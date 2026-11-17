@@ -112,7 +112,7 @@ export default function LupaKataSandiPage() {
 
     if (!isEmailValid) {
       setEmailError(
-        "Format email tidak valid. Gunakan email seperti direksi@lionmesh.com.",
+        "Masukkan alamat email perusahaan yang valid.",
       );
       return;
     }
@@ -229,10 +229,10 @@ export default function LupaKataSandiPage() {
           <div className="animate-fade-up" style={{ animationDelay: "40ms" }}>
             <Link
               href="/login"
-              className="group inline-flex items-center gap-2 text-xs font-semibold text-[#ED8B00] transition-opacity hover:opacity-85"
+              className="inline-flex items-center gap-2 text-xs font-semibold text-[#ED8B00] transition-all duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] hover:-translate-x-1 hover:text-[#D97F00]"
             >
               <svg
-                className="h-3.5 w-3.5 transition-transform duration-200 group-hover:-translate-x-1"
+                className="h-3.5 w-3.5 shrink-0"
                 fill="none"
                 stroke="currentColor"
                 strokeLinecap="round"

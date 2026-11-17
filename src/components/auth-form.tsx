@@ -36,7 +36,7 @@ export function AuthForm() {
       nextErrors.email = "Email perusahaan wajib diisi.";
     } else if (!isEmailValid) {
       nextErrors.email =
-        "Format email tidak valid. Gunakan email seperti direksi@lionmesh.com.";
+        "Masukkan alamat email perusahaan yang valid.";
     }
 
     if (!password) {
