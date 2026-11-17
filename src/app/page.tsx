@@ -4,6 +4,9 @@ import { SignOutButton } from "@/components/sign-out-button";
 import { isSupabaseConfigured } from "@/lib/supabase/env";
 import { createClient } from "@/lib/supabase/server";
 
+// Halaman ini membaca cookie sesi, jadi tidak bisa dirender statis.
+export const instant = false;
+
 async function getCurrentUser() {
   if (!isSupabaseConfigured()) {
     return null;
