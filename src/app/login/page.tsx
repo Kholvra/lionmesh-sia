@@ -9,7 +9,7 @@ const BUSINESS_CYCLES = [
     description: "Pesanan hingga penerimaan kas",
     icon: (
       <svg
-        className="h-5 w-5 text-[#F59E0B]"
+        className="h-5 w-5 text-[#F59E0B] transition-transform duration-300 group-hover:scale-110"
         fill="none"
         stroke="currentColor"
         strokeLinecap="round"
@@ -28,7 +28,7 @@ const BUSINESS_CYCLES = [
     description: "Pembelian hingga pembayaran",
     icon: (
       <svg
-        className="h-5 w-5 text-[#F59E0B]"
+        className="h-5 w-5 text-[#F59E0B] transition-transform duration-300 group-hover:scale-110"
         fill="none"
         stroke="currentColor"
         strokeLinecap="round"
@@ -46,7 +46,7 @@ const BUSINESS_CYCLES = [
     description: "Perencanaan hingga hasil produksi",
     icon: (
       <svg
-        className="h-5 w-5 text-[#F59E0B]"
+        className="h-5 w-5 text-[#F59E0B] transition-transform duration-300 group-hover:scale-110"
         fill="none"
         stroke="currentColor"
         strokeLinecap="round"
@@ -66,7 +66,7 @@ const BUSINESS_CYCLES = [
     description: "Kehadiran hingga rilis payroll",
     icon: (
       <svg
-        className="h-5 w-5 text-[#F59E0B]"
+        className="h-5 w-5 text-[#F59E0B] transition-transform duration-300 group-hover:scale-110"
         fill="none"
         stroke="currentColor"
         strokeLinecap="round"
@@ -87,9 +87,12 @@ export default function LoginPage() {
   return (
     <div className="flex min-h-screen w-full flex-col lg:flex-row">
       {/* Panel Kiri: Branding & Informasi Siklus Bisnis */}
-      <aside className="flex w-full flex-col justify-between bg-[#1C2530] px-8 py-8 text-white lg:w-[29%] lg:min-w-[360px] lg:max-w-[430px] lg:px-10 lg:py-10">
+      <aside className="relative flex w-full flex-col justify-between overflow-hidden bg-[#1C2530] px-8 py-8 text-white lg:w-[29%] lg:min-w-[360px] lg:max-w-[430px] lg:px-10 lg:py-10">
+        {/* Subtle Ambient Glow */}
+        <div className="pointer-events-none absolute -top-24 -left-24 h-64 w-64 rounded-full bg-[#ED8B00]/[0.06] blur-3xl" />
+
         {/* Brand Header */}
-        <div>
+        <div className="animate-fade-up relative z-10">
           <div className="text-[28px] font-bold tracking-tight text-white">
             Lionmesh
           </div>
@@ -99,34 +102,37 @@ export default function LoginPage() {
         </div>
 
         {/* Konten Utama Sidebar */}
-        <div className="my-12 lg:my-0">
-          <span className="inline-block rounded-full bg-[#FFF4D5] px-3 py-1 text-[12px] font-semibold uppercase tracking-normal text-[#A8740D]">
-            SISTEM INFORMASI BISNIS
-          </span>
+        <div className="relative z-10 my-12 lg:my-0">
+          <div className="animate-fade-up" style={{ animationDelay: "60ms" }}>
+            <span className="inline-block rounded-full bg-[#FFF4D5] px-3 py-1 text-[12px] font-semibold uppercase tracking-normal text-[#A8740D]">
+              SISTEM INFORMASI BISNIS
+            </span>
 
-          <h2 className="mt-4 text-[32px] font-bold leading-[1.2] tracking-tight text-white">
-            Empat siklus.
-            <br />
-            Satu kendali bisnis.
-          </h2>
+            <h2 className="mt-4 text-[32px] font-bold leading-[1.2] tracking-tight text-white">
+              Empat siklus.
+              <br />
+              Satu kendali bisnis.
+            </h2>
 
-          <p className="mt-3.5 text-[13.5px] leading-relaxed text-[#9CA3AF]">
-            Pantau pendapatan, pengeluaran, produksi, dan penggajian dalam satu
-            sistem yang terintegrasi.
-          </p>
+            <p className="mt-3.5 text-[13.5px] leading-relaxed text-[#9CA3AF]">
+              Pantau pendapatan, pengeluaran, produksi, dan penggajian dalam satu
+              sistem yang terintegrasi.
+            </p>
+          </div>
 
           {/* Daftar Card 4 Siklus */}
           <div className="mt-7 space-y-3">
-            {BUSINESS_CYCLES.map((cycle) => (
+            {BUSINESS_CYCLES.map((cycle, index) => (
               <div
                 key={cycle.title}
-                className="flex items-center gap-3.5 rounded-xl border border-white/[0.06] bg-[#263342] px-4 py-3.5 transition-colors hover:border-white/10"
+                style={{ animationDelay: `${140 + index * 70}ms` }}
+                className="animate-fade-up group flex items-center gap-3.5 rounded-xl border border-white/[0.06] bg-[#263342] px-4 py-3.5 transition-all duration-200 hover:translate-x-1 hover:border-[#F59E0B]/30 hover:bg-[#2B394A]"
               >
-                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[#2C3542]">
+                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[#2C3542] transition-colors duration-200 group-hover:bg-[#333E4D]">
                   {cycle.icon}
                 </div>
                 <div>
-                  <h3 className="text-[13.5px] font-semibold text-white">
+                  <h3 className="text-[13.5px] font-semibold text-white transition-colors group-hover:text-[#FDE68A]">
                     {cycle.title}
                   </h3>
                   <p className="mt-0.5 text-[11.5px] text-[#8B95A5]">
@@ -139,7 +145,10 @@ export default function LoginPage() {
         </div>
 
         {/* Footer Kiri */}
-        <div className="text-[11px] text-[#6B7280]">
+        <div
+          style={{ animationDelay: "420ms" }}
+          className="animate-fade-up relative z-10 text-[11px] text-[#6B7280]"
+        >
           Akses internal • Aman dan terintegrasi
         </div>
       </aside>
@@ -147,13 +156,13 @@ export default function LoginPage() {
       {/* Panel Kanan: Form Login */}
       <main className="flex flex-1 flex-col justify-between bg-[#F9FAFB] px-6 py-8 sm:px-12 lg:px-16 lg:py-10">
         {/* Top Bar Help Link */}
-        <div className="flex w-full justify-end">
+        <div className="animate-fade-up flex w-full justify-end">
           <a
             href="#bantuan-it"
-            className="inline-flex items-center gap-1.5 text-xs font-medium text-[#6B7280] transition-colors hover:text-[#111827]"
+            className="group inline-flex items-center gap-1.5 text-xs font-medium text-[#6B7280] transition-colors hover:text-[#111827]"
           >
             <svg
-              className="h-4 w-4 text-[#6B7280]"
+              className="h-4 w-4 text-[#6B7280] transition-transform duration-200 group-hover:rotate-12 group-hover:text-[#ED8B00]"
               fill="none"
               stroke="currentColor"
               strokeLinecap="round"
@@ -171,7 +180,10 @@ export default function LoginPage() {
 
         {/* Form Container Tengah */}
         <div className="mx-auto my-auto w-full max-w-[680px] py-10">
-          <div className="mb-7">
+          <div
+            style={{ animationDelay: "80ms" }}
+            className="animate-fade-up mb-7"
+          >
             <span className="inline-block rounded-full bg-[#FFF4D5] px-3 py-1 text-[12px] font-semibold uppercase tracking-normal text-[#A8740D]">
               PORTAL DIREKSI
             </span>
@@ -190,11 +202,19 @@ export default function LoginPage() {
             <AuthError />
           </Suspense>
 
-          <AuthForm />
+          <div
+            style={{ animationDelay: "160ms" }}
+            className="animate-fade-up"
+          >
+            <AuthForm />
+          </div>
         </div>
 
         {/* Footer Kanan */}
-        <footer className="mx-auto w-full max-w-[680px] text-[11.5px] text-[#9CA3AF]">
+        <footer
+          style={{ animationDelay: "240ms" }}
+          className="animate-fade-up mx-auto w-full max-w-[680px] text-[11.5px] text-[#9CA3AF]"
+        >
           © 2026 PT Lionmesh Prima Tbk. Seluruh hak dilindungi.
         </footer>
       </main>
