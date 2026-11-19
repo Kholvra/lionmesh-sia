@@ -48,13 +48,13 @@ Tanpa epic ini, empat siklus yang berjalan paralel akan menghasilkan empat defin
 1. Satu kelompok bisa membuat dokumen baru dengan nomor benar tanpa menulis logika penomoran.
 2. Satu kelompok bisa memposting jurnal tanpa menyentuh tabel jurnal langsung.
 3. Satu kelompok bisa mengubah stok tanpa menghitung ulang saldo sendiri.
-4. `FND` selesai sebelum item modul pertama masuk `ready`.
+4. `FND-001`–`FND-006` selesai sebelum item modul pertama masuk `ready`; `FND-007`/`FND-008` boleh menyusul paralel.
 
 ## Anak requirement
 
 | ID | Outcome | Sequence | Depends on | Status |
 |---|---|---|---|---|
-| `FND-001` | Lingkungan dapat diulang + gerbang mutu | 1 | — | `specified` |
+| `FND-001` | Lingkungan dapat diulang + gerbang mutu | 1 | — | `in progress` |
 | `FND-002` | Skema domain inti + migrasi bernomor | 2 | `FND-001` | `idea` |
 | `FND-003` | Autentikasi & 12 peran dengan RLS | 3 | `FND-002` | `idea` |
 | `FND-004` | Dokumen: nomor, status, riwayat, approval | 4 | `FND-002`, `FND-003` | `idea` |
@@ -72,6 +72,8 @@ Epic ini ditutup hanya kalau:
 - Seluruh anak requirement `done` menurut `policies/definition-of-done.md`.
 - Empat track modul sudah bisa membuat satu dokumen uji masing-masing tanpa menyentuh database manual.
 - Migrasi berjalan dari database kosong tanpa langkah manual di dashboard.
+
+Epic ditutup setelah **seluruh** `FND-*` `done`. Gate untuk memulai item modul lebih sempit: `FND-001`–`FND-006`, karena `FND-007`/`FND-008` boleh berjalan bersamaan dengan gelombang pertama.
 
 ## Risiko
 

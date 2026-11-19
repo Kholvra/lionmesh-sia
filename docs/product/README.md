@@ -102,7 +102,7 @@ Approval topologi: keputusan D-02 (satu repo, branch per track) dan D-03 (review
 | CI | `partial` | `.github/workflows/ci.yml` ada; belum pernah dijalankan |
 | Migration runner | `available` | `scripts/check-migrations.mjs`, `pnpm db:setup` |
 
-Gate: seluruh `FND-*` wajib `done` sebelum item modul boleh `Ready`.
+Gate: `FND-001`–`FND-006` wajib `done` sebelum item modul boleh `Ready`. `FND-007`/`FND-008` boleh selesai paralel, kecuali item yang menambah primitive UI (menunggu `FND-007`).
 
 ## Menambah item
 

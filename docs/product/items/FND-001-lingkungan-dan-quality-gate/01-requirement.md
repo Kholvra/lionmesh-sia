@@ -8,7 +8,7 @@ lane: active
 sequence: 1
 type: chore
 req_status: specified
-delivery_status: planned
+delivery_status: in_progress
 priority: high
 size: M
 depends_on: []

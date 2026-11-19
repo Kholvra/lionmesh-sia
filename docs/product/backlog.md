@@ -33,7 +33,7 @@ Satu pemilik: tech lead. Urutan wajib.
 | `FND-007` | UI kit bersama: tabel, form, status badge, dialog | 7 | `FND-002` | `idea` |
 | `FND-008` | Seed deterministik + reset ke kosong | 8 | `FND-001`, `FND-002` | `idea` |
 
-**Gate:** seluruh `FND-*` berstatus `done` sebelum item modul mana pun boleh `ready`.
+**Gate:** `FND-001`–`FND-006` berstatus `done` sebelum item modul mana pun boleh `ready`. `FND-007` (UI kit) dan `FND-008` (seed) boleh selesai paralel dengan gelombang pertama; item modul yang butuh primitive UI baru menunggu `FND-007`.
 
 ## Siklus Pendapatan — 4 track
 
@@ -70,15 +70,17 @@ Satu pemilik: tech lead. Urutan wajib.
 
 | ID | Fitur | Track | Level | Depends on | Status |
 |---|---|---|---|---|---|
-| `PR-001` | Produk, BOM berversi, toleransi | PR-A master | 1 | `FND-002` | `idea` |
-| `PR-002` | Perintah produksi | PR-B eksekusi | 2 | `PR-001`, `FND-004` | `idea` |
-| `PR-003` | Kebutuhan & permintaan bahan | PR-B eksekusi | 3 | `PR-002`, `C-013` | `idea` |
-| `PR-004` | Pemakaian bahan & WIP | PR-B eksekusi | 4 | `PR-003`, `FND-005` | `idea` |
-| `PR-005` | Hasil produksi & QC (rework/reject) | PR-C mutu | 3 | `PR-002`, `FND-005` | `idea` |
-| `PR-006` | Biaya produksi & HPP | PR-D biaya | 5 | `PR-004`, `PR-005`, `FND-006` | `idea` |
-| `PR-007` | Laporan produksi & efisiensi | PR-D biaya | 6 | `PR-006` | `idea` |
+| `PR-001` | BOM berversi & toleransi (master produk di `C-011`) | PR-A master | 2 | `C-011`, `FND-002` | `idea` |
+| `PR-002` | Perintah produksi | PR-B eksekusi | 3 | `PR-001`, `FND-004` | `idea` |
+| `PR-003` | Kebutuhan & permintaan bahan | PR-B eksekusi | 4 | `PR-002`, `C-013` | `idea` |
+| `PR-004` | Pemakaian bahan & WIP | PR-B eksekusi | 5 | `PR-003`, `FND-005` | `idea` |
+| `PR-005` | Hasil produksi & QC (rework/reject) | PR-C mutu | 4 | `PR-002`, `FND-005` | `idea` |
+| `PR-006` | Biaya produksi & HPP | PR-D biaya | 6 | `PR-004`, `PR-005`, `FND-006` | `idea` |
+| `PR-007` | Laporan produksi & efisiensi | PR-D biaya | 7 | `PR-006` | `idea` |
 
 `PR-003` bergantung pada `C-013` (domain pengadaan di core), bukan pada seluruh siklus Pengeluaran. Jadi Produksi tidak ikut menunggu `PG-005`.
+
+`PR-001` tidak membuat tabel produk sendiri. Master produk ada di `C-011`; track Produksi hanya memiliki BOM, versinya, dan toleransinya.
 
 ## Siklus Penggajian — 4 track
 
@@ -101,11 +103,13 @@ Sebagian tidak memblokir siklus mana pun. Satu di antaranya memblokir dua item l
 |---|---|---|---|---|---|
 | `C-009` | Laporan keuangan | CORE-A laporan | 1 | `FND-006` | `idea` |
 | `C-010` | Tutup buku & jurnal penutup | CORE-B tutup | 2 | `C-009` | `idea` |
-| `C-011` | Master data terpadu | CORE-C master | 1 | `FND-002` | `idea` |
+| `C-011` | Master data terpadu: produk, gudang, satuan | CORE-C master | 1 | `FND-002` | `idea` |
 | `C-012` | Notifikasi in-app + email | CORE-C master | 1 | `FND-004` | `idea` |
 | `C-013` | Domain pengadaan: tabel + aturan status (permintaan, PO, penerimaan) | CORE-D pengadaan | 1 | `FND-002`, `FND-004`, `FND-005` | `idea` |
 
 `C-013` adalah penerapan `D-05`. Ia **memblokir** `PG-002` dan `PR-003`, tapi bukan seluruh siklus: layar dan alur approval tetap milik track Pengeluaran. Karena itu ia ada di core, bukan di `PG-*` — supaya Produksi tidak ikut menunggu siklus Pengeluaran selesai.
+
+`C-011` hanya memiliki master yang dipakai lintas siklus: produk, gudang, dan satuan. `akun` (COA) lahir di `FND-006`; `C-011` membacanya, bukan membuatnya.
 
 ## Integrasi — join
 
@@ -121,24 +125,24 @@ Terbaca per level. Semua item dalam satu baris boleh dikerjakan serentak.
 
 | Level | Pendapatan | Pengeluaran | Produksi | Penggajian | Core | Jumlah |
 |---|---|---|---|---|---|---|
-| 1 | `PD-001` `PD-003` | `PG-001` `PG-010` | `PR-001` | `GJ-001` | `C-009` `C-011` `C-012` `C-013` | **10** |
-| 2 | `PD-002` | `PG-002` | `PR-002` | `GJ-002` | `C-010` | 5 |
-| 3 | `PD-004` | `PG-003` `PG-004` | `PR-003` `PR-005` | `GJ-003` `GJ-008` | — | 7 |
-| 4 | `PD-005` | `PG-005` | `PR-004` | `GJ-004` | — | 4 |
-| 5 | `PD-006` `PD-007` | `PG-006` | `PR-006` | `GJ-005` | — | 5 |
-| 6 | `PD-008` `PD-009` | `PG-007` | `PR-007` | `GJ-006` | — | 5 |
-| 7 | — | `PG-008` | — | `GJ-007` | — | 2 |
+| 1 | `PD-001` `PD-003` | `PG-001` `PG-010` | — | `GJ-001` | `C-009` `C-011` `C-012` `C-013` | **9** |
+| 2 | `PD-002` | `PG-002` | `PR-001` | `GJ-002` | `C-010` | 5 |
+| 3 | `PD-004` | `PG-003` `PG-004` | `PR-002` | `GJ-003` `GJ-008` | — | 6 |
+| 4 | `PD-005` | `PG-005` | `PR-003` `PR-005` | `GJ-004` | — | 5 |
+| 5 | `PD-006` `PD-007` | `PG-006` | `PR-004` | `GJ-005` | — | 5 |
+| 6 | `PD-008` `PD-009` | `PG-007` | `PR-006` | `GJ-006` | — | 5 |
+| 7 | — | `PG-008` | `PR-007` | `GJ-007` | — | 3 |
 | 8 | — | `PG-009` | — | — | — | 1 |
 | 9 | — | — | — | — | — | `INT-001` |
 | 10 | — | — | — | — | — | `INT-002` `INT-003` |
 
-**Puncak paralel: 10 item serentak di level 1.** Setelah itu turun karena rantai dokumen memang berurutan.
+**Puncak paralel: 9 item serentak di level 1, dan baru terbuka setelah gate `FND-001`–`FND-006` selesai.** Setelah itu turun karena rantai dokumen memang berurutan.
 
 **Titik kritis awal: `C-013`.** Dua siklus menunggunya. Ia harus selesai di gelombang pertama, bukan menyusul.
 
 ## Aturan gate
 
-1. **Gate fondasi** — tidak ada item modul `ready` sebelum `FND-001`…`FND-008` `done`.
+1. **Gate fondasi** — tidak ada item modul `ready` sebelum `FND-001`–`FND-006` `done`. `FND-007`/`FND-008` boleh menyusul paralel, dengan pengecualian primitive UI seperti di atas.
 2. **Gate per item** — `depends on` harus `done`, bukan sekadar "hampir".
 3. **Gate migrasi** — DDL dari kelompok berupa usulan; tech lead yang menomori dan merge.
 4. **Gate join** — `INT-001` tidak boleh mulai sebelum seluruh jurnal siklus ada.
@@ -150,3 +154,6 @@ Terbaca per level. Semua item dalam satu baris boleh dikerjakan serentak.
 |---|---|
 | 2026-11-17 | Inisialisasi. 50 item: 8 fondasi, 34 modul, 5 core bersama, 3 integrasi |
 | 2026-11-17 | Tambah `C-013` domain pengadaan (level 1, memblokir `PG-002` dan `PR-003`) |
+| 2026-11-19 | Gate fondasi dipersempit ke `FND-001`–`FND-006`; `FND-007`/`FND-008` boleh paralel |
+| 2026-11-19 | `C-011` tidak lagi memiliki `akun` (COA milik `FND-006`); `PR-001` bergantung `C-011`, level rantai Produksi bergeser +1 |
+| 2026-11-19 | `FND-001` diselaraskan ke `in progress` di semua dokumen |

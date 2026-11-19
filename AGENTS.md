@@ -64,7 +64,7 @@ Run this before the first edit and report the result to the user.
 
 1. **Name the item.** Confirm the ID exists in `docs/product/backlog.md`.
 2. **Check status and dependencies.** The item must be `ready` or `in progress`. Every `depends on` item must be `done`. Do not start an `idea` item.
-3. **Check the foundation gate.** No module item may start before all `FND-*` items are `done` (see `docs/product/policies/definition-of-done.md`).
+3. **Check the foundation gate.** No module item may start before `FND-001`–`FND-006` are `done`. `FND-007` (UI kit) and `FND-008` (seed) may finish in parallel; an item that adds a new UI primitive waits for `FND-007` (see `docs/product/backlog.md`).
 4. **Read the package in order:** `00` → `01` → `02` → `03` → `04`. `05` is written at the end.
 5. **State the plan before coding:** item ID, cycle, files to touch, core services to call, and the AC you will prove.
 6. **Touch only your cycle's folders.** `src/modules/<cycle>/` plus its routes in `src/app/(app)/<cycle>/`.
