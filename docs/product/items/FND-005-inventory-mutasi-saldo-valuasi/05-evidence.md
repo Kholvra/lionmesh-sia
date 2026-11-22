@@ -89,6 +89,14 @@ Migrasi `0004_inventory_mutasi_saldo.sql` dijalankan pada PostgreSQL 17 terisola
 
 Efek compatibility: caller aplikasi yang memakai JWT pengguna tidak dapat lagi menjalankan RPC ini. Pemanggil harus berupa kode server tepercaya dengan `service_role`; grant pengguna menunggu matriks izin FND-003.
 
+## Integrasi server internal (2026-11-22)
+
+- `src/core/inventory/server.ts` menyediakan jalur server internal untuk transfer, opname, dan penyesuaian manual, diekspor dari `src/core/inventory/index.ts`. Sesi aktif dan izin Gudang diperiksa sebelum client `service_role` dibuat; `actorId` diambil dari sesi. Input menolak properti sumber dokumen dan identitas dari caller.
+- `src/lib/auth/permissions.ts` memetakan izin `opname_stok` dan `penyesuaian_stok` ke Gudang sesuai `D-58` dan `docs/product/policies/matriks-izin.md`.
+- Pemanggil harus mencegah retry otomatis. Idempotency key belum tersedia di skema; jalur ini bukan Server Action publik dan belum dipasang ke UI atau aksi dokumen.
+- AC-06 tetap `PARTIAL`: entry point core tersedia, tetapi belum ada caller aplikasi dan integrasi sesi pengguna belum diuji. Worktree ini tidak memiliki `.env.local`, sehingga pengujian sesi runtime belum dijalankan. Jangan menganggap pemeriksaan statik sebagai bukti runtime.
+- `pnpm verify` pada 2026-11-22, Node.js v24.22.2, pnpm 10.18.3: `lint`, `typecheck`, `arch:check` (48 modul, 83 dependensi), dan `next build` lulus. `git diff --check` juga lulus. Ini membuktikan mutu build, bukan perilaku runtime jalur sesi.
+
 Urutan migrasi wajib: FND-003 `0003_autentikasi_peran_rls.sql` lebih dulu mendefinisikan `public.is_active_staff()`, kemudian FND-005 `0004_inventory_mutasi_saldo.sql` membuat policy baca inventory yang memakainya.
 
 ## Pemeriksaan setelah integrasi skema FND-003
