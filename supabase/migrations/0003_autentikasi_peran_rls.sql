@@ -39,6 +39,11 @@ as $$
 begin
   new.updated_at = now();
   if auth.uid() is not null then
+    if new.peran is distinct from old.peran
+      or new.aktif is distinct from old.aktif
+      or new.karyawan_id is distinct from old.karyawan_id then
+      raise exception 'Perubahan peran, status, dan karyawan tidak diizinkan.';
+    end if;
     new.updated_by = auth.uid();
   end if;
   return new;
@@ -76,6 +81,23 @@ after update on public.profiles
 for each row execute procedure public.handle_profile_session_revocation();
 
 -- 3. Fungsi pembantu RLS
+create or replace function public.is_session_current()
+returns boolean
+language sql
+security definer
+stable
+set search_path = public, auth
+as $$
+  select exists (
+    select 1 from auth.sessions
+    where id::text = (select auth.jwt() ->> 'session_id')
+      and user_id = (select auth.uid())
+  );
+$$;
+
+revoke all on function public.is_session_current() from public, anon;
+grant execute on function public.is_session_current() to authenticated;
+
 create or replace function public.current_peran()
 returns text
 language sql
@@ -85,7 +107,8 @@ set search_path = public
 as $$
   select peran
   from public.profiles
-  where id = (select auth.uid()) and aktif = true;
+  where id = (select auth.uid()) and aktif = true
+    and public.is_session_current();
 $$;
 
 create or replace function public.is_active_staff()
@@ -99,6 +122,7 @@ as $$
     select 1
     from public.profiles
     where id = (select auth.uid())
+      and public.is_session_current()
       and aktif = true
       and peran is not null
       and peran <> 'Karyawan'
@@ -112,19 +136,14 @@ drop policy if exists "Users can view their own profile" on public.profiles;
 create policy "Users can view their own profile"
 on public.profiles for select
 to authenticated
-using ((select auth.uid()) = id);
+using ((select auth.uid()) = id and public.is_session_current());
 
 drop policy if exists "Users can update their own profile" on public.profiles;
 create policy "Users can update their own profile"
 on public.profiles for update
 to authenticated
 using ((select auth.uid()) = id)
-with check (
-  (select auth.uid()) = id
-  and peran is not distinct from (select p.peran from public.profiles p where p.id = (select auth.uid()))
-  and aktif is not distinct from (select p.aktif from public.profiles p where p.id = (select auth.uid()))
-  and karyawan_id is not distinct from (select p.karyawan_id from public.profiles p where p.id = (select auth.uid()))
-);
+with check ((select auth.uid()) = id and public.is_session_current());
 
 -- 5. Kebijakan RLS untuk tabel domain inti (satuan, produk, gudang)
 alter table public.satuan enable row level security;

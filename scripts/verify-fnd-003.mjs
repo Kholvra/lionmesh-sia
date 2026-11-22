@@ -7,13 +7,13 @@ import { MATRIKS_IZIN, cekIzin } from "../src/lib/auth/permissions.ts";
 
 const { Client } = pg;
 
-const SUPABASE_URL = "http://127.0.0.1:54321";
+const SUPABASE_URL = process.env.SUPABASE_TEST_URL ?? "http://127.0.0.1:54321";
 const SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const ANON_KEY = process.env.SUPABASE_ANON_KEY;
 if (!SERVICE_ROLE_KEY || !ANON_KEY) {
   throw new Error("Set SUPABASE_SERVICE_ROLE_KEY and SUPABASE_ANON_KEY for the isolated local test project.");
 }
-const PG_CONN = "postgresql://postgres:postgres@127.0.0.1:54322/postgres";
+const PG_CONN = process.env.SUPABASE_TEST_DB_URL ?? "postgresql://postgres:postgres@127.0.0.1:54322/postgres";
 
 const adminClient = createClient(SUPABASE_URL, SERVICE_ROLE_KEY, {
   auth: { autoRefreshToken: false, persistSession: false },
@@ -330,27 +330,7 @@ try {
 // -------------------------------------------------------------
 // AC-04: Aksi yang tidak diizinkan ditolak dengan pesan standar
 // -------------------------------------------------------------
-try {
-  // Test permissions check rejection logic
-  const checkForbidden = (userRole, allowedRoles) => {
-    if (!userRole) return { ok: false, message: "Akun Anda belum memiliki peran. Hubungi pengelola akun." };
-    const roles = Array.isArray(allowedRoles) ? allowedRoles : [allowedRoles];
-    if (!roles.includes(userRole)) {
-      return { ok: false, message: "Peran Anda tidak berwenang melakukan tindakan ini." };
-    }
-    return { ok: true };
-  };
-
-  const resUnauth = checkForbidden("Gudang", ["Penjualan"]);
-  const expectedMsg = "Peran Anda tidak berwenang melakukan tindakan ini.";
-  logAC(
-    "AC-04",
-    resUnauth.ok === false && resUnauth.message === expectedMsg,
-    `Aksi ditolak dengan pesan: "${resUnauth.message}"`,
-  );
-} catch (e) {
-  logAC("AC-04", false, e.message);
-}
+console.log("[PENDING] AC-04: no protected action endpoint is available for a direct-request test.");
 
 // -------------------------------------------------------------
 // AC-05: Perubahan peran atau penonaktifan mencabut sesi lama (D-48)
@@ -368,10 +348,11 @@ try {
   const clientTest = createClient(SUPABASE_URL, ANON_KEY, {
     auth: { autoRefreshToken: false, persistSession: false },
   });
-  await clientTest.auth.signInWithPassword({
+  const { data: initialLogin, error: initialLoginError } = await clientTest.auth.signInWithPassword({
     email: emailSessionTest,
     password: pass,
   });
+  if (initialLoginError || !initialLogin.session) throw initialLoginError ?? new Error("No session returned");
 
   const sessionBefore = await db.query(
     `select id from auth.sessions where user_id = $1`,
@@ -390,6 +371,11 @@ try {
     [testUserId],
   );
   const revokedOnRoleChange = sessionAfterRoleChange.rows.length === 0;
+  const oldTokenResponse = await fetch(`${SUPABASE_URL}/rest/v1/profiles?select=id`, {
+    headers: { apikey: ANON_KEY, Authorization: `Bearer ${initialLogin.session.access_token}` },
+  });
+  const oldTokenData = await oldTokenResponse.json();
+  const oldTokenDenied = !Array.isArray(oldTokenData) || !oldTokenData.some((row) => row.id === testUserId);
 
   // Login again
   await clientTest.auth.signInWithPassword({
@@ -411,8 +397,8 @@ try {
 
   logAC(
     "AC-05",
-    hadSessionBefore && revokedOnRoleChange && revokedOnDeactivation,
-    `Sesi aktif otomatis dicabut dari auth.sessions saat perubahan peran dan saat akun dinonaktifkan (D-48)`,
+    hadSessionBefore && revokedOnRoleChange && oldTokenDenied && revokedOnDeactivation,
+    `Sesi dicabut saat perubahan peran/penonaktifan; token lama tidak membaca profil (D-48)`,
   );
 } catch (e) {
   logAC("AC-05", false, e.message);
@@ -513,30 +499,13 @@ try {
 // -------------------------------------------------------------
 // AC-01: Permintaan tanpa sesi ke halaman terlindungi diarahkan ke /login
 // -------------------------------------------------------------
-try {
-  // Test requireSesi logic for unauthenticated request
-  const checkUnauthenticated = (hasSession) => {
-    if (!hasSession) {
-      return { redirect: "/login", data: null };
-    }
-    return { data: "secret" };
-  };
-
-  const outcome = checkUnauthenticated(false);
-  logAC(
-    "AC-01",
-    outcome.redirect === "/login" && outcome.data === null,
-    `Permintaan tanpa sesi diarahkan ke /login dan tidak menampilkan data (data: null)`,
-  );
-} catch (e) {
-  logAC("AC-01", false, e.message);
-}
+console.log("[PENDING] AC-01: no protected application route is available for an HTTP redirect test.");
 
 await db.end();
 
 const total = Object.keys(results).length;
 const passedCount = Object.values(results).filter((r) => r.passed).length;
-console.log(`\nVerifikasi selesai: ${passedCount}/${total} AC lolos.`);
+console.log(`\nVerifikasi selesai: ${passedCount}/${total} pemeriksaan lulus; AC-01 dan AC-04 tertunda.`);
 if (passedCount < total) {
   process.exit(1);
 }

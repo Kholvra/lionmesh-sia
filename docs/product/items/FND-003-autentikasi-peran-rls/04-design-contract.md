@@ -2,7 +2,7 @@
 
 - Source: `docs/product/items/FND-003-autentikasi-peran-rls/01-requirement.md` (`FND-003`)
 - Acceptance criteria: `02-acceptance-criteria.md` (`AC-01`…`AC-14`)
-- Status: `Verified`
+- Status: `Partially verified`
 - Profile: product app / security boundary
 - Scope: identitas dari sesi, 13 peran, RLS dasar, pembatasan per pemilik untuk Karyawan, pencabutan sesi, penolakan di server dan database
 - Owner: tech lead
@@ -81,21 +81,21 @@ Karyawan tidak melihat `profiles` orang lain.
 
 | Contract ID | Observable oracle | Check type/owner | Evidence | Status |
 |---|---|---|---|---|
-| `B-01` | Nilai tidak valid ditolak sebelum layanan | Uji perilaku | AC-04, AC-08 | `PASS` |
+| `B-01` | Nilai tidak valid ditolak sebelum layanan | Uji perilaku | AC-04, AC-08 | `PARTIAL` |
 | `B-02` | `actor_id` dari klien diabaikan | AC-06 | AC-06 | `PASS` |
 | `B-03` | RLS menolak akses tanpa peran | AC-02 | AC-02 | `PASS` |
-| `B-04` | Sesi lama ditolak setelah perubahan | AC-05 | AC-05 | `PASS` |
-| `PRE-01` | Tanpa sesi atau akun nonaktif ditolak | AC-01, AC-09 | AC-01, AC-09 | `PASS` |
-| `PRE-02` | Peran tidak berwenang ditolak | AC-03, AC-04 | AC-03, AC-04 | `PASS` |
+| `B-04` | Sesi lama ditolak setelah perubahan | AC-05 | AC-05 | `PARTIAL` |
+| `PRE-01` | Tanpa sesi atau akun nonaktif ditolak | AC-01, AC-09 | AC-01, AC-09 | `PARTIAL` |
+| `PRE-02` | Peran tidak berwenang ditolak | AC-03, AC-04 | AC-03, AC-04 | `PARTIAL` |
 | `PRE-03` | Peran ke-14 ditolak | AC-08 | AC-08 | `PASS` |
 | `PRE-04` | Karyawan hanya baris sendiri | AC-11 | AC-11 | `PASS` |
 | `POST-01` | Aksi sah mencatat identitas sesi | AC-06 | AC-06 | `PASS` |
-| `POST-02` | Aksi ditolak tidak mengubah data | AC-04 | AC-04 | `PASS` |
-| `POST-03` | Sesi lama dicabut | AC-05 | AC-05 | `PASS` |
+| `POST-02` | Aksi ditolak tidak mengubah data | AC-04 | AC-04 | `PARTIAL` |
+| `POST-03` | Sesi lama dicabut | AC-05 | AC-05 | `PARTIAL` |
 | `INV-01` | Daftar peran = 13 | AC-07 | AC-07 | `PASS` |
 | `INV-02` | Identitas dari sesi | AC-06 | AC-06 | `PASS` |
 | `INV-03` | Akses tanpa peran ditolak | AC-02 | AC-02 | `PASS` |
-| `INV-04` | Pemisahan tugas diuji di pemilik aksi | AC-03 di item pemilik | — | `PASS` |
+| `INV-04` | Pemisahan tugas diuji di pemilik aksi | AC-03 di item pemilik | — | `PARTIAL` |
 | `INV-05` | Satu peran per akun | AC-10 | AC-10 | `PASS` |
 | `INV-06` | Karyawan tidak membaca baris orang lain | AC-11 | AC-11 | `PASS` |
 

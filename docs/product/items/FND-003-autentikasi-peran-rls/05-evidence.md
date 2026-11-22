@@ -7,22 +7,27 @@ Dijalankan pada 2026-11-22 di lingkungan lokal via `scripts/verify-fnd-003.mjs` 
 
 | AC | Hasil | Bukti |
 |---|---|---|
-| `AC-01` | Lolos | Permintaan tanpa sesi diarahkan ke `/login` dan tidak menampilkan data domain (`requireSesi`). |
+| `AC-01` | Tertunda | Belum ada halaman terlindungi untuk diuji lewat HTTP; skrip lama hanya mensimulasikan redirect. |
 | `AC-02` | Lolos | Pengguna dengan sesi sah tanpa peran membaca `satuan` (0 baris), `produk` (0 baris), `gudang` (0 baris); seluruhnya kosong oleh RLS. |
-| `AC-03` | Lolos | Matriks izin v0 valid untuk seluruh 63 aksi domain dan 13 peran sesuai `policies/matriks-izin.md` (D-33, D-53). |
-| `AC-04` | Lolos | Aksi langsung tanpa izin ditolak dengan pesan standar: `"Peran Anda tidak berwenang melakukan tindakan ini."` |
-| `AC-05` | Lolos | Sesi aktif di `auth.sessions` otomatis dicabut seketika saat `peran` berubah atau saat akun dinonaktifkan (`aktif = false`) via trigger database (D-48). |
-| `AC-06` | Belum terbukti | Skrip sebelumnya memakai simulasi objek, bukan permintaan tulis terhadap database. Perlu uji payload palsu pada aksi nyata. |
+| `AC-03` | Parsial | Fungsi izin diuji terhadap daftar yang sama; pencocokan independen seluruh matriks dan endpoint aksi belum dibuktikan. |
+| `AC-04` | Tertunda | Belum ada endpoint aksi terlindungi untuk uji permintaan langsung; simulasi lama tidak membuktikan AC. |
+| `AC-05` | Parsial | Perubahan peran dan penonaktifan menghapus sesi. Uji REST token lama setelah perubahan peran menghasilkan HTTP 200 dengan profil sendiri tidak terlihat; uji redirect halaman dan skenario penonaktifan lengkap masih diperlukan. |
+| `AC-06` | Lolos | Permintaan REST update profil membawa updated_by palsu; nilai tersimpan adalah ID sesi (uji Supabase lokal terisolasi). |
 | `AC-07` | Lolos | Constraint `ck_profiles_peran` pada tabel `profiles` memuat tepat 13 nilai peran sah (12 staf + Karyawan). |
 | `AC-08` | Lolos | Insert peran di luar daftar (misal `'ADMIN'`) ditolak oleh database dengan error constraint `ck_profiles_peran`. |
-| `AC-09` | Perlu uji endpoint | Trigger database mengatur `auth.users.banned_until` saat akun dinonaktifkan; uji SQL terisolasi lulus. Penolakan melalui endpoint Auth belum diverifikasi setelah perubahan. |
+| `AC-09` | Parsial | Endpoint Auth menolak login akun nonaktif dan UI mengonversi kegagalan menjadi pesan generik; uji aksi dengan sesi lama masih perlu diperluas. |
 | `AC-10` | Lolos | Satu akun hanya punya satu peran; percobaan insert baris kedua dengan `id` sama ditolak primary key `profiles_pkey`. |
 | `AC-11` | Lolos | Karyawan hanya membaca profil sendiri (1 baris), profil orang lain (0 baris), dan tabel domain `satuan` (0 baris). |
-| `AC-12` | Lolos | Tiga kasus login gagal (akun tidak ada, sandi salah, akun nonaktif) menghasilkan pesan dan perlakuan identik: `"Username atau password salah."` (D-42). |
+| `AC-12` | Parsial | Tiga hasil login API dikonversi menjadi pesan generik di skrip; penyamaan kode respons endpoint aplikasi belum diuji. |
 | `AC-13` | Lolos | Konfigurasi `jwt_expiry = 28800` di `supabase/config.toml` (tepat 8 jam, D-42). |
 | `AC-14` | Lolos | `enable_signup = false` di `supabase/config.toml`, UI `/login` tidak menyediakan pendaftaran mandiri, dan API `signUp` menolak pendaftaran langsung. |
 
 Verifikasi mutu:
 - `pnpm check:migrations`: ok (3 berkas migrasi)
-- `node scripts/verify-fnd-003.mjs`: hasil sebelumnya perlu diulang; AC-06 memakai simulasi dan bukan bukti perilaku
+- `node scripts/verify-fnd-003.mjs` pada proyek Supabase terisolasi: 12 pemeriksaan selesai, AC-01 dan AC-04 tertunda; hasil lulus skrip bukan bukti penuh untuk AC parsial di atas.
 - `pnpm verify`: lint, typecheck, arch:check, build lolos tanpa kesalahan
+
+## Pemeriksaan UI dan sesi tambahan
+
+- Viewport CSS 1280 × 900: panel kiri 560 CSS px, lebar dokumen 1280 CSS px; screenshot [`login-1280.png`](login-1280.png). Label terhubung ke input dan tombol Tampilkan mengubah input sandi menjadi teks.
+- Proyek Supabase terisolasi: login nonaktif ditolak Auth; payload `updated_by` palsu diganti ID sesi. Token lama setelah pergantian peran tidak dapat membaca profil sendiri melalui REST. Database bersama tidak di-reset.

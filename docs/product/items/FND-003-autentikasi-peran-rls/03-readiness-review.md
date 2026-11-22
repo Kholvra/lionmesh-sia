@@ -53,7 +53,7 @@ Tidak ada pertanyaan terbuka. Usulan berikut diratifikasi melalui D-58:
 
 ## Kontrak desain
 
-`04-design-contract.md` berstatus `Verified`; bukti parsial dan uji yang masih diperlukan dicatat di `05-evidence.md`. Item ini menyentuh identitas dan peran, sehingga kontrak wajib.
+`04-design-contract.md` berstatus `Partially verified`; bukti parsial dan uji yang masih diperlukan dicatat di `05-evidence.md`. Item ini menyentuh identitas dan peran, sehingga kontrak wajib.
 
 | Tipe kontrak | Dipakai | Alasan |
 |---|---|---|
