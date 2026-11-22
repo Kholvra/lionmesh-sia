@@ -31,7 +31,7 @@ Satu pemilik: tech lead. Urutan wajib.
 | `FND-005` | Inventory: mutasi, saldo, valuasi rata-rata bergerak | 5 | `FND-002` | `in progress` |
 | `FND-006` | Ledger: COA, `postJournal()`, periode akuntansi | 6 | `FND-002`, `FND-003` | `specified` |
 | `FND-007` | UI kit bersama: tabel, form, status badge, dialog | 7 | `FND-002` | `done` |
-| `FND-008` | Seed deterministik + reset ke skema `siap` | 8 | `FND-001`, `FND-002` | `in progress` |
+| `FND-008` | Seed deterministik + reset ke skema `siap` | 8 | `FND-001`, `FND-002` | `done` |
 
 **Gate:** `FND-001`–`FND-007` berstatus `done` sebelum item **modul** (`PD`, `PG`, `PR`, `GJ`, `C`, `INT`) boleh `ready`. Gate ini tidak berlaku untuk item `FND-*` sendiri, yang hanya mengikuti `depends on` (`D-54`). `FND-008` (seed) boleh menyusul paralel dengan gelombang pertama.
 
@@ -181,3 +181,4 @@ Terbaca per level. Semua item dalam satu baris boleh dikerjakan serentak. `DISC-
 | 2026-11-22 | `FND-007` → `done`: AC-01–AC-08 dibuktikan, screenshot 1280px disimpan, dan `pnpm verify` lulus |
 | 2026-11-22 | `FND-008` mulai dikerjakan setelah `FND-001` dan `FND-002` done; `D-54` mengecualikan item fondasi dari gate item modul |
 | 2026-11-22 | Implementasi seed dasar diverifikasi; seed akun FND-003 dan AC-05 masih tertunda |
+| 2026-11-22 | `FND-008` → `done`: AC-01–AC-09 dibuktikan pada Supabase lokal terisolasi; akun uji 13 peran ditambahkan; `pnpm verify` dan pemeriksaan finalisasi lulus |
