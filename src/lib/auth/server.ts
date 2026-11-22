@@ -2,7 +2,8 @@ import { redirect } from "next/navigation";
 
 import { createClient } from "@/lib/supabase/server";
 import type { Result } from "@/lib/result";
-import type { Peran, Profile } from "./types";
+import { cekIzin, type AksiDomain } from "./permissions";
+import type { Profile } from "./types";
 
 export class AuthError extends Error {
   constructor(message: string) {
@@ -61,11 +62,11 @@ export async function requireSesi(): Promise<{
 }
 
 /**
- * Memvalidasi bahwa pengguna memiliki peran yang diizinkan.
- * Melemparkan AuthError jika belum punya peran atau peran tidak sesuai.
+ * Memvalidasi izin aksi dari matriks izin bersama.
+ * Melemparkan AuthError jika belum punya peran atau aksinya tidak diizinkan.
  */
-export async function requirePeran(
-  allowedRoles: Peran | Peran[],
+export async function requireIzin(
+  aksi: AksiDomain,
 ): Promise<{
   user: { id: string; email?: string };
   profile: Profile;
@@ -77,8 +78,7 @@ export async function requirePeran(
     throw new AuthError("Akun Anda belum memiliki peran. Hubungi pengelola akun.");
   }
 
-  const roles = Array.isArray(allowedRoles) ? allowedRoles : [allowedRoles];
-  if (!roles.includes(profile.peran)) {
+  if (!cekIzin(profile.peran, aksi)) {
     throw new AuthError("Peran Anda tidak berwenang melakukan tindakan ini.");
   }
 
@@ -88,8 +88,8 @@ export async function requirePeran(
 /**
  * Memvalidasi otorisasi peran dalam konteks Server Action dengan mengembalikan Result.
  */
-export async function assertPeran(
-  allowedRoles: Peran | Peran[],
+export async function assertIzin(
+  aksi: AksiDomain,
 ): Promise<Result<Profile>> {
   const sessionData = await getSesiUser();
   if (!sessionData) {
@@ -107,8 +107,7 @@ export async function assertPeran(
     };
   }
 
-  const roles = Array.isArray(allowedRoles) ? allowedRoles : [allowedRoles];
-  if (!roles.includes(profile.peran)) {
+  if (!cekIzin(profile.peran, aksi)) {
     return {
       ok: false,
       message: "Peran Anda tidak berwenang melakukan tindakan ini.",

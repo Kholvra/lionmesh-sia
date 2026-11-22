@@ -2,9 +2,10 @@
 
 import { useRouter } from "next/navigation";
 
+import styles from "@/components/auth.module.css";
 import { createClient } from "@/lib/supabase/client";
 
-export function SignOutButton() {
+export function SignOutButton({ variant = "dark" }: { variant?: "dark" | "light" }) {
   const router = useRouter();
 
   async function signOut() {
@@ -16,11 +17,15 @@ export function SignOutButton() {
 
   return (
     <button
-      className="rounded-full border border-white/15 px-4 py-2 text-sm text-slate-200 transition hover:border-white/30 hover:bg-white/10"
+      className={
+        variant === "light"
+          ? styles.signOutLight
+          : "rounded-full border border-white/15 px-4 py-2 text-sm text-slate-200 transition hover:border-white/30 hover:bg-white/10"
+      }
       onClick={signOut}
       type="button"
     >
-      keluar
+      {variant === "light" ? "Keluar" : "keluar"}
     </button>
   );
 }

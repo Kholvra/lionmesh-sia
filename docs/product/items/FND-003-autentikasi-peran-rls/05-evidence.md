@@ -1,13 +1,13 @@
 # FND-003 — Bukti Verifikasi
 
-Dijalankan pada 2026-11-22 di lingkungan lokal via `scripts/verify-fnd-003.mjs` dan `pnpm verify`.
+Pengujian Supabase dan skrip dilakukan pada 2026-11-22 di lingkungan lokal via `scripts/verify-fnd-003.mjs`. `pnpm verify` terakhir dijalankan ulang pada 2026-11-23 dengan URL dan publishable key placeholder setelah pembaruan UI.
 - Versi Supabase CLI: 3.2.0
 - Versi PostgreSQL: PostgreSQL 17 (Docker)
 - Sesi JWT Expiry: 28800 detik (8 jam)
 
 | AC | Hasil | Bukti |
 |---|---|---|
-| `AC-01` | Tertunda | Belum ada halaman terlindungi untuk diuji lewat HTTP; skrip lama hanya mensimulasikan redirect. |
+| `AC-01` | Lolos | GET tanpa cookie ke `/pengaturan` menghasilkan HTTP 307 ke `/login`; saat diikuti, hasil akhir HTTP 200 di `/login`. Halaman terlindungi tidak mengirim profil. |
 | `AC-02` | Lolos | Pengguna dengan sesi sah tanpa peran membaca `satuan` (0 baris), `produk` (0 baris), `gudang` (0 baris); seluruhnya kosong oleh RLS. |
 | `AC-03` | Parsial | Fungsi izin diuji terhadap daftar yang sama; pencocokan independen seluruh matriks dan endpoint aksi belum dibuktikan. |
 | `AC-04` | Tertunda | Belum ada endpoint aksi terlindungi untuk uji permintaan langsung; simulasi lama tidak membuktikan AC. |
@@ -24,20 +24,37 @@ Dijalankan pada 2026-11-22 di lingkungan lokal via `scripts/verify-fnd-003.mjs` 
 
 Verifikasi mutu:
 - `pnpm check:migrations`: ok (3 berkas migrasi)
-- `node scripts/verify-fnd-003.mjs` pada proyek Supabase terisolasi: 12 pemeriksaan selesai, AC-01 dan AC-04 tertunda; hasil lulus skrip bukan bukti penuh untuk AC parsial di atas.
-- `pnpm verify`: lint, typecheck, arch:check, build lolos tanpa kesalahan
+- `node scripts/verify-fnd-003.mjs` pada proyek Supabase terisolasi: 12 pemeriksaan selesai. Saat skrip itu dijalankan, AC-01 dan AC-04 tertunda; uji HTTP manual setelahnya membuktikan AC-01, AC-04 tetap tertunda.
+- `pnpm verify` (2026-11-23): lint, typecheck, arch:check (48 modul, 81 dependensi), dan build lolos tanpa kesalahan.
 
 ## Pemeriksaan UI dan sesi tambahan
 
-- Viewport CSS 1280 × 900: panel kiri 560 CSS px, lebar dokumen 1280 CSS px; screenshot [`login-1280.png`](login-1280.png). Label terhubung ke input dan tombol Tampilkan mengubah input sandi menjadi teks.
+- Viewport CSS 1280 × 900 (2026-11-23): panel kiri 352 CSS px (27,5%), lebar dokumen 1280 CSS px tanpa overflow; screenshot [`login-1280.png`](login-1280.png). Label terhubung ke input dan tombol kata sandi mengubah input menjadi teks.
 - Proyek Supabase terisolasi: login nonaktif ditolak Auth; payload `updated_by` palsu diganti ID sesi. Token lama setelah pergantian peran tidak dapat membaca profil sendiri melalui REST. Database bersama tidak di-reset.
+- Screenshot halaman `/pengaturan` belum tersedia: worktree ini tidak memiliki `.env.local`, Supabase lokal tidak berjalan, dan tidak ada sesi uji untuk membuka halaman setelah login.
+
+## Uji HTTP halaman terlindungi
+
+Tanggal 2026-11-22. Next.js 16.4.6 berjalan lokal pada port 3101 dengan Supabase URL dan publishable key placeholder; permintaan tidak membawa cookie sesi.
+
+```text
+curl --silent --show-error --dump-header - --output /dev/null http://127.0.0.1:3101/pengaturan
+HTTP/1.1 307 Temporary Redirect
+location: /login
+
+curl --silent --show-error --location --output /dev/null --write-out 'HTTP %{http_code}\nURL %{url_effective}\n' http://127.0.0.1:3101/pengaturan
+HTTP 200
+URL http://127.0.0.1:3101/login
+```
+
+Halaman profil tidak dirender sebelum redirect. `instant = false` dipasang pada halaman karena pemeriksaan sesi membaca cookie pada waktu permintaan.
 
 ## Uji HTTP tambahan pada fixture terisolasi
 
 Tanggal 2026-11-22. Proyek Supabase dan server Next.js berjalan terpisah secara lokal; fixture route sementara dihapus setelah uji.
 
-- GET tanpa cookie ke fixture yang memanggil `requireSesi()` menghasilkan HTTP 307 dengan `Location: /login`. Ini membuktikan guard pada route handler; halaman aplikasi terlindungi yang sebenarnya belum tersedia untuk AC-01.
-- Login sebagai akun uji Gudang, kemudian POST langsung ke fixture yang memanggil `assertPeran("Penjualan")`, menghasilkan HTTP 403 dengan `{"ok":false,"message":"Peran Anda tidak berwenang melakukan tindakan ini."}`. Ini membuktikan guard pada fixture; AC-04 perlu diulang pada aksi fitur sebenarnya.
+- GET tanpa cookie ke fixture yang memanggil `requireSesi()` menghasilkan HTTP 307 dengan `Location: /login`. Saat pengujian historis itu dijalankan, halaman aplikasi terlindungi belum tersedia; route `/pengaturan` kini diuji terpisah di bagian sebelumnya.
+- Pengujian fixture historis memakai `assertPeran("Penjualan")` dan menghasilkan HTTP 403 untuk akun Gudang. API guard sejak itu diubah agar memakai matriks izin; AC-04 belum diuji ulang pada aksi fitur sebenarnya.
 
 Fixture route sementara dibuat di `src/app/fnd003-verify/route.ts` dengan isi berikut dan dihapus setelah pengujian:
 

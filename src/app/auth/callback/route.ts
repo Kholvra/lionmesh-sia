@@ -9,7 +9,7 @@ export async function GET(request: Request) {
   const next =
     requestedNext?.startsWith("/") && !requestedNext.startsWith("//")
       ? requestedNext
-      : "/";
+      : "/pengaturan";
 
   if (!code) {
     return NextResponse.redirect(
