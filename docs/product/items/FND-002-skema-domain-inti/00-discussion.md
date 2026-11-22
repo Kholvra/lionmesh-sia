@@ -2,13 +2,19 @@
 
 ## Konteks
 
-`backlog.md` (tabel Fondasi) mendefinisikan `FND-002` sebagai "Skema domain inti + migrasi bernomor", sequence 2, `depends on` `FND-001` (sudah `done` per 2026-11-22). Saat ini `supabase/migrations/` hanya berisi `0001_initial.sql` (tabel `profiles`). `backlog.md` mencatat status fondasi "Skema domain" = `missing`.
+`backlog.md` (tabel Fondasi) mendefinisikan `FND-002` sebagai "Skema domain inti + migrasi bernomor", sequence 2, `depends on` `FND-001` (sudah `done` per 2026-11-22). FND-002 kini `done`; `supabase/migrations/0001_initial.sql` tetap menjadi baseline `profiles`, dan `0002_skema_domain_inti.sql` menyediakan skema domain dasar.
 
 Analisis (`reference/analisis-sia.md` §7.2) mendaftar daftar tabel inti yang panjang. Analisis §11.4 mengusulkan pemecahan migrasi per kelompok (`0002_core.sql` … `0010_*.sql`) — ini `[USULAN]`, bukan keputusan, dan nomor tetap ditetapkan tech lead (`D-09`).
 
 ## Pembaruan 2026-11-22
 
-Keputusan terkunci yang menjawab sebagian pertanyaan: `D-31` (kepemilikan tabel bersama), `D-32` (audit = kolom), `D-38` (C8 menjadi `C-014`). Pass ini menutup semua pertanyaan: yang belum ada di keputusan terkunci diberi keputusan default `[USULAN-AGEN]` untuk dikunci koordinator. Dependensi `FND-001` sudah `done`; `FND-002` sendiri berstatus `specified`.
+Keputusan terkunci: `D-31` (kepemilikan tabel bersama), `D-32` (audit = kolom), `D-38` (C8 menjadi `C-014`), `D-54` (gate fondasi), `D-55` (tiga tabel dasar di FND-002), `D-56` (konvensi tipe), dan `D-58` (ratifikasi usulan konsisten pada tingkat-item). AC-01–AC-09, `pnpm verify`, dan review akhir lulus; backlog mencatat FND-002 `done`.
+
+Keputusan eksplisit pengguna untuk item ini: `created_by` dan `updated_by` adalah kolom UUID nullable tanpa foreign key. Ini tidak diberi ID keputusan global. Kebijakan ini memungkinkan seed FND-008 sebelum akun FND-003 tersedia dan tidak menetapkan aturan penghapusan profil.
+
+## Historis proposal agen (2026-11-22)
+
+Log pertanyaan dan proposal di bawah dipertahankan sebagai riwayat. Proposal yang konsisten dengan keputusan terkunci diratifikasi oleh `D-58`; untuk cakupan tabel dan tipe data, `D-55` dan `D-56` adalah acuan langsung. Status proposal historis bukan keputusan tambahan.
 
 ## Kenapa item ini
 
@@ -65,34 +71,32 @@ Setelah `pnpm db:reset`, skema `siap` berisi tiga tabel dasar bersama dengan rel
 
 | ID | Question | Why it matters | Owner | Status |
 |---|---|---|---|---|
-| OQ-02-01 | Tabel apa saja yang masuk `FND-002`? | Menentukan ukuran item, daftar AC-01, dan gate. | tech lead | Terjawab — [USULAN-AGEN]: `FND-002` membuat tiga tabel dasar `satuan`, `produk`, `gudang` (audit, FK, tanpa kolom stok). Tabel lain dibuat pemiliknya (`D-31`, tabel di atas). Alasan: hanya tabel yang dibutuhkan lintas item sebelum gelombang C-011 selesai. |
+| OQ-02-01 | Tabel apa saja yang masuk `FND-002`? | Menentukan ukuran item, daftar AC-01, dan gate. | tech lead | Terjawab — `D-55`: `FND-002` membuat `satuan`, `produk`, `gudang`, tanpa kolom stok. Tabel lain dibuat pemiliknya (`D-31`). |
 | OQ-02-02 | Apakah tabel pengadaan didefinisikan di `FND-002` atau `C-013`? | `D-05` dan backlog bisa bertabrakan. | tech lead | Terjawab — D-31: permintaan, PO, penerimaan, QC di `C-013`; invoice dan utang di `PG-008` dan `PG-009`. |
-| OQ-02-03 | `produk`, `gudang`, dan `satuan` dimiliki `C-011`. Apakah tabel itu masuk `FND-002` atau `FND-005` harus menunggu `C-011`? | Jika `C-011` harus selesai dulu, `FND-005` punya dependensi tersembunyi. | tech lead | Terjawab — [USULAN-AGEN]: tabel `satuan`, `produk`, `gudang` didefinisikan di `FND-002`, kepemilikan fitur tetap `C-011`; `FND-005` tetap hanya bergantung `FND-002`. Alasan: menghindari dependensi tersembunyi tanpa mengubah backlog; ini pengecualian terhadap `D-31` yang perlu dikunci. |
+| OQ-02-03 | `produk`, `gudang`, dan `satuan` dimiliki `C-011`. Apakah tabel itu masuk `FND-002` atau `FND-005` harus menunggu `C-011`? | Jika `C-011` harus selesai dulu, `FND-005` punya dependensi tersembunyi. | tech lead | Terjawab — `D-55`: tabel `satuan`, `produk`, `gudang` didefinisikan di `FND-002`; kepemilikan fitur tetap `C-011`. |
 | OQ-02-04 | Kolom audit masuk konvensi `FND-002`, `C6`, atau item lain? | Menentukan kepemilikan kolom audit. | tech lead / user | Terjawab — D-32: kolom di setiap tabel; tidak ada tabel audit terpisah. |
 | OQ-02-05 | Fitur `C6` audit belum punya item. | `D-01` melarang pemotongan. | user / tech lead | Terjawab — D-32 (catatan pemetaan `D-01`: `C6` = kolom audit di `FND-002`). |
 | OQ-02-06 | Fitur `C8` dashboard belum punya item. | Kepemilikan dashboard. | user / tech lead | Terjawab — D-38: `C8` = `C-014`. |
-| OQ-02-07 | Konvensi tipe angka dan waktu disahkan sebagai aturan? | Mengunci tipe kolom sebelum DDL. | tech lead | Terjawab — [USULAN-AGEN]: uang total `numeric(18,2)`; harga satuan dan harga rata `numeric(18,4)`; qty `numeric(18,4)`; waktu `timestamptz` disimpan UTC dan tampil `Asia/Jakarta`. Alasan: sesuai analisis §10.6 dan harga satuan butuh presisi lebih dari sen agar valuasi tidak bergeser. |
-| OQ-02-08 | Kolom dari keputusan terkunci yang menyentuh tabel modul masuk migrasi `FND-002` atau item pemilik? | Menentukan siapa menyentuh tabel apa. | tech lead | Terjawab — [USULAN-AGEN]: kolom dari keputusan modul masuk migrasi item pemilik tabel, bukan `FND-002`. Alasan: konsisten dengan `D-31` (DDL oleh item pertama yang membutuhkan). |
-| OQ-02-09 | Constraint dasar apa yang wajib di `FND-002`, dan mana milik item pemilik? | Constraint harus cocok dengan tabel yang dibuat. | tech lead | Terjawab — [USULAN-AGEN]: `FND-002` memasang unique `kode` pada tiga tabel, FK `produk.satuan_dasar_id`, dan check nama tidak kosong. `UNIQUE(tipe, nomor)` milik `FND-004`; `CHECK qty ≠ 0` dan tak-ubah milik `FND-005`; `UNIQUE(penerimaan_id)` invoice milik `PG-008` (`D-49`). Alasan: setiap constraint ditaruh di tabel pemiliknya. |
-| OQ-02-10 | Migrasi dipecah per kelompok atau per item? Siapa menomori? | Mengubah jumlah file dan urutan merge. | tech lead | Terjawab — [USULAN-AGEN]: satu berkas migrasi per item pemilik DDL; nomor ditetapkan tech lead (`D-09`). Alasan: menghindari konflik merge yang sudah ditolak di `FND-001`. |
-| OQ-02-11 | Test runner belum ada. Apakah `FND-002` memperkenalkannya atau cukup perintah SQL? | Menentukan cara membuktikan AC-01..AC-08. | tech lead | Terjawab — [USULAN-AGEN]: bukti `FND-002` cukup dengan perintah SQL dan dump skema (AC sudah berbentuk perintah); test runner diperkenalkan `FND-003`, item perilaku pertama. Alasan: sama dengan keputusan `FND-001` yang menunda runner. |
-| OQ-02-12 | Apakah DoR butir 8 (gate `FND-001`–`FND-006`) berlaku literal untuk item fondasi? | Menentukan verdict item fondasi. | user / tech lead | Terjawab — [USULAN-AGEN]: untuk item fondasi, gate dibaca sebagai urutan; `FND-003`–`FND-006` menunggu `FND-002` lewat butir 6. Butir 8 tetap `belum` sampai `FND-001`–`FND-006` seluruhnya `done`. Alasan: gate literal membuat `FND-002` tidak pernah bisa selesai. |
+| OQ-02-07 | Konvensi tipe angka dan waktu disahkan sebagai aturan? | Mengunci tipe kolom sebelum DDL. | tech lead | Terjawab — `D-56`: uang total `numeric(18,2)`; harga satuan, harga rata, dan qty `numeric(18,4)`; waktu `timestamptz` disimpan UTC dan ditampilkan `Asia/Jakarta`. |
+| OQ-02-08 | Kolom dari keputusan terkunci yang menyentuh tabel modul masuk migrasi `FND-002` atau item pemilik? | Menentukan siapa menyentuh tabel apa. | tech lead | Terjawab — `D-31`: kolom modul masuk migrasi item pemilik tabel. |
+| OQ-02-09 | Constraint dasar apa yang wajib di `FND-002`, dan mana milik item pemilik? | Constraint harus cocok dengan tabel yang dibuat. | tech lead | Terjawab — `D-58` meratifikasi proposal konsisten: unique `kode` pada tiga tabel, FK `produk.satuan_dasar_id`, dan check nama tidak kosong di FND-002; constraint lain oleh pemilik tabelnya. |
+| OQ-02-10 | Migrasi dipecah per kelompok atau per item? Siapa menomori? | Mengubah jumlah file dan urutan merge. | tech lead | Terjawab — satu berkas per item pemilik DDL; nomor ditetapkan tech lead (`D-09`), proposal konsisten disahkan `D-58`. |
+| OQ-02-11 | Test runner belum ada. Apakah `FND-002` memperkenalkannya atau cukup perintah SQL? | Menentukan cara membuktikan AC-01..AC-08. | tech lead | Terjawab — proposal bukti SQL/dump dan runner di FND-003 disahkan `D-58`. |
+| OQ-02-12 | Apakah DoR butir 8 (gate `FND-001`–`FND-006`) berlaku literal untuk item fondasi? | Menentukan verdict item fondasi. | user / tech lead | Terjawab — proposal bahwa gate fondasi dibaca sebagai urutan disahkan `D-58`; gate berlaku sesuai `D-54`. |
 
 ## Decisions
 
 | ID | Decision | Date | Owner | Consequence |
 |---|---|---|---|---|
-| `[USULAN-AGEN]` OQ-02-01, 03 | Tiga tabel dasar `satuan`, `produk`, `gudang` di `FND-002`; tanpa kolom stok | 2026-11-22 | tech lead (kunci koordinator) | AC-01, AC-04..AC-08 dan kontrak mengikuti |
-| `[USULAN-AGEN]` OQ-02-07 | Tipe angka dan waktu | 2026-11-22 | tech lead (kunci koordinator) | Berlaku untuk seluruh tabel domain |
-| `[USULAN-AGEN]` OQ-02-08..10 | Kolom modul di migrasi pemilik; constraint di pemilik; satu berkas per item | 2026-11-22 | tech lead (kunci koordinator) | Urutan merge |
-| `[USULAN-AGEN]` OQ-02-11, 12 | Bukti SQL; gate fondasi dibaca sebagai urutan | 2026-11-22 | tech lead (kunci koordinator) | DoR butir 8 |
+| `D-55` | Tiga tabel dasar `satuan`, `produk`, `gudang` di `FND-002`; tanpa kolom stok | 2026-11-22 | Koordinator | AC-01, AC-04..AC-08 dan kontrak mengikuti |
+| `D-56` | Konvensi tipe angka dan waktu untuk tabel domain | 2026-11-22 | Koordinator | Tabel ini tidak memiliki kolom numeric; timestamp audit memakai `timestamptz` |
+| `D-58` | Proposal tingkat-item konsisten diratifikasi | 2026-11-22 | Koordinator | Constraint, bukti SQL, dan aturan item sesuai jawaban historis di atas |
+| — | `created_by` dan `updated_by` nullable UUID tanpa FK | 2026-11-22 | User | Kolom aktor audit tidak mengikat ke profil |
 
-## Assumptions (agent-proposed)
+## Assumptions
 
-- A1: Tipe angka dan zona waktu mengikuti OQ-02-07 sampai dikunci koordinator.
-- A2: Ukuran item dinilai `L` (`[USULAN]`) karena daftar tabel yang mungkin masuk besar. Dengan daftar tiga tabel, ukuran turun menjadi `S`-`M` (lihat 03).
-- A3: Tipe item `chore` (`[USULAN]`): perubahan skema tanpa perilaku pengguna langsung.
-- A4: Pemetaan tabel adalah keputusan pass ini, bukan fakta dari sumber lain.
+- Tipe item `chore` dan ukuran `S`–`M` adalah metadata klasifikasi item, bukan aturan skema.
+- Pemetaan tabel di atas merangkum kepemilikan item sesuai keputusan yang tercatat.
 
 ## Rejected alternatives
 
@@ -102,4 +106,4 @@ Setelah `pnpm db:reset`, skema `siap` berisi tiga tabel dasar bersama dengan rel
 
 ## Next step
 
-Koordinator mengunci keputusan `[USULAN-AGEN]` di atas. Setelah `FND-002` selesai dan `done`, item yang bergantung padanya dapat menjadi `Ready` sesuai 03.
+AC-01–AC-09, gerbang proyek, dan review akhir telah selesai. Item bergantung dapat maju sesuai backlog dan gate `D-54`.

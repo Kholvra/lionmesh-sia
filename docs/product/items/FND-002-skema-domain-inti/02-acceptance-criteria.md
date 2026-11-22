@@ -1,11 +1,11 @@
 # FND-002 — Acceptance Criteria
 
-Setiap kriteria harus bisa dibuktikan dengan perintah atau langkah yang bisa diulang orang lain. Semua pertanyaan pada 00 sudah terjawab; sebagian jawaban berstatus `[USULAN-AGEN]` menunggu kunci koordinator.
+Setiap kriteria harus bisa dibuktikan dengan perintah atau langkah yang bisa diulang orang lain. Keputusan terkait kriteria telah diratifikasi oleh `D-55`, `D-56`, dan `D-58`; ini tidak memperluas acceptance criteria.
 
 | ID | Kriteria | Cara membuktikan |
 |---|---|---|
 | `AC-01` | Setelah `pnpm db:reset`, daftar tabel publik tepat `profiles` (dari `0001`), `satuan`, `produk`, dan `gudang`. Tidak ada tabel domain lain. | Jalankan `pnpm db:reset`. Ambil URL database dari `pnpm exec supabase status`. Jalankan `pg_dump --schema-only` ke berkas di direktori sementara. Bandingkan daftar `CREATE TABLE` dengan daftar di atas. |
-| `AC-02` | Dua kali `pnpm db:reset` menghasilkan skema yang identik. | Jalankan `pnpm db:reset`, simpan `pg_dump --schema-only`. Ulangi. Jalankan `diff` pada kedua berkas; keluaran kosong. |
+| `AC-02` | Dua kali `pnpm db:reset` menghasilkan skema yang identik. | Jalankan dua reset dan simpan `pg_dump --schema-only` masing-masing. Karena `pg_dump` membuat token acak pada baris `\restrict`/`\unrestrict`, keluarkan hanya dua baris kendali itu dari tiap dump, lalu `diff` seluruh isi skema lainnya; keluaran kosong. |
 | `AC-03` | Migrasi yang sudah di-merge tidak berubah, dan penomoran tetap lolos pemeriksa. | Jalankan `git log --follow -- supabase/migrations/0001_initial.sql`; hanya commit awal yang muncul. Jalankan `pnpm check:migrations`; exit 0. |
 | `AC-04` | Insert `produk` dengan `satuan_dasar_id` yang tidak ada ditolak. | Jalankan `pnpm db:reset`. Dengan `psql` ke URL database lokal, insert satu baris `produk` dengan `satuan_dasar_id` acak. Harus ada error foreign key yang menyebut nama constraint; jumlah baris `produk` tidak berubah. |
 | `AC-05` | Kode duplikat pada `satuan`, `produk`, dan `gudang` ditolak; nama kosong ditolak. | Untuk tiap tabel: insert satu baris valid (berhasil), lalu baris dengan `kode` sama (ditolak, nama constraint unique muncul), lalu baris dengan `nama` kosong (ditolak, nama constraint check muncul). |

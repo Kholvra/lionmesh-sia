@@ -25,7 +25,7 @@ Satu pemilik: tech lead. Urutan wajib.
 | ID | Outcome | Sequence | Depends on | Status |
 |---|---|---|---|---|
 | `FND-001` | Lingkungan pengembangan yang dapat diulang + gerbang mutu | 1 | — | `done` |
-| `FND-002` | Skema domain inti + migrasi bernomor | 2 | `FND-001` | `ready` |
+| `FND-002` | Skema domain inti + migrasi bernomor | 2 | `FND-001` | `done` |
 | `FND-003` | Autentikasi & 13 peran (12 staf + Karyawan self-service) dengan RLS | 3 | `FND-002` | `specified` |
 | `FND-004` | Dokumen: penomoran, status, riwayat, approval berjenjang | 4 | `FND-002`, `FND-003` | `specified` |
 | `FND-005` | Inventory: mutasi, saldo, valuasi rata-rata bergerak | 5 | `FND-002` | `specified` |
@@ -175,3 +175,5 @@ Terbaca per level. Semua item dalam satu baris boleh dikerjakan serentak. `DISC-
 | 2026-11-22 | Catatan pemetaan `D-01` (FND-001/002/008 infrastruktur; `C6`/`C8` belum punya item); bukti `INV-01` dikoreksi ke riwayat git; istilah "seed kosong" diganti `db:reset` + `db:seed` |
 | 2026-11-22 | Paket requirement (6 file) dibuat untuk 49 item; status `idea` → `specified`. Semua verdict DoR `Blocked` + `Needs decision`; tidak ada `ready`. Pertanyaan terbuka dicatat per item di `00-discussion.md` |
 | 2026-11-22 | Gate fondasi diperluas ke `FND-001`–`FND-007` dan hanya untuk item modul (`D-54`); `FND-002` → `ready`; `PG-004` + `PG-003`, `PG-002` − `PG-001`, `PR-005` + `PR-004` (`D-57`); level dan matriks paralel dihitung ulang (jalur kritis Pengeluaran level 9); `C-014`, `DISC-001`, `DISC-002` ditambahkan |
+| 2026-11-22 | `FND-002` mulai dikerjakan setelah `FND-001` done; migrasi dan kontrak item sedang diselaraskan |
+| 2026-11-22 | `FND-002` → `done`: migrasi `0002_skema_domain_inti.sql`; AC-01–AC-09, `pnpm check:migrations`, `pnpm verify`, dan review akhir lulus |
