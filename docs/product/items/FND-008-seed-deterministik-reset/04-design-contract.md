@@ -2,7 +2,7 @@
 
 - Source: `docs/product/items/FND-008-seed-deterministik-reset/01-requirement.md` (`FND-008`)
 - Acceptance criteria: `02-acceptance-criteria.md` (`AC-01`…`AC-09`)
-- Status: `Proposed`
+- Status: `Approved` (`D-58`, item-level decisions)
 - Profile: infrastructure / developer tooling (data seed)
 - Scope: mekanisme seed bernomor, master dasar, penanda versi, penolakan seed ganda, penjaga lingkungan
 - Owner: tech lead
@@ -29,21 +29,22 @@
 | ID | Rule | Owner | Violation behavior |
 |---|---|---|---|
 | `PRE-01` | Seed hanya dari `siap` | Skrip seed | Tolak; sebut `pnpm db:reset` |
-| `PRE-02` | Versi berkas seed sama dengan versi terpasang, atau database baru `siap` | Skrip seed | Tolak sampai reset penuh (`OQ-08-05`) |
+| `PRE-02` | Versi di `supabase/seed-version` sama dengan versi terpasang, atau database baru `siap` | Skrip seed | Tolak sampai reset penuh (`OQ-08-05`) |
 | `POST-01` | Seed sukses → `terisi`; data dasar tetap | Skrip seed | Gagal di tengah → bukan `terisi`; reset |
 
 ## Verification mapping
 
 | Contract ID | Observable oracle | Check type/owner | Evidence | Status |
 |---|---|---|---|---|
-| `INV-01` | `grep` waktu dan acak tanpa hasil | AC-03 | — | `Unverified` |
-| `INV-02` | Dua putaran identik | AC-01 | — | `Unverified` |
-| `INV-03` | Seed kedua ditolak | AC-02 | — | `Unverified` |
-| `INV-04` | Tidak ada transaksi di seed | AC-06 | — | `Unverified` |
-| `INV-05` | Penanda non-lokal menolak seed | AC-07 | — | `Unverified` |
-| `PRE-01` | Seed dari status tidak `siap` ditolak | AC-02 | — | `Unverified` |
-| `PRE-02` | Versi berbeda ditolak | AC-08 | — | `Unverified` |
-| `POST-01` | Status `terisi` setelah sukses | AC-01 | — | `Unverified` |
+| `INV-01` | `rg` waktu dan acak tanpa hasil | AC-03 | `05-evidence.md` | `PASS` |
+| `INV-02` | Dua putaran identik | AC-01 | `05-evidence.md` | `PASS` |
+| `INV-03` | Seed kedua ditolak | AC-02 | `05-evidence.md` | `PASS` |
+| `INV-04` | Tidak ada transaksi di seed | AC-06 | `05-evidence.md` | `PASS` untuk skema saat ini; tabel transaksi belum dibuat |
+| `INV-05` | Penanda non-lokal menolak seed | AC-07 | `05-evidence.md` | `PASS` |
+| `PRE-01` | Seed setelah reset berhasil; seed kedua ditolak | AC-01, AC-02 | `05-evidence.md` | `PASS` |
+| `PRE-02` | Versi berbeda ditolak | AC-08 | `05-evidence.md` | `PASS` |
+| `POST-01` | Status `terisi` setelah sukses; gagal di tengah rollback | AC-01, AC-08 | `05-evidence.md` | `PASS` |
+| `AC-09` | Role klien tidak membaca atau menulis marker | AC-09 | `05-evidence.md` | `PASS` |
 
 ## Keamanan kredensial
 
@@ -54,13 +55,13 @@
 
 | Hal | Status | Dampak bila salah |
 |---|---|---|
-| Seed hanya master (`OQ-08-01`) | `[USULAN-AGEN]` | Transaksi di seed membuat uji tidak membuktikan proses |
-| Setiap item menambah seed (`OQ-08-02`) | `[USULAN-AGEN]` | Dependensi tersembunyi ke `FND-003`–`FND-006` |
-| Akun uji dan kredensial lokal (`OQ-08-03`) | `[USULAN-AGEN]` | Kredensial ikut ke lingkungan lain |
-| Versi dan reset penuh (`OQ-08-05`) | `[USULAN-AGEN]` | Seed lama dianggap berlaku |
-| UUID tetap (`OQ-08-06`) | `[USULAN-AGEN]` | Perbandingan AC-01 tidak stabil |
-| Penjaga `db:seed` (`OQ-08-07`) | `[USULAN-AGEN]` | Seed ke non-lokal |
-| RLS penanda (`OQ-08-08`) | `[USULAN-AGEN]` | Penanda terbaca klien |
+| Seed hanya master (`OQ-08-01`) | `Approved` (`D-58`) | Transaksi di seed membuat uji tidak membuktikan proses |
+| Setiap item menambah seed (`OQ-08-02`) | `Approved` (`D-58`) | Dependensi tersembunyi ke `FND-003`–`FND-006` |
+| Akun uji dan kredensial lokal (`OQ-08-03`) | `Approved` (`D-58`) | Kredensial ikut ke lingkungan lain |
+| Versi dan reset penuh (`OQ-08-05`) | `Approved` (`D-58`) | Seed lama dianggap berlaku |
+| UUID tetap (`OQ-08-06`) | `Approved` (`D-58`) | Perbandingan AC-01 tidak stabil |
+| Penjaga `db:seed` (`OQ-08-07`) | `Approved` (`D-58`) | Seed ke non-lokal |
+| RLS penanda (`OQ-08-08`) | `Approved` (`D-58`) | Penanda terbaca klien |
 
 ## Aturan yang sengaja tidak dibuat
 

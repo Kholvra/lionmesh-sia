@@ -8,9 +8,9 @@ lane: active
 sequence: 8
 type: chore
 req_status: specified
-delivery_status: not_started
-priority: unset
-size: unset
+delivery_status: in_progress
+priority: medium
+size: M
 depends_on:
   - FND-001
   - FND-002
@@ -47,7 +47,8 @@ Siapa pun dapat mengembalikan database lokal ke skema `siap`, lalu mengisi data 
 - Reset ke `siap` (`D-30`), sudah ada dari `FND-001`, dipertahankan.
 - Mekanisme seed bernomor: setiap item menambah berkas seed untuk tabel yang dibuatnya; urutan dicatat tech lead (`OQ-08-02`).
 - Seed dasar yang dimiliki item ini: satu gudang (`D-52`), satuan dasar, dan penanda versi seed. Tabel dan master milik item lain diisi berkas seed item pemilik.
-- Akun uji untuk 13 peran (`D-53`) dibuat lewat berkas seed item `FND-003` memakai mekanisme yang sama (`OQ-08-03`).
+- Fixture tetap untuk pengembangan lokal: satuan `UNIT` / `Unit` dan gudang `GUDANG-01` / `Gudang Utama`; bukan master operasional resmi.
+- Akun uji lokal untuk 13 peran (`D-53`) dibuat melalui berkas seed bernomor; alamat menggunakan domain `lionmesh.test` dan sandi disediakan melalui `FND_TEST_PASSWORD`, sesuai persetujuan tech lead.
 - Akun dasar COA (`D-41`) dibuat lewat berkas seed item `FND-006`; aturan approval placeholder (`D-37`, `D-51` c) lewat berkas seed item `FND-004`.
 - Penolakan seed kedua tanpa reset (sudah ada, dipertahankan).
 - Penanda versi seed (`OQ-08-05`).
@@ -85,6 +86,7 @@ Menghapus sebagian baris seed secara manual dilarang.
 
 - Seed tidak bergantung pada tanggal hari ini, waktu sistem, atau acak tanpa benih (`FND-001` `INV-03`).
 - Id seed tetap (UUID literal per tabel) (`OQ-08-06`).
+- Berkas seed item memakai prefix nomor empat digit unik; versi dataset empat digit di `supabase/seed-version` dinaikkan setiap kali isi seed berubah.
 - Perbandingan hasil memakai jumlah baris dan nilai kunci (`FND-001` `POST-04`).
 - Data dasar tidak berisi data nyata. Kredensial uji hanya untuk lingkungan lokal (`OQ-08-03`, `D-27`).
 

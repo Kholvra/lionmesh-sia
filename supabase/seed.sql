@@ -1,12 +1,10 @@
--- Data dasar FND-001.
--- Penjaga "sudah pernah di-seed" dijalankan oleh scripts/db-seed.mjs sebelum berkas ini.
--- Kontrak: B-02, POST-04, INV-03.
+-- Bootstrap the FND-001 seed metadata table.
+-- Item seed files run in numeric order through scripts/db-seed.mjs.
+-- The script writes the dataset version after all files succeed.
 
 create table if not exists public._seed_meta (
   version text primary key
 );
 
--- Tidak ada policy: tabel ini tidak boleh dibaca lewat API.
+-- No policies means client roles cannot read this table.
 alter table public._seed_meta enable row level security;
-
-insert into public._seed_meta (version) values ('0001');

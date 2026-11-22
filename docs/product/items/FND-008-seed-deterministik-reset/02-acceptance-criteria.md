@@ -11,7 +11,7 @@ Setiap kriteria harus bisa dibuktikan dengan perintah yang bisa diulang. Kriteri
 | `AC-05` | Setelah berkas seed `FND-003` terpasang, tabel akun berisi 13 akun uji dengan 13 peran berbeda (`D-53`). | `select count(distinct peran) from profiles;` pada database hasil seed. Hasil 13. *Dibuktikan saat `FND-003` selesai.* |
 | `AC-06` | Seed tidak memuat transaksi: tidak ada baris mutasi, dokumen, atau jurnal setelah `db:seed` (`OQ-08-01`). | `select count(*)` pada tabel `mutasi_stok`, `riwayat_status`, `jurnal` (yang ada) setelah seed: hasil 0. |
 | `AC-07` | Seed menolak bila penanda lingkungan bukan lokal (`OQ-08-07`). | Atur penanda ke non-lokal di uji. `db:seed` ditolak dengan "Seed hanya boleh dijalankan di lingkungan lokal."; tidak ada baris tersimpan. |
-| `AC-08` | Versi seed dicatat di `_seed_meta`; berkas dengan versi berbeda dari versi terpasang ditolak sampai reset penuh (`OQ-08-05`). | Pasang seed versi uji 1, lalu ubah nomor versi di berkas uji: `db:seed` ditolak; `db:reset` lalu seed berhasil dan versi tercatat. |
+| `AC-08` | Versi seed dicatat di `_seed_meta`; versi dataset di `supabase/seed-version` yang berbeda dari versi terpasang ditolak sampai reset penuh (`OQ-08-05`). | Pasang versi uji 1, ubah `supabase/seed-version`: `db:seed` ditolak; pulihkan versi repo, jalankan `db:reset`, lalu seed berhasil dan versi tercatat. |
 | `AC-09` | Tabel penanda `_seed_meta` tidak bisa dibaca atau ditulis role klien (`OQ-08-08`). | Dengan role klien, `select` dan `insert` ke `_seed_meta`: ditolak atau hasil kosong. |
 
 ## Bukti yang harus dicatat saat item selesai
