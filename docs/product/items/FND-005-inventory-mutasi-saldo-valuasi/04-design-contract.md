@@ -21,6 +21,12 @@
 | `B-01` | Modul → `core/inventory` | produk, gudang, qty, harga, tanggal, sumber, alasan | qty bukan nol; produk dan gudang aktif; tanggal tidak mendahului; harga positif untuk masuk | mutasi tervalidasi | Tolak sebelum menyentuh data |
 | `B-02` | Layanan → database | penulisan mutasi dan saldo | satu transaksi; hak akses role klien dicabut (`OQ-05-07`) | baris konsisten | Rollback seluruh transaksi |
 
+## Otorisasi mutasi (keputusan tech lead, 2026-11-22)
+
+Mutasi yang timbul dari dokumen mengikuti izin aksi dokumen sumber. Transfer, opname, dan penyesuaian manual hanya boleh dijalankan Gudang. Server harus mengambil aktor dari sesi dan memverifikasi aksi serta dokumen sumber sebelum memanggil core; `actorId`, `sumberTipe`, atau `sumberId` dari payload bukan bukti identitas atau izin. Hak istimewa database hanya boleh dipakai oleh layanan server yang telah melakukan pemeriksaan tersebut.
+
+Migrasi RPC menolak peran klien secara langsung. Pemanggil server tepercaya dan verifikasi dokumen sumber belum tersedia; `PRE-01` dan AC-06 tetap parsial sampai jalur itu diuji bersama aksi sumber yang nyata.
+
 ## Preconditions
 
 | ID | Trigger | MUST be true | Owner | Violation behavior |
@@ -78,7 +84,7 @@ Keadaan saldo: belum ada → ada (qty > 0) → nol (nilai nol, `harga_rata` dipe
 |---|---|---|---|---|
 | `B-01` | Mutasi tidak valid ditolak | AC-07, AC-08, AC-14, AC-15 | `node scripts/verify-fnd-005.mjs` | `PASS` |
 | `B-02` | Kegagalan saldo membatalkan mutasi | AC-05, AC-12 | `node scripts/verify-fnd-005.mjs` | `PASS` |
-| `PRE-01` | Penulisan langsung ditolak | AC-06 | `node scripts/verify-fnd-005.mjs` | `PASS` |
+| `PRE-01` | Penulisan langsung ditolak | AC-06 | `node scripts/verify-fnd-005.mjs` | `PARTIAL` |
 | `PRE-02` | Produk, gudang nonaktif, qty nol ditolak | AC-08, AC-14 | `node scripts/verify-fnd-005.mjs` | `PASS` |
 | `PRE-03` | Backdate ditolak | AC-07 | `node scripts/verify-fnd-005.mjs` | `PASS` |
 | `PRE-04` | Keluar melebihi stok ditolak | AC-10 | `node scripts/verify-fnd-005.mjs` | `PASS` |
