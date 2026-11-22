@@ -41,7 +41,7 @@ Item yang mengubah uang, stok, status dokumen, atau batas modul **wajib** punya 
 | `PR-###` | siklus produksi | active, paralel |
 | `GJ-###` | siklus penggajian | active, paralel |
 | `INT-###` | integrasi lintas siklus | active, join |
-| `DISC-###` | pencarian bukti / spike | discovery |
+| `DISC-###` | pencarian bukti / spike (konfirmasi dari luar tim) | discovery |
 
 Nomor tidak pernah dipakai ulang. Item yang sudah di-handoff tidak di-renumber.
 
@@ -72,19 +72,19 @@ FND-001 → … → FND-008            (serial, satu pemilik)
 
 ### Critical path
 
-Jalur ini dihitung **setelah** gate fondasi. Enam `FND-*` yang serial ada di depannya, jadi total durasi lebih panjang dari jalur di bawah.
+Jalur ini dihitung **setelah** gate fondasi. `FND-001`–`FND-007` ada di depannya (`FND-003` sampai `FND-007` sejajar setelah `FND-002`), jadi total durasi lebih panjang dari jalur di bawah.
 
-`FND-002` → `FND-005` → `C-013` → `PG-002` → `PG-003` → `PG-005` → `PG-006` → `PG-007` → `PG-008` → `PG-009` → `INT-001`
+`FND-002` → `FND-005` → `C-013` → `PG-002` → `PG-003` → `PG-004` → `PG-005` → `PG-006` → `PG-007` → `PG-008` → `PG-009` → `INT-001`
 
-Pengeluaran adalah jalur terpanjang (level 8). Kalau mau mempercepat keseluruhan, tambah orang di Pengeluaran — bukan di Pendapatan.
+Pengeluaran adalah jalur terpanjang (level 9). Kalau mau mempercepat keseluruhan, tambah orang di Pengeluaran — bukan di Pendapatan.
 
 ### Yang bisa mulai serentak setelah fondasi
 
-| Level 1 — sembilan item, tiga siklus plus core sekaligus |
+| Level 1 — delapan item kerja dan dua spike discovery |
 |---|
-| `PD-001` pelanggan · `PD-003` cek stok · `PG-001` pemasok · `PG-010` rekonsiliasi bank · `GJ-001` data karyawan · `C-009` laporan keuangan · `C-011` master data · `C-012` notifikasi · `C-013` pengadaan |
+| `PD-001` pelanggan · `PG-001` pemasok · `GJ-001` data karyawan · `C-009` laporan keuangan · `C-011` master data · `C-012` notifikasi · `C-013` pengadaan · `C-014` dashboard · spike `DISC-001` (mesin absensi) · `DISC-002` (format bank) |
 
-Produksi mulai di level 2 (`PR-001` menunggu `C-011`).
+Produksi mulai di level 2 (`PR-001` menunggu `C-011`). `C-011` dan `C-013` yang memblokir siklus lain, jadi keduanya didahulukan (`D-34`).
 
 Approval topologi: keputusan D-02 (satu repo, branch per track) dan D-03 (review tech lead).
 
@@ -106,7 +106,7 @@ Approval topologi: keputusan D-02 (satu repo, branch per track) dan D-03 (review
 | CI | `available` | `.github/workflows/ci.yml`; merah→hijau terbukti di PR #3 |
 | Migration runner | `available` | `scripts/check-migrations.mjs`, `pnpm db:setup` |
 
-Gate: `FND-001`–`FND-006` wajib `done` sebelum item modul boleh `Ready`. Gate ini **lebih ketat** daripada `depends on` per item dan menang atas aturan 2 di atas (mis. `PD-001` hanya butuh `FND-003`, tapi tetap menunggu gate). `FND-007`/`FND-008` boleh selesai paralel, kecuali item yang menambah primitive UI (menunggu `FND-007`).
+Gate: `FND-001`–`FND-007` wajib `done` sebelum item modul boleh `Ready` (tidak berlaku untuk item `FND-*`, `D-54`). Gate ini **lebih ketat** daripada `depends on` per item dan menang atas aturan 2 di atas (mis. `PD-001` hanya butuh `FND-003`, tapi tetap menunggu gate). Hanya `FND-008` yang boleh selesai paralel.
 
 ## Menambah item
 

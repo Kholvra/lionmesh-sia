@@ -19,7 +19,7 @@ Presensi dan lembur berubah menjadi payroll yang dihitung, diperiksa, disetujui,
 
 ## Aturan yang mengikat
 
-- `D-18` karyawan **tidak punya akun**. Slip dicetak dan diserahkan. Tidak ada portal karyawan.
+- `D-53` (menggantikan `D-18` soal akun): karyawan punya akun terbatas (peran ke-13, self-service) untuk mencatat presensi dan lembur miliknya sendiri; HR boleh input atas nama dan koreksi. Slip tetap diterbitkan HR dan dicetak; tidak ada portal slip.
 - `D-19` seluruh komponen dihitung dari tabel tarif berversi.
 - PPh 21 memakai lookup TER, bukan bracket progresif bulanan.
 - Gaji pokok diambil dari histori, bukan kolom tunggal.

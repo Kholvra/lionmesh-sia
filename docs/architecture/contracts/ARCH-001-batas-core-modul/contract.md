@@ -34,7 +34,7 @@
 | `ARCH-06` | Tabel dan aturan pengadaan MUST berada di `core/pengadaan`. Modul Pengeluaran hanya memanggil service-nya | `D-05` disetujui | Core pengadaan | Produksi ikut menunggu siklus Pengeluaran |
 | `ARCH-07` | Migrasi MUST dinomori dan di-merge hanya oleh tech lead. Kelompok mengirim DDL sebagai usulan | `D-09` disetujui | Tech lead | Tabrakan nomor; migrasi ditolak |
 | `ARCH-08` | Modul MUST NOT membaca tabel milik modul lain secara langsung. Data lintas siklus diambil lewat service core atau read model core | `D-25` disetujui 2026-11-17 | Tech lead | Laporan lintas siklus tersebar dan tidak konsisten |
-| `ARCH-09` | Peran MUST mengikuti 12 akun staf. Tidak ada peran baru tanpa keputusan | `D-18` disetujui | Tech lead | Wewenang melebar tanpa kendali |
+| `ARCH-09` | Peran MUST mengikuti 13 peran (12 akun staf + Karyawan self-service). Tidak ada peran baru tanpa keputusan | `D-18` dan `D-53` disetujui | Tech lead | Wewenang melebar tanpa kendali |
 
 `ARCH-08` sudah disetujui (`D-25`), tapi belum punya checker otomatis. Statusnya tetap `Unverified` sampai ada bukti — persetujuan bukan verifikasi.
 
@@ -78,7 +78,7 @@
 | Modul mengimpor modul lain | Build gagal bila checker aktif; review menolak | Pindahkan dependensi ke `core/` |
 | Jurnal tidak balance | Transaksi dibatalkan seluruhnya | Perbaiki pemanggil |
 | Mutasi stok backdate | Ditolak dengan alasan | Gunakan tanggal yang sah atau koreksi lewat dokumen penyesuaian |
-| Periode terkunci | Ditolak; tidak ada baris tersimpan | Buka periode lewat prosedur `C-010` |
+| Periode terkunci | Ditolak; tidak ada baris tersimpan | Koreksi lewat jurnal pembalik di periode berjalan (`D-44` 5); periode tertutup tidak dibuka kembali |
 | Dua modul menulis `saldo_stok` | Saldo tidak dapat dipercaya | Hentikan track, perbaiki, rekonsiliasi |
 
 ## Verification mapping
@@ -93,7 +93,7 @@
 | `ARCH-06` | Tabel pengadaan hanya didefinisikan di core | Review migrasi | — | `Unverified` |
 | `ARCH-07` | Nomor migrasi unik di `main` | Pemeriksaan runner | `pnpm check:migrations` menolak `0001_duplikat.sql` dan menyebut kedua berkas; dijalankan di CI | `PASS` |
 | `ARCH-08` | Tidak ada query ke tabel modul lain | Review + pencarian SQL | — | `Unverified` |
-| `ARCH-09` | Daftar peran = 12 | Review migrasi + seed | — | `Unverified` |
+| `ARCH-09` | Daftar peran = 13 | Review migrasi + seed | — | `Unverified` |
 | `BOUNDARY-01` | Server action menolak input tidak valid | Uji perilaku | — | `Unverified` |
 | `BOUNDARY-02` | `actor_id` dari klien diabaikan | Uji perilaku | — | `Unverified` |
 | `BOUNDARY-03` | RLS menolak akses lintas peran | Uji database | — | `Unverified` |

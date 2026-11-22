@@ -26,7 +26,7 @@ Epic ini menguji **persimpangan**, bukan fitur.
 
 Tidak boleh mulai sebelum:
 
-- `PD-008`, `PG-009`, `PR-007`, `GJ-007` `done`
+- `PD-008`, `PG-009`, `PG-010`, `PR-007`, `GJ-007` `done`
 - `C-009` dan `C-010` `done`
 
 ## Gate selesai
