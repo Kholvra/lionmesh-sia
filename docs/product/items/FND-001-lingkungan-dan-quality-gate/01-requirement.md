@@ -29,7 +29,7 @@ Akibatnya, setiap bug yang muncul tidak bisa dibedakan antara kesalahan kode dan
 
 ## Outcome
 
-Siapa pun yang meng-clone repo dapat menjalankan aplikasi dengan database yang skemanya berasal dari migrasi, mengembalikannya ke kosong, mengisinya dengan data dasar yang sama setiap kali, dan mengetahui apakah perubahannya lolos pemeriksaan — tanpa satu pun langkah manual di dashboard.
+Siapa pun yang meng-clone repo dapat menjalankan aplikasi dengan database yang skemanya berasal dari migrasi, mengembalikannya ke skema `siap` (migrasi terpasang, tanpa data), mengisinya dengan data dasar yang sama setiap kali, dan mengetahui apakah perubahannya lolos pemeriksaan — tanpa satu pun langkah manual di dashboard.
 
 ## Aktor
 
@@ -66,8 +66,8 @@ Satu kondisi yang harus dibedakan secara eksplisit:
 
 | Kondisi | Arti |
 |---|---|
-| `schema kosong` | tidak ada tabel aplikasi; migrasi belum dijalankan |
-| `schema siap` | seluruh migrasi sudah diterapkan |
+| `schema kosong` | tidak ada tabel aplikasi; migrasi belum dijalankan (hanya sesaat di dalam reset, `D-30`) |
+| `schema siap` | seluruh migrasi sudah diterapkan; tujuan reset |
 | `seed terpasang` | data dasar ada, deterministik |
 
 Ketiganya harus bisa dicapai dan dibedakan lewat perintah, bukan tebakan.

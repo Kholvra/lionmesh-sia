@@ -41,7 +41,7 @@ Berlaku untuk **setiap** item, termasuk fondasi.
 
 ## Per siklus
 
-Satu siklus dianggap selesai kalau **seluruh rantai dokumennya** bisa dijalankan berurutan dari seed kosong tanpa menyentuh database manual, dan setiap perpindahan status menghasilkan jurnal yang balance.
+Satu siklus dianggap selesai kalau **seluruh rantai dokumennya** bisa dijalankan berurutan dari `db:reset` + `db:seed` tanpa menyentuh database manual, dan setiap perpindahan status menghasilkan jurnal yang balance.
 
 ## Yang tidak termasuk
 

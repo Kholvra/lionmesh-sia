@@ -33,7 +33,7 @@ Tanpa lingkungan yang dapat diulang:
 1. Migrasi bernomor, dijalankan berurutan, hanya tech lead yang menomori.
 2. Pemeriksaan minimum: lint, tipe, build. Test ditambahkan saat item pertama yang punya perilaku.
 3. Seed harus deterministik — ID dan jumlah baris sama setiap kali.
-4. Reset harus mengembalikan ke skema kosong, bukan "hapus sebagian".
+4. Reset harus mengembalikan ke skema kosong, bukan "hapus sebagian". *(Digantikan `D-30`: reset berakhir di skema `siap`, `kosong` hanya state sesaat.)*
 
 ## Pertanyaan terbuka
 

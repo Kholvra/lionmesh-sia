@@ -12,7 +12,7 @@ Sumber kebenaran tunggal untuk urutan dan status pekerjaan.
 | **Level** | panjang jalur dependensi. **Derived**, bukan normatif |
 | **Depends on** | prasyarat sebenarnya. Item boleh mulai begitu semua selesai |
 | **Status** | `idea` · `discovery` · `specified` · `ready` · `in progress` · `blocked` · `done` |
-| **Paket** | folder `items/` — dibuat saat item masuk `specified` |
+| **Paket** | bukan kolom: paket item ada di `items/<ID>-<slug>/`, dibuat saat item masuk `specified` |
 
 `level` dipakai untuk melihat **apa yang bisa dikerjakan serentak**. Item dengan level sama tidak saling bergantung, kecuali ditulis eksplisit di `depends on`.
 
@@ -31,7 +31,7 @@ Satu pemilik: tech lead. Urutan wajib.
 | `FND-005` | Inventory: mutasi, saldo, valuasi rata-rata bergerak | 5 | `FND-002` | `idea` |
 | `FND-006` | Ledger: COA, `postJournal()`, periode akuntansi | 6 | `FND-002`, `FND-003` | `idea` |
 | `FND-007` | UI kit bersama: tabel, form, status badge, dialog | 7 | `FND-002` | `idea` |
-| `FND-008` | Seed deterministik + reset ke kosong | 8 | `FND-001`, `FND-002` | `idea` |
+| `FND-008` | Seed deterministik + reset ke skema `siap` | 8 | `FND-001`, `FND-002` | `idea` |
 
 **Gate:** `FND-001`–`FND-006` berstatus `done` sebelum item modul mana pun boleh `ready`. `FND-007` (UI kit) dan `FND-008` (seed) boleh selesai paralel dengan gelombang pertama; item modul yang butuh primitive UI baru menunggu `FND-007`.
 
@@ -115,8 +115,8 @@ Sebagian tidak memblokir siklus mana pun. Satu di antaranya memblokir dua item l
 
 | ID | Outcome | Level | Depends on | Status |
 |---|---|---|---|---|
-| `INT-001` | Jurnal gabungan konsisten lintas empat siklus | 9 | `PD-008`, `PG-009`, `PR-007`, `GJ-007`, `C-009` | `idea` |
-| `INT-002` | Uji rantai end-to-end dari seed kosong | 10 | `INT-001` | `idea` |
+| `INT-001` | Jurnal gabungan konsisten lintas empat siklus | 9 | `PD-008`, `PG-009`, `PR-007`, `GJ-007`, `C-009`, `C-010` | `idea` |
+| `INT-002` | Uji rantai end-to-end dari `db:reset` + `db:seed` | 10 | `INT-001` | `idea` |
 | `INT-003` | Rekonsiliasi stok vs jurnal vs laporan | 10 | `INT-001` | `idea` |
 
 ## Matriks paralel
@@ -146,7 +146,7 @@ Terbaca per level. Semua item dalam satu baris boleh dikerjakan serentak.
 2. **Gate per item** — `depends on` harus `done`, bukan sekadar "hampir".
 3. **Gate migrasi** — DDL dari kelompok berupa usulan; tech lead yang menomori dan merge.
 4. **Gate join** — `INT-001` tidak boleh mulai sebelum seluruh jurnal siklus ada.
-5. **`level` tidak mengikat** — kalau `depends on` sudah `done`, item boleh mulai walau level lebih tinggi.
+5. **`level` tidak mengikat** — kalau `depends on` sudah `done`, item boleh mulai walau level lebih tinggi. Pengecualian: gate fondasi (aturan 1) tetap berlaku lebih dulu.
 
 ## Changelog
 
@@ -158,3 +158,5 @@ Terbaca per level. Semua item dalam satu baris boleh dikerjakan serentak.
 | 2026-11-19 | `C-011` tidak lagi memiliki `akun` (COA milik `FND-006`); `PR-001` bergantung `C-011`, level rantai Produksi bergeser +1 |
 | 2026-11-19 | `FND-001` diselaraskan ke `in progress` di semua dokumen |
 | 2026-11-22 | `FND-001` → `done`: CI merah lalu hijau terbukti di PR #3; branch `fnd-001-lingkungan` di-merge ke `main` |
+| 2026-11-22 | `INT-001` menambah `C-010` ke `depends on` (selaras `EPIC-INT`); gate fondasi ditegaskan menang atas aturan 5; `README` level 1 dikoreksi ke 9 item; `FND-001` diselaraskan (D-30) |
+| 2026-11-22 | Catatan pemetaan `D-01` (FND-001/002/008 infrastruktur; `C6`/`C8` belum punya item); bukti `INV-01` dikoreksi ke riwayat git; istilah "seed kosong" diganti `db:reset` + `db:seed` |

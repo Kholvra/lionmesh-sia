@@ -45,7 +45,23 @@ GET /login  → 200
 runtime data error → 0
 ```
 
-Catatan: ini salinan working tree, bukan `git clone`, karena perubahan FND-001 belum di-commit. Setelah commit, AC ini perlu diulang dari clone sungguhan.
+Diulang 2026-11-22 dari `git clone` sungguhan (HEAD `e2bc534`, direktori sementara):
+
+```text
+git clone                           → e2bc534
+pnpm install --frozen-lockfile      → exit 0 (37,3 dtk)
+pnpm db:setup                       → exit 0
+  Applying migration 0001_initial.sql...
+  Finished supabase db reset on branch main.
+.env.local dari .env.example + `supabase status`
+next dev -p 3102                    → Ready in 348 ms
+GET /       → 200
+GET /login  → 200
+error di dev.log → 0
+tabel publik: profiles
+```
+
+Run pertama (2026-11-17, salinan working tree) dan pengulangan dari clone memberi hasil sama.
 
 ### AC-02 — migrasi dan reset idempoten
 
@@ -140,7 +156,7 @@ seed kedua   → exit 1   "[db:seed] Data dasar sudah terpasang. Jalankan `pnpm 
 | `POST-03` | **PASS** | setelah reset tidak ada `_seed_meta`; hanya tabel dari migrasi |
 | `POST-04` | **PASS** | dua putaran reset+seed identik |
 | `POST-05` | **PASS** | `AC-04` lulus, `AC-05` hijau di run 44982685947 dan 44982807239 |
-| `INV-01` | **PASS** | `fnd-001-lingkungan` di-merge ke `main` (1dd8477) dan di-push; CI hijau di `main` |
+| `INV-01` | **PASS** | `git log --follow -- supabase/migrations/0001_initial.sql` → hanya `dc17e0b`; berkas tidak berubah sejak bootstrap |
 | `INV-04` | **PASS** | migrasi `0002_rusak.sql` → exit 1; versi tercatat tetap `0001`; tabel `rusak` tidak ada; reset berikutnya pulih |
 
 Bukti `INV-04`:

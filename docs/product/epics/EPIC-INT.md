@@ -19,7 +19,7 @@ Epic ini menguji **persimpangan**, bukan fitur.
 | ID | Outcome |
 |---|---|
 | `INT-001` | Jurnal gabungan konsisten: total debit = kredit, tidak ada akun menggantung |
-| `INT-002` | Rantai end-to-end dari seed kosong: pesanan → pengadaan → produksi → payroll → laporan |
+| `INT-002` | Rantai end-to-end dari `db:reset` + `db:seed`: pesanan → pengadaan → produksi → payroll → laporan |
 | `INT-003` | Rekonsiliasi stok fisik, mutasi, saldo, dan jurnal persediaan |
 
 ## Gate mulai

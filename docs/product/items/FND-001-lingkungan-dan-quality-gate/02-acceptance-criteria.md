@@ -9,7 +9,7 @@ Setiap kriteria harus bisa dibuktikan dengan perintah atau langkah yang bisa diu
 | `AC-03` | Dua migrasi dengan nomor sama ditolak sebelum menyentuh database, dengan pesan yang menyebut kedua nama file | Buat dua file bernomor sama di branch uji, jalankan, catat pesan |
 | `AC-04` | `pnpm lint`, `pnpm typecheck`, dan `pnpm build` lolos pada clone bersih | Jalankan ketiganya, simpan keluaran |
 | `AC-05` | CI menjalankan tiga pemeriksaan yang sama pada setiap pull request dan menggagalkan check bila salah satu gagal | Buka PR dengan kesalahan tipe yang disengaja, pastikan check merah; perbaiki, pastikan hijau |
-| `AC-06` | Ada perintah reset yang mengembalikan ke skema kosong, dan perintah seed yang menghasilkan data dasar identik setiap kali dijalankan | Jalankan reset+seed dua kali, bandingkan jumlah baris dan nilai kunci |
+| `AC-06` | Ada perintah reset yang mengembalikan ke skema `siap` (`D-30`), dan perintah seed yang menghasilkan data dasar identik setiap kali dijalankan | Jalankan reset+seed dua kali, bandingkan jumlah baris dan nilai kunci |
 | `AC-07` | Seed menolak berjalan di atas data yang sudah ada tanpa reset, dengan pesan yang menyebut perintah reset | Jalankan seed dua kali berturut-turut, catat pesan |
 | `AC-08` | `README.md` memuat seluruh langkah lokal tanpa instruksi menempel SQL manual ke dashboard | Baca README dari awal; ikuti hanya isinya |
 

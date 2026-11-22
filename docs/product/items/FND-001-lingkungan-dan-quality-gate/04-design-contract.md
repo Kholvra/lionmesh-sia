@@ -2,7 +2,7 @@
 
 - Source: `docs/product/items/FND-001-lingkungan-dan-quality-gate/01-requirement.md` (`FND-001`)
 - Acceptance criteria: `02-acceptance-criteria.md` (`AC-01`…`AC-08`)
-- Status: `Proposed` — revisi 2026-11-17, diselaraskan dengan Supabase CLI (`D-27`)
+- Status: `Verified` — 12 dari 12 aturan `PASS` per 2026-11-22; revisi 2026-11-17 diselaraskan dengan Supabase CLI (`D-27`) dan `D-30`
 - Profile: infrastructure / developer tooling
 - Scope: penyiapan database, penerapan migrasi, reset, seed, gerbang mutu, CI
 - Owner: tech lead
@@ -94,11 +94,11 @@ Satu batasan yang tetap berlaku di sini: **mekanisme penyiapan tidak boleh menja
 | `POST-02` | Penerapan ulang → tidak ada perubahan skema | Perintah + diff | `05-evidence.md` AC-02 | `PASS` |
 | `POST-03` | Setelah reset, skema `siap` tanpa data dasar | Perintah | `05-evidence.md` AC-02 | `PASS` |
 | `POST-04` | Dua kali reset+seed → jumlah baris dan kunci sama | Skrip pembanding | `05-evidence.md` AC-06 | `PASS` |
-| `POST-05` | `AC-04` dan `AC-05` | CI | `AC-04` lulus; `AC-05` belum | `Unverified` |
-| `INV-01` | Berkas migrasi lama tidak berubah di `main` | Review PR | belum ada riwayat `main` | `Unverified` |
+| `POST-05` | `AC-04` dan `AC-05` | CI | `AC-04` lulus; `AC-05` hijau di run 44982685947 dan 44982807239 | `PASS` |
+| `INV-01` | Berkas migrasi lama tidak berubah di `main` | Riwayat git | `git log --follow` → `0001_initial.sql` hanya di `dc17e0b` | `PASS` |
 | `INV-04` | Migrasi gagal → status tidak tercatat | Uji migrasi rusak | `05-evidence.md` INV-04 | `PASS` |
 
-Sepuluh dari dua belas aturan `PASS`. Dua sisanya menunggu bukti luar: `POST-05` menunggu run CI pertama, `INV-01` menunggu riwayat `main` yang sudah di-merge.
+Dua belas dari dua belas aturan `PASS`.
 
 ## Open decisions and assumptions
 

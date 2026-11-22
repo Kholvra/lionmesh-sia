@@ -8,7 +8,7 @@ Urutan prioritas: **dokumen ini** > `backlog.md` > `reference/analisis-sia.md`.
 
 | ID | Keputusan | Konsekuensi | Sumber |
 |---|---|---|---|
-| `D-01` | Cakupan penuh: 48 use case + fitur tambahan = **46 fitur** (12 core + 34 modul). Tidak ada pemotongan | tidak ada item "menyusul" atau "v2" | keputusan pengguna |
+| `D-01` | Cakupan penuh: 48 use case + fitur tambahan = **46 fitur** menurut kode fitur di analisis (12 core + 34 modul); di backlog core terpecah jadi 8 `FND-*` + 5 `C-*`. Tidak ada pemotongan | tidak ada item "menyusul" atau "v2" | keputusan pengguna |
 | `D-02` | Satu repo, branch per track, merge ke `main` oleh tech lead | tidak ada repo terpisah per kelompok | keputusan pengguna |
 | `D-03` | Empat siklus berjalan paralel, **dan beberapa track di dalam tiap siklus** juga paralel | backlog disusun sebagai graph, bukan antrean | keputusan pengguna |
 | `D-04` | Satu aplikasi Next.js, satu project Supabase. `src/core/` + `src/modules/<siklus>/` | modul boleh impor core, tidak boleh impor modul lain | analisis §2 |
@@ -17,6 +17,8 @@ Urutan prioritas: **dokumen ini** > `backlog.md` > `reference/analisis-sia.md`.
 | `D-07` | Jurnal hanya ditulis lewat `postJournal()` di `core/ledger` | tidak ada modul yang menulis ke tabel jurnal langsung | analisis §7.5 |
 | `D-08` | `riwayat_status` bersifat polimorfik untuk semua dokumen | satu tabel riwayat, bukan satu per dokumen | analisis §7.2 |
 | `D-09` | Migrasi Supabase dinomori dan di-merge **hanya oleh tech lead**. Kelompok mengirim DDL sebagai usulan | tidak ada empat file `0005_*.sql` bertabrakan | keputusan pengguna |
+
+> Catatan pemetaan `D-01`: dari 8 item `FND-*`, `FND-001` (lingkungan), `FND-002` (skema), dan `FND-008` (seed) adalah infrastruktur, bukan fitur. Dua fitur core di analisis belum punya item backlog: `C6` audit dan `C8` dashboard; keduanya belum ditetapkan masuk item mana.
 
 ## Keputusan domain (Q1–Q11)
 
