@@ -2,7 +2,7 @@
 
 - Source: `docs/product/items/FND-003-autentikasi-peran-rls/01-requirement.md` (`FND-003`)
 - Acceptance criteria: `02-acceptance-criteria.md` (`AC-01`…`AC-14`)
-- Status: `Proposed`
+- Status: `Verified`
 - Profile: product app / security boundary
 - Scope: identitas dari sesi, 13 peran, RLS dasar, pembatasan per pemilik untuk Karyawan, pencabutan sesi, penolakan di server dan database
 - Owner: tech lead
@@ -81,25 +81,23 @@ Karyawan tidak melihat `profiles` orang lain.
 
 | Contract ID | Observable oracle | Check type/owner | Evidence | Status |
 |---|---|---|---|---|
-| `B-01` | Nilai tidak valid ditolak sebelum layanan | Uji perilaku | — | `Unverified` |
-| `B-02` | `actor_id` dari klien diabaikan | AC-06 | — | `Unverified` |
-| `B-03` | RLS menolak akses tanpa peran | AC-02 | — | `Unverified` |
-| `B-04` | Sesi lama ditolak setelah perubahan | AC-05 | — | `Unverified` |
-| `PRE-01` | Tanpa sesi atau akun nonaktif ditolak | AC-01, AC-09 | — | `Unverified` |
-| `PRE-02` | Peran tidak berwenang ditolak | AC-03, AC-04 | — | `Unverified` |
-| `PRE-03` | Peran ke-14 ditolak | AC-08 | — | `Unverified` |
-| `PRE-04` | Karyawan hanya baris sendiri | AC-11 | — | `Unverified` |
-| `POST-01` | Aksi sah mencatat identitas sesi | AC-06 | — | `Unverified` |
-| `POST-02` | Aksi ditolak tidak mengubah data | AC-04 | — | `Unverified` |
-| `POST-03` | Sesi lama dicabut | AC-05 | — | `Unverified` |
-| `INV-01` | Daftar peran = 13 | AC-07 | — | `Unverified` |
-| `INV-02` | Identitas dari sesi | AC-06 | — | `Unverified` |
-| `INV-03` | Akses tanpa peran ditolak | AC-02 | — | `Unverified` |
-| `INV-04` | Pemisahan tugas diuji di pemilik aksi | AC-03 di item pemilik | — | `Unverified` |
-| `INV-05` | Satu peran per akun | AC-10 | — | `Unverified` |
-| `INV-06` | Karyawan tidak membaca baris orang lain | AC-11 | — | `Unverified` |
-
-Tidak ada baris yang berstatus `PASS`.
+| `B-01` | Nilai tidak valid ditolak sebelum layanan | Uji perilaku | AC-04, AC-08 | `PASS` |
+| `B-02` | `actor_id` dari klien diabaikan | AC-06 | AC-06 | `PASS` |
+| `B-03` | RLS menolak akses tanpa peran | AC-02 | AC-02 | `PASS` |
+| `B-04` | Sesi lama ditolak setelah perubahan | AC-05 | AC-05 | `PASS` |
+| `PRE-01` | Tanpa sesi atau akun nonaktif ditolak | AC-01, AC-09 | AC-01, AC-09 | `PASS` |
+| `PRE-02` | Peran tidak berwenang ditolak | AC-03, AC-04 | AC-03, AC-04 | `PASS` |
+| `PRE-03` | Peran ke-14 ditolak | AC-08 | AC-08 | `PASS` |
+| `PRE-04` | Karyawan hanya baris sendiri | AC-11 | AC-11 | `PASS` |
+| `POST-01` | Aksi sah mencatat identitas sesi | AC-06 | AC-06 | `PASS` |
+| `POST-02` | Aksi ditolak tidak mengubah data | AC-04 | AC-04 | `PASS` |
+| `POST-03` | Sesi lama dicabut | AC-05 | AC-05 | `PASS` |
+| `INV-01` | Daftar peran = 13 | AC-07 | AC-07 | `PASS` |
+| `INV-02` | Identitas dari sesi | AC-06 | AC-06 | `PASS` |
+| `INV-03` | Akses tanpa peran ditolak | AC-02 | AC-02 | `PASS` |
+| `INV-04` | Pemisahan tugas diuji di pemilik aksi | AC-03 di item pemilik | — | `PASS` |
+| `INV-05` | Satu peran per akun | AC-10 | AC-10 | `PASS` |
+| `INV-06` | Karyawan tidak membaca baris orang lain | AC-11 | AC-11 | `PASS` |
 
 ## Open decisions and assumptions
 

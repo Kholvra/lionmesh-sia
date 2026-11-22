@@ -1,14 +1,14 @@
 ---
 id: FND-003
 slug: autentikasi-peran-rls
-title: Autentikasi dan 12 peran staf dengan RLS
+title: Autentikasi dan 13 peran (12 staf + Karyawan self-service) dengan RLS
 epic: EPIC-FND
 milestone: M0
 lane: active
 sequence: 3
 type: feature
 req_status: specified
-delivery_status: not_started
+delivery_status: done
 priority: unset
 size: unset
 depends_on:

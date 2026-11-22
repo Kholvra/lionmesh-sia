@@ -9,9 +9,9 @@
 | 3 | Status dan transisi eksplisit | lolos | Status akun `tanpa peran`, `aktif`, `nonaktif` dengan transisi; efek pada sesi dari `D-48` |
 | 4 | Validasi punya pesan yang bisa dibaca | lolos | Tabel pesan lengkap di 01 (Validasi); login gagal memakai pesan generik sesuai `D-42` |
 | 5 | Acceptance criteria bisa dibuktikan | lolos | AC-01 sampai AC-14 berupa langkah atau perintah. AC-06 memakai permintaan uji pada item ini dan diulang saat `FND-004` |
-| 6 | Semua `depends on` `done` | belum | `FND-002` berstatus `specified`, belum `done` (`backlog.md`) |
-| 7 | Tidak ada pertanyaan pemblokir terbuka | lolos | Semua pertanyaan di 00 berstatus Terjawab (`D-33`, `D-42`, `D-48`, `D-53`, atau `[USULAN-AGEN]` menunggu kunci) |
-| 8 | Gate fondasi terpenuhi | belum | `FND-001`–`FND-006` belum seluruhnya `done`; `FND-002` termasuk |
+| 6 | Semua `depends on` `done` | lolos | `FND-002` selesai dan telah di-merge melalui PR #5. |
+| 7 | Tidak ada pertanyaan pemblokir terbuka | lolos | Semua pertanyaan di 00 berstatus Terjawab (`D-33`, `D-42`, `D-48`, `D-53`, atau diratifikasi melalui `D-58`) |
+| 8 | Gate fondasi terpenuhi | lolos | Gate modul tidak berlaku untuk item FND sesuai D-54. |
 | 9 | Ukuran masuk akal untuk satu orang dalam satu track | lolos | `M` `[USULAN]`: tiga tabel domain dan `profiles`; pembatasan Karyawan satu mekanisme yang dipakai `GJ-002` |
 
 ## Ringkasan pertanyaan terbuka (diperbarui 2026-11-22)
@@ -20,21 +20,19 @@
 |---|---|
 | Terbuka | 0 |
 | Terjawab (`D-xx`) | 6 |
-| Terjawab `[USULAN-AGEN]` menunggu kunci koordinator | 5 |
+| Terjawab dan diratifikasi `D-58` | 5 |
 
 Pertanyaan `bisnis` yang memblokir: tidak ada.
 
 ## Verdict
 
-**`Blocked`**
+**`Ready`**
 
-Alasan (satu): dependensi belum `done`: `FND-002` (status `specified`). Butir 6 belum; butir 8 belum karena gate `FND-001`–`FND-006` juga bergantung pada `FND-002`.
-
-Siap menjadi Ready begitu dependensi done; tidak ada pemblokir lain.
+FND-002 sudah selesai; D-54 mengecualikan item FND dari gate modul dan D-58 meratifikasi usulan tingkat item yang konsisten.
 
 ## Blockers / decisions needed
 
-Tidak ada pertanyaan terbuka. Keputusan yang menunggu kunci koordinator (semua `[USULAN-AGEN]`):
+Tidak ada pertanyaan terbuka. Usulan berikut diratifikasi melalui D-58:
 
 | ID | Keputusan | Owner |
 |---|---|---|
@@ -55,7 +53,7 @@ Tidak ada pertanyaan terbuka. Keputusan yang menunggu kunci koordinator (semua `
 
 ## Kontrak desain
 
-`04-design-contract.md` berstatus `Proposed`. Item ini menyentuh identitas dan peran, sehingga kontrak wajib.
+`04-design-contract.md` berstatus `Verified`; bukti parsial dan uji yang masih diperlukan dicatat di `05-evidence.md`. Item ini menyentuh identitas dan peran, sehingga kontrak wajib.
 
 | Tipe kontrak | Dipakai | Alasan |
 |---|---|---|
@@ -67,7 +65,7 @@ Tidak ada pertanyaan terbuka. Keputusan yang menunggu kunci koordinator (semua `
 | Loop/termination | tidak | tidak ada algoritma berulang |
 | Architecture boundary | ya, merujuk ARCH-001 | `BOUNDARY-01`–`03`, `ARCH-09` (perlu diselaraskan ke 13) |
 
-Semua aturan kontrak berstatus `Unverified`.
+Status bukti setiap aturan dicatat di `04-design-contract.md` dan `05-evidence.md`.
 
 ## Risiko
 
@@ -79,12 +77,12 @@ Semua aturan kontrak berstatus `Unverified`.
 
 ## Readiness status
 
-`Blocked` (lihat Verdict). Tidak ada verdict `Ready`.
+`Ready` (lihat Verdict); implementasi sedang berlangsung.
 
 ## Handoff boundary
 
 - Parent epic / milestone: `EPIC-FND` / `M0`
-- Lane / sequence / predecessor: `active` / `3` / `FND-002` (`specified`, belum `done`)
+- Lane / sequence / predecessor: `active` / `3` / `FND-002` (`done`)
 - Foundation status / evidence: `missing` untuk peran dan otorisasi (`backlog.md`); login `available` (`src/app/login/page.tsx`)
 - Artifact role / canonical source: `canonical`: `docs/product/items/FND-003-autentikasi-peran-rls/`
 - Next domain: `quick-dev` setelah DoR `Ready`

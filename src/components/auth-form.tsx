@@ -6,50 +6,46 @@ import { useRouter } from "next/navigation";
 
 import { createClient } from "@/lib/supabase/client";
 
-type Mode = "sign-in" | "sign-up";
-
 export function AuthForm() {
   const router = useRouter();
-  const [mode, setMode] = useState<Mode>("sign-in");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
-  const [message, setMessage] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setError(null);
-    setMessage(null);
     setIsLoading(true);
 
     try {
       const supabase = createClient();
-      const redirectTo = `${window.location.origin}/auth/callback`;
-      const result =
-        mode === "sign-in"
-          ? await supabase.auth.signInWithPassword({ email, password })
-          : await supabase.auth.signUp({
-              email,
-              password,
-              options: { emailRedirectTo: redirectTo },
-            });
+      const result = await supabase.auth.signInWithPassword({ email, password });
 
       if (result.error) {
-        throw result.error;
+        throw new Error("Username atau password salah.");
       }
 
-      if (mode === "sign-up" && !result.data.session) {
-        setMessage("cek email kamu untuk konfirmasi akun.");
-      } else {
-        router.push("/");
-        router.refresh();
+      if (result.data.user) {
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("aktif")
+          .eq("id", result.data.user.id)
+          .single();
+
+        if (profile && !profile.aktif) {
+          await supabase.auth.signOut();
+          throw new Error("Username atau password salah.");
+        }
       }
+
+      router.push("/");
+      router.refresh();
     } catch (caughtError) {
       setError(
         caughtError instanceof Error
           ? caughtError.message
-          : "terjadi kesalahan yang tidak diketahui.",
+          : "Username atau password salah.",
       );
     } finally {
       setIsLoading(false);
@@ -58,27 +54,6 @@ export function AuthForm() {
 
   return (
     <div className="w-full max-w-md rounded-2xl border border-white/10 bg-white/5 p-6 shadow-2xl shadow-black/20 backdrop-blur">
-      <div className="mb-6 flex gap-2 rounded-xl bg-black/20 p-1 text-sm">
-        {(["sign-in", "sign-up"] as const).map((nextMode) => (
-          <button
-            className={`flex-1 rounded-lg px-3 py-2 transition ${
-              mode === nextMode
-                ? "bg-white text-slate-950"
-                : "text-slate-300 hover:bg-white/10"
-            }`}
-            key={nextMode}
-            onClick={() => {
-              setMode(nextMode);
-              setError(null);
-              setMessage(null);
-            }}
-            type="button"
-          >
-            {nextMode === "sign-in" ? "masuk" : "daftar"}
-          </button>
-        ))}
-      </div>
-
       <form className="space-y-4" onSubmit={handleSubmit}>
         <label className="block text-sm text-slate-300">
           email
@@ -96,7 +71,7 @@ export function AuthForm() {
         <label className="block text-sm text-slate-300">
           password
           <input
-            autoComplete={mode === "sign-in" ? "current-password" : "new-password"}
+            autoComplete="current-password"
             className="mt-2 w-full rounded-xl border border-white/10 bg-black/20 px-4 py-3 text-white outline-none transition placeholder:text-slate-500 focus:border-cyan-300"
             minLength={6}
             onChange={(event) => setPassword(event.target.value)}
@@ -112,22 +87,13 @@ export function AuthForm() {
             {error}
           </p>
         ) : null}
-        {message ? (
-          <p className="rounded-xl border border-emerald-400/30 bg-emerald-400/10 px-4 py-3 text-sm text-emerald-200">
-            {message}
-          </p>
-        ) : null}
 
         <button
           className="w-full rounded-xl bg-cyan-300 px-4 py-3 font-semibold text-slate-950 transition hover:bg-cyan-200 disabled:cursor-not-allowed disabled:opacity-60"
           disabled={isLoading}
           type="submit"
         >
-          {isLoading
-            ? "memproses..."
-            : mode === "sign-in"
-              ? "masuk"
-              : "buat akun"}
+          {isLoading ? "memproses..." : "masuk"}
         </button>
       </form>
     </div>
