@@ -31,3 +31,30 @@ Verifikasi mutu:
 
 - Viewport CSS 1280 × 900: panel kiri 560 CSS px, lebar dokumen 1280 CSS px; screenshot [`login-1280.png`](login-1280.png). Label terhubung ke input dan tombol Tampilkan mengubah input sandi menjadi teks.
 - Proyek Supabase terisolasi: login nonaktif ditolak Auth; payload `updated_by` palsu diganti ID sesi. Token lama setelah pergantian peran tidak dapat membaca profil sendiri melalui REST. Database bersama tidak di-reset.
+
+## Uji HTTP tambahan pada fixture terisolasi
+
+Tanggal 2026-11-22. Proyek Supabase dan server Next.js berjalan terpisah secara lokal; fixture route sementara dihapus setelah uji.
+
+- GET tanpa cookie ke fixture yang memanggil `requireSesi()` menghasilkan HTTP 307 dengan `Location: /login`. Ini membuktikan guard pada route handler; halaman aplikasi terlindungi yang sebenarnya belum tersedia untuk AC-01.
+- Login sebagai akun uji Gudang, kemudian POST langsung ke fixture yang memanggil `assertPeran("Penjualan")`, menghasilkan HTTP 403 dengan `{"ok":false,"message":"Peran Anda tidak berwenang melakukan tindakan ini."}`. Ini membuktikan guard pada fixture; AC-04 perlu diulang pada aksi fitur sebenarnya.
+
+Fixture route sementara dibuat di `src/app/fnd003-verify/route.ts` dengan isi berikut dan dihapus setelah pengujian:
+
+```ts
+import { assertPeran, requireSesi } from "@/lib/auth/server";
+
+export async function GET() {
+  await requireSesi();
+  return Response.json({ secret: "protected" });
+}
+
+export async function POST() {
+  const result = await assertPeran("Penjualan");
+  return Response.json(result, { status: result.ok ? 200 : 403 });
+}
+```
+
+Untuk mengulang, siapkan Supabase lokal terisolasi dengan migrasi FND-003 dan akun uji Gudang, lalu jalankan server Next.js yang terhubung ke proyek itu. `curl -i http://localhost:<port>/fnd003-verify` tanpa cookie menghasilkan 307 ke `/login`. Masuk sebagai Gudang di browser, lalu kirim `fetch('/fnd003-verify', { method: 'POST' })` dari halaman yang sama; hasil 403. Jangan gunakan akun produksi untuk pengujian.
+
+- Audit terhadap `matriks-izin.md` menemukan aksi menerima bahan dan barang jadi belum memiliki entri izin tersendiri; keduanya ditambahkan untuk peran Gudang. Uji endpoint modul tetap dilakukan saat fitur terkait tersedia.

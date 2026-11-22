@@ -43,6 +43,8 @@ export const MATRIKS_IZIN = {
   buat_perintah_produksi: ["Produksi"],
   ajukan_permintaan_bahan: ["Produksi"],
   cek_ketersediaan_bahan: ["Gudang"],
+  terima_bahan: ["Gudang"],
+  terima_barang_jadi: ["Gudang"],
   verifikasi_permintaan_bahan: ["Purchasing"],
   setujui_pembelian_bahan: ["Manajemen"],
   catat_pemakaian_bahan_keluar: ["Gudang"],
