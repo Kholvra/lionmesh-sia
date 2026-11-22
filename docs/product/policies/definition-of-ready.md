@@ -13,7 +13,7 @@ Sebuah item boleh masuk `ready` hanya kalau **semua** baris bertanda wajib terpe
 | 5 | Acceptance criteria bisa dibuktikan dengan langkah atau perintah | `02-acceptance-criteria.md` |
 | 6 | Semua `depends on` berstatus `done` | `backlog.md` |
 | 7 | Tidak ada pertanyaan pemblokir yang masih terbuka | `03-readiness-review.md` |
-| 8 | Gate fondasi terpenuhi (`FND-001`–`FND-006` selesai; `FND-007` bila item menambah primitive UI) | gate di `backlog.md` |
+| 8 | Gate fondasi terpenuhi untuk item modul (`FND-001`–`FND-007` selesai); tidak berlaku untuk item `FND-*` (`D-54`) | gate di `backlog.md` |
 | 9 | Ukuran masuk akal untuk satu orang dalam satu track | bagian Size |
 
 ## Bersyarat

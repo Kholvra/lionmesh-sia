@@ -35,4 +35,4 @@ Kebutuhan barang berubah menjadi permintaan, PO, penerimaan, utang yang tervalid
 
 ## Catatan jalur kritis
 
-Epic ini adalah jalur terpanjang (level 8). Menambah orang di sini mempercepat keseluruhan proyek; menambah orang di Pendapatan tidak.
+Epic ini adalah jalur terpanjang (level 9). Menambah orang di sini mempercepat keseluruhan proyek; menambah orang di Pendapatan tidak.

@@ -203,7 +203,7 @@ WCAG 2.2 AA is the floor, not a stretch goal.
 - Light mode only; dark mode is out of scope.
 - Print uses the browser's print pipeline with a dedicated A4 stylesheet; a
   server-side PDF service is not required for v1.
-- The 12 staff roles are the only accounts; customers and suppliers never log in.
+- The 12 staff roles plus the self-service Karyawan role (own attendance and overtime only, D-53) are the only accounts; customers and suppliers never log in.
 - The app is used on a LAN/office connection; no offline mode.
 
 ## Out of Scope
