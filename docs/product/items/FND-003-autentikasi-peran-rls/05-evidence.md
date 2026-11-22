@@ -56,3 +56,5 @@ export async function POST() {
 ```
 
 Untuk mengulang, siapkan Supabase lokal terisolasi dengan migrasi FND-003 dan akun uji Gudang, lalu jalankan server Next.js yang terhubung ke proyek itu. `curl -i http://localhost:<port>/fnd003-verify` tanpa cookie menghasilkan 307 ke `/login`. Masuk sebagai Gudang di browser, lalu kirim `fetch('/fnd003-verify', { method: 'POST' })` dari halaman yang sama; hasil 403. Jangan gunakan akun produksi untuk pengujian.
+
+- Audit terhadap `matriks-izin.md` menemukan aksi menerima bahan dan barang jadi belum memiliki entri izin tersendiri; keduanya ditambahkan untuk peran Gudang. Uji endpoint modul tetap dilakukan saat fitur terkait tersedia.
