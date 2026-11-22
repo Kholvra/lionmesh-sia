@@ -54,7 +54,7 @@ Tanpa epic ini, empat siklus yang berjalan paralel akan menghasilkan empat defin
 
 | ID | Outcome | Sequence | Depends on | Status |
 |---|---|---|---|---|
-| `FND-001` | Lingkungan dapat diulang + gerbang mutu | 1 | — | `in progress` |
+| `FND-001` | Lingkungan dapat diulang + gerbang mutu | 1 | — | `done` |
 | `FND-002` | Skema domain inti + migrasi bernomor | 2 | `FND-001` | `idea` |
 | `FND-003` | Autentikasi & 12 peran dengan RLS | 3 | `FND-002` | `idea` |
 | `FND-004` | Dokumen: nomor, status, riwayat, approval | 4 | `FND-002`, `FND-003` | `idea` |

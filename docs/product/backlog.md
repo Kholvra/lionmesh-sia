@@ -24,7 +24,7 @@ Satu pemilik: tech lead. Urutan wajib.
 
 | ID | Outcome | Sequence | Depends on | Status |
 |---|---|---|---|---|
-| `FND-001` | Lingkungan pengembangan yang dapat diulang + gerbang mutu | 1 | — | `in progress` |
+| `FND-001` | Lingkungan pengembangan yang dapat diulang + gerbang mutu | 1 | — | `done` |
 | `FND-002` | Skema domain inti + migrasi bernomor | 2 | `FND-001` | `idea` |
 | `FND-003` | Autentikasi & 12 peran staf dengan RLS | 3 | `FND-002` | `idea` |
 | `FND-004` | Dokumen: penomoran, status, riwayat, approval berjenjang | 4 | `FND-002`, `FND-003` | `idea` |
@@ -157,3 +157,4 @@ Terbaca per level. Semua item dalam satu baris boleh dikerjakan serentak.
 | 2026-11-19 | Gate fondasi dipersempit ke `FND-001`–`FND-006`; `FND-007`/`FND-008` boleh paralel |
 | 2026-11-19 | `C-011` tidak lagi memiliki `akun` (COA milik `FND-006`); `PR-001` bergantung `C-011`, level rantai Produksi bergeser +1 |
 | 2026-11-19 | `FND-001` diselaraskan ke `in progress` di semua dokumen |
+| 2026-11-22 | `FND-001` → `done`: CI merah lalu hijau terbukti di PR #3; branch `fnd-001-lingkungan` di-merge ke `main` |

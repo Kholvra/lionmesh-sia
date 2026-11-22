@@ -21,12 +21,12 @@ Dijalankan 2026-11-17, dari repo ini dan dari salinan bersih tanpa `node_modules
 | `AC-02` | **lulus** | dua `db:reset`; dump skema 9.182 baris, `diff` kosong; tabel publik tetap `profiles` |
 | `AC-03` | **lulus** | `0001_duplikat.sql` → exit 1, pesan menyebut kedua berkas |
 | `AC-04` | **lulus** | `lint`, `typecheck`, `build` exit 0 di salinan bersih |
-| `AC-05` | **belum** | workflow ada; belum pernah dijalankan — butuh push dan PR |
+| `AC-05` | **lulus** | PR #3: check merah karena `error TS2322`, hijau setelah diperbaiki; run 44982760068 → 44982807239 |
 | `AC-06` | **lulus** | dua putaran reset+seed → snapshot `0/1/0001` identik |
 | `AC-07` | **lulus** | seed kedua → exit 1, pesan menyebut `pnpm db:reset` |
 | `AC-08` | **lulus** | README tidak menyuruh menempel SQL ke dashboard |
 
-Enam dari delapan AC lulus. `AC-05` tidak bisa diklaim tanpa run CI sungguhan.
+Delapan dari delapan AC lulus. `AC-05` dibuktikan dengan run CI sungguhan pada 2026-11-22.
 
 ## Rincian per AC
 
@@ -86,11 +86,26 @@ pnpm build       → exit 0
 
 Build diuji dua kali: tanpa env dan dengan env placeholder seperti CI. Keduanya exit 0.
 
-### AC-05 — belum dijalankan
+### AC-05 — CI merah lalu hijau
 
-`.github/workflows/ci.yml` menjalankan `check:migrations`, `lint`, `typecheck`, `arch:check`, dan `build` pada setiap PR.
+`.github/workflows/ci.yml` menjalankan `check:migrations`, `lint`, `typecheck`, `arch:check`, dan `build` pada setiap PR dan pada push ke `main`.
 
-Yang belum ada: run sungguhan. Tanpa push dan PR, tidak ada bukti bahwa check bisa merah lalu hijau. Karena itu status item belum `done`.
+Bukti pada 2026-11-22:
+
+```text
+PR #3  fnd-001-ac05-ci-proof (throwaway, ditutup tanpa merge)
+  commit 59e7d1e  src/lib/ci-proof.ts: export const ciProof: number = "deliberate type error";
+  run 44982760068 → failure
+    Tipe: src/lib/ci-proof.ts(1,14): error TS2322: Type 'string' is not assignable to type 'number'
+    Process completed with exit code 2
+  commit 21f95f1  berkas dihapus
+  run 44982807239 → success
+    Install, Migrasi, Lint, Tipe, Batas modul, Build — semua ✓
+```
+
+CI juga hijau di `main` setelah merge: run 44982685947.
+
+Catatan: run pertama di `main` (44982638751) gagal karena `pnpm/action-setup` menerima versi ganda (`version: 10` di workflow + `packageManager` di `package.json`). Diperbaiki di commit `bb4fa4c`; workflow sekarang membaca versi dari `package.json` saja.
 
 ### AC-06 — determinisme seed
 
@@ -124,8 +139,8 @@ seed kedua   → exit 1   "[db:seed] Data dasar sudah terpasang. Jalankan `pnpm 
 | `POST-02` | **PASS** | reset kedua tidak mengubah skema (diff kosong) |
 | `POST-03` | **PASS** | setelah reset tidak ada `_seed_meta`; hanya tabel dari migrasi |
 | `POST-04` | **PASS** | dua putaran reset+seed identik |
-| `POST-05` | **belum** | `AC-04` lulus, `AC-05` belum dijalankan |
-| `INV-01` | **belum** | butuh riwayat `main` yang sudah di-merge; belum ada commit |
+| `POST-05` | **PASS** | `AC-04` lulus, `AC-05` hijau di run 44982685947 dan 44982807239 |
+| `INV-01` | **PASS** | `fnd-001-lingkungan` di-merge ke `main` (1dd8477) dan di-push; CI hijau di `main` |
 | `INV-04` | **PASS** | migrasi `0002_rusak.sql` → exit 1; versi tercatat tetap `0001`; tabel `rusak` tidak ada; reset berikutnya pulih |
 
 Bukti `INV-04`:
@@ -150,9 +165,6 @@ reset pemulihan    : exit 0, versi tetap 0001
 
 `src/app/page.tsx` bukan bagian FND-001. Perbaikan itu diperlukan karena tanpa itu `AC-04`/`AC-05` tidak bisa hijau dengan env nyata. Perubahan ini harus direview terpisah saat PR.
 
-## Yang masih memblokir status `done`
+## Status `done`
 
-1. `AC-05`: butuh satu PR yang menunjukkan check merah karena kesalahan sengaja, lalu hijau setelah diperbaiki.
-2. Review dan merge oleh tech lead (`DoD` butir 15).
-
-Setelah keduanya ada, item ini boleh `done`.
+Tidak ada AC yang tersisa. `AC-05` terbukti merah lalu hijau (PR #3), branch `fnd-001-lingkungan` sudah di-merge ke `main` oleh tech lead, dan CI `main` hijau. Item ditandai `done` pada 2026-11-22.
