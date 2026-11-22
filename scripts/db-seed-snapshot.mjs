@@ -22,6 +22,9 @@ try {
   const gudang = (await client.query(
     "select id, kode, nama from public.gudang order by id",
   )).rows;
+  const profiles = (await client.query(
+    "select id, display_name, peran, aktif, created_at, updated_at from public.profiles order by id",
+  )).rows;
   const seedVersion = (await client.query(
     "select version from public._seed_meta order by version",
   )).rows;
@@ -31,6 +34,7 @@ try {
       {
         satuan: { count: satuan.length, rows: satuan },
         gudang: { count: gudang.length, rows: gudang },
+        profiles: { count: profiles.length, rows: profiles },
         seedVersion,
       },
       null,

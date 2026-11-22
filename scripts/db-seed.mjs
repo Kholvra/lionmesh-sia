@@ -52,6 +52,11 @@ if (guardResult.status !== 0) process.exit(guardResult.status ?? 1);
 
 const fileNames = listSeedFiles();
 const seedVersion = readSeedVersion();
+const testPassword = process.env.FND_TEST_PASSWORD;
+if (!testPassword) fail("Atur FND_TEST_PASSWORD untuk akun uji lokal sebelum menjalankan seed.");
+if (Buffer.byteLength(testPassword, "utf8") > 72) {
+  fail("FND_TEST_PASSWORD tidak boleh lebih dari 72 byte UTF-8.");
+}
 
 const client = new Client({ connectionString: DB_URL });
 
@@ -82,6 +87,7 @@ try {
   }
 
   await client.query("begin");
+  await client.query("select set_config('lionmesh.test_password', $1, true)", [testPassword]);
   await client.query(readFileSync("supabase/seed.sql", "utf8"));
   for (const fileName of fileNames) {
     await client.query(readFileSync(join(SEED_DIRECTORY, fileName), "utf8"));

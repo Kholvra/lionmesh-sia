@@ -48,7 +48,7 @@ Siapa pun dapat mengembalikan database lokal ke skema `siap`, lalu mengisi data 
 - Mekanisme seed bernomor: setiap item menambah berkas seed untuk tabel yang dibuatnya; urutan dicatat tech lead (`OQ-08-02`).
 - Seed dasar yang dimiliki item ini: satu gudang (`D-52`), satuan dasar, dan penanda versi seed. Tabel dan master milik item lain diisi berkas seed item pemilik.
 - Fixture tetap untuk pengembangan lokal: satuan `UNIT` / `Unit` dan gudang `GUDANG-01` / `Gudang Utama`; bukan master operasional resmi.
-- Akun uji untuk 13 peran (`D-53`) dibuat lewat berkas seed item `FND-003` memakai mekanisme yang sama (`OQ-08-03`).
+- Akun uji lokal untuk 13 peran (`D-53`) dibuat melalui berkas seed bernomor; alamat menggunakan domain `lionmesh.test` dan sandi disediakan melalui `FND_TEST_PASSWORD`, sesuai persetujuan tech lead.
 - Akun dasar COA (`D-41`) dibuat lewat berkas seed item `FND-006`; aturan approval placeholder (`D-37`, `D-51` c) lewat berkas seed item `FND-004`.
 - Penolakan seed kedua tanpa reset (sudah ada, dipertahankan).
 - Penanda versi seed (`OQ-08-05`).

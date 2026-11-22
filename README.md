@@ -44,7 +44,7 @@ Jalankan:
 pnpm dev
 ```
 
-Buka http://localhost:3000. Halaman `/login` menyediakan flow masuk/daftar dan callback PKCE di `/auth/callback`.
+Buka http://localhost:3000. Halaman `/login` menyediakan alur masuk dan callback PKCE di `/auth/callback`; pendaftaran mandiri tidak tersedia.
 
 ## Database
 
@@ -56,6 +56,15 @@ Migrasi ada di `supabase/migrations/` dan diterapkan berurutan.
 | `pnpm db:reset` | kosongkan database, terapkan ulang migrasi (tanpa seed) |
 | `pnpm db:seed` | isi data dasar; menolak bila sudah pernah di-seed |
 | `pnpm db:stop` | hentikan Supabase lokal |
+
+Seed membuat 13 akun uji lokal (`peran@lionmesh.test`). Sebelum menjalankan `pnpm db:seed`, atur sandi uji melalui variabel lingkungan `FND_TEST_PASSWORD`; jangan simpan sandi di repositori. Contoh shell interaktif:
+
+```bash
+read -rs FND_TEST_PASSWORD
+export FND_TEST_PASSWORD
+pnpm db:seed
+unset FND_TEST_PASSWORD
+```
 
 Aturan migrasi:
 

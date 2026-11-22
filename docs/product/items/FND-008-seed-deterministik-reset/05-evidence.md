@@ -4,11 +4,11 @@ Tanggal: 2026-11-22. Lingkungan: Node v24.22.2, pnpm 10.18.3, Supabase CLI lokal
 
 | AC | Hasil | Bukti |
 |---|---|---|
-| `AC-01` | Lulus | Dua putaran `pnpm db:reset` + `pnpm db:seed` dibandingkan dengan `node scripts/db-seed-snapshot.mjs`; keduanya identik: satuan 1 baris, gudang 1 baris, versi `0002`. UUID/kode/nama tetap: `f0080000-0000-4000-8000-000000000001` / `UNIT` / `Unit`; `f0080000-0000-4000-8000-000000000002` / `GUDANG-01` / `Gudang Utama`. |
+| `AC-01` | Lulus | Dua reset dan seed di Supabase terisolasi menghasilkan snapshot satuan, gudang, 13 UUID profil dan peran, serta versi `0003` yang identik. Hash sandi memiliki salt acak. |
 | `AC-02` | Lulus | `pnpm db:seed` kedua keluar 1; pesan `Database sudah berisi seed. Jalankan pnpm db:reset terlebih dahulu.` |
-| `AC-03` | Lulus | `rg -n -i 'now\(\)|current_date|current_timestamp|random\(\)|gen_random_uuid\(\)' supabase/seed.sql supabase/seeds supabase/seed-version` tidak menemukan baris. |
+| `AC-03` | Lulus dengan pengecualian tercatat | `gen_salt('bf')` menggunakan salt acak untuk hash sandi; kunci dan data profil tetap deterministik. |
 | `AC-04` | Lulus | UUID literal sama pada kedua snapshot AC-01. |
-| `AC-05` | Ditunda sesuai kriteria | FND-003 belum selesai; `profiles` saat ini hanya memiliki `id` dan `display_name` dari migrasi `0001_initial.sql`, belum ada `peran` atau berkas seed akun. Verifikasi 13 akun dilakukan saat FND-003 selesai. |
+| `AC-05` | Lulus | Pada Supabase lokal terisolasi, seed menghasilkan 13 akun dengan 13 peran berbeda; seluruh 13 akun berhasil login melalui endpoint Auth menggunakan sandi dari variabel lingkungan. |
 | `AC-06` | Lulus untuk skema saat ini | `to_regclass` mengembalikan null untuk `mutasi_stok`, `riwayat_status`, dan `jurnal`; berkas seed FND-008 hanya memasukkan `satuan` dan `gudang`. Item pemilik tabel memverifikasi tabelnya saat tersedia. |
 | `AC-07` | Lulus | `SUPABASE_DB_URL=postgresql://postgres@198.51.100.1:54322/postgres pnpm db:seed` keluar 1 dengan `Seed hanya boleh dijalankan di lingkungan lokal.`; guard berhenti sebelum koneksi. |
 | `AC-08` | Lulus | Dengan marker terpasang `0002`, versi repo sementara diubah ke `0003`; `pnpm db:seed` keluar 1 dan menyebut versi berbeda, marker tetap `0002`. Setelah `pnpm db:reset`, `pnpm db:seed` berhasil dan mencatat `0002`. |
@@ -37,4 +37,10 @@ Tidak ada test runner baru. Pemeriksaan perilaku memakai perintah lokal yang dap
 ## Pemeriksaan terhadap skema FND-003
 
 - Pada proyek Supabase terisolasi dengan migrasi 0001–0003, dua kali reset lokal diikuti `pnpm db:seed` menghasilkan snapshot `satuan`, `gudang`, dan versi yang identik. Seed kedua tanpa reset ditolak dengan exit code 1 dan pesan yang menyebut `pnpm db:reset`.
-- Setelah seed, `profiles = 0` dan peran berbeda = 0. AC-05 tetap tertunda: berkas seed 13 akun milik FND-003 belum tersedia, walaupun migrasi autentikasi sudah di-merge.
+- Pada pemeriksaan sebelum berkas seed akun ditambahkan, `profiles = 0` dan peran berbeda = 0. Hasil terkini setelah penambahan tercatat di bawah.
+
+## Akun uji lokal (2026-11-22)
+
+- Tech lead menyetujui alamat `peran@lionmesh.test` dan sandi yang diberikan melalui `FND_TEST_PASSWORD`; sandi tidak disimpan di repo atau bukti.
+- Dua siklus reset dan seed pada proyek Supabase terisolasi menghasilkan snapshot master, UUID profil, dan 13 peran yang identik (versi seed `0003`). Ketiga belas akun berhasil login melalui Auth. Seed ulang tanpa reset ditolak dengan exit code 1.
+- `extensions.gen_salt('bf')` sengaja menggunakan salt acak untuk keamanan hash sandi. Hash berbeda antar-run, sedangkan identitas akun dan data bisnis tetap deterministik; ini pengecualian AC-03 yang dicatat secara eksplisit.
