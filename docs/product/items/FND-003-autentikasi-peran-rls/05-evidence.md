@@ -31,3 +31,10 @@ Verifikasi mutu:
 
 - Viewport CSS 1280 × 900: panel kiri 560 CSS px, lebar dokumen 1280 CSS px; screenshot [`login-1280.png`](login-1280.png). Label terhubung ke input dan tombol Tampilkan mengubah input sandi menjadi teks.
 - Proyek Supabase terisolasi: login nonaktif ditolak Auth; payload `updated_by` palsu diganti ID sesi. Token lama setelah pergantian peran tidak dapat membaca profil sendiri melalui REST. Database bersama tidak di-reset.
+
+## Uji HTTP tambahan pada fixture terisolasi
+
+Tanggal 2026-11-22. Proyek Supabase dan server Next.js berjalan terpisah secara lokal; fixture route sementara dihapus setelah uji.
+
+- GET tanpa cookie ke fixture yang memanggil `requireSesi()` menghasilkan HTTP 307 dengan `Location: /login`. Ini membuktikan guard pada route handler; halaman aplikasi terlindungi yang sebenarnya belum tersedia untuk AC-01.
+- Login sebagai akun uji Gudang, kemudian POST langsung ke fixture yang memanggil `assertPeran("Penjualan")`, menghasilkan HTTP 403 dengan `{"ok":false,"message":"Peran Anda tidak berwenang melakukan tindakan ini."}`. Ini membuktikan guard pada fixture; AC-04 perlu diulang pada aksi fitur sebenarnya.
