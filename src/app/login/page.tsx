@@ -1,28 +1,47 @@
-import Link from "next/link";
 import { Suspense } from "react";
 
 import { AuthError } from "@/components/auth-error";
 import { AuthForm } from "@/components/auth-form";
+import styles from "@/components/auth.module.css";
+
+const CYCLES = [
+  { title: "Pendapatan", description: "Pesanan hingga penerimaan kas" },
+  { title: "Pengeluaran", description: "Pembelian hingga pembayaran" },
+  { title: "Produksi", description: "Perencanaan hingga hasil produksi" },
+  { title: "Penggajian", description: "Kehadiran hingga pembayaran gaji" },
+];
 
 export default function LoginPage() {
   return (
-    <main className="flex min-h-screen flex-col items-center justify-center bg-slate-950 px-6 py-12 text-white">
-      <div className="mb-8 w-full max-w-md">
-        <Link className="text-sm text-cyan-300 hover:text-cyan-200" href="/">
-          ← kembali ke home
-        </Link>
-        <h1 className="mt-6 text-3xl font-semibold tracking-tight">
-          masuk ke lionmesh sia
-        </h1>
-        <p className="mt-2 text-slate-400">
-          auth sudah terhubung ke Supabase. isi env lokal dulu sebelum submit.
-        </p>
-      </div>
-
-      <Suspense fallback={null}>
-        <AuthError />
-      </Suspense>
-      <AuthForm />
-    </main>
+    <div className={styles.page}>
+      <aside className={styles.brandPanel}>
+        <div>
+          <p className={styles.brand}>Lionmesh</p>
+          <p className={styles.brandDescription}>PT Lionmesh Prima Tbk</p>
+        </div>
+        <div className={styles.introduction}>
+          <h2>Empat siklus.<br />Satu kendali bisnis.</h2>
+          <p>Pantau pendapatan, pengeluaran, produksi, dan penggajian dalam satu sistem.</p>
+          <div className={styles.cycleList}>
+            {CYCLES.map((cycle) => (
+              <div className={styles.cycle} key={cycle.title}>
+                <span className={styles.cycleTitle}>{cycle.title}</span>
+                <span>{cycle.description}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+        <p className={styles.brandDescription}>Sistem informasi internal</p>
+      </aside>
+      <main className={styles.main}>
+        <div className={styles.content}>
+          <h1>Selamat datang kembali</h1>
+          <p className={styles.description}>Masuk untuk melanjutkan pekerjaan Anda di Lionmesh SIA.</p>
+          <Suspense fallback={null}><AuthError /></Suspense>
+          <AuthForm />
+        </div>
+        <footer className={styles.footer}>© PT Lionmesh Prima Tbk</footer>
+      </main>
+    </div>
   );
 }
