@@ -1,0 +1,191 @@
+"use client";
+
+import { useState } from "react";
+import {
+  ArrowRight,
+  CircleDollarSign,
+  CircleHelp,
+  Eye,
+  EyeOff,
+  Factory,
+  Lock,
+  Mail,
+  ShieldCheck,
+  Users,
+  Wallet,
+} from "lucide-react";
+
+const siklus = [
+  { title: "Pendapatan", desc: "Pesanan hingga penerimaan kas", icon: CircleDollarSign },
+  { title: "Pengeluaran", desc: "Pembelian hingga pembayaran", icon: Wallet },
+  { title: "Produksi", desc: "Perencanaan hingga hasil produksi", icon: Factory },
+  { title: "Penggajian", desc: "Kehadiran hingga rilis payroll", icon: Users },
+];
+
+export default function LoginPage() {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [remember, setRemember] = useState(true);
+
+  function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    // TODO: sambungkan ke Supabase Auth (signInWithPassword)
+    console.log({ email, password, remember });
+  }
+
+  return (
+    <div className="flex min-h-screen bg-slate-50 text-slate-900">
+      {/* Panel kiri */}
+      <aside className="hidden w-[28%] min-w-[380px] flex-col bg-[#1c2333] p-8 text-white lg:flex">
+        <div>
+          <h2 className="text-3xl font-bold tracking-tight">Lionmesh</h2>
+          <p className="mt-1 text-sm text-slate-400">PT Lionmesh Prima Tbk</p>
+        </div>
+
+        <div className="mt-16">
+          <span className="inline-block rounded-full bg-amber-100 px-3 py-1.5 text-xs font-semibold uppercase tracking-wide text-amber-800">
+            Sistem Informasi Bisnis
+          </span>
+          <h1 className="mt-6 text-4xl font-bold leading-tight tracking-tight">
+            Empat siklus.
+            <br />
+            Satu kendali bisnis.
+          </h1>
+          <p className="mt-5 text-sm leading-relaxed text-slate-400">
+            Pantau pendapatan, pengeluaran, produksi, dan penggajian dalam satu
+            sistem yang terintegrasi.
+          </p>
+        </div>
+
+        <ul className="mt-10 space-y-3">
+          {siklus.map(({ title, desc, icon: Icon }) => (
+            <li
+              key={title}
+              className="flex items-center gap-4 rounded-xl border border-white/10 bg-white/5 px-5 py-4"
+            >
+              <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-white/5 text-amber-500">
+                <Icon size={20} />
+              </span>
+              <div>
+                <p className="font-semibold">{title}</p>
+                <p className="text-xs text-slate-400">{desc}</p>
+              </div>
+            </li>
+          ))}
+        </ul>
+
+        <p className="mt-auto pt-10 text-xs text-slate-500">
+          Aman dan terintegrasi
+        </p>
+      </aside>
+
+      {/* Panel kanan */}
+      <main className="relative flex flex-1 flex-col px-6 py-8 sm:px-12">
+        <a
+          href="#"
+          className="ml-auto flex items-center gap-2 text-sm text-slate-600 hover:text-slate-900"
+        >
+          <CircleHelp size={16} />
+          Butuh bantuan? Hubungi IT
+        </a>
+
+        <div className="mx-auto flex w-full max-w-[44rem] flex-1 flex-col justify-center py-10">
+          <span className="w-fit rounded-full bg-amber-100 px-3 py-1.5 text-xs font-semibold uppercase tracking-wide text-amber-800">
+            Portal Direksi
+          </span>
+          <h1 className="mt-5 text-4xl font-bold tracking-tight">
+            Selamat datang kembali
+          </h1>
+          <p className="mt-3 text-slate-600">
+            Masuk untuk memantau kinerja bisnis dan menindaklanjuti persetujuan
+            operasional Lionmesh.
+          </p>
+
+          <form onSubmit={handleSubmit} className="mt-8 space-y-5">
+            <div>
+              <label htmlFor="email" className="text-sm font-semibold">
+                Email perusahaan
+              </label>
+              <div className="mt-2 flex items-center gap-3 rounded-lg border border-slate-200 bg-white px-4 py-3 focus-within:border-amber-500 focus-within:ring-2 focus-within:ring-amber-200">
+                <Mail size={18} className="text-slate-400" />
+                <input
+                  id="email"
+                  type="email"
+                  required
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="direksi@lionmesh.com"
+                  className="w-full bg-transparent outline-none placeholder:text-slate-400"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label htmlFor="password" className="text-sm font-semibold">
+                Kata sandi
+              </label>
+              <div className="mt-2 flex items-center gap-3 rounded-lg border border-slate-200 bg-white px-4 py-3 focus-within:border-amber-500 focus-within:ring-2 focus-within:ring-amber-200">
+                <Lock size={18} className="text-slate-400" />
+                <input
+                  id="password"
+                  type={showPassword ? "text" : "password"}
+                  required
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="••••••••••••"
+                  className="w-full bg-transparent outline-none placeholder:text-slate-400"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword((v) => !v)}
+                  aria-label={showPassword ? "Sembunyikan kata sandi" : "Tampilkan kata sandi"}
+                  className="text-slate-400 hover:text-slate-600"
+                >
+                  {showPassword ? <Eye size={18} /> : <EyeOff size={18} />}
+                </button>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-between text-sm">
+              <label className="flex cursor-pointer items-center gap-2">
+                <input
+                  type="checkbox"
+                  checked={remember}
+                  onChange={(e) => setRemember(e.target.checked)}
+                  className="h-4 w-4 accent-amber-600"
+                />
+                Ingat saya
+              </label>
+              <a href="#" className="font-semibold text-amber-600 hover:text-amber-700">
+                Lupa kata sandi?
+              </a>
+            </div>
+
+            <button
+              type="submit"
+              className="flex w-full items-center justify-center gap-2 rounded-lg bg-[#e68a00] py-3.5 font-semibold text-white transition hover:bg-[#cc7a00]"
+            >
+              <ArrowRight size={18} />
+              Masuk ke Dashboard
+            </button>
+          </form>
+
+          <div className="mt-5 flex items-center gap-3 rounded-lg bg-slate-100 px-4 py-3 text-sm text-slate-600">
+            <ShieldCheck size={18} className="shrink-0 text-slate-500" />
+            Gunakan akun perusahaan Anda. Akses dan aktivitas dicatat untuk
+            menjaga keamanan data bisnis.
+          </div>
+
+          <p className="mt-5 text-sm text-slate-600">
+            Tidak dapat masuk? Hubungi administrator sistem.
+          </p>
+        </div>
+
+        <footer className="text-center text-xs text-slate-400 sm:text-left">
+          © 2026 PT Lionmesh Prima Tbk. Seluruh hak dilindungi.
+        </footer>
+      </main>
+    </div>
+  );
+}
