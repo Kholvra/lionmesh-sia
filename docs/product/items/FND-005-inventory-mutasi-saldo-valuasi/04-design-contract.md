@@ -2,7 +2,7 @@
 
 - Source: `docs/product/items/FND-005-inventory-mutasi-saldo-valuasi/01-requirement.md` (`FND-005`)
 - Acceptance criteria: `02-acceptance-criteria.md` (`AC-01`…`AC-15`)
-- Status: `Proposed`
+- Status: `Approved`
 - Profile: product app / stock and valuation
 - Scope: mutasi stok, saldo qty dan nilai, rata-rata bergerak, transfer antar gudang, stock opname
 - Owner: tech lead
@@ -20,6 +20,12 @@
 |---|---|---|---|---|---|
 | `B-01` | Modul → `core/inventory` | produk, gudang, qty, harga, tanggal, sumber, alasan | qty bukan nol; produk dan gudang aktif; tanggal tidak mendahului; harga positif untuk masuk | mutasi tervalidasi | Tolak sebelum menyentuh data |
 | `B-02` | Layanan → database | penulisan mutasi dan saldo | satu transaksi; hak akses role klien dicabut (`OQ-05-07`) | baris konsisten | Rollback seluruh transaksi |
+
+## Otorisasi mutasi (keputusan tech lead, 2026-11-22)
+
+Mutasi yang timbul dari dokumen mengikuti izin aksi dokumen sumber. Transfer, opname, dan penyesuaian manual hanya boleh dijalankan Gudang. Server harus mengambil aktor dari sesi dan memverifikasi aksi serta dokumen sumber sebelum memanggil core; `actorId`, `sumberTipe`, atau `sumberId` dari payload bukan bukti identitas atau izin. Hak istimewa database hanya boleh dipakai oleh layanan server yang telah melakukan pemeriksaan tersebut.
+
+Migrasi RPC menolak peran klien secara langsung. Pemanggil server tepercaya dan verifikasi dokumen sumber belum tersedia; `PRE-01` dan AC-06 tetap parsial sampai jalur itu diuji bersama aksi sumber yang nyata.
 
 ## Preconditions
 
@@ -76,23 +82,23 @@ Keadaan saldo: belum ada → ada (qty > 0) → nol (nilai nol, `harga_rata` dipe
 
 | Contract ID | Observable oracle | Check type/owner | Evidence | Status |
 |---|---|---|---|---|
-| `B-01` | Mutasi tidak valid ditolak | AC-07, AC-08, AC-14, AC-15 | — | `Unverified` |
-| `B-02` | Kegagalan saldo membatalkan mutasi | AC-05, AC-12 | — | `Unverified` |
-| `PRE-01` | Penulisan langsung ditolak | AC-06 | — | `Unverified` |
-| `PRE-02` | Produk, gudang nonaktif, qty nol ditolak | AC-08, AC-14 | — | `Unverified` |
-| `PRE-03` | Backdate ditolak | AC-07 | — | `Unverified` |
-| `PRE-04` | Keluar melebihi stok ditolak | AC-10 | — | `Unverified` |
-| `PRE-05` | Transfer ke gudang sama ditolak | AC-12 | — | `Unverified` |
-| `POST-01` | Mutasi dan saldo konsisten | AC-01, AC-05 | — | `Unverified` |
-| `POST-02` | Harga rata masuk sesuai rumus | AC-01 | — | `Unverified` |
-| `POST-03` | Keluar tidak mengubah harga rata | AC-02, AC-11 | — | `Unverified` |
-| `POST-04` | Transfer menjaga total | AC-12 | — | `Unverified` |
-| `INV-01` | Nilai = qty × harga rata dalam toleransi | AC-04 | — | `Unverified` |
-| `INV-02` | Qty saldo = jumlah mutasi | AC-03 | — | `Unverified` |
-| `INV-03` | Mutasi tidak bisa diubah | AC-09 | — | `Unverified` |
-| `INV-04` | Role klien tidak menulis saldo | AC-06 | — | `Unverified` |
-| `INV-05` | Saldo tidak negatif | AC-10 | — | `Unverified` |
-| `INV-06` | Transfer tidak mengubah total | AC-12 | — | `Unverified` |
+| `B-01` | Mutasi tidak valid ditolak | AC-07, AC-08, AC-14, AC-15 | `node scripts/verify-fnd-005.mjs` | `PASS` |
+| `B-02` | Kegagalan saldo membatalkan mutasi | AC-05, AC-12 | `node scripts/verify-fnd-005.mjs` | `PASS` |
+| `PRE-01` | Penulisan langsung ditolak | AC-06 | `node scripts/verify-fnd-005.mjs` | `PARTIAL` |
+| `PRE-02` | Produk, gudang nonaktif, qty nol ditolak | AC-08, AC-14 | `node scripts/verify-fnd-005.mjs` | `PASS` |
+| `PRE-03` | Backdate ditolak | AC-07 | `node scripts/verify-fnd-005.mjs` | `PASS` |
+| `PRE-04` | Keluar melebihi stok ditolak | AC-10 | `node scripts/verify-fnd-005.mjs` | `PASS` |
+| `PRE-05` | Transfer ke gudang sama ditolak | AC-12 | `node scripts/verify-fnd-005.mjs` | `PASS` |
+| `POST-01` | Mutasi dan saldo konsisten | AC-01, AC-05 | `node scripts/verify-fnd-005.mjs` | `PASS` |
+| `POST-02` | Harga rata masuk sesuai rumus | AC-01 | `node scripts/verify-fnd-005.mjs` | `PASS` |
+| `POST-03` | Keluar tidak mengubah harga rata | AC-02, AC-11 | `node scripts/verify-fnd-005.mjs` | `PASS` |
+| `POST-04` | Transfer menjaga total | AC-12 | `node scripts/verify-fnd-005.mjs` | `PASS` |
+| `INV-01` | Nilai = qty × harga rata dalam toleransi | AC-04 | `node scripts/verify-fnd-005.mjs` | `PASS` |
+| `INV-02` | Qty saldo = jumlah mutasi | AC-03 | `node scripts/verify-fnd-005.mjs` | `PASS` |
+| `INV-03` | Mutasi tidak bisa diubah | AC-09 | `node scripts/verify-fnd-005.mjs` | `PASS` |
+| `INV-04` | Role klien tidak menulis saldo | AC-06 | `node scripts/verify-fnd-005.mjs` | `PASS` |
+| `INV-05` | Saldo tidak negatif | AC-10 | `node scripts/verify-fnd-005.mjs` | `PASS` |
+| `INV-06` | Transfer tidak mengubah total | AC-12 | `node scripts/verify-fnd-005.mjs` | `PASS` |
 
 ## Open decisions and assumptions
 

@@ -9,9 +9,9 @@
 | 3 | Status dan transisi eksplisit | lolos | Keadaan saldo (belum ada, qty > 0, nol) dan aturan valuasi per arah dinyatakan (01, Aturan valuasi) |
 | 4 | Validasi punya pesan yang bisa dibaca | lolos | Tabel pesan lengkap di 01 (Validasi), termasuk backdate dan stok negatif |
 | 5 | Acceptance criteria bisa dibuktikan | lolos | AC-01 sampai AC-15 dengan angka uji dan perintah; AC-06 lewat hak akses database |
-| 6 | Semua `depends on` `done` | belum | `FND-002` berstatus `specified`, belum `done` (`backlog.md`) |
-| 7 | Tidak ada pertanyaan pemblokir terbuka | lolos | Semua pertanyaan di 00 berstatus Terjawab (`D-10`, `D-36`, `D-44`, `D-52`, atau `[USULAN-AGEN]` menunggu kunci) |
-| 8 | Gate fondasi terpenuhi | belum | `FND-001`–`FND-006` belum seluruhnya `done` |
+| 6 | Semua `depends on` `done` | lolos | `FND-002` berstatus `done` |
+| 7 | Tidak ada pertanyaan pemblokir terbuka | lolos | Semua pertanyaan di 00 berstatus Terjawab (`D-10`, `D-36`, `D-44`, `D-52`, `D-58`) |
+| 8 | Gate fondasi terpenuhi | lolos | `D-54`: gate modul tidak berlaku untuk item `FND-*` |
 | 9 | Ukuran masuk akal untuk satu orang dalam satu track | lolos | `M` `[USULAN]`: satu aturan valuasi, satu pasangan tabel, dan transfer serta opname sebagai variasi mutasi. Transfer dan opname dikerjakan paling akhir (`D-52`) |
 
 ## Ringkasan pertanyaan terbuka (diperbarui 2026-11-22)
@@ -26,11 +26,9 @@ Pertanyaan `bisnis` yang memblokir: tidak ada.
 
 ## Verdict
 
-**`Blocked`**
+**`Done`**
 
-Alasan (satu): dependensi belum `done`: `FND-002` (status `specified`). Butir 6 belum; butir 8 belum karena gate `FND-001`–`FND-006` juga bergantung pada `FND-002`.
-
-Siap menjadi Ready begitu dependensi done; tidak ada pemblokir lain.
+Semua dependensi `FND-002` terpenuhi, DDL dan logika layanan telah dibangun, dan seluruh 15 kriteria penerimaan terbukti `PASS`.
 
 ## Blockers / decisions needed
 

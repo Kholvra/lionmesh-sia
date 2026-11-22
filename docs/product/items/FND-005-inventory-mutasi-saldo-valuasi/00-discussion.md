@@ -81,3 +81,7 @@ Setiap perubahan stok menjadi mutasi tak-ubah. Saldo qty dan nilai per produk pe
 ## Next step
 
 Koordinator mengunci keputusan `[USULAN-AGEN]` dan baris matriks baru. Setelah `FND-002` `done`, item ini dapat menjadi `Ready` sesuai 03.
+
+## Keputusan tech lead: izin pemicu mutasi
+
+Pada 2026-11-22, tech lead menyetujui bahwa mutasi yang dipicu dokumen mengikuti izin aksi dokumen sumber. Transfer, opname, dan penyesuaian manual hanya untuk peran Gudang. Implementasi tetap harus memverifikasi aksi dan dokumen sumber di server, mengambil aktor dari sesi, serta menulis stok melalui core; nilai tipe sumber atau aktor dari payload klien tidak menjadi bukti izin. Integrasi tersebut belum tersedia dan AC-06 masih parsial.
