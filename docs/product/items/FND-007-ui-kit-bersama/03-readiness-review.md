@@ -9,9 +9,9 @@
 | 3 | Status dan transisi eksplisit | lolos | Keadaan dialog, tabel, dan badge ditulis (01, Status) |
 | 4 | Validasi punya pesan yang bisa dibaca | lolos | Tabel pesan lengkap di 01 (Validasi) |
 | 5 | Acceptance criteria bisa dibuktikan | lolos | AC-01 sampai AC-08 dengan langkah manual terekam atau perintah; `arch:check` dan `grep` untuk AC-05 dan AC-06 |
-| 6 | Semua `depends on` `done` | belum | `FND-002` berstatus `specified`, belum `done` (`backlog.md`) |
-| 7 | Tidak ada pertanyaan pemblokir terbuka | lolos | Semua pertanyaan di 00 berstatus Terjawab (`D-46`, `D-47`, atau `[USULAN-AGEN]` menunggu kunci) |
-| 8 | Gate fondasi terpenuhi | belum | `FND-001`–`FND-006` belum seluruhnya `done`; `FND-007` sendiri termasuk yang dinanti (aturan gate) |
+| 6 | Semua `depends on` `done` | lolos | Pada branch `fnd-007-ui-kit-bersama`, `FND-002` berstatus `done`; buktinya tercatat di paket FND-002 dan backlog branch ini. |
+| 7 | Tidak ada pertanyaan pemblokir terbuka | lolos | OQ-07-01 sampai OQ-07-07 sudah dijawab di 00; pilihan UI yang diusulkan menjadi perilaku item ini, tanpa aturan domain baru. |
+| 8 | Gate fondasi terpenuhi | lolos | D-54 membatasi gate FND-001–FND-007 ke item modul. Item FND-007 mengikuti dependensinya sendiri, FND-002. |
 | 9 | Ukuran masuk akal untuk satu orang dalam satu track | lolos | `S` atau `M` `[USULAN]` untuk empat komponen tanpa logika domain |
 
 ## Ringkasan pertanyaan terbuka (diperbarui 2026-11-22)
@@ -19,35 +19,27 @@
 | Status | Jumlah |
 |---|---|
 | Terbuka | 0 |
-| Terjawab (`D-xx`) | 1 |
-| Terjawab `[USULAN-AGEN]` menunggu kunci koordinator | 6 |
+| Terjawab dan disahkan (`D-xx`) | 7 |
+| Menunggu kunci koordinator | 0 |
 
 Pertanyaan `bisnis` yang memblokir: tidak ada.
 
 ## Verdict
 
-**`Blocked`**
+**`Ready`**
 
-Alasan (satu): dependensi belum `done`: `FND-002` (status `specified`). Butir 6 belum; butir 8 belum karena gate `FND-001`–`FND-006` juga bergantung pada `FND-002`.
-
-Siap menjadi Ready begitu dependensi done; tidak ada pemblokir lain.
+Verdict ini mencatat kesiapan saat implementasi dimulai. Dependensi `FND-002` sudah `done` pada branch kerja ini. Seluruh OQ disahkan D-58 dan implementasi selesai; buktinya ada di `05-evidence.md`.
 
 ## Blockers / decisions needed
 
-Tidak ada pertanyaan terbuka. Keputusan yang menunggu kunci koordinator:
+Tidak ada. Seluruh pertanyaan terbuka disahkan pada tingkat item oleh D-58.
 
-| ID | Keputusan | Owner |
+## Usulan yang disahkan D-58
+
+| Hal | Keputusan | Bukti |
 |---|---|---|
-| OQ-07-01 | aturan gate UI sebagai DoR butir 6; kolom `depends_on` di `backlog.md` | koordinator |
-| OQ-07-02, OQ-07-04..06 | perilaku tabel, konfirmasi, pesan, aksesibilitas | koordinator |
-| OQ-07-07 | bukti manual sampai runner ada | koordinator |
-
-## Agent suggestions awaiting approval
-
-| Hal | Usulan | Kenapa |
-|---|---|---|
-| Dependensi | `FND-007` ditambahkan ke `depends on` item modul yang menambah layar `[USULAN]` | mengikuti aturan gate; keputusan ada di koordinator (`backlog.md` tidak diubah di sini) |
-| Ukuran | `S` atau `M` `[USULAN]` | empat komponen, tanpa logika domain |
+| Gate UI | DoR butir 6 mengikuti aturan gate di `backlog.md`; koordinator menetapkan dependensi masing-masing item | D-58, OQ-07-01 |
+| Perilaku UI dan pembuktian | Perilaku AC-01 sampai AC-08 dipakai; AC visual/interaksi dicatat manual sampai runner tersedia | D-58, `05-evidence.md` |
 
 ## Kontrak desain
 
@@ -66,23 +58,23 @@ Tidak ada pertanyaan terbuka. Keputusan yang menunggu kunci koordinator:
 
 | Risiko | Dampak | Mitigasi |
 |---|---|---|
-| Gate UI tidak masuk `depends_on` (`OQ-07-01`) | item modul mulai tanpa primitive | koordinator memutuskan; DoR butir 6 membaca aturan gate |
+| Item modul melewatkan gate UI | item modul mulai tanpa primitive | aturan gate di `backlog.md`, disahkan D-58 |
 | Setiap modul membuat tabel sendiri sebelum item ini | duplikasi | gate pada `FND-007` |
 | Bukti manual tidak berulang | AC UI sulit diverifikasi ulang | tangkapan layar di `05-evidence.md`; runner nanti |
 
 ## Readiness status
 
-`Blocked` (lihat Verdict). Tidak ada verdict `Ready`.
+`Ready` (lihat Verdict); implementasi dimulai pada branch `fnd-007-ui-kit-bersama`.
 
 ## Handoff boundary
 
 - Parent epic / milestone: `EPIC-FND` / `M0`
-- Lane / sequence / predecessor: `active` / `7` / `FND-002` (`specified`, belum `done`)
-- Foundation status / evidence: `missing` untuk UI kit (`backlog.md`); `src/components/` ada sebagai folder, isi tidak diverifikasi
+- Lane / sequence / predecessor: `active` / `7` / `FND-002` (`done` pada branch kerja)
+- Foundation status / evidence: `FND-007` selesai pada branch ini; komponen ada di `src/components/ui/` dan AC-01–AC-08 tercatat di `05-evidence.md`
 - Artifact role / canonical source: `canonical`: `docs/product/items/FND-007-ui-kit-bersama/`
-- Next domain: `quick-dev` setelah DoR `Ready`
+- Next domain: tidak ada; implementasi dan verifikasi item selesai
 - Required input artifacts: `docs/product/decisions.md` (D-46, D-47, D-48); `docs/product/backlog.md` (Fondasi, Aturan gate 1); `docs/product/epics/EPIC-FND.md`; `docs/product/README.md` (aturan gate); `docs/architecture/contracts/ARCH-001-batas-core-modul/contract.md` (ARCH-01, ARCH-02)
-- Implementation plan: `Not created`
+- Implementation plan: in-chat plan and scenario matrix, 2026-11-22; implementation complete
 - Out of scope for this skill: setup execution, technical task breakdown, contract compilation, test strategy, and code changes.
 
 ## Links

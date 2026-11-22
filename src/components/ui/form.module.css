@@ -1,0 +1,104 @@
+.form {
+  display: grid;
+  gap: var(--space-4);
+}
+
+.field {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.fieldLabel {
+  color: var(--text-primary);
+  font-size: var(--font-size-label);
+  font-weight: 600;
+  line-height: var(--line-height-label);
+}
+
+.requiredMark {
+  color: var(--status-danger-text);
+  margin-inline-start: var(--space-1);
+}
+
+.input {
+  width: 100%;
+  height: var(--control-height);
+  padding-inline: var(--space-3);
+  border: var(--border-width-default) solid var(--border-input);
+  border-radius: var(--radius-md);
+  background: var(--bg-surface);
+  color: var(--text-primary);
+  font-size: var(--font-size-body);
+  line-height: var(--line-height-body);
+  transition:
+    border-color var(--motion-fast) ease-out,
+    background-color var(--motion-fast) ease-out;
+}
+
+.input::placeholder {
+  color: var(--text-muted);
+}
+
+.input:hover:not(:disabled, :read-only) {
+  border-color: var(--ink-400);
+}
+
+.input:focus-visible {
+  border-color: var(--border-focus);
+  outline: var(--focus-ring-width) solid var(--border-focus);
+  outline-offset: var(--focus-ring-offset);
+}
+
+.input[aria-invalid="true"] {
+  border-color: var(--status-danger-text);
+}
+
+.input:disabled {
+  background: var(--bg-subtle);
+  color: var(--text-muted);
+  cursor: not-allowed;
+}
+
+.input:read-only {
+  border-color: transparent;
+  background: var(--bg-subtle);
+}
+
+.input[type="number"] {
+  font-variant-numeric: tabular-nums;
+  text-align: end;
+}
+
+.fieldHelp {
+  color: var(--text-muted);
+  font-size: var(--font-size-label);
+  line-height: var(--line-height-label);
+}
+
+.fieldError {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  color: var(--status-danger-text);
+  font-size: var(--font-size-label);
+  line-height: var(--line-height-label);
+}
+
+.errorIcon {
+  display: inline-grid;
+  width: var(--space-4);
+  height: var(--space-4);
+  flex: 0 0 auto;
+  place-items: center;
+  border: var(--border-width-default) solid currentColor;
+  border-radius: var(--radius-full);
+  font-size: var(--font-size-caption);
+  font-weight: 700;
+  line-height: var(--line-height-label);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .input {
+    transition-duration: var(--motion-none);
+  }
+}

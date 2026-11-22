@@ -2,11 +2,11 @@
 
 - Source: `docs/product/items/FND-007-ui-kit-bersama/01-requirement.md` (`FND-007`)
 - Acceptance criteria: `02-acceptance-criteria.md` (`AC-01`…`AC-08`)
-- Status: `Proposed`
+- Status: `Approved`
 - Profile: product app / shared UI primitives
 - Scope: tabel, form, status badge, dialog konfirmasi
 - Owner: tech lead
-- Referensi: `ARCH-001` (`ARCH-01`, `ARCH-02`); `D-46`, `D-47`, `D-48`
+- Referensi: `ARCH-001` (`ARCH-01`, `ARCH-02`); `D-46`, `D-47`, `D-48`, `D-58`
 
 ## Intent and non-goals
 
@@ -34,20 +34,20 @@
 
 | Contract ID | Observable oracle | Check type/owner | Evidence | Status |
 |---|---|---|---|---|
-| `INV-01` | `grep` tanpa hasil | AC-06 | — | `Unverified` |
-| `INV-02` | `pnpm arch:check` gagal bila modul impor modul | AC-05 | — | `Unverified` |
-| `INV-03` | Label di luar daftar tidak tampil | AC-03 | — | `Unverified` |
-| `PRE-01` | Nilai di luar daftar ditolak badge | AC-03 | — | `Unverified` |
-| `PRE-02` | Aksi tanpa konfirmasi tidak jalan | AC-04 | — | `Unverified` |
-| `POST-01` | Batal tidak mengubah data | AC-04 | — | `Unverified` |
+| `INV-01` | pencarian impor tidak menemukan layanan domain, tabel, core, modul, atau Supabase | AC-06 | `05-evidence.md` — AC-06 | `Verified` |
+| `INV-02` | impor komponen UI lintas modul lolos; impor antar-modul ditolak | AC-05 | `05-evidence.md` — AC-05 | `Verified` |
+| `INV-03` | label status di luar daftar tidak tampil | AC-03 | `05-evidence.md` — AC-03 | `Verified` |
+| `PRE-01` | nilai status di luar daftar ditolak badge dan dilaporkan | AC-03 | `05-evidence.md` — AC-03 | `Verified` |
+| `PRE-02` | aksi setujui, tolak, dan batalkan hanya berjalan setelah konfirmasi | AC-04 | `05-evidence.md` — AC-04 | `Verified` |
+| `POST-01` | batal atau kembali menutup dialog tanpa menjalankan aksi | AC-04 | `05-evidence.md` — AC-04 | `Verified` |
 
 ## Open decisions and assumptions
 
 | Hal | Status | Dampak bila salah |
 |---|---|---|
-| Gate UI di `backlog.md` (`OQ-07-01`) | `[USULAN-AGEN]` | Item modul mulai tanpa primitive |
-| Perilaku tabel, konfirmasi, pesan, aksesibilitas (`OQ-07-02`, `OQ-07-04` sampai `OQ-07-06`) | `[USULAN-AGEN]` | AC-01 sampai AC-04, AC-07, AC-08 berbeda dari keputusan |
-| Bukti manual sampai runner (`OQ-07-07`) | `[USULAN-AGEN]` | Bukti tidak bisa diulang otomatis |
+| Gate UI di `backlog.md` (`OQ-07-01`) | Disahkan pada tingkat item oleh D-58 | Item modul mengikuti gate UI |
+| Perilaku tabel, konfirmasi, pesan, aksesibilitas (`OQ-07-02` sampai OQ-07-06) | Disahkan pada tingkat item oleh D-58 | AC-01 sampai AC-04, AC-07, AC-08 memakai perilaku tersebut |
+| Bukti manual sampai runner (`OQ-07-07`) | Disahkan pada tingkat item oleh D-58 | Langkah dan hasil ada di `05-evidence.md` |
 
 ## Aturan yang sengaja tidak dibuat
 

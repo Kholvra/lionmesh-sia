@@ -30,7 +30,7 @@ Satu pemilik: tech lead. Urutan wajib.
 | `FND-004` | Dokumen: penomoran, status, riwayat, approval berjenjang | 4 | `FND-002`, `FND-003` | `specified` |
 | `FND-005` | Inventory: mutasi, saldo, valuasi rata-rata bergerak | 5 | `FND-002` | `specified` |
 | `FND-006` | Ledger: COA, `postJournal()`, periode akuntansi | 6 | `FND-002`, `FND-003` | `specified` |
-| `FND-007` | UI kit bersama: tabel, form, status badge, dialog | 7 | `FND-002` | `specified` |
+| `FND-007` | UI kit bersama: tabel, form, status badge, dialog | 7 | `FND-002` | `done` |
 | `FND-008` | Seed deterministik + reset ke skema `siap` | 8 | `FND-001`, `FND-002` | `specified` |
 
 **Gate:** `FND-001`–`FND-007` berstatus `done` sebelum item **modul** (`PD`, `PG`, `PR`, `GJ`, `C`, `INT`) boleh `ready`. Gate ini tidak berlaku untuk item `FND-*` sendiri, yang hanya mengikuti `depends on` (`D-54`). `FND-008` (seed) boleh menyusul paralel dengan gelombang pertama.
@@ -177,3 +177,5 @@ Terbaca per level. Semua item dalam satu baris boleh dikerjakan serentak. `DISC-
 | 2026-11-22 | Gate fondasi diperluas ke `FND-001`–`FND-007` dan hanya untuk item modul (`D-54`); `FND-002` → `ready`; `PG-004` + `PG-003`, `PG-002` − `PG-001`, `PR-005` + `PR-004` (`D-57`); level dan matriks paralel dihitung ulang (jalur kritis Pengeluaran level 9); `C-014`, `DISC-001`, `DISC-002` ditambahkan |
 | 2026-11-22 | `FND-002` mulai dikerjakan setelah `FND-001` done; migrasi dan kontrak item sedang diselaraskan |
 | 2026-11-22 | `FND-002` → `done`: migrasi `0002_skema_domain_inti.sql`; AC-01–AC-09, `pnpm check:migrations`, `pnpm verify`, dan review akhir lulus |
+| 2026-11-22 | `FND-007` → `in progress` setelah `FND-002` `done` pada branch kerja; readiness review diperbarui |
+| 2026-11-22 | `FND-007` → `done`: AC-01–AC-08 dibuktikan, screenshot 1280px disimpan, dan `pnpm verify` lulus |
