@@ -9,50 +9,38 @@
 | 3 | Status dan transisi eksplisit | lolos | Transisi `kosong`/`siap`/`terisi` dari `FND-001` dirujuk di 01 (Status) |
 | 4 | Validasi punya pesan yang bisa dibaca | lolos | Pesan penolakan seed sudah ada (`FND-001` AC-07); teks lain ditulis di 01 (Validasi) |
 | 5 | Acceptance criteria bisa dibuktikan | lolos | AC-01 sampai AC-09 dengan perintah; AC-05 dan AC-06 dibuktikan saat item pemilik selesai, dicatat di 02 |
-| 6 | Semua `depends on` `done` | belum | `FND-001` done; `FND-002` `specified`, belum `done` (`backlog.md`) |
-| 7 | Tidak ada pertanyaan pemblokir terbuka | lolos | Semua pertanyaan di 00 berstatus Terjawab (`D-51` g, atau `[USULAN-AGEN]` menunggu kunci) |
-| 8 | Gate fondasi terpenuhi | belum | `FND-001`–`FND-006` belum seluruhnya `done` |
-| 9 | Ukuran masuk akal untuk satu orang dalam satu track | lolos | `M` `[USULAN]`: mekanisme sudah ada dari `FND-001`; item ini menambah isi master dan penanda versi |
+| 6 | Semua `depends on` `done` | lolos | `FND-001` dan `FND-002` berstatus `done` pada branch kerja (`backlog.md`) |
+| 7 | Tidak ada pertanyaan pemblokir terbuka | lolos | OQ-08-01–08 dijawab oleh `D-51`, `D-58`, atau instruksi pengguna untuk fixture lokal |
+| 8 | Gate fondasi terpenuhi | tidak berlaku | Gate fondasi hanya untuk item modul; item `FND-*` mengikuti `depends on` (`D-54`) |
+| 9 | Ukuran masuk akal untuk satu orang dalam satu track | lolos | Ukuran `M` dipakai sesuai rekomendasi; mekanisme sudah ada dari `FND-001` |
 
 ## Ringkasan pertanyaan terbuka (diperbarui 2026-11-22)
 
 | Status | Jumlah |
 |---|---|
 | Terbuka | 0 |
-| Terjawab (`D-xx`, atau `D-51` untuk skenario) | 1 |
-| Terjawab `[USULAN-AGEN]` menunggu kunci koordinator | 7 |
+| Terjawab (`D-xx` atau instruksi pengguna) | 8 |
+| Terjawab `[USULAN-AGEN]` menunggu kunci koordinator | 0 |
 
 Pertanyaan `bisnis` yang memblokir: tidak ada.
 
 ## Verdict
 
-**`Blocked`**
+**`Ready`**
 
-Alasan (satu): dependensi belum `done`: `FND-002` (status `specified`). `FND-001` sudah `done`. Butir 6 belum; butir 8 belum karena gate `FND-001`–`FND-006` juga bergantung pada `FND-002`.
-
-Siap menjadi Ready begitu dependensi done; tidak ada pemblokir lain.
+Dependensi selesai dan tidak ada keputusan pemblokir terbuka. Gate fondasi tidak berlaku pada item `FND-008` (`D-54`).
 
 ## Blockers / decisions needed
 
-Tidak ada pertanyaan terbuka. Keputusan yang menunggu kunci koordinator (`[USULAN-AGEN]`):
-
-| ID | Keputusan | Owner |
-|---|---|---|
-| OQ-08-01, OQ-08-02 | seed hanya master; setiap item menambah berkas seed | koordinator |
-| OQ-08-03, OQ-08-07 | 13 akun uji lokal; `db:seed` memakai penjaga | koordinator |
-| OQ-08-05, OQ-08-06, OQ-08-08 | versi dan reset penuh; UUID tetap; RLS penanda | koordinator |
+Tidak ada. Usulan tingkat-item berlaku lewat `D-58`; fixture generik lokal disetujui pengguna.
 
 ## Agent suggestions awaiting approval
 
-| Hal | Usulan | Kenapa |
-|---|---|---|
-| Prioritas | `medium` `[USULAN]` | tidak memblokir `FND-003`–`FND-006`; `INT-002` bergantung pada seluruh rantai |
-| Ukuran | `M` `[USULAN]` | mekanisme sudah ada; isi master dan penanda versi |
-| Urutan | seed ditambah per item untuk tabel yang dibuat item itu `[USULAN-AGEN]` | menghindari dependensi tersembunyi ke `FND-003`–`FND-006` |
+Prioritas `medium` dan ukuran `M` dipakai sesuai rekomendasi implementasi. Berkas seed bernomor ditambah oleh pemilik tabelnya.
 
 ## Kontrak desain
 
-`04-design-contract.md` berstatus `Proposed`. Item ini menyentuh kredensial uji dan penanda, sehingga kontrak ringkas dengan alasan tertulis. Aturan seed dari `FND-001` (`B-02`, `POST-04`, `INV-03`) dirujuk, tidak diduplikasi.
+`04-design-contract.md` berstatus `Approved` (`D-58`). Item ini menyentuh penanda seed dan guard lingkungan; aturan seed dari `FND-001` (`B-02`, `POST-04`, `INV-03`) dirujuk, tidak diduplikasi.
 
 | Tipe kontrak | Dipakai | Alasan |
 |---|---|---|
@@ -73,15 +61,15 @@ Tidak ada pertanyaan terbuka. Keputusan yang menunggu kunci koordinator (`[USULA
 
 ## Readiness status
 
-`Blocked` (lihat Verdict). Tidak ada verdict `Ready`.
+`Ready` (lihat Verdict). Implementasi dan bukti diselesaikan pada branch FND-008.
 
 ## Handoff boundary
 
 - Parent epic / milestone: `EPIC-FND` / `M0`
-- Lane / sequence / predecessor: `active` / `8` / `FND-001` (done), `FND-002` (`specified`, belum `done`)
-- Foundation status / evidence: `available` untuk reset dan seed dasar (`backlog.md`: "Seed & reset"; `scripts/db-seed.mjs`, `supabase/seed.sql`); isi data domain `missing`
+- Lane / sequence / predecessor: `active` / `8` / `FND-001` (done), `FND-002` (done)
+- Foundation status / evidence: reset siap dari FND-001; mekanisme bernomor dan master dasar selesai di FND-008 (`scripts/db-seed.mjs`, `supabase/seed.sql`, `supabase/seeds/`, `05-evidence.md`)
 - Artifact role / canonical source: `canonical`: `docs/product/items/FND-008-seed-deterministik-reset/`
-- Next domain: `quick-dev` setelah DoR `Ready`
+- Next domain: `quick-dev` (implementasi aktif)
 - Required input artifacts: `docs/product/items/FND-001-lingkungan-dan-quality-gate/04-design-contract.md` (B-02, POST-03, POST-04, INV-03); `docs/product/decisions.md` (D-27, D-30, D-37, D-51, D-53); `docs/product/epics/EPIC-FND.md`
 - Implementation plan: `Not created`
 - Out of scope for this skill: setup execution, technical task breakdown, contract compilation, test strategy, and code changes.
