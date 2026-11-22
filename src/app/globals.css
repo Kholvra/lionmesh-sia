@@ -1,26 +1,138 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  color-scheme: light;
+
+  --brand-50: #fff4e0;
+  --brand-100: #ffe3b3;
+  --brand-500: #ed8b00;
+  --brand-600: #d97d00;
+  --brand-700: #b25a00;
+
+  --ink-950: #141b24;
+  --ink-900: #1c2530;
+  --ink-800: #202938;
+  --ink-700: #2c3947;
+  --ink-600: #3e4c5e;
+  --ink-500: #4b5563;
+  --ink-400: #6b7385;
+  --ink-300: #8490a2;
+  --ink-200: #cbd5e1;
+  --ink-100: #e2e8f0;
+  --ink-50: #f1f5f9;
+  --cloud: #f7f9fc;
+  --white: #ffffff;
+
+  --text-primary: var(--ink-800);
+  --text-secondary: var(--ink-500);
+  --text-muted: var(--ink-400);
+  --text-on-brand: var(--ink-900);
+  --text-inverse: var(--white);
+  --text-link: var(--brand-700);
+
+  --bg-app: var(--cloud);
+  --bg-surface: var(--white);
+  --bg-subtle: var(--ink-50);
+  --bg-selected: var(--brand-50);
+  --bg-sidebar: var(--ink-900);
+  --bg-overlay: rgb(20 27 36 / 55%);
+
+  --border-subtle: var(--ink-100);
+  --border-strong: var(--ink-200);
+  --border-input: var(--ink-300);
+  --border-focus: var(--ink-900);
+  --border-focus-dark: var(--brand-500);
+
+  --status-success-text: #08785f;
+  --status-success-bg: #d1fae5;
+  --status-warning-text: #8a5a00;
+  --status-warning-bg: #fff4d5;
+  --status-danger-text: #b42318;
+  --status-danger-bg: #fee4e2;
+  --status-info-text: #1d4ed8;
+  --status-info-bg: #dbeafe;
+  --status-neutral-text: #475569;
+  --status-neutral-bg: var(--ink-50);
+
+  --font-family-sans: var(--font-inter), system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-size-caption: 12px;
+  --line-height-caption: 16px;
+  --font-size-label: 12px;
+  --line-height-label: 16px;
+  --font-size-body-sm: 13px;
+  --line-height-body-sm: 20px;
+  --font-size-body: 14px;
+  --line-height-body: 20px;
+  --font-size-section: 16px;
+  --line-height-section: 24px;
+  --font-size-title: 20px;
+  --line-height-title: 28px;
+  --font-size-display: 24px;
+  --line-height-display: 32px;
+  --letter-spacing-caption: 0.04em;
+
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-10: 40px;
+  --space-12: 48px;
+  --space-16: 64px;
+
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-full: 999px;
+
+  --shadow-sm: 0 1px 2px rgb(16 24 40 / 5%);
+  --shadow-md: 0 4px 12px rgb(16 24 40 / 8%);
+  --shadow-lg: 0 12px 32px rgb(16 24 40 / 12%);
+
+  --border-width-default: 1px;
+  --focus-ring-width: 2px;
+  --focus-ring-offset: 2px;
+  --control-height: 36px;
+  --button-sm-height: 32px;
+  --button-lg-height: 40px;
+  --icon-target-size: 44px;
+  --table-row-height: 48px;
+  --table-header-height: 40px;
+  --dialog-confirm-width: 480px;
+  --dialog-form-width: 640px;
+  --badge-dot-size: 6px;
+  --layout-content-max: 1440px;
+
+  --motion-fast: 120ms;
+  --motion-base: 180ms;
+  --motion-slow: 240ms;
+  --motion-none: 0ms;
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  --color-background: var(--bg-app);
+  --color-foreground: var(--text-primary);
+  --font-sans: var(--font-family-sans);
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  margin: 0;
+  background: var(--bg-app);
+  color: var(--text-primary);
+  font-family: var(--font-family-sans);
+  font-size: var(--font-size-body);
+  line-height: var(--line-height-body);
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+button {
+  color: inherit;
 }

@@ -1,0 +1,135 @@
+.dialog {
+  width: min(var(--dialog-confirm-width), calc(100vw - var(--space-8)));
+  max-height: calc(100vh - var(--space-16));
+  padding: 0;
+  overflow: auto;
+  border: var(--border-width-default) solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  background: var(--bg-surface);
+  box-shadow: var(--shadow-lg);
+  color: var(--text-primary);
+}
+
+.dialog::backdrop {
+  background: var(--bg-overlay);
+}
+
+.dialogContent {
+  display: grid;
+  gap: var(--space-6);
+  padding: var(--space-6);
+}
+
+.dialogHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-4);
+}
+
+.dialogTitle {
+  margin: 0;
+  font-size: var(--font-size-section);
+  font-weight: 600;
+  line-height: var(--line-height-section);
+}
+
+.dialogDescription {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: var(--font-size-body);
+  line-height: var(--line-height-body);
+}
+
+.dialogClose {
+  display: inline-grid;
+  width: var(--icon-target-size);
+  height: var(--icon-target-size);
+  flex: 0 0 auto;
+  place-items: center;
+  margin: calc(-1 * var(--space-2));
+  border: 0;
+  border-radius: var(--radius-md);
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
+  font-size: var(--font-size-section);
+}
+
+.dialogClose:hover:not(:disabled) {
+  background: var(--bg-subtle);
+  color: var(--text-primary);
+}
+
+.dialogButton:focus-visible,
+.dialogClose:focus-visible {
+  outline: var(--focus-ring-width) solid var(--border-focus);
+  outline-offset: var(--focus-ring-offset);
+}
+
+.dialogFooter {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.dialogButton {
+  min-height: var(--control-height);
+  padding-inline: var(--space-4);
+  border: var(--border-width-default) solid transparent;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  font-size: var(--font-size-body);
+  font-weight: 600;
+  line-height: var(--line-height-body);
+  transition:
+    background-color var(--motion-fast) ease-out,
+    border-color var(--motion-fast) ease-out;
+}
+
+.dialogButton:disabled,
+.dialogClose:disabled {
+  cursor: not-allowed;
+}
+
+.dialogButton:disabled {
+  border-color: var(--border-subtle);
+  background: var(--bg-subtle);
+  color: var(--ink-300);
+}
+
+.secondaryButton {
+  border-color: var(--border-input);
+  background: var(--bg-surface);
+  color: var(--text-primary);
+}
+
+.secondaryButton:hover:not(:disabled) {
+  background: var(--bg-subtle);
+}
+
+.primaryButton {
+  background: var(--brand-500);
+  color: var(--text-on-brand);
+}
+
+.primaryButton:hover:not(:disabled) {
+  background: var(--brand-600);
+}
+
+.dangerButton {
+  border-color: var(--status-danger-bg);
+  background: var(--bg-surface);
+  color: var(--status-danger-text);
+}
+
+.dangerButton:hover:not(:disabled) {
+  background: var(--status-danger-bg);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dialogButton {
+    transition-duration: var(--motion-none);
+  }
+}

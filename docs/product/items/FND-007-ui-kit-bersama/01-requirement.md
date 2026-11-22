@@ -8,7 +8,7 @@ lane: active
 sequence: 7
 type: chore
 req_status: specified
-delivery_status: not_started
+delivery_status: done
 priority: unset
 size: unset
 depends_on:
