@@ -68,6 +68,7 @@ try {
   check("valuation retains precision and PostgreSQL half rounding", valuation.incoming.qtyBaru === "900719925474.0993" && valuation.incoming.nilaiBaru === "90071992.55" && valuation.outgoing.qtyBaru === "0.0000" && valuation.outgoing.nilaiBaru === "0.00" && valuation.rounding.nilaiMasuk === "0.01");
   accounts.Gudang = await makeAccount("Gudang");
   accounts.Penjualan = await makeAccount("Penjualan");
+  accounts.QC = await makeAccount("QC");
   const unit = (await db.query("insert into public.satuan(kode,nama) values($1,'Unit') returning id", [`UNIT-${suffix}`])).rows[0].id;
   const product = (await db.query("insert into public.produk(kode,nama,satuan_dasar_id) values($1,'Product',$2) returning id", [`PROD-${suffix}`, unit])).rows[0].id;
   const origin = (await db.query("insert into public.gudang(kode,nama) values($1,'Origin') returning id", [`ORIG-${suffix}`])).rows[0].id;
@@ -109,6 +110,26 @@ try {
   check("JSON numbers rejected before rounding can change stock", !result.body.ok);
   result = await request("transfer", { ...payload, qty: "0.00001" }, accounts.Gudang.cookie);
   check("excess decimal places rejected", !result.body.ok);
+  // This table models a document only inside the disposable test project.
+  await db.query("create table if not exists public.fnd005_test_document(id uuid primary key, produk_id uuid not null, gudang_id uuid not null, qty numeric(18,4) not null, harga_satuan numeric(18,4) not null, lulus boolean not null)");
+  await db.query("grant all on public.fnd005_test_document to service_role");
+  await db.query("notify pgrst, 'reload schema'");
+  const docId = randomUUID();
+  await db.query("insert into public.fnd005_test_document values($1,$2,$3,2,10,false)", [docId, product, origin]);
+  result = await request("document", { id: docId }, accounts.Gudang.cookie);
+  check("warehouse cannot perform QC document action", !result.body.ok);
+  result = await request("document", { id: docId, actorId: accounts.Gudang.id }, accounts.QC.cookie);
+  check("document caller rejects forged actor", !result.body.ok);
+  result = await request("document", { id: randomUUID() }, accounts.QC.cookie);
+  check("missing source document rejected", !result.body.ok);
+  result = await request("document", { id: docId }, accounts.QC.cookie);
+  check("document without passed QC rejected", !result.body.ok);
+  const beforeDoc = (await db.query("select count(*)::int as n from public.mutasi_stok where sumber_id=$1", [docId])).rows[0].n;
+  check("rejected document calls create no movement", beforeDoc === 0);
+  await db.query("update public.fnd005_test_document set lulus=true where id=$1", [docId]);
+  result = await request("document", { id: docId }, accounts.QC.cookie);
+  const docMovement = (await db.query("select created_by,sumber_tipe,qty::text from public.mutasi_stok where sumber_id=$1", [docId])).rows;
+  check("QC source action creates movement as session actor", result.body.ok && docMovement.length === 1 && docMovement[0].created_by === accounts.QC.id && docMovement[0].sumber_tipe === "TEST_QC" && docMovement[0].qty === "2.0000");
   const direct = await accounts.Gudang.client.rpc("transfer_stok", { p_produk_id: product, p_gudang_asal_id: origin, p_gudang_tujuan_id: dest, p_qty: 1 });
   check("direct client RPC denied", !!direct.error);
   await db.query("update public.profiles set peran='Penjualan' where id=$1", [accounts.Gudang.id]);
