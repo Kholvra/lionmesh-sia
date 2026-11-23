@@ -9,18 +9,26 @@
 | 3 | Status dan transisi eksplisit; jalur gagal juga | lolos | `aktif` dan `nonaktif` dengan transisi tertulis. Nonaktif dengan dokumen terbuka: diizinkan, dokumen tetap berjalan (`D-50`). Aktivasi ulang didefinisikan (`[USULAN-AGEN]` Q-07) |
 | 4 | Validasi punya pesan yang bisa dibaca | lolos | tabel Validasi memuat pesan untuk setiap kondisi gagal. Teks pesan ditandai `[USULAN]` dan ikut kunci koordinator |
 | 5 | Acceptance criteria bisa dibuktikan | lolos | AC-01 sampai AC-13 punya langkah UI dari `pnpm db:reset`. AC-07 dan AC-09 bersifat lintas item dan disebut eksplisit |
-| 6 | Semua `depends on` berstatus `done` | belum | `FND-003` `specified`, belum `done` |
+| 6 | Semua `depends on` berstatus `done` | lolos | `FND-003` `done` (2026-11-23) |
 | 7 | Tidak ada pertanyaan pemblokir terbuka | lolos | 9 pertanyaan: 5 terjawab `D-xx`, 4 terjawab `[USULAN-AGEN]`. Terbuka: 0 |
-| 8 | Gate fondasi terpenuhi | belum | `FND-001` `done`; `FND-002` sampai `FND-006` masih `specified`. `FND-007` juga belum (lihat Dependensi) |
+| 8 | Gate fondasi terpenuhi | lolos | `FND-001`–`FND-007` `done` (2026-11-23); `FND-008` juga `done` |
 | 9 | Ukuran masuk akal untuk satu orang dalam satu track | lolos | usulan `M` (agen), satu track PG-A |
 
 ## Verdict
 
 `Blocked`
 
-Alasan (dependensi belum `done`): `FND-003` (`depends on`), beserta gate fondasi `FND-002`, `FND-004`, `FND-005`, dan `FND-006` yang menjadi prasyaratnya; serta `FND-007` karena item ini memakai primitive UI (tabel, form) dan backlog mensyaratkannya untuk item modul yang membutuhkan primitive UI.
+Sembilan kriteria DoR terpenuhi sejak 2026-11-23, tetapi item tetap `Blocked` karena satu prasyarat teknis belum punya item pemilik: belum ada AppShell. Rincian di bagian berikut.
 
-Siap menjadi Ready begitu dependensi done; tidak ada pemblokir lain.
+## Pemblokir baru (2026-11-23)
+
+Gate fondasi `FND-001`–`FND-008` sudah `done`, jadi kriteria 6 dan 8 lolos. Blokir yang tersisa bukan soal requirement:
+
+1. **AppShell belum dimiliki item mana pun.** `src/app/(app)/layout.tsx` — sidebar 200/220px, guard sesi, `<nav>`/`<main>` — tidak ada di `src/` dan tidak ada baris di `backlog.md` yang memilikinya. `FND-007` hanya mengirim empat primitive (tabel, form, status badge, dialog). Tanpa shell, layar pemasok hanya bisa dibangun dengan membuat shell kedua, yang dilarang `docs/design/COMPONENTS.md` §1.
+2. **Lebar sidebar belum diputuskan.** `DESIGN_TOKENS.md` mengunci 200px; `docs/design/FIGMA_V2_DELTAS.md` §1 mengukur 220px pada 375 dari 375 frame v2. Item yang membangun shell harus memakai nilai yang sudah diputuskan, bukan menebak.
+3. **Tabel `pemasok` belum ada di migrasi.** `D-31` menaruhnya di `core/`; PG-001 mengirim DDL sebagai usulan dan tech lead menomori (`D-09`). Ini prosedur normal, bukan kegagalan DoR, tetapi harus selesai sebelum implementasi dimulai.
+
+Verdict menjadi `Ready` setelah item AppShell (usulan `FND-009`) ada dan `done`. Tidak ada pemblokir requirement yang tersisa.
 
 ## Pertanyaan terbuka (2026-11-22)
 
@@ -66,14 +74,15 @@ Keputusan aktivasi ulang pemasok (Q-07, bagian dari `D-50`) juga `[USULAN-AGEN]`
 
 - Status requirement: `specified`. Paket dibuat, belum `ready`.
 - Baris `backlog.md` `specified`.
+- Verdict diperbarui 2026-11-23: kriteria 6 dan 8 lolos setelah fondasi `done`; status tetap `Blocked` karena AppShell belum punya item pemilik.
 
 ## Handoff boundary
 
 - Parent epic / milestone: `EPIC-PG` / `M1`
 - Lane / sequence / predecessor: `active`, graph (`D-03`), predecessor `FND-003` dan gate fondasi, serta `FND-007` (primitive UI)
-- Foundation status / evidence: `partial` (lihat `backlog.md` bagian Status fondasi)
+- Foundation status / evidence: `done` (`FND-001`–`FND-008`)
 - Artifact role / canonical source: `canonical` (`docs/product/items/PG-001-pemasok-termin-toleransi/`)
-- Next domain: `design-contracts` untuk kontrak yang sudah disiapkan, lalu `quick-dev` setelah `Ready`
+- Next domain: `design-contracts` untuk kontrak yang sudah disiapkan, lalu `quick-dev` setelah `Ready` (menunggu item AppShell, usulan `FND-009`)
 - Required input artifacts: `00-discussion.md`, `01-requirement.md`, `02-acceptance-criteria.md`, `04-design-contract.md`
 - Implementation plan: `Not created`
 - Out of scope for this skill: setup execution, technical task breakdown, contract compilation, test strategy, and code changes.
