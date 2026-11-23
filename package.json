@@ -13,6 +13,7 @@
     "db:setup": "pnpm check:migrations && node scripts/db-guard.mjs setup && supabase start && supabase db reset",
     "db:reset": "pnpm check:migrations && node scripts/db-guard.mjs reset && supabase db reset",
     "db:seed": "node scripts/db-seed.mjs",
+    "db:seed:local": "node scripts/db-seed-local.mjs",
     "db:stop": "supabase stop",
     "verify": "pnpm lint && pnpm typecheck && pnpm arch:check && pnpm build"
   },
