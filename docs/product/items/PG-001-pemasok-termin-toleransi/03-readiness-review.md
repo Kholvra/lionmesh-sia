@@ -48,7 +48,7 @@ Keputusan aktivasi ulang pemasok (Q-07, bagian dari `D-50`) juga `[USULAN-AGEN]`
 
 ## Pertentangan yang ditemukan
 
-- Backlog gate (`FND-007`) menyatakan item dengan primitive UI menunggu `FND-007`, tetapi `depends on` `PG-001` tidak mencantumkannya. Front-matter tetap sesuai backlog (`backlog.md` tidak diubah).
+- Tidak ada pertentangan gate: `FND-007` sudah `done`. `FND-004` menyimpan `riwayat_status` yang terikat ke `dokumen`; karena pemasok adalah master, status pemasok dicatat di `pemasok_riwayat_status` (lihat catatan eksekusi).
 
 ## Agent suggestions awaiting approval
 
@@ -92,3 +92,12 @@ Keputusan aktivasi ulang pemasok (Q-07, bagian dari `D-50`) juga `[USULAN-AGEN]`
 - `docs/product/policies/matriks-izin.md` (Pengeluaran: buat / ubah pemasok)
 - `docs/product/reference/analisis-sia.md` §3.1, §5.3, §7.2, §8.2, §9.1
 - `docs/architecture/contracts/ARCH-001-batas-core-modul/contract.md`
+
+## Catatan eksekusi (2026-11-23)
+
+- Implementasi dimulai setelah `FND-001`–`FND-007` selesai.
+- Yang sudah ada: migrasi `0009_pg001_pemasok.sql`, service core `src/core/pemasok`, layar `/pengeluaran/pemasok`, validasi server, RLS, dan riwayat status.
+- `FND-004` memiliki `riwayat_status` yang terikat ke `dokumen`; pemasok adalah master, jadi status pemasok dicatat di `pemasok_riwayat_status`. Penyimpangan dari `D-08`/`D-32` ini perlu keputusan tech lead.
+- Yang belum: pembuktian AC di database. Docker/Supabase lokal tidak tersedia di mesin ini, sehingga `pnpm db:reset` belum dijalankan.
+- Migrasi masih perlu direview dan dinomori ulang oleh tech lead (`D-09`).
+- Status item tetap `in progress` sampai seluruh AC dibuktikan.

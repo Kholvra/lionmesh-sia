@@ -7,8 +7,8 @@ milestone: M1
 lane: active
 sequence: unset # graph (D-03); bukan urutan serial
 type: feature
-req_status: specified
-delivery_status: not_started
+req_status: ready
+delivery_status: in_progress
 priority: P0 # usulan dari analisis-sia §5.3; belum dikonfirmasi
 size: M # usulan agen; belum disetujui
 depends_on:
@@ -70,7 +70,7 @@ Status pemasok: `aktif` dan `nonaktif`. Sumber menyebut "menonaktifkan" (`LAPORA
 Jalur gagal:
 - Menonaktifkan pemasok yang masih punya dokumen terbuka: **diizinkan**. Dokumen terbuka tetap berjalan (`D-50`); tidak ada dokumen yang berubah status karena ini.
 - Mengaktifkan kembali pemasok yang sudah aktif: ditolak dengan pesan, status tidak berubah.
-- Setiap perubahan status meninggalkan jejak di `riwayat_status` (`D-08`) dengan aktor dan waktu.
+- Setiap perubahan status meninggalkan jejak riwayat dengan aktor dan waktu. `FND-004` mengikat `riwayat_status` ke dokumen, sehingga master pemasok memakai `pemasok_riwayat_status`.
 
 ## Validasi dan pesan
 
@@ -95,13 +95,13 @@ Jalur gagal:
 - Field kontak PIC adalah data pribadi: hanya Purchasing dan Accounting yang membacanya (`[USULAN-AGEN]`, Q-03; ditegakkan lewat RLS `FND-003`).
 - Tabel `pemasok` dimiliki `core/` (`D-31`, `D-05`). Modul hanya memiliki layar dan aturan alur.
 - DDL dikirim sebagai usulan dan dinomori tech lead (`D-09`).
-- Perubahan status dan perubahan master tercatat lewat kolom audit `D-32` dan `riwayat_status` `D-08`. Nilai lama per field tidak disimpan (`[USULAN-AGEN]`, Q-09).
+- Perubahan status dan perubahan master tercatat lewat kolom audit `D-32` dan riwayat status. `FND-004` mengikat `riwayat_status` ke dokumen, sehingga master pemasok memakai `pemasok_riwayat_status`; nilai lama per field tidak disimpan (`[USULAN-AGEN]`, Q-09).
 
 ## Dependensi
 
-- `FND-003` (backlog `depends on`): autentikasi dan 12 peran staf dengan RLS. Dibutuhkan untuk izin dan pembatasan field kontak. Status `specified` (belum `done`).
-- Gate fondasi `FND-001` sampai `FND-006` (`backlog.md`): `FND-001` sudah `done`. `FND-002` sampai `FND-006` masih `specified`.
-- `FND-007` (UI kit: tabel, form, status badge): item ini memakai tabel dan form. Backlog menyatakan item modul yang membutuhkan primitive UI menunggu `FND-007`, tetapi `FND-007` belum tercantum di `depends on`. Lihat `03-readiness-review.md`.
+- `FND-003` (backlog `depends on`): autentikasi dan 12 peran staf dengan RLS. Dibutuhkan untuk izin dan pembatasan field kontak. Status `done` (2026-11-23).
+- Gate fondasi `FND-001` sampai `FND-007` (`backlog.md`): seluruhnya `done` (2026-11-23).
+- `FND-007` (UI kit: tabel, form, status badge): item ini memakai tabel dan form; `FND-007` sudah `done`.
 - Tabel `pemasok`: pemilik `core/` (`D-31`).
 
 ## Yang membuka jalan

@@ -54,7 +54,7 @@ Satu pemilik: tech lead. Urutan wajib.
 
 | ID | Fitur | Track | Level | Depends on | Status |
 |---|---|---|---|---|---|
-| `PG-001` | Pemasok, termin, toleransi match | PG-A master | 1 | `FND-003` | `ready` |
+| `PG-001` | Pemasok, termin, toleransi match | PG-A master | 1 | `FND-003` | `in progress` |
 | `PG-002` | Permintaan pembelian | PG-B pengadaan | 2 | `C-013`, `C-011` | `specified` |
 | `PG-003` | Approval berjenjang | PG-B pengadaan | 3 | `PG-002`, `FND-004` | `specified` |
 | `PG-004` | Pemilihan pemasok & perbandingan harga | PG-B pengadaan | 4 | `PG-002`, `PG-001`, `PG-003` | `specified` |
@@ -193,3 +193,4 @@ Terbaca per level. Semua item dalam satu baris boleh dikerjakan serentak. `DISC-
 | 2026-11-23 | `FND-009` → `done`: AppShell 220px (`D-62`) di `src/app/(app)/layout.tsx`, sidebar bersama, guard sesi, dan route `/pengaturan` dipindah ke dalam shell; gate fondasi jadi `FND-001`–`FND-009` |
 | 2026-11-23 | Tambah `PG-011` laporan pembelian/utang/pengeluaran kas (track `PG-F`, level 10) untuk menutup rujukan melingkar `C-009` ↔ `PG-009`; `EPIC-PG` dan `PG-009` diperbaiki di PR yang sama |
 | 2026-11-23 | Gelombang 1 → `ready`: `PD-001`, `PG-001`, `PG-010`, `GJ-001`, `C-009`, `C-011`, `C-012`. Readiness review disegarkan setelah `FND-009` `done`; DDL tetap lewat usulan dan nomor tech lead (`D-09`) |
+| 2026-11-23 | `PG-001` mulai dikerjakan setelah fondasi `FND-001`–`FND-007` selesai; migrasi `0009`, core service, UI, dan validasi server ditambahkan. Verifikasi database tertunda karena Docker tidak tersedia |
