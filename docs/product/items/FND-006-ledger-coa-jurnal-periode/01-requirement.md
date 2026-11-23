@@ -7,10 +7,10 @@ milestone: M0
 lane: active
 sequence: 6
 type: feature
-req_status: specified
-delivery_status: not_started
-priority: unset
-size: unset
+req_status: done
+delivery_status: done
+priority: high
+size: L
 depends_on:
   - FND-002
   - FND-003

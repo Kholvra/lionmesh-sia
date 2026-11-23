@@ -29,7 +29,7 @@ Satu pemilik: tech lead. Urutan wajib.
 | `FND-003` | Autentikasi & 13 peran (12 staf + Karyawan self-service) dengan RLS | 3 | `FND-002` | `done` |
 | `FND-004` | Dokumen: penomoran, status, riwayat, approval berjenjang | 4 | `FND-002`, `FND-003` | `done` |
 | `FND-005` | Inventory: mutasi, saldo, valuasi rata-rata bergerak | 5 | `FND-002` | `done` |
-| `FND-006` | Ledger: COA, `postJournal()`, periode akuntansi | 6 | `FND-002`, `FND-003` | `specified` |
+| `FND-006` | Ledger: COA, `postJournal()`, periode akuntansi | 6 | `FND-002`, `FND-003` | `done` |
 | `FND-007` | UI kit bersama: tabel, form, status badge, dialog | 7 | `FND-002` | `done` |
 | `FND-008` | Seed deterministik + reset ke skema `siap` | 8 | `FND-001`, `FND-002` | `done` |
 
@@ -185,3 +185,4 @@ Terbaca per level. Semua item dalam satu baris boleh dikerjakan serentak. `DISC-
 | 2026-11-23 | `FND-003` → `done`: implementasi login, guard, RLS, dan Auth hook selesai; tech lead mengonfirmasi hasil pengujian manual, sisa risiko deployment dicatat di `docs/tech-debt/fnd-003-auth-deployment.md` |
 | 2026-11-23 | `FND-005` → `done`: implementasi mutasi, saldo, valuasi, presisi desimal, dan integrasi sintetis selesai; tech lead mengonfirmasi hasil pengujian manual, sisa integrasi dokumen sumber dicatat di `docs/tech-debt/fnd-005-integrasi-dokumen.md` |
 | 2026-11-23 | `FND-004` → `done`: migrasi `0007`, `core/dokumen`, registry status/tipe, approval berjenjang, seed versi `0004`, AC-01–AC-16, uji sesi, dan `pnpm verify` lulus. Pemeriksaan periode sumber dicatat menunggu `FND-006` |
+| 2026-11-23 | `FND-006` → `done`: migrasi `0008`, seed COA `D-41`, `postJournal()`/`reverseJournal()`, periode, RLS, dan immutability selesai; AC-01–AC-16 serta jalur sesi server dibuktikan, `pnpm verify` lulus |
