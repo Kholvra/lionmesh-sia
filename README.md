@@ -21,9 +21,12 @@ Sistem Informasi Akuntansi untuk PT Lionmesh Prima Tbk. Satu aplikasi, empat sik
 pnpm install
 pnpm db:setup          # nyalakan Supabase lokal + terapkan seluruh migrasi
 cp .env.example .env.local
+FND_TEST_PASSWORD=lionmesh-dev-2026 pnpm db:seed   # 13 akun uji lokal
 ```
 
 `pnpm db:setup` memeriksa penomoran migrasi lebih dulu, lalu menerapkannya berurutan. Tidak ada langkah menempel SQL manual.
+
+Tanpa langkah `db:seed`, database berisi skema tetapi **tanpa akun**, sehingga `/login` selalu menolak. Akun uji dan sandinya dijelaskan di bagian [Database](#database).
 
 Isi `.env.local`. Untuk Supabase lokal, ambil nilainya dari:
 
@@ -57,7 +60,13 @@ Migrasi ada di `supabase/migrations/` dan diterapkan berurutan.
 | `pnpm db:seed` | isi data dasar; menolak bila sudah pernah di-seed |
 | `pnpm db:stop` | hentikan Supabase lokal |
 
-Seed membuat 13 akun uji lokal (`peran@lionmesh.test`). Sebelum menjalankan `pnpm db:seed`, atur sandi uji melalui variabel lingkungan `FND_TEST_PASSWORD`; jangan simpan sandi di repositori. Contoh shell interaktif:
+Seed membuat 13 akun uji lokal (`peran@lionmesh.test`). Sandi disediakan melalui `FND_TEST_PASSWORD`; mekanisme ini bagian dari `FND-008` dan skema tidak menyimpan sandi. Untuk database lokal, tim memakai satu sandi uji bersama supaya semua orang bisa masuk dengan akun yang sama:
+
+```bash
+FND_TEST_PASSWORD=lionmesh-dev-2026 pnpm db:seed
+```
+
+Sandi itu hanya untuk 13 akun fiktif di database lokal Docker. Jangan memakainya di project Supabase hosted atau lingkungan lain. Kalau ingin sandi sendiri, pakai bentuk interaktif:
 
 ```bash
 read -rs FND_TEST_PASSWORD
@@ -65,6 +74,24 @@ export FND_TEST_PASSWORD
 pnpm db:seed
 unset FND_TEST_PASSWORD
 ```
+
+Akun uji yang tersedia (sandi sama untuk semuanya):
+
+| Peran | Email |
+|---|---|
+| Penjualan | `penjualan@lionmesh.test` |
+| Pengiriman | `pengiriman@lionmesh.test` |
+| Gudang | `gudang@lionmesh.test` |
+| Purchasing | `purchasing@lionmesh.test` |
+| QC | `qc@lionmesh.test` |
+| Produksi | `produksi@lionmesh.test` |
+| Accounting | `accounting@lionmesh.test` |
+| Finance | `finance@lionmesh.test` |
+| Manajemen | `manajemen@lionmesh.test` |
+| Direksi | `direksi@lionmesh.test` |
+| HR | `hr@lionmesh.test` |
+| Supervisor Lapangan | `supervisor-lapangan@lionmesh.test` |
+| Karyawan | `karyawan@lionmesh.test` |
 
 Aturan migrasi:
 
@@ -133,3 +160,21 @@ Batas antar modul mengikat, bukan saran:
 - Modul tidak membaca tabel milik modul lain.
 
 Kontrak lengkap: `docs/architecture/contracts/ARCH-001-batas-core-modul/contract.md`.
+
+## Troubleshooting
+
+### `/login` selalu menolak, padahal database jalan
+
+Penyebab paling sering: seed belum dijalankan. Skema terpasang, tetapi `auth.users` kosong sehingga tidak ada akun yang bisa masuk. Periksa:
+
+```bash
+psql postgresql://postgres:postgres@127.0.0.1:54322/postgres \
+  -c "select count(*) from auth.users;" \
+  -c "select version from public._seed_meta;"
+```
+
+Kalau hasilnya `0` atau tabel `_seed_meta` tidak ada, jalankan `pnpm db:seed` (lihat [Database](#database)). `pnpm db:reset` mengosongkan database termasuk akun uji, jadi seed harus dijalankan ulang sesudah reset. Studio lokal ada di http://127.0.0.1:54323 bila lebih nyaman memeriksa lewat tabel.
+
+### `pnpm build` gagal karena variabel Supabase
+
+Build membaca `NEXT_PUBLIC_SUPABASE_URL` dan `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` dari `.env.local`. Salin `.env.example`, jangan menanam nilai di kode untuk membuat build lulus.
