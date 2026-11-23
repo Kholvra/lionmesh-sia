@@ -2,9 +2,9 @@
 
 ## Verdict
 
-`Blocked` — dependensi belum `done`: `FND-003` (`specified`, depends on `FND-002`); gate fondasi `FND-001`–`FND-007` belum `done` (D-54) (hanya `FND-001` yang `done`); `FND-007` (gate item modul, D-54).
+`Ready`
 
-Siap menjadi Ready begitu dependensi done; tidak ada pemblokir lain.
+Semua kriteria DoR terpenuhi sejak 2026-11-23. Fondasi `FND-001`–`FND-009` sudah `done`, termasuk AppShell (`D-62`), sehingga layar item ini punya tempat render. Bila item membuat tabel, DDL dikirim sebagai usulan `06-ddl-proposal.sql` dan dinomori tech lead (`D-09`); layar dicari di `docs/design/inventory/<siklus>.md`.
 
 ## Definition of Ready — evidence
 
@@ -15,9 +15,9 @@ Siap menjadi Ready begitu dependensi done; tidak ada pemblokir lain.
 | 3 | Status dan transisi eksplisit, jalur gagal juga | 01 bagian Status (status master AKTIF/NONAKTIF; entri gaji diturunkan dari tanggal, tanpa status baru `D-47`); jalur gagal di Validasi | Lolos |
 | 4 | Validasi punya pesan yang bisa dibaca | 01 bagian Validasi (NIK 16 digit, rekening, tanggal berlaku sama, nonaktif) | Lolos |
 | 5 | AC bisa dibuktikan dengan langkah | 02 AC-01 sampai AC-15; AC-10 ditunda ke GJ-005 dan dicatat | Lolos |
-| 6 | `depends on` berstatus `done` | `backlog.md`: `FND-003` = `specified` | Belum lolos |
+| 6 | Semua `depends on` berstatus `done` | lolos | `FND-003` `done` (2026-11-23) |
 | 7 | Tidak ada pertanyaan pemblokir terbuka | 00 tidak punya pertanyaan terbuka; P-04, P-06, P-07, P-08, P-10 berstatus `[USULAN-AGEN]` sudah disahkan `D-58` (tingkat item) | Lolos |
-| 8 | Gate fondasi terpenuhi | Hanya `FND-001` `done`; `FND-007` belum (P-10) | Belum lolos |
+| 8 | Gate fondasi terpenuhi | lolos | `FND-001`–`FND-009` `done` (2026-11-23, `D-54`, `D-62`) |
 | 9 | Ukuran wajar untuk satu orang satu track | Usulan `M` (agen, belum disetujui) | Lolos |
 
 Kondisi bersyarat:
@@ -53,7 +53,7 @@ Tidak ada pertanyaan terbuka. Yang disahkan `D-58`: P-04 (tanggal berlaku gaji),
 
 ## Readiness status
 
-`Blocked` (alasan tunggal: dependensi belum `done`).
+`Ready` sejak 2026-11-23: `FND-003` dan gate `FND-001`–`FND-009` `done`.
 
 ## Handoff boundary
 

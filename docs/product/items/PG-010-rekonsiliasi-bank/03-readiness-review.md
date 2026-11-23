@@ -9,9 +9,9 @@
 | 3 | Status dan transisi eksplisit; jalur gagal juga | lolos | `BELUM_COCOK`, `COCOK`, `SELISIH` ([USULAN-AGEN], nama dari §5.2). Jalur gagal: berkas rusak menolak seluruh impor, impor ulang ditolak, mutasi di luar periode ditolak, selisih tanpa alasan ditolak. |
 | 4 | Validasi punya pesan yang bisa dibaca | lolos | Setiap kondisi punya isi informasi pesan yang tetap. Kalimat final adalah pekerjaan implementasi dan tidak mengubah perilaku. |
 | 5 | Acceptance criteria dapat dibuktikan | lolos | 17 AC dengan langkah UI atau pemeriksaan daftar, saldo, dan jurnal. Format riil bank tidak dibutuhkan untuk AC karena berkas uji disusun sesuai profil pemetaan. |
-| 6 | Semua `depends on` berstatus `done` | belum | `FND-006` `specified`. `DISC-002` bukan dependensi (`D-60`(e)). |
+| 6 | Semua `depends on` berstatus `done` | lolos | `FND-006` `done` (2026-11-23) |
 | 7 | Tidak ada pertanyaan pemblokir terbuka | lolos | 10 pertanyaan: terjawab dengan D-xx, backlog, atau [USULAN-AGEN]. Tidak ada yang `Terbuka`. |
-| 8 | Gate fondasi terpenuhi | belum | `FND-002` sampai `FND-007` belum `done`; hanya `FND-001` yang `done` (D-54). |
+| 8 | Gate fondasi terpenuhi | lolos | `FND-001`–`FND-009` `done` (2026-11-23, `D-54`, `D-62`) |
 | 9 | Ukuran masuk akal untuk satu orang | lolos | Ukuran M (usulan). Impor, validasi, pencocokan, dan daftar selisih dalam satu track PG-E. Tidak ada jurnal (R-06), sehingga lebih kecil dari item yang menulis jurnal. |
 
 Pemeriksaan bersyarat:
@@ -26,19 +26,17 @@ Pemeriksaan bersyarat:
 
 ## Verdict
 
-`Blocked`
+`Ready`
 
-Alasan tunggal: dependensi belum `done`: `FND-006` (`specified`), ditambah gate fondasi `FND-001`–`FND-007` untuk item modul (D-54; hanya `FND-001` yang `done`). `DISC-002` bukan dependensi (`D-60`(e)).
-
-Siap menjadi `Ready` begitu dependensi done; tidak ada pemblokir lain.
+Semua kriteria DoR terpenuhi sejak 2026-11-23. Fondasi `FND-001`–`FND-009` sudah `done`, termasuk AppShell (`D-62`), sehingga layar item ini punya tempat render. Bila item membuat tabel, DDL dikirim sebagai usulan `06-ddl-proposal.sql` dan dinomori tech lead (`D-09`); layar dicari di `docs/design/inventory/<siklus>.md`.
 
 ## Blockers / decisions needed
 
 | Jenis | Item | Pemilik |
 |---|---|---|
-| Dependensi | FND-006 belum `done` | gate fondasi |
-| Dependensi | FND-002, FND-003, FND-004, FND-005 belum `done` | gate fondasi |
-| Gate fondasi | FND-007 belum `done` (gate item modul) | D-54 |
+| Dependensi | `FND-006` `done` (2026-11-23) | gate fondasi |
+| Dependensi | `FND-002`–`FND-005` `done` (2026-11-23) | gate fondasi |
+| Gate fondasi | `FND-007` dan `FND-009` `done` (2026-11-23) | `D-54`, `D-62` |
 
 Tidak ada pertanyaan terbuka. Semua keputusan ada di `00-discussion.md`. Usulan [USULAN-AGEN] menunggu penguncian koordinator.
 
@@ -50,7 +48,7 @@ Tidak ada pertanyaan terbuka. Semua keputusan ada di `00-discussion.md`. Usulan 
 | Prioritas | belum ditetapkan | analisis menyebut P1; keputusan pengguna |
 | Owner | belum ditetapkan | backlog tidak memuat pemilik track |
 | Penentuan aturan | R-03 (hash berkas), R-04 (aturan cocok dan sumber jurnal), R-05 (status), R-06 (tanpa jurnal), R-08 (per rekening per bulan), R-09 (1:1) | belum ada keputusan terkunci yang langsung menjawab |
-| Pertentangan untuk koordinator | `EPIC-PG` gate 3 (cocok dengan pembayaran) vs backlog (`PG-010` tanpa dependensi `PG-009`); dipilih baris jurnal kas | perlu konfirmasi sebelum `FND-006` ditulis |
+| Pertentangan untuk koordinator | `EPIC-PG` gate 3 (cocok dengan pembayaran) vs backlog (`PG-010` tanpa dependensi `PG-009`); dipilih baris jurnal kas | selesai: `FND-006` sudah menulis tabel jurnal |
 | Lingkup `FND-006` | referensi rekening pada baris jurnal kas | dibutuhkan R-04; perlu dimasukkan ke spesifikasi FND-006 |
 
 ## Readiness status
@@ -71,7 +69,7 @@ Tidak ada pertanyaan terbuka. Semua keputusan ada di `00-discussion.md`. Usulan 
 
 - Parent epic / milestone: `EPIC-PG` / `M1`
 - Lane / sequence / predecessor: active; sequence belum ditetapkan; predecessor `FND-006` (`DISC-002` spike non-pemblokir, `D-60`(e))
-- Foundation status / evidence: `partial`. FND-001 `done`; FND-002 sampai FND-007 belum `done`.
+- Foundation status / evidence: `done` (`FND-001`–`FND-009`, 2026-11-23).
 - Artifact role / canonical source: `canonical` (paket item); `EPIC-PG` dan `backlog.md` untuk gate dan dependensi.
 - Next domain: `design-contracts` untuk kontrak yang sudah ada, lalu `quick-dev` setelah verdict `Ready`.
 - Required input artifacts: `01-requirement.md`, `02-acceptance-criteria.md`, `04-design-contract.md`, `EPIC-PG`, `D-04`, `D-07`, `D-25`, `D-33`, `D-43`, `D-52`.

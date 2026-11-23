@@ -11,24 +11,21 @@
 | 5 | Acceptance criteria bisa dibuktikan | lolos | AC-01 sampai AC-13 punya langkah UI dari `pnpm db:reset`. AC-07 dan AC-09 bersifat lintas item dan disebut eksplisit |
 | 6 | Semua `depends on` berstatus `done` | lolos | `FND-003` `done` (2026-11-23) |
 | 7 | Tidak ada pertanyaan pemblokir terbuka | lolos | 9 pertanyaan: 5 terjawab `D-xx`, 4 terjawab `[USULAN-AGEN]`. Terbuka: 0 |
-| 8 | Gate fondasi terpenuhi | lolos | `FND-001`–`FND-007` `done` (2026-11-23); `FND-008` juga `done` |
+| 8 | Gate fondasi terpenuhi | lolos | `FND-001`–`FND-009` `done` (2026-11-23, `D-54`, `D-62`) |
 | 9 | Ukuran masuk akal untuk satu orang dalam satu track | lolos | usulan `M` (agen), satu track PG-A |
 
 ## Verdict
 
-`Blocked`
+`Ready`
 
-Sembilan kriteria DoR terpenuhi sejak 2026-11-23, tetapi item tetap `Blocked` karena satu prasyarat teknis belum punya item pemilik: belum ada AppShell. Rincian di bagian berikut.
+Semua kriteria DoR terpenuhi sejak 2026-11-23. Fondasi `FND-001`–`FND-009` sudah `done`, termasuk AppShell (`D-62`), sehingga layar item ini punya tempat render. Bila item membuat tabel, DDL dikirim sebagai usulan `06-ddl-proposal.sql` dan dinomori tech lead (`D-09`); layar dicari di `docs/design/inventory/<siklus>.md`.
 
-## Pemblokir baru (2026-11-23)
+## Pemblokir yang sudah ditutup (2026-11-23)
 
-Gate fondasi `FND-001`–`FND-008` sudah `done`, jadi kriteria 6 dan 8 lolos. Blokir yang tersisa bukan soal requirement:
+1. **AppShell** — ditutup oleh `FND-009` `done` (`src/app/(app)/layout.tsx`, 220px, `D-62`).
+2. **Lebar sidebar** — diputuskan 220px di `D-62`; `DESIGN_TOKENS`, `LAYOUTS`, `COMPONENTS` sudah diselaraskan.
+3. **Tabel `pemasok`** — tetap prosedur normal: DDL dikirim sebagai `06-ddl-proposal.sql`, dinomori tech lead (`D-09`, `D-31`).
 
-1. **AppShell belum dimiliki item mana pun.** `src/app/(app)/layout.tsx` — sidebar 200/220px, guard sesi, `<nav>`/`<main>` — tidak ada di `src/` dan tidak ada baris di `backlog.md` yang memilikinya. `FND-007` hanya mengirim empat primitive (tabel, form, status badge, dialog). Tanpa shell, layar pemasok hanya bisa dibangun dengan membuat shell kedua, yang dilarang `docs/design/COMPONENTS.md` §1.
-2. **Lebar sidebar belum diputuskan.** `DESIGN_TOKENS.md` mengunci 200px; `docs/design/FIGMA_V2_DELTAS.md` §1 mengukur 220px pada 375 dari 375 frame v2. Item yang membangun shell harus memakai nilai yang sudah diputuskan, bukan menebak.
-3. **Tabel `pemasok` belum ada di migrasi.** `D-31` menaruhnya di `core/`; PG-001 mengirim DDL sebagai usulan dan tech lead menomori (`D-09`). Ini prosedur normal, bukan kegagalan DoR, tetapi harus selesai sebelum implementasi dimulai.
-
-Verdict menjadi `Ready` setelah item AppShell (usulan `FND-009`) ada dan `done`. Tidak ada pemblokir requirement yang tersisa.
 
 ## Pertanyaan terbuka (2026-11-22)
 
@@ -72,9 +69,9 @@ Keputusan aktivasi ulang pemasok (Q-07, bagian dari `D-50`) juga `[USULAN-AGEN]`
 
 ## Readiness status
 
-- Status requirement: `specified`. Paket dibuat, belum `ready`.
-- Baris `backlog.md` `specified`.
-- Verdict diperbarui 2026-11-23: kriteria 6 dan 8 lolos setelah fondasi `done`; status tetap `Blocked` karena AppShell belum punya item pemilik.
+- Status requirement: `specified`. Paket lengkap.
+- Baris `backlog.md` `ready` (2026-11-23).
+- Verdict `Ready` setelah `FND-009` `done`; implementasi boleh dimulai setelah DDL `pemasok` dinomori.
 
 ## Handoff boundary
 
