@@ -69,6 +69,23 @@ sesi valid + peran Gudang     → 42501
 sesi valid + peran Purchasing → baris tersimpan
 ```
 
+## Validasi form memakai zod (2026-11-23)
+
+`schema.ts` memakai `zod 4.6.7` (standar baru di `AGENTS.md`). Validasi RPC tidak berubah; zod adalah gerbang pertama di batas action. Kasus diperiksa langsung terhadap `parsePemasokForm`:
+
+| Input | Hasil |
+|---|---|
+| kosong | `nama: Nama pemasok wajib diisi`, `termin_hari: Termin pembayaran wajib diisi` |
+| nama + termin 30, toleransi kosong | tersimpan dengan `toleransi_persen 0`, `toleransi_nominal 0` |
+| termin `abc` | `Termin pembayaran harus berupa angka` |
+| termin `-5` | `Termin pembayaran harus berupa angka bulat minimal 0` |
+| persen `0,755` | `Maksimal 2 angka desimal` (tidak dibulatkan diam-diam oleh `numeric(5,2)`) |
+| nominal `-1` | `Toleransi nominal tidak boleh negatif` |
+| nominal `1.234,56` | `Toleransi nominal harus berupa angka` |
+| `0,75` / `1500` | tersimpan `0.75` / `1500` |
+
+`zod` hanya diimpor `actions.ts` (`"use server"`), jadi tidak masuk bundel browser.
+
 ## Screenshot 1280
 
 [`pg001-pemasok-1280.png`](pg001-pemasok-1280.png) — daftar + detail + riwayat status, sidebar 220px, konten mulai x=252.

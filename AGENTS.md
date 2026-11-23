@@ -241,6 +241,7 @@ Imports use the `@/` alias; no `../../../` chains. Put `import type` for type-on
 - No `console.log` in committed code. Errors go through the result object or the server log.
 - Comments explain **why**, not what. English only.
 - Never import a server module into a client component. Keep server code out of `"use client"` import graphs; the `server-only` guard package is not installed yet.
+- Server input is validated with **zod**: one `<feature>Schema` per feature in its `schema.ts`, Indonesian messages per field, parsed in the action before any service call. Distinguish *empty* from *not a number* from *out of range*; never let a blank field silently become zero unless the requirement says it defaults. The database keeps its own checks — zod is the first gate, not the only one.
 - Use `Result` shape for actions: `{ ok: true; data } | { ok: false; message }`. Create `src/lib/result.ts` once, when the first action lands; do not redefine the shape per feature.
 
 ## Architecture Rules

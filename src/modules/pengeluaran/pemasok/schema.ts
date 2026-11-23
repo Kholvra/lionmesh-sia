@@ -1,3 +1,5 @@
+import { z } from "zod";
+
 import type { PemasokInput } from "@/core/pemasok";
 
 export type PemasokField =
@@ -23,77 +25,148 @@ export const INITIAL_PEMASOK_ACTION_STATE: PemasokActionState = {
   status: "idle",
 };
 
-function textValue(value: FormDataEntryValue | null): string {
-  return typeof value === "string" ? value.trim() : "";
+const PESAN_NAMA = "Nama pemasok wajib diisi";
+const PESAN_TERMIN = "Termin pembayaran wajib diisi";
+const PESAN_TERMIN_ANGKA = "Termin pembayaran harus berupa angka";
+const PESAN_TERMIN_BULAT = "Termin pembayaran harus berupa angka bulat minimal 0";
+const PESAN_PERSEN = "Toleransi persen harus antara 0 dan 100";
+const PESAN_PERSEN_ANGKA = "Toleransi persen harus berupa angka";
+const PESAN_NOMINAL = "Toleransi nominal tidak boleh negatif";
+const PESAN_NOMINAL_ANGKA = "Toleransi nominal harus berupa angka";
+const PESAN_DESIMAL = "Maksimal 2 angka desimal";
+
+/** Reads a text field, keeping an empty input distinct from a missing one. */
+function teks(formData: FormData, field: PemasokField): string {
+  const value = formData.get(field);
+  return typeof value === "string" ? value : "";
 }
 
-function optionalText(value: FormDataEntryValue | null): string | null {
-  const text = textValue(value);
-  return text.length > 0 ? text : null;
+const pemasokFormSchema = z.object({
+  nama: z.string().trim().min(1, PESAN_NAMA),
+  alamat: z.string().trim(),
+  npwp: z.string().trim(),
+  kontak_perusahaan: z.string().trim(),
+  kontak_pic_nama: z.string().trim(),
+  kontak_pic_telepon: z.string().trim(),
+  termin_hari: z.string(),
+  toleransi_persen: z.string(),
+  toleransi_nominal: z.string(),
+});
+
+type AngkaTerbaca = { nilai: number } | { pesan: string };
+
+function bacaAngka(
+  raw: string,
+  pesanWajib: string,
+  pesanBukanAngka: string,
+  maksDesimal: number | null,
+): AngkaTerbaca {
+  const trimmed = raw.trim();
+  if (trimmed.length === 0) return { pesan: pesanWajib };
+
+  // The form accepts the Indonesian decimal comma; anything else is a mistake.
+  const normal = trimmed.replace(",", ".");
+  const nilai = Number(normal);
+  if (!Number.isFinite(nilai)) return { pesan: pesanBukanAngka };
+
+  if (maksDesimal !== null) {
+    const [, desimal = ""] = normal.split(".");
+    if (desimal.length > maksDesimal) return { pesan: PESAN_DESIMAL };
+  }
+
+  return { nilai };
 }
 
-function parseNumber(value: FormDataEntryValue | null, fallback: number): number {
-  const text = textValue(value);
-  if (text.length === 0) return fallback;
-  return Number(text.replace(",", "."));
+function kosongJadiNull(value: string): string | null {
+  return value.length > 0 ? value : null;
 }
 
 export function parsePemasokForm(formData: FormData): {
   input: PemasokInput | null;
   fieldErrors: PemasokFieldErrors;
 } {
+  const mentah = {
+    nama: teks(formData, "nama"),
+    alamat: teks(formData, "alamat"),
+    npwp: teks(formData, "npwp"),
+    kontak_perusahaan: teks(formData, "kontak_perusahaan"),
+    kontak_pic_nama: teks(formData, "kontak_pic_nama"),
+    kontak_pic_telepon: teks(formData, "kontak_pic_telepon"),
+    termin_hari: teks(formData, "termin_hari"),
+    toleransi_persen: teks(formData, "toleransi_persen"),
+    toleransi_nominal: teks(formData, "toleransi_nominal"),
+  };
+
   const fieldErrors: PemasokFieldErrors = {};
+  const parsed = pemasokFormSchema.safeParse(mentah);
 
-  const nama = textValue(formData.get("nama"));
-  if (nama.length === 0) {
-    fieldErrors.nama = "Nama pemasok wajib diisi";
+  if (!parsed.success) {
+    for (const issue of parsed.error.issues) {
+      const key = issue.path[0];
+      if (typeof key === "string" && !(key in fieldErrors)) {
+        fieldErrors[key as PemasokField] = issue.message;
+      }
+    }
   }
 
-  const terminText = textValue(formData.get("termin_hari"));
-  const terminHari = Number(terminText);
-  if (terminText.length === 0) {
-    fieldErrors.termin_hari = "Termin pembayaran wajib diisi";
-  } else if (!Number.isInteger(terminHari) || terminHari < 0) {
-    fieldErrors.termin_hari = "Termin pembayaran harus berupa angka bulat minimal 0";
+  const termin = bacaAngka(mentah.termin_hari, PESAN_TERMIN, PESAN_TERMIN_ANGKA, null);
+  // D-15: both tolerances default to zero when the field is left empty.
+  const persen =
+    mentah.toleransi_persen.trim().length === 0
+      ? { nilai: 0 }
+      : bacaAngka(mentah.toleransi_persen, PESAN_PERSEN, PESAN_PERSEN_ANGKA, 2);
+  const nominal =
+    mentah.toleransi_nominal.trim().length === 0
+      ? { nilai: 0 }
+      : bacaAngka(mentah.toleransi_nominal, PESAN_NOMINAL, PESAN_NOMINAL_ANGKA, 2);
+
+  if ("pesan" in termin) {
+    fieldErrors.termin_hari = termin.pesan;
+  } else if (!Number.isInteger(termin.nilai) || termin.nilai < 0) {
+    fieldErrors.termin_hari = PESAN_TERMIN_BULAT;
   }
 
-  const toleransiPersen = parseNumber(formData.get("toleransi_persen"), 0);
-  if (
-    !Number.isFinite(toleransiPersen) ||
-    toleransiPersen < 0 ||
-    toleransiPersen > 100
-  ) {
-    fieldErrors.toleransi_persen = "Toleransi persen harus antara 0 dan 100";
+  if ("pesan" in persen) {
+    fieldErrors.toleransi_persen = persen.pesan;
+  } else if (persen.nilai < 0 || persen.nilai > 100) {
+    fieldErrors.toleransi_persen = PESAN_PERSEN;
   }
 
-  const toleransiNominal = parseNumber(formData.get("toleransi_nominal"), 0);
-  if (!Number.isFinite(toleransiNominal) || toleransiNominal < 0) {
-    fieldErrors.toleransi_nominal = "Toleransi nominal tidak boleh negatif";
+  if ("pesan" in nominal) {
+    fieldErrors.toleransi_nominal = nominal.pesan;
+  } else if (nominal.nilai < 0) {
+    fieldErrors.toleransi_nominal = PESAN_NOMINAL;
   }
 
-  if (Object.keys(fieldErrors).length > 0) {
+  if (Object.keys(fieldErrors).length > 0 || !parsed.success) {
     return { input: null, fieldErrors };
   }
 
+  // Reaching here means every reading produced a number; narrow for TypeScript.
+  if ("pesan" in termin || "pesan" in persen || "pesan" in nominal) {
+    return { input: null, fieldErrors };
+  }
+
+  const nilai = parsed.data;
+
   return {
     input: {
-      nama,
-      alamat: optionalText(formData.get("alamat")),
-      npwp: optionalText(formData.get("npwp")),
-      kontakPerusahaan: optionalText(formData.get("kontak_perusahaan")),
-      kontakPicNama: optionalText(formData.get("kontak_pic_nama")),
-      kontakPicTelepon: optionalText(formData.get("kontak_pic_telepon")),
-      terminHari,
-      toleransiPersen,
-      toleransiNominal,
+      nama: nilai.nama,
+      alamat: kosongJadiNull(nilai.alamat),
+      npwp: kosongJadiNull(nilai.npwp),
+      kontakPerusahaan: kosongJadiNull(nilai.kontak_perusahaan),
+      kontakPicNama: kosongJadiNull(nilai.kontak_pic_nama),
+      kontakPicTelepon: kosongJadiNull(nilai.kontak_pic_telepon),
+      terminHari: termin.nilai,
+      toleransiPersen: persen.nilai,
+      toleransiNominal: nominal.nilai,
     },
-    fieldErrors,
+    fieldErrors: {},
   };
 }
 
-const UUID_PATTERN =
-  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+const pemasokIdSchema = z.uuid();
 
 export function isValidPemasokId(value: unknown): value is string {
-  return typeof value === "string" && UUID_PATTERN.test(value);
+  return pemasokIdSchema.safeParse(value).success;
 }
