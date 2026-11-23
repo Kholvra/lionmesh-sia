@@ -42,4 +42,4 @@ Layar hanya membaca melalui core/read model yang berwenang, tidak membaca tabel 
 
 ## Dependensi dan prioritas
 
-FND-003 dan FND-004 `done`; gate FND-001–FND-009 terpenuhi. D-59 tetap mendahulukan pengerjaan C-011 dan C-013. C-014 tidak mensyaratkan penyelesaian sumber siklus yang belum tersedia.
+FND-003 dan FND-004 `done`; gate FND-001–FND-009 terpenuhi. D-65 mengizinkan pengerjaan paralel. C-014 tidak mensyaratkan penyelesaian sumber siklus yang belum tersedia.

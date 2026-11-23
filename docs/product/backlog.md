@@ -195,4 +195,4 @@ Terbaca per level. Semua item dalam satu baris boleh dikerjakan serentak. `DISC-
 | 2026-11-23 | Gelombang 1 → `ready`: `PD-001`, `PG-001`, `PG-010`, `GJ-001`, `C-009`, `C-011`, `C-012`. Readiness review disegarkan setelah `FND-009` `done`; DDL tetap lewat usulan dan nomor tech lead (`D-09`) |
 | 2026-11-23 | `PG-001` mulai dikerjakan setelah fondasi `FND-001`–`FND-007` selesai; migrasi `0009`, core service, UI, dan validasi server ditambahkan. Verifikasi database tertunda karena Docker tidak tersedia |
 
-- 2026-11-23: `C-013` dan `C-014` → `ready` setelah keputusan tech lead D-64; prioritas D-59 tetap berlaku.
+| 2026-11-24 | `C-013` dan `C-014` → `ready` setelah keputusan tech lead D-64; lima track core boleh paralel sesuai D-65 |
