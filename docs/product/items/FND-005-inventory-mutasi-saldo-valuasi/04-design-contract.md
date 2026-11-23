@@ -27,6 +27,10 @@ Mutasi yang timbul dari dokumen mengikuti izin aksi dokumen sumber. Transfer, op
 
 Migrasi RPC menolak peran klien secara langsung. Jalur server operasi manual sudah diuji dengan sesi nyata di lingkungan terisolasi. Caller UI dan aksi dokumen sumber belum tersedia; `PRE-01` untuk mutasi yang dipicu dokumen tetap parsial sampai diuji bersama aksi sumber yang sesuai.
 
+## Presisi desimal
+
+Kontrak input dan output kuantitas, harga, dan nilai menggunakan string desimal. Migrasi fix-forward `0005` mengubah serialisasi respons RPC tanpa mengubah data tersimpan; query membaca kolom numerik sebagai teks. Perhitungan transaksi tetap atomik di PostgreSQL; strategi valuasi di TypeScript memakai aritmetika bilangan bulat berskala. Nilai JSON numerik ditolak pada batas input operasi manual agar pembulatan JavaScript tidak diam-diam mengubah stok.
+
 ## Preconditions
 
 | ID | Trigger | MUST be true | Owner | Violation behavior |

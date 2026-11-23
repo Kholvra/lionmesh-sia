@@ -64,6 +64,8 @@ async function request(operation, payload, cookie = "") {
 }
 
 try {
+  const valuation = await (await fetch(`${app}/fnd005-security-probe`)).json();
+  check("valuation retains precision and PostgreSQL half rounding", valuation.incoming.qtyBaru === "900719925474.0993" && valuation.incoming.nilaiBaru === "90071992.55" && valuation.outgoing.qtyBaru === "0.0000" && valuation.outgoing.nilaiBaru === "0.00" && valuation.rounding.nilaiMasuk === "0.01");
   accounts.Gudang = await makeAccount("Gudang");
   accounts.Penjualan = await makeAccount("Penjualan");
   const unit = (await db.query("insert into public.satuan(kode,nama) values($1,'Unit') returning id", [`UNIT-${suffix}`])).rows[0].id;
@@ -71,7 +73,7 @@ try {
   const origin = (await db.query("insert into public.gudang(kode,nama) values($1,'Origin') returning id", [`ORIG-${suffix}`])).rows[0].id;
   const dest = (await db.query("insert into public.gudang(kode,nama) values($1,'Destination') returning id", [`DEST-${suffix}`])).rows[0].id;
   await db.query("select public.catat_mutasi_stok($1,$2,'2020-01-01T00:00:00Z','MASUK',10,10,'TEST',$3,null,null)", [product, origin, randomUUID()]);
-  const payload = { produkId: product, gudangAsalId: origin, gudangTujuanId: dest, qty: 3 };
+  const payload = { produkId: product, gudangAsalId: origin, gudangTujuanId: dest, qty: "3" };
   let result = await request("transfer", payload);
   check("anonymous denied", result.status === 403 && !result.body.ok);
   result = await request("transfer", payload, accounts.Penjualan.cookie);
@@ -80,21 +82,33 @@ try {
   check("forged actor rejected", result.status === 403 && !result.body.ok);
   result = await request("transfer", { ...payload, sumberId: randomUUID() }, accounts.Gudang.cookie);
   check("forged source rejected", result.status === 403 && !result.body.ok);
-  result = await request("transfer", { ...payload, qty: 0 }, accounts.Gudang.cookie);
+  result = await request("transfer", { ...payload, qty: "0" }, accounts.Gudang.cookie);
   check("zero quantity rejected", result.status === 403 && !result.body.ok);
-  result = await request("opname", { produkId: product, gudangId: origin, qtyFisik: -1, alasan: "Uji" }, accounts.Gudang.cookie);
+  result = await request("opname", { produkId: product, gudangId: origin, qtyFisik: "-1", alasan: "Uji" }, accounts.Gudang.cookie);
   check("negative stocktake rejected", result.status === 403 && !result.body.ok);
   const before = Number((await db.query("select count(*) as n from public.mutasi_stok where produk_id=$1", [product])).rows[0].n);
   check("rejections have no stock side effects", before === 1);
   result = await request("transfer", payload, accounts.Gudang.cookie);
   check("warehouse transfer allowed", result.status === 200 && result.body.ok);
-  result = await request("opname", { produkId: product, gudangId: origin, qtyFisik: 8, alasan: "Uji lokal" }, accounts.Gudang.cookie);
+  result = await request("opname", { produkId: product, gudangId: origin, qtyFisik: "8", alasan: "Uji lokal" }, accounts.Gudang.cookie);
   check("warehouse stocktake allowed", result.status === 200 && result.body.ok);
-  result = await request("adjustment", { produkId: product, gudangId: origin, qty: -2, alasan: "Uji lokal" }, accounts.Gudang.cookie);
+  result = await request("adjustment", { produkId: product, gudangId: origin, qty: "-2", alasan: "Uji lokal" }, accounts.Gudang.cookie);
   check("warehouse adjustment allowed", result.status === 200 && result.body.ok);
   const balances = (await db.query("select gudang_id,qty::text from public.saldo_stok where produk_id=$1", [product])).rows;
   const movements = (await db.query("select created_by from public.mutasi_stok where produk_id=$1", [product])).rows;
   check("balances and session audit actor", Number(balances.find((row) => row.gudang_id === origin)?.qty) === 6 && Number(balances.find((row) => row.gudang_id === dest)?.qty) === 3 && movements.length === 5 && movements.filter((row) => row.created_by === accounts.Gudang.id).length === 4);
+  const precisionProduct = (await db.query("insert into public.produk(kode,nama,satuan_dasar_id) values($1,'Precision',$2) returning id", [`PREC-${suffix}`, unit])).rows[0].id;
+  const precise = "900719925474.0993";
+  const preciseMutation = await db.query("select public.catat_mutasi_stok($1,$2,'2020-01-01T00:00:00Z','MASUK',$3,0.0001,'TEST',$4,null,null) as result", [precisionProduct, origin, precise, randomUUID()]);
+  check("RPC preserves exact decimal strings", preciseMutation.rows[0].result.qty === precise && preciseMutation.rows[0].result.saldo.qty === precise);
+  result = await request("transfer", { ...payload, produkId: precisionProduct, qty: precise }, accounts.Gudang.cookie);
+  check("large decimal survives API and database", result.body.ok && result.body.data.saldoTujuan.qty === precise);
+  const read = await accounts.Gudang.client.from("saldo_stok").select("*,qty::text,nilai::text,harga_rata::text").eq("produk_id", precisionProduct).eq("gudang_id", dest).single();
+  check("read API preserves exact decimal strings", !read.error && read.data.qty === precise);
+  result = await request("transfer", { ...payload, qty: 900719925474.0993 }, accounts.Gudang.cookie);
+  check("JSON numbers rejected before rounding can change stock", !result.body.ok);
+  result = await request("transfer", { ...payload, qty: "0.00001" }, accounts.Gudang.cookie);
+  check("excess decimal places rejected", !result.body.ok);
   const direct = await accounts.Gudang.client.rpc("transfer_stok", { p_produk_id: product, p_gudang_asal_id: origin, p_gudang_tujuan_id: dest, p_qty: 1 });
   check("direct client RPC denied", !!direct.error);
   await db.query("update public.profiles set peran='Penjualan' where id=$1", [accounts.Gudang.id]);

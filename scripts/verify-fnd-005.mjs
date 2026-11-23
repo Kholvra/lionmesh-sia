@@ -104,9 +104,9 @@ await recordResult(
     `);
 
     const res = rows[0].res;
-    assert(res.saldo.qty === 15, `Qty saldo harus 15, dapat ${res.saldo.qty}`);
-    assert(res.saldo.nilai === 180, `Nilai saldo harus 180, dapat ${res.saldo.nilai}`);
-    assert(res.saldo.harga_rata === 12, `Harga rata harus 12, dapat ${res.saldo.harga_rata}`);
+    assert(Number(res.saldo.qty) === 15, `Qty saldo harus 15, dapat ${res.saldo.qty}`);
+    assert(Number(res.saldo.nilai) === 180, `Nilai saldo harus 180, dapat ${res.saldo.nilai}`);
+    assert(Number(res.saldo.harga_rata) === 12, `Harga rata harus 12, dapat ${res.saldo.harga_rata}`);
 
     return `Saldo: qty=${res.saldo.qty}, nilai=${res.saldo.nilai}, harga_rata=${res.saldo.harga_rata}`;
   }
@@ -124,10 +124,10 @@ await recordResult(
     `);
 
     const res = rows[0].res;
-    assert(res.saldo.qty === 11, `Qty saldo harus 11, dapat ${res.saldo.qty}`);
-    assert(res.saldo.nilai === 132, `Nilai saldo harus 132, dapat ${res.saldo.nilai}`);
-    assert(res.saldo.harga_rata === 12, `Harga rata harus 12, dapat ${res.saldo.harga_rata}`);
-    assert(res.nilai === 48, `Nilai keluar harus 48, dapat ${res.nilai}`);
+    assert(Number(res.saldo.qty) === 11, `Qty saldo harus 11, dapat ${res.saldo.qty}`);
+    assert(Number(res.saldo.nilai) === 132, `Nilai saldo harus 132, dapat ${res.saldo.nilai}`);
+    assert(Number(res.saldo.harga_rata) === 12, `Harga rata harus 12, dapat ${res.saldo.harga_rata}`);
+    assert(Number(res.nilai) === 48, `Nilai keluar harus 48, dapat ${res.nilai}`);
 
     return `Saldo: qty=${res.saldo.qty}, nilai=${res.saldo.nilai}, harga_rata=${res.saldo.harga_rata}, nilai_keluar=${res.nilai}`;
   }
@@ -410,9 +410,9 @@ await recordResult(
     `);
 
     const res = rows[0].res;
-    assert(res.saldo.qty === 0, `Qty saldo harus 0, dapat ${res.saldo.qty}`);
-    assert(res.saldo.nilai === 0, `Nilai saldo harus 0, dapat ${res.saldo.nilai}`);
-    assert(res.saldo.harga_rata === 12, `Harga rata harus 12, dapat ${res.saldo.harga_rata}`);
+    assert(Number(res.saldo.qty) === 0, `Qty saldo harus 0, dapat ${res.saldo.qty}`);
+    assert(Number(res.saldo.nilai) === 0, `Nilai saldo harus 0, dapat ${res.saldo.nilai}`);
+    assert(Number(res.saldo.harga_rata) === 12, `Harga rata harus 12, dapat ${res.saldo.harga_rata}`);
 
     return `Saldo: qty=${res.saldo.qty}, nilai=${res.saldo.nilai}, harga_rata=${res.saldo.harga_rata}`;
   }
@@ -438,11 +438,11 @@ await recordResult(
     `);
 
     const res = rows[0].res;
-    assert(res.saldo_asal.qty === 8, `G1 qty harus 8, dapat ${res.saldo_asal.qty}`);
-    assert(res.saldo_asal.nilai === 96, `G1 nilai harus 96, dapat ${res.saldo_asal.nilai}`);
-    assert(res.saldo_tujuan.qty === 3, `G2 qty harus 3, dapat ${res.saldo_tujuan.qty}`);
-    assert(res.saldo_tujuan.nilai === 36, `G2 nilai harus 36, dapat ${res.saldo_tujuan.nilai}`);
-    assert(res.saldo_tujuan.harga_rata === 12, `G2 harga rata harus 12, dapat ${res.saldo_tujuan.harga_rata}`);
+    assert(Number(res.saldo_asal.qty) === 8, `G1 qty harus 8, dapat ${res.saldo_asal.qty}`);
+    assert(Number(res.saldo_asal.nilai) === 96, `G1 nilai harus 96, dapat ${res.saldo_asal.nilai}`);
+    assert(Number(res.saldo_tujuan.qty) === 3, `G2 qty harus 3, dapat ${res.saldo_tujuan.qty}`);
+    assert(Number(res.saldo_tujuan.nilai) === 36, `G2 nilai harus 36, dapat ${res.saldo_tujuan.nilai}`);
+    assert(Number(res.saldo_tujuan.harga_rata) === 12, `G2 harga rata harus 12, dapat ${res.saldo_tujuan.harga_rata}`);
 
     // Uji transfer ke gudang yang sama
     let sameWhErr = "";
@@ -477,10 +477,10 @@ await recordResult(
       ) as res;
     `);
     const r1 = op1[0].res;
-    assert(r1.selisih === 2, `Selisih harus 2, dapat ${r1.selisih}`);
-    assert(r1.saldo.qty === 10, `Qty harus 10, dapat ${r1.saldo.qty}`);
-    assert(r1.saldo.nilai === 120, `Nilai harus 120, dapat ${r1.saldo.nilai}`);
-    assert(r1.saldo.harga_rata === 12, `Harga rata harus 12, dapat ${r1.saldo.harga_rata}`);
+    assert(Number(r1.selisih) === 2, `Selisih harus 2, dapat ${r1.selisih}`);
+    assert(Number(r1.saldo.qty) === 10, `Qty harus 10, dapat ${r1.saldo.qty}`);
+    assert(Number(r1.saldo.nilai) === 120, `Nilai harus 120, dapat ${r1.saldo.nilai}`);
+    assert(Number(r1.saldo.harga_rata) === 12, `Harga rata harus 12, dapat ${r1.saldo.harga_rata}`);
 
     // Fisik 7: mutasi PENYESUAIAN keluar 3, nilai 36, hasil saldo qty 7 nilai 84 harga rata 12
     const { rows: op2 } = await client.query(`
@@ -489,10 +489,10 @@ await recordResult(
       ) as res;
     `);
     const r2 = op2[0].res;
-    assert(r2.selisih === -3, `Selisih harus -3, dapat ${r2.selisih}`);
-    assert(r2.saldo.qty === 7, `Qty harus 7, dapat ${r2.saldo.qty}`);
-    assert(r2.saldo.nilai === 84, `Nilai harus 84, dapat ${r2.saldo.nilai}`);
-    assert(r2.saldo.harga_rata === 12, `Harga rata harus 12, dapat ${r2.saldo.harga_rata}`);
+    assert(Number(r2.selisih) === -3, `Selisih harus -3, dapat ${r2.selisih}`);
+    assert(Number(r2.saldo.qty) === 7, `Qty harus 7, dapat ${r2.saldo.qty}`);
+    assert(Number(r2.saldo.nilai) === 84, `Nilai harus 84, dapat ${r2.saldo.nilai}`);
+    assert(Number(r2.saldo.harga_rata) === 12, `Harga rata harus 12, dapat ${r2.saldo.harga_rata}`);
 
     // Tanpa alasan ditolak
     let noReasonErr = "";

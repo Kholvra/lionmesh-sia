@@ -116,3 +116,8 @@ Pengujian terpisah tanpa konfigurasi service-role menghasilkan Result `Layanan s
 Untuk mengulang: jalankan proyek Supabase **khusus uji** pada port selain 54321/54322, terapkan migrasi, salin `scripts/fixtures/fnd005-security-probe.route.txt` sementara ke `src/app/fnd005-security-probe/route.ts`, dan jalankan server Next.js dengan URL, publishable key, dan service-role key proyek uji. Jalankan skrip dengan `FND005_DISPOSABLE=1`, `FND005_TEST_API_URL`, `FND005_TEST_DB_URL`, `FND005_TEST_APP_URL`, `FND005_TEST_ANON_KEY`, dan `FND005_TEST_SERVICE_KEY` di environment. Skrip membuat data dan akun uji pada database tersebut; jangan gunakan database bersama. Setelah selesai hapus route sementara dan proyek uji.
 
 AC-06 untuk operasi manual kini memiliki bukti jalur server dan penolakan DML/RPC klien. Verifikasi dokumen sumber untuk mutasi yang dipicu siklus lain tetap menunggu aksi dan dokumen pemilik; jangan meneruskan `actorId` atau `sumberTipe` dari payload klien sebagai bukti otorisasi.
+
+
+## Presisi desimal — 2026-11-23
+
+Pada Supabase dan PostgreSQL lokal terisolasi, migrasi `0005_inventory_decimal_strings.sql` diterapkan setelah 0004. `node scripts/verify-fnd-005.mjs` menghasilkan 15 pemeriksaan database lulus. `node scripts/verify-fnd-005-session.mjs` memeriksa sesi dan batas desimal: `900719925474.0993` tetap sama pada respons RPC, transfer, dan hasil baca; angka JSON dan input dengan lima angka desimal ditolak. Strategi valuasi diuji dengan nilai besar, pengeluaran seluruh saldo, dan pembulatan `0.005` menjadi `0.01`. Pemeriksaan dokumen sumber tetap menunggu item pemilik.

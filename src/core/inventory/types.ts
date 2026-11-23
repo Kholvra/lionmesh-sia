@@ -8,9 +8,9 @@ export type TipeMutasi =
 export interface SaldoStok {
   produk_id: string;
   gudang_id: string;
-  qty: number;
-  nilai: number;
-  harga_rata: number;
+  qty: string;
+  nilai: string;
+  harga_rata: string;
   created_by?: string | null;
   created_at: string;
   updated_by?: string | null;
@@ -23,9 +23,9 @@ export interface MutasiStok {
   gudang_id: string;
   tanggal: string;
   tipe: TipeMutasi;
-  qty: number;
-  harga_satuan: number;
-  nilai: number;
+  qty: string;
+  harga_satuan: string;
+  nilai: string;
   sumber_tipe: string;
   sumber_id: string;
   alasan?: string | null;
@@ -40,8 +40,8 @@ export interface CatatMutasiInput {
   gudangId: string;
   tanggal: string | Date;
   tipe: TipeMutasi;
-  qty: number;
-  hargaSatuan?: number;
+  qty: string;
+  hargaSatuan?: string;
   sumberTipe?: string;
   sumberId?: string;
   alasan?: string;
@@ -51,13 +51,13 @@ export interface CatatMutasiInput {
 export interface CatatMutasiResult {
   mutasiId: string;
   tipe: TipeMutasi;
-  qty: number;
-  hargaSatuan: number;
-  nilai: number;
+  qty: string;
+  hargaSatuan: string;
+  nilai: string;
   saldo: {
-    qty: number;
-    nilai: number;
-    hargaRata: number;
+    qty: string;
+    nilai: string;
+    hargaRata: string;
   };
 }
 
@@ -65,7 +65,7 @@ export interface TransferStokInput {
   produkId: string;
   gudangAsalId: string;
   gudangTujuanId: string;
-  qty: number;
+  qty: string;
   tanggal?: string | Date;
   sumberId?: string;
   actorId?: string;
@@ -75,23 +75,23 @@ export interface TransferStokResult {
   transferId: string;
   mutasiKeluarId: string;
   mutasiMasukId: string;
-  nilaiTransfer: number;
+  nilaiTransfer: string;
   saldoAsal: {
-    qty: number;
-    nilai: number;
-    hargaRata: number;
+    qty: string;
+    nilai: string;
+    hargaRata: string;
   };
   saldoTujuan: {
-    qty: number;
-    nilai: number;
-    hargaRata: number;
+    qty: string;
+    nilai: string;
+    hargaRata: string;
   };
 }
 
 export interface OpnameStokInput {
   produkId: string;
   gudangId: string;
-  qtyFisik: number;
+  qtyFisik: string;
   alasan: string;
   tanggal?: string | Date;
   sumberId?: string;
@@ -101,12 +101,12 @@ export interface OpnameStokInput {
 export interface OpnameStokResult {
   opnameId: string;
   mutasiId: string | null;
-  selisih: number;
-  nilaiPenyesuaian: number;
+  selisih: string;
+  nilaiPenyesuaian: string;
   saldo: {
-    qty: number;
-    nilai: number;
-    hargaRata: number;
+    qty: string;
+    nilai: string;
+    hargaRata: string;
   };
 }
 
@@ -116,27 +116,27 @@ export interface OpnameStokResult {
  */
 export interface ValuationStrategy {
   calculateIncoming(
-    currentQty: number,
-    currentNilai: number,
-    currentHargaRata: number,
-    incomingQty: number,
-    incomingHarga: number,
+    currentQty: string,
+    currentNilai: string,
+    currentHargaRata: string,
+    incomingQty: string,
+    incomingHarga: string,
   ): {
-    qtyBaru: number;
-    nilaiBaru: number;
-    hargaRataBaru: number;
-    nilaiMasuk: number;
+    qtyBaru: string;
+    nilaiBaru: string;
+    hargaRataBaru: string;
+    nilaiMasuk: string;
   };
 
   calculateOutgoing(
-    currentQty: number,
-    currentNilai: number,
-    currentHargaRata: number,
-    outgoingQty: number,
+    currentQty: string,
+    currentNilai: string,
+    currentHargaRata: string,
+    outgoingQty: string,
   ): {
-    qtyBaru: number;
-    nilaiBaru: number;
-    hargaRataBaru: number;
-    nilaiKeluar: number;
+    qtyBaru: string;
+    nilaiBaru: string;
+    hargaRataBaru: string;
+    nilaiKeluar: string;
   };
 }

@@ -9,6 +9,7 @@ import type {
   OpnameStokResult,
   TransferStokResult,
 } from "./types";
+import { isDecimal } from "./decimal";
 import { catatMutasi, opnameStok, transferStok } from "./service";
 
 type InventorySession = NonNullable<Awaited<ReturnType<typeof getSesiUser>>>;
@@ -27,13 +28,6 @@ function hasOnlyKeys(value: InputRecord, keys: readonly string[]): boolean {
 
 function isUuid(value: unknown): value is string {
   return typeof value === "string" && UUID_PATTERN.test(value);
-}
-
-function isQuantity(value: unknown, allowZero = false): value is number {
-  if (typeof value !== "number" || !Number.isFinite(value)) return false;
-  if (Math.abs(value) >= 100_000_000_000_000) return false;
-  if (!allowZero && value === 0) return false;
-  return Math.round(value * 10_000) / 10_000 === value;
 }
 
 function isDate(value: unknown): value is string {
@@ -67,8 +61,7 @@ function parseTransferInput(value: unknown) {
     !isUuid(value.produkId) ||
     !isUuid(value.gudangAsalId) ||
     !isUuid(value.gudangTujuanId) ||
-    !isQuantity(value.qty) ||
-    value.qty <= 0 ||
+    !isDecimal(value.qty, false, false) ||
     (value.tanggal !== undefined && !isDate(value.tanggal))
   ) {
     return null;
@@ -89,8 +82,7 @@ function parseOpnameInput(value: unknown) {
   if (
     !isUuid(value.produkId) ||
     !isUuid(value.gudangId) ||
-    !isQuantity(value.qtyFisik, true) ||
-    value.qtyFisik < 0 ||
+    !isDecimal(value.qtyFisik, true, false) ||
     !isReason(value.alasan) ||
     (value.tanggal !== undefined && !isDate(value.tanggal))
   ) {
@@ -112,7 +104,7 @@ function parseAdjustmentInput(value: unknown) {
   if (
     !isUuid(value.produkId) ||
     !isUuid(value.gudangId) ||
-    !isQuantity(value.qty) ||
+    !isDecimal(value.qty, false) ||
     !isReason(value.alasan) ||
     (value.tanggal !== undefined && !isDate(value.tanggal))
   ) {

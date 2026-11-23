@@ -11,3 +11,12 @@ export async function POST(request: Request) {
         : { ok: false as const, message: "Operasi tidak dikenal." };
   return Response.json(result, { status: result.ok ? 200 : 403 });
 }
+
+export async function GET() {
+  const { defaultValuationStrategy: strategy } = await import("@/core/inventory");
+  return Response.json({
+    incoming: strategy.calculateIncoming("0", "0", "0", "900719925474.0993", "0.0001"),
+    outgoing: strategy.calculateOutgoing("900719925474.0993", "90071992.55", "0.0001", "900719925474.0993"),
+    rounding: strategy.calculateIncoming("0", "0", "0", "1", "0.0050"),
+  });
+}
