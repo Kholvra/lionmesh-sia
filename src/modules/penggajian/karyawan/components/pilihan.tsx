@@ -1,6 +1,6 @@
 "use client";
 
-import ui from "@/modules/penggajian/shell/ui.module.css";
+import ui from "@/modules/penggajian/ui/ui.module.css";
 
 type PilihanProps = {
   name: string;

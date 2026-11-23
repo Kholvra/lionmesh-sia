@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 
-import styles from "@/modules/penggajian/shell/ui.module.css";
+import styles from "@/modules/penggajian/ui/ui.module.css";
 
 type NoticeProps = {
   tone: "success" | "danger" | "warning" | "info";

@@ -1,6 +1,6 @@
 import Link from "next/link";
 
-import ui from "@/modules/penggajian/shell/ui.module.css";
+import ui from "@/modules/penggajian/ui/ui.module.css";
 
 export function TidakBerwenang() {
   return (

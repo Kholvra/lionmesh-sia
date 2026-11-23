@@ -8,7 +8,7 @@ import type { DataTableColumn, TableSort } from "@/components/ui";
 import { samarkanRekening } from "@/modules/penggajian/karyawan/format";
 import type { BarisKaryawan } from "@/modules/penggajian/karyawan/queries";
 import { STATUS_KARYAWAN } from "@/modules/penggajian/karyawan/status";
-import ui from "@/modules/penggajian/shell/ui.module.css";
+import ui from "@/modules/penggajian/ui/ui.module.css";
 
 type FilterStatus = "AKTIF" | "NONAKTIF" | "SEMUA";
 

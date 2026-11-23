@@ -5,8 +5,8 @@ import { BelumAdaKaryawan, TidakBerwenang } from "@/modules/penggajian/karyawan/
 import { KaryawanTable, KaryawanTableLoading } from "@/modules/penggajian/karyawan/components/karyawan-table";
 import { listKaryawan } from "@/modules/penggajian/karyawan/queries";
 import { aksesSesi } from "@/modules/penggajian/karyawan/sesi";
-import { PageHeader } from "@/modules/penggajian/shell/page-header";
-import ui from "@/modules/penggajian/shell/ui.module.css";
+import { PageHeader } from "@/modules/penggajian/ui/page-header";
+import ui from "@/modules/penggajian/ui/ui.module.css";
 
 const ITEM = "GJ-001 Mengelola data karyawan";
 const JUDUL = "Data karyawan";

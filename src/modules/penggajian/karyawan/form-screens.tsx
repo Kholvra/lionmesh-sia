@@ -6,9 +6,9 @@ import { NonaktifForm } from "@/modules/penggajian/karyawan/components/nonaktif-
 import { KaryawanTidakDitemukan, TidakBerwenang } from "@/modules/penggajian/karyawan/components/states";
 import { getDaftarAktif, getKaryawanUntukUbah } from "@/modules/penggajian/karyawan/queries";
 import { aksesSesi } from "@/modules/penggajian/karyawan/sesi";
-import { Notice } from "@/modules/penggajian/shell/notice";
-import { PageHeader } from "@/modules/penggajian/shell/page-header";
-import ui from "@/modules/penggajian/shell/ui.module.css";
+import { Notice } from "@/modules/penggajian/ui/notice";
+import { PageHeader } from "@/modules/penggajian/ui/page-header";
+import ui from "@/modules/penggajian/ui/ui.module.css";
 
 const ITEM = "GJ-001 Mengelola data karyawan";
 const DAFTAR = { href: "/penggajian/karyawan", label: "Data karyawan" };
