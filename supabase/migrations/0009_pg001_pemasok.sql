@@ -143,7 +143,10 @@ security definer
 set search_path = pg_catalog, public, auth
 as $$
 begin
-    if auth.uid() is null or public.current_peran() <> 'Purchasing' then
+    -- `is distinct from` matters: current_peran() returns null when the session is
+    -- no longer current, and `null <> 'Purchasing'` is null, which PL/pgSQL treats
+    -- as false. Using `<>` would let an expired session write.
+    if auth.uid() is null or public.current_peran() is distinct from 'Purchasing' then
         raise exception 'Anda tidak punya izin mengubah data pemasok.' using errcode = '42501';
     end if;
 end;

@@ -1,14 +1,14 @@
 # PG-001 — Bukti Verifikasi
 
-Implementasi dimulai 2026-11-23 pada branch `feat/pg-001-pemasok`, di-rebase ke `origin/main` (`b372edb`) setelah `FND-001`–`FND-007` selesai. Status item **belum selesai**: acceptance criteria yang membutuhkan database belum dijalankan karena Docker/Supabase lokal tidak tersedia di mesin ini.
+Implementasi dimulai 2026-11-23 pada branch `feat/pg-001-pemasok` oleh track Pengeluaran. Di-rebase ke `origin/main` dan diverifikasi ulang oleh tech lead pada hari yang sama setelah `FND-009` (AppShell) selesai.
 
-## Lingkungan
+Status item: **`in progress`**. Sebelas dari tiga belas AC terbukti; `AC-07` dan `AC-09` sengaja lintas item dan baru bisa dibuktikan saat dokumen pemakai (`PG-005`, `PG-006`) ada.
 
-- Node.js `v26.13.1`
-- pnpm `10.18.3`
-- Next.js `16.4.6`
-- Supabase CLI terpasang sebagai dependency, tetapi `docker` tidak ditemukan (`docker: command not found`)
-- Build dijalankan dengan `NEXT_PUBLIC_SUPABASE_URL` dan `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` placeholder
+## Lingkungan verifikasi
+
+- Node.js `v24.22.2`, pnpm `10.18.3`, Next.js `16.4.6`
+- Supabase lokal (Docker) — migrasi `0001`–`0009`, seed versi `0004`
+- Akun: `purchasing@lionmesh.test`, `gudang@lionmesh.test`, `manajemen@lionmesh.test` (sandi `lionmesh-dev-2026`)
 
 ## Perubahan yang dibuat
 
@@ -20,48 +20,68 @@ Implementasi dimulai 2026-11-23 pada branch `feat/pg-001-pemasok`, di-rebase ke 
 | Komponen | `src/modules/pengeluaran/pemasok/components/*` |
 | Route | `src/app/(app)/pengeluaran/pemasok/{page,loading,error}.tsx` |
 
-Catatan kepatuhan:
+### Perubahan saat review (tech lead, 2026-11-23)
 
-- `D-09` mewajibkan migrasi dinomori dan di-merge tech lead. Migrasi `0009` disiapkan di branch ini dan tetap perlu direview tech lead sebelum merge.
-- `D-31` menempatkan tabel `pemasok` di core. Implementasi mengikuti aturan itu: tabel, RPC, dan query ada di `src/core/pemasok`.
-- `FND-004` menyediakan `public.riwayat_status`, tetapi tabel itu terikat ke `public.dokumen` melalui foreign key `(dokumen_id, tipe_dokumen)`. Pemasok adalah master, bukan dokumen, sehingga PG-001 memakai tabel append-only `public.pemasok_riwayat_status`. Penyimpangan dari `D-08`/`D-32` ini perlu keputusan tech lead.
-- Kontak PIC dibatasi lewat view `pemasok_aman`; peran selain Purchasing dan Accounting menerima nilai `null`.
-- Tabel dasar `pemasok` dan `pemasok_riwayat_status` tidak dapat ditulis langsung oleh `authenticated`; semua tulisan lewat RPC `security definer`.
+| Hal | Sebelum | Sesudah |
+|---|---|---|
+| Guard peran di RPC | `current_peran() <> 'Purchasing'` — gagal terbuka saat `current_peran()` null (sesi kedaluwarsa) | `current_peran() is distinct from 'Purchasing'` |
+| Guard di halaman | Dua `<main>` (shell + layar) dan tombol keluar ganda | Satu `<main>` milik shell; tombol keluar hanya di sidebar |
+| Peran pembaca | Semua staf kecuali Karyawan | Purchasing dan Accounting saja, sesuai `D-33` dan requirement |
+| Padding halaman | Shell 32px + layar 32px (konten mulai x=284) | Hanya shell; konten mulai x=252 |
 
 ## Hasil perintah
 
 | Perintah | Hasil |
 |---|---|
 | `pnpm check:migrations` | lolos — 9 berkas, nomor unik |
-| `pnpm typecheck` | lolos |
 | `pnpm lint` | lolos |
-| `pnpm arch:check` | lolos — 82 modul, 176 dependensi |
-| `pnpm build` | lolos dengan env placeholder |
-
-`pnpm db:reset` **belum dijalankan** karena Docker tidak tersedia.
+| `pnpm typecheck` | lolos |
+| `pnpm arch:check` | lolos |
+| `pnpm build` | lolos |
+| `pnpm db:reset` | lolos — migrasi `0009` terpasang dari database kosong |
+| `pnpm db:seed` | lolos — 13 akun uji |
 
 ## Acceptance criteria
 
 | AC | Hasil | Bukti |
 |---|---|---|
-| `AC-01` | belum dijalankan | butuh database; route `/pengeluaran/pemasok` sudah ada |
-| `AC-02` | belum dijalankan | default `toleransi_persen = 0`, `toleransi_nominal = 0` ada di skema |
-| `AC-03` | belum dijalankan | validasi server `Nama pemasok wajib diisi` ada di `schema.ts` dan RPC |
-| `AC-04` | belum dijalankan | validasi server `Toleransi nominal tidak boleh negatif` ada di `schema.ts` dan RPC |
-| `AC-05` | belum dijalankan | validasi server `Termin pembayaran wajib diisi` ada di `schema.ts` dan RPC |
-| `AC-06` | belum dijalankan | RPC `set_status_pemasok` menulis `pemasok_riwayat_status` |
-| `AC-07` | belum dijalankan | query `listPemasok({ aktif: true })` tersedia untuk item pemakai |
-| `AC-08` | belum dijalankan | action memeriksa `buat_ubah_pemasok`; RPC memeriksa peran Purchasing |
-| `AC-09` | belum dijalankan | snapshot dokumen baru; tidak ada dokumen di PG-001 |
-| `AC-10` | belum dijalankan | butuh `pnpm db:reset` |
-| `AC-11` | belum dijalankan | dua kolom toleransi terpisah di tabel dan form |
-| `AC-12` | belum dijalankan | RPC `set_status_pemasok` mendukung aktivasi ulang dan menulis riwayat |
-| `AC-13` | belum dijalankan | view `pemasok_aman` menyembunyikan PIC dari peran lain |
+| `AC-01` | ✅ | Form di `/pengeluaran/pemasok` membuat `PT Baja Nusantara`; baris muncul di daftar dengan status `Aktif` dan detail terbuka lewat `?pemasok=<id>` |
+| `AC-02` | ✅ | `create_pemasok('PT Default', …, termin 30)` → `toleransi_persen 0.00`, `toleransi_nominal 0.00` |
+| `AC-03` | ✅ | Submit nama kosong → `Nama pemasok wajib diisi`; tidak ada baris baru |
+| `AC-04` | ✅ | `toleransi_nominal = -1` → `Toleransi nominal tidak boleh negatif` |
+| `AC-05` | ✅ | Termin kosong → `Termin pembayaran wajib diisi` |
+| `AC-06` | ✅ | `set_status_pemasok(false)` menulis `NONAKTIFKAN · aktif → nonaktif` dengan `actor_id` Purchasing dan waktu |
+| `AC-07` | ⚠️ | Lintas item: pemakai pertama adalah `PG-005`/`PG-006`. Query `listPemasok({ aktif: true })` tersedia |
+| `AC-08` | ✅ | Manajemen memanggil `update_pemasok` → `42501 Anda tidak punya izin mengubah data pemasok`; halaman menampilkan "Akses ditolak" untuk Gudang |
+| `AC-09` | ⚠️ | Lintas item: butuh dokumen lama untuk membuktikan snapshot termin |
+| `AC-10` | ✅ | `pnpm db:reset` dua kali berturut-turut, lalu `db:seed`; hasil sama dan migrasi bersih |
+| `AC-11` | ✅ | Tersimpan terpisah: `toleransi_persen 0.5`, `toleransi_nominal 1000`, keduanya dibaca apa adanya di detail |
+| `AC-12` | ✅ | `set_status_pemasok(true)` menulis `AKTIFKAN · nonaktif → aktif`; riwayat berisi tiga baris berurutan |
+| `AC-13` | ✅ | Purchasing melihat `kontak_pic_nama = Rina`; Gudang membaca baris yang sama dengan PIC `null` |
 
-## Langkah verifikasi berikutnya
+### Bukti sesi kedaluwarsa
 
-1. Jalankan `pnpm db:setup` di mesin dengan Docker.
-2. Jalankan `FND_TEST_PASSWORD=... pnpm db:seed`.
-3. Login sebagai `purchasing@lionmesh.test`, buka `/pengeluaran/pemasok`, lalu jalankan AC-01–AC-13.
-4. Simpan screenshot 1280 px dan perbarui tabel di atas.
-5. Setelah semua AC lolos, ubah status `backlog.md` menjadi `done`.
+`D-42` membatasi sesi 8 jam. Sebelum perbaikan, pengguna dengan token valid tetapi sesi berumur 9 jam masih bisa menulis pemasok karena `current_peran()` mengembalikan `null` dan `null <> 'Purchasing'` dievaluasi `false` oleh PL/pgSQL. Setelah perbaikan:
+
+```text
+sesi 9 jam + peran Purchasing → 42501 Anda tidak punya izin mengubah data pemasok
+sesi valid + peran Gudang     → 42501
+sesi valid + peran Purchasing → baris tersimpan
+```
+
+## Screenshot 1280
+
+[`pg001-pemasok-1280.png`](pg001-pemasok-1280.png) — daftar + detail + riwayat status, sidebar 220px, konten mulai x=252.
+
+## Kepatuhan aturan
+
+- `D-09`: migrasi `0009` dinomori dan di-review tech lead; tidak ada migrasi lain yang memakai nomor itu.
+- `D-31`: tabel `pemasok` hidup di core (`src/core/pemasok`, `public.pemasok`), layar di modul.
+- `D-63`: status master dicatat di `public.pemasok_riwayat_status` karena `riwayat_status` terikat `dokumen`.
+- `D-42`/`D-48`: guard peran dan sesi ditegakkan di RPC `security definer`, bukan hanya di UI.
+- `D-33`: hanya Purchasing menulis; Accounting membaca; peran lain tidak mendapat akses master.
+
+## Yang belum selesai
+
+1. `AC-07` dan `AC-09` menunggu dokumen pemakai.
+2. `PG-011`/laporan belum membaca pemasok — di luar cakupan item ini.

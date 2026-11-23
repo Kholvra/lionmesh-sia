@@ -1,9 +1,9 @@
+/* The shell already pads the page and owns the height (FND-009); extra padding
+   here would start content at x=284 instead of x=252. */
 .page {
-  min-height: 100vh;
   width: 100%;
   max-width: var(--layout-content-max);
   margin-inline: auto;
-  padding: var(--space-8);
 }
 
 .header {

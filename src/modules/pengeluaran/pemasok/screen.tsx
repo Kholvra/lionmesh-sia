@@ -1,6 +1,5 @@
 import Link from "next/link";
 
-import { SignOutButton } from "@/components/sign-out-button";
 import type { Profile } from "@/lib/auth/types";
 import { cekIzin } from "@/lib/auth/permissions";
 import { PemasokDetail } from "./components/pemasok-detail";
@@ -24,11 +23,12 @@ export async function PemasokScreen({
   const canManage = cekIzin(profile.peran, "buat_ubah_pemasok");
   const canReadPic =
     profile.peran === "Purchasing" || profile.peran === "Accounting";
-  const bolehBaca = profile.peran !== null && profile.peran !== "Karyawan";
+  // PG-001: Purchasing mengelola, Accounting membaca kontak. Peran lain tidak punya aksi pada master ini (D-33).
+  const bolehBaca = profile.peran === "Purchasing" || profile.peran === "Accounting";
 
   if (!bolehBaca) {
     return (
-      <main className={styles.page}>
+      <section aria-label="Master pemasok" className={styles.page}>
         <section className={styles.panelCard} aria-labelledby="akses-ditolak">
           <h1 className={styles.title} id="akses-ditolak">
             Akses ditolak
@@ -38,7 +38,7 @@ export async function PemasokScreen({
             administrator bila akses ini dibutuhkan.
           </p>
         </section>
-      </main>
+      </section>
     );
   }
 
@@ -48,7 +48,7 @@ export async function PemasokScreen({
   const tampilkanFormUbah = canManage && mode === "edit" && terpilih !== null;
 
   return (
-    <main className={styles.page}>
+    <section aria-label="Master pemasok" className={styles.page}>
       <header className={styles.header}>
         <div>
           <p className={styles.breadcrumb}>Siklus Pengeluaran / Pemasok</p>
@@ -57,9 +57,6 @@ export async function PemasokScreen({
             Kelola master pemasok, termin pembayaran, dan toleransi pencocokan
             tiga dokumen. Perubahan master hanya berlaku untuk dokumen baru.
           </p>
-        </div>
-        <div className={styles.headerActions}>
-          <SignOutButton variant="light" />
         </div>
       </header>
 
@@ -174,6 +171,6 @@ export async function PemasokScreen({
           </div>
         </section>
       </div>
-    </main>
+    </section>
   );
 }
