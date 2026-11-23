@@ -397,3 +397,28 @@
     transition-duration: var(--motion-none);
   }
 }
+
+/* Read-only field: label above a grey box, matching the Figma read-only inputs. */
+.bidangBaca {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.bidangLabel {
+  color: var(--text-secondary);
+  font-size: var(--font-size-label);
+  line-height: var(--line-height-label);
+}
+
+.bidangNilai {
+  display: flex;
+  min-height: var(--control-height);
+  align-items: center;
+  padding: var(--space-2) var(--space-3);
+  border: var(--border-width-default) solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  background: var(--bg-subtle);
+  color: var(--text-primary);
+  font-size: var(--font-size-body);
+  line-height: var(--line-height-body);
+}

@@ -33,30 +33,41 @@ function Fakta({ label, children }: { label: string; children: ReactNode }) {
   );
 }
 
+function Bidang({ label, children }: { label: string; children: ReactNode }) {
+  return (
+    <div className={ui.bidangBaca}>
+      <span className={ui.bidangLabel}>{label}</span>
+      <div className={ui.bidangNilai}>{children}</div>
+    </div>
+  );
+}
+
 function KartuIdentitas({ karyawan }: { karyawan: DetailKaryawan }) {
   return (
     <section className={ui.card}>
-      <h2 className={ui.cardTitle}>Identitas</h2>
-      <dl className={ui.facts}>
-        {karyawan.nik ? <Fakta label="NIK"><span className={ui.numeric}>{karyawan.nik}</span></Fakta> : null}
-        <Fakta label="Nama">{karyawan.nama}</Fakta>
-        {karyawan.departemen ? <Fakta label="Departemen">{karyawan.departemen}</Fakta> : null}
-        {karyawan.jabatan ? <Fakta label="Jabatan">{karyawan.jabatan}</Fakta> : null}
-        {karyawan.tipe ? <Fakta label="Tipe">{karyawan.tipe}</Fakta> : null}
-        {karyawan.tanggalMasuk ? <Fakta label="Tanggal masuk">{formatTanggal(karyawan.tanggalMasuk)}</Fakta> : null}
-        <Fakta label="Status"><StatusBadge status={karyawan.status} statuses={STATUS_KARYAWAN} /></Fakta>
-        {karyawan.tanggalKeluar ? <Fakta label="Tanggal keluar">{formatTanggal(karyawan.tanggalKeluar)}</Fakta> : null}
-      </dl>
+      <h2 className={ui.cardTitle}>Identitas tersimpan</h2>
+      <div className={ui.formGrid}>
+        {karyawan.nik ? <Bidang label="NIK"><span className={ui.numeric}>{karyawan.nik}</span></Bidang> : null}
+        <Bidang label="Nama">{karyawan.nama}</Bidang>
+        {karyawan.departemen ? <Bidang label="Departemen">{karyawan.departemen}</Bidang> : null}
+        {karyawan.jabatan ? <Bidang label="Jabatan">{karyawan.jabatan}</Bidang> : null}
+        {karyawan.tanggalMasuk ? <Bidang label="Tanggal masuk">{formatTanggal(karyawan.tanggalMasuk)}</Bidang> : null}
+        <Bidang label="Status"><StatusBadge status={karyawan.status} statuses={STATUS_KARYAWAN} /></Bidang>
+        {karyawan.tanggalKeluar ? <Bidang label="Tanggal keluar">{formatTanggal(karyawan.tanggalKeluar)}</Bidang> : null}
+      </div>
     </section>
   );
 }
 
 function KartuPajakRekening({ karyawan }: { karyawan: DetailKaryawan }) {
   if (!karyawan.ptkpKode && !karyawan.rekening) return null;
+  const berlaku = karyawan.gajiPokok?.find((g) => g.keadaan === "berlaku");
+  const dijadwalkan = karyawan.gajiPokok?.filter((g) => g.keadaan === "dijadwalkan") ?? [];
   return (
     <section className={ui.card}>
-      <h2 className={ui.cardTitle}>{karyawan.ptkpKode ? "Pajak dan rekening" : "Rekening"}</h2>
+      <h2 className={ui.cardTitle}>{karyawan.ptkpKode ? "Penggajian" : "Rekening"}</h2>
       <dl className={ui.facts}>
+        {karyawan.tipe ? <Fakta label="Tipe">{karyawan.tipe}</Fakta> : null}
         {karyawan.ptkpKode ? <Fakta label="Status PTKP">{karyawan.ptkpKode}</Fakta> : null}
         {karyawan.rekening ? (
           <Fakta label="Rekening">
@@ -64,6 +75,8 @@ function KartuPajakRekening({ karyawan }: { karyawan: DetailKaryawan }) {
             {karyawan.rekening.namaPemilik}
           </Fakta>
         ) : null}
+        {berlaku ? <Fakta label="Gaji pokok berlaku">{formatRupiah(berlaku.nominal)} sejak {formatTanggal(berlaku.tanggalBerlaku)}</Fakta> : null}
+        {dijadwalkan.map((g) => <Fakta key={g.id} label="Gaji pokok dijadwalkan">{formatRupiah(g.nominal)} mulai {formatTanggal(g.tanggalBerlaku)}</Fakta>)}
       </dl>
     </section>
   );
@@ -131,20 +144,8 @@ async function DetailKonten({ id, pesan }: { id: string; pesan?: string }) {
   return (
     <>
       <PageHeader
-        actions={
-          bolehUbah ? (
-            <>
-              <Link className={`${ui.button} ${ui.primary}`} href={`/penggajian/karyawan/${id}/ubah`}>Ubah data</Link>
-              <Link className={`${ui.button} ${ui.danger}`} href={`/penggajian/karyawan/${id}/status`}>Nonaktifkan</Link>
-            </>
-          ) : null
-        }
         back={KEMBALI}
-        description={
-          karyawan.gajiPokok
-            ? "Riwayat gaji pokok tidak pernah ditimpa; perubahan menambah entri baru."
-            : undefined
-        }
+        description="Lihat identitas dan informasi payroll tanpa menghapus riwayat lama."
         item={ITEM}
         title={`Detail karyawan / ${karyawan.nama}`}
       />
@@ -154,6 +155,15 @@ async function DetailKonten({ id, pesan }: { id: string; pesan?: string }) {
           <div className={`${ui.span8} ${ui.stack}`}>
             <KartuIdentitas karyawan={karyawan} />
             <KartuPajakRekening karyawan={karyawan} />
+            <div className={ui.formActions}>
+              {bolehUbah ? (
+                <>
+                  <Link className={`${ui.button} ${ui.primary}`} href={`/penggajian/karyawan/${id}/ubah`}>Edit data</Link>
+                  <Link className={ui.button} href={`/penggajian/karyawan/${id}/status`}>Ubah status</Link>
+                </>
+              ) : null}
+              <Link className={ui.button} href={KEMBALI.href}>← Kembali</Link>
+            </div>
             <KartuGaji bolehTambah={bolehUbah} karyawan={karyawan} />
           </div>
           <div className={ui.span4}>
