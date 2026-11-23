@@ -3,6 +3,12 @@
 All values are normative. If a screen needs a value that is not here, the value
 is wrong or the token set is incomplete — do not hardcode it.
 
+> **Snapshot.** The Figma source was rebuilt on 2026-11-23 as “SIA Liomesh
+> (Copy)” (`VS9PagBMlKi2McPPfCdsRV`, 371 screens). The values below are still the
+> locked v0.1 values and match the shipped UI kit. Every disagreement in the v2
+> file is measured in `FIGMA_V2_DELTAS.md`; none of it is adopted until the tech
+> lead decides.
+
 Contrast ratios are calculated against the stated background. WCAG AA requires
 4.5:1 for normal text and 3:1 for large text and UI boundaries.
 

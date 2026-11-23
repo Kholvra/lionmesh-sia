@@ -5,6 +5,14 @@ Owner: Tech Lead
 Source artifact: Figma **“DESAIN UI SIA (Copy)”** — file key `Np8oosi3jZuSuoaQGbf5sb`
 Implementation item: `FND-007` (shared UI kit). This folder does **not** add backlog items.
 
+> **Snapshot.** The source file was rebuilt on 2026-11-23 as **“SIA Liomesh
+> (Copy)”** (`VS9PagBMlKi2McPPfCdsRV`, 371 screens). The locked values below are
+> still the v0.1 values, and the shipped UI kit in `src/app/globals.css` matches
+> them. Where the v2 file disagrees — 220px sidebar, `#E67E00` accent, new ink
+> and grey values — the contradiction is measured in `FIGMA_V2_DELTAS.md` and is
+> **not** adopted until the tech lead decides. Do not take a value from the v2
+> file without that decision.
+
 ## What this is
 
 The design authority for the internal accounting information system of
@@ -16,6 +24,19 @@ Penggajian) must share.
 The system is derived from the existing Figma file, not invented over it. Where
 the file is inconsistent, the dominant value becomes the default and the old
 value is recorded as an anti-pattern with a migration note.
+
+## The v2 source file
+
+| | |
+|---|---|
+| File | **“SIA Liomesh (Copy)”** — `VS9PagBMlKi2McPPfCdsRV` |
+| Pages | `01 · Prototipe SIA`, `02 · Komponen` |
+| Screens | 371 frames, 1440×960 (Accounting 1440×1132) |
+| Notes | 174 `Catatan / <ID>` and 38 `Ringkasan / <section>` frames |
+| Styles | 17 paint + 5 text (`SIA v2 / …`), 0 effect, 0 variables |
+
+The v1 artifact (`Np8oosi3jZuSuoaQGbf5sb`) is retired; `FIGMA_AUDIT.md` keeps its
+measurements for history.
 
 ## Locked decisions
 
@@ -36,24 +57,28 @@ value is recorded as an anti-pattern with a migration note.
 
 | File | Purpose |
 |---|---|
+| `INVENTORY.md` | Index of all 371 v2 screens: node id, size, backlog item, export filename |
+| `inventory/*.md` | The same index split per cycle (umum, penggajian, pendapatan, pengeluaran, produksi) |
+| `FIGMA_V2_DELTAS.md` | Every place the v2 file disagrees with the locked values, and what is undecided |
 | `DESIGN_BRIEF.md` | Intent, users, principles, aesthetic direction, scope |
 | `INFORMATION_ARCHITECTURE.md` | Sitemap, navigation, page hierarchy, flows, glossary, URLs |
 | `DESIGN_TOKENS.md` | Semantic color, typography, spacing, radius, shadow, layout, motion, data-display rules, anti-patterns |
 | `LAYOUTS.md` | One shell, page patterns, 12-column composition, wireframes, responsive rules, slicing checklist |
 | `DESIGN_DIRECTION.md` | Chosen visual direction, alternatives considered, why |
 | `COMPONENTS.md` | Component inventory with anatomy, variants, states, accessibility |
-| `FIGMA_AUDIT.md` | Measured audit of the source file: coverage, drift, contrast, duplicates, gaps |
-| `screenshots/` | Raw Figma exports for visual reference, contact sheet, and per-screen node IDs |
+| `FIGMA_AUDIT.md` | Measured audit of the source file: coverage, contrast, duplicates, gaps (v1 sections 1–6, v2 sections 7–9) |
+| `screenshots/` | 17 v2 sample PNGs for visual reference, contact sheet, export rules |
 
 ## How to use
 
 1. Read `DESIGN_BRIEF.md` for intent and constraints.
-2. Take values from `DESIGN_TOKENS.md`; never invent a hex, size, or spacing.
-3. Compose the screen from `LAYOUTS.md`; use the pattern, not a one-off layout.
-4. Build it from `COMPONENTS.md`; do not create one-off variants.
-5. Follow `INFORMATION_ARCHITECTURE.md` for routes, navigation, and naming.
-6. Check `FIGMA_AUDIT.md` before touching the Figma file or migrating an old screen.
-7. Use `screenshots/` only for visual reference; the raw Figma values are not normative.
+2. Find the screen in `INVENTORY.md` (or `inventory/<cycle>.md`); it names the backlog item.
+3. Take values from `DESIGN_TOKENS.md`; never invent a hex, size, or spacing.
+4. Compose the screen from `LAYOUTS.md`; use the pattern, not a one-off layout.
+5. Build it from `COMPONENTS.md`; do not create one-off variants.
+6. Follow `INFORMATION_ARCHITECTURE.md` for routes, navigation, and naming.
+7. Check `FIGMA_V2_DELTAS.md` before writing a value down; if the delta is undecided, stop and ask the tech lead.
+8. Use `screenshots/` only for visual reference; the raw Figma values are not normative.
 
 ## Hard rule
 

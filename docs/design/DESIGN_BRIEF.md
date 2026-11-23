@@ -1,5 +1,10 @@
 # Design Brief: Lionmesh SIA
 
+> **Snapshot v0.1 (2026-11-17).** The Figma source was rebuilt on 2026-11-23
+> ("SIA Liomesh (Copy)", key `VS9PagBMlKi2McPPfCdsRV`, 371 screens). Values below
+> are still the locked v0.1 values. Differences between this document and the v2
+> file are listed in `FIGMA_V2_DELTAS.md`; do not silently adopt either side.
+
 ## Visitor Mode
 
 **Medium:** web — desktop browser (Next.js 16), 1280–1440.
