@@ -4,7 +4,7 @@ Setiap kriteria harus bisa dibuktikan dengan perintah atau langkah yang bisa diu
 
 | ID | Kriteria | Cara membuktikan |
 |---|---|---|
-| `AC-01` | Permintaan tanpa sesi ke halaman terlindungi diarahkan ke `/login` dan tidak menampilkan data. | Buka jendela tanpa cookie sesi, akses halaman terlindungi, catat URL akhir dan bahwa tidak ada data. Daftar halaman terlindungi ditetapkan saat implementasi. |
+| `AC-01` | Permintaan tanpa sesi ke halaman terlindungi diarahkan ke `/login` dan tidak menampilkan data. | Buka jendela tanpa cookie sesi, akses `/pengaturan`, catat URL akhir dan bahwa tidak ada data. |
 | `AC-02` | Pengguna dengan sesi sah tetapi tanpa peran tidak membaca tabel domain (`satuan`, `produk`, `gudang`, dan tabel domain lain yang ada). | Di database lokal, buat akun uji dengan `peran` kosong. Masuk, jalankan query baca ke setiap tabel domain lewat klien Supabase dengan sesi itu. Hasil kosong atau ditolak. |
 | `AC-03` | Setiap peran hanya melakukan aksi yang diizinkan matriksnya, termasuk peran Karyawan. | Untuk setiap pasangan peran dan aksi di `policies/matriks-izin.md` (`D-33`, `D-53`): jalankan aksi dengan akun peran itu, catat diterima atau ditolak. Untuk aksi yang layarnya belum ada, uji lewat fungsi izin dan catat hasilnya. |
 | `AC-04` | Aksi yang tidak diizinkan ditolak meski tombol disembunyikan di klien. | Dengan akun peran tidak berwenang, kirim permintaan langsung (mis. `curl` ke endpoint aksi dengan token sesi itu). Harus ditolak dengan pesan "Peran Anda tidak berwenang melakukan tindakan ini." |

@@ -499,13 +499,13 @@ try {
 // -------------------------------------------------------------
 // AC-01: Permintaan tanpa sesi ke halaman terlindungi diarahkan ke /login
 // -------------------------------------------------------------
-console.log("[PENDING] AC-01: no protected application route is available for an HTTP redirect test.");
+console.log("[MANUAL] AC-01: protected route /pengaturan redirect check is recorded in 05-evidence.md.");
 
 await db.end();
 
 const total = Object.keys(results).length;
 const passedCount = Object.values(results).filter((r) => r.passed).length;
-console.log(`\nVerifikasi selesai: ${passedCount}/${total} pemeriksaan lulus; AC-01 dan AC-04 tertunda.`);
+console.log(`\nVerifikasi selesai: ${passedCount}/${total} pemeriksaan lulus; AC-01 tercatat sebagai uji manual dan AC-04 tertunda.`);
 if (passedCount < total) {
   process.exit(1);
 }
