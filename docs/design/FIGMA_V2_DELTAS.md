@@ -11,36 +11,41 @@ This file exists because the rebuilt file **contradicts** several values that
 by the tech lead, not by an audit.
 
 ```text
-STOP: shell width and brand colors in the v2 file differ from the locked values
-Need: one decision per row of sections 1 and 2 — adopt the v2 value, or keep the
-      locked value and fix the Figma file
-Affects: DESIGN_TOKENS.md (§3, §5, §11), LAYOUTS.md (shell geometry),
-         COMPONENTS.md (sidebar item width), every screen built from FND-007
-Options: A) Adopt v2 — the file is internally consistent (375/375 screens agree),
-            so implementation can start immediately; tokens and layouts get
-            rewritten once
+STOP: the v2 brand colors differ from the locked values
+Need: one decision per row of section 2 — adopt the v2 values, or keep the
+      locked values and fix the Figma file
+Affects: DESIGN_TOKENS.md (§2–§3), every component built from FND-007
+Options: A) Adopt v2 — the file is internally consistent (375/375 screens agree);
+            `#172335` on `#E67E00` measures 5.53:1, so AA still passes
          B) Keep locked values — Figma must be edited on 375 screens or the
             screens will never match the build
 ```
 
-## 1. Shell geometry — contradiction
+Section 1 (shell geometry) was decided on 2026-11-23: the v2 width of 220px is
+adopted in `D-62` and implemented by `FND-009`.
+
+## 1. Shell geometry — resolved 2026-11-23 (`D-62`)
 
 All 375 screens carry a frame with a child named `Sidebar`. Width distribution
-is a single value: **220px, 375 of 375 frames.**
+is a single value: **220px, 375 of 375 frames.** The tech lead adopted the v2
+geometry on 2026-11-23, and `FND-009` implements it.
 
-| Element | Locked (v0.1) | Measured in v2 | Delta |
+| Element | Locked (v0.1) | Measured in v2 | Adopted |
 |---|---|---|---|
-| Sidebar width | 200px | **220px** | +20 |
-| Page padding | 32px | 32px (content x=32 inside `Area kerja`) | none |
-| Content left edge (absolute) | x=232 | **x=252** (220 + 32) | +20 |
-| Content width @1440 | 1176 | **1156** (1220 − 64) | −20 |
-| Content width @1280 | 1016 | 1020 (hypothetical, not drawn) | +4 |
-| Screen frame | 1280×760 (v1 audit) | **1440×960** (Accounting: 1440×1132) | new |
-| Sidebar fill | `#1C2530` (`ink-900`) | `#1B232E` (`SIA v2 / navy`) | see §2 |
-| Work area | 12-column, gutter 24 | not encoded; layouts are drawn flat | unknown |
+| Sidebar width | 200px | **220px** | **220px** |
+| Page padding | 32px | 32px (content x=32 inside `Area kerja`) | 32px |
+| Content left edge (absolute) | x=232 | **x=252** (220 + 32) | **252** |
+| Content width @1440 | 1176 | **1156** (1220 − 64) | **1156** |
+| Content width @1280 | 1016 | 996 (1060 − 64) | **996** |
+| Screen frame | 1280×760 (v1 audit) | **1440×960** (Accounting: 1440×1132) | reference only |
+| Sidebar fill | `#1C2530` (`ink-900`) | `#1B232E` (`SIA v2 / navy`) | **still open** (§2) |
+| Work area | 12-column, gutter 24 | not encoded; layouts are drawn flat | locked 12/24 |
 
 The 288px hub shell from the v1 file is **gone**; there is one shell again. That
 part of the v1 audit is resolved.
+
+`DESIGN_TOKENS.md`, `LAYOUTS.md`, `COMPONENTS.md`, `README.md` and
+`src/app/globals.css` now carry 220px. The palette in §2 stays undecided.
 
 ## 2. Color — contradiction
 

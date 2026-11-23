@@ -32,8 +32,9 @@ Satu pemilik: tech lead. Urutan wajib.
 | `FND-006` | Ledger: COA, `postJournal()`, periode akuntansi | 6 | `FND-002`, `FND-003` | `done` |
 | `FND-007` | UI kit bersama: tabel, form, status badge, dialog | 7 | `FND-002` | `done` |
 | `FND-008` | Seed deterministik + reset ke skema `siap` | 8 | `FND-001`, `FND-002` | `done` |
+| `FND-009` | AppShell: sidebar 220px + guard rute `(app)` | 9 | `FND-003`, `FND-007` | `done` |
 
-**Gate:** `FND-001`–`FND-007` berstatus `done` sebelum item **modul** (`PD`, `PG`, `PR`, `GJ`, `C`, `INT`) boleh `ready`. Gate ini tidak berlaku untuk item `FND-*` sendiri, yang hanya mengikuti `depends on` (`D-54`). `FND-008` (seed) boleh menyusul paralel dengan gelombang pertama.
+**Gate:** `FND-001`–`FND-009` berstatus `done` sebelum item **modul** (`PD`, `PG`, `PR`, `GJ`, `C`, `INT`) boleh `ready`. Gate ini tidak berlaku untuk item `FND-*` sendiri, yang hanya mengikuti `depends on` (`D-54`). `FND-008` (seed) boleh menyusul paralel dengan gelombang pertama.
 
 ## Siklus Pendapatan — 4 track
 
@@ -189,4 +190,5 @@ Terbaca per level. Semua item dalam satu baris boleh dikerjakan serentak. `DISC-
 | 2026-11-23 | `FND-005` → `done`: implementasi mutasi, saldo, valuasi, presisi desimal, dan integrasi sintetis selesai; tech lead mengonfirmasi hasil pengujian manual, sisa integrasi dokumen sumber dicatat di `docs/tech-debt/fnd-005-integrasi-dokumen.md` |
 | 2026-11-23 | `FND-004` → `done`: migrasi `0007`, `core/dokumen`, registry status/tipe, approval berjenjang, seed versi `0004`, AC-01–AC-16, uji sesi, dan `pnpm verify` lulus. Pemeriksaan periode sumber dicatat menunggu `FND-006` |
 | 2026-11-23 | `FND-006` → `done`: migrasi `0008`, seed COA `D-41`, `postJournal()`/`reverseJournal()`, periode, RLS, dan immutability selesai; AC-01–AC-16 serta jalur sesi server dibuktikan, `pnpm verify` lulus |
+| 2026-11-23 | `FND-009` → `done`: AppShell 220px (`D-62`) di `src/app/(app)/layout.tsx`, sidebar bersama, guard sesi, dan route `/pengaturan` dipindah ke dalam shell; gate fondasi jadi `FND-001`–`FND-009` |
 | 2026-11-23 | Tambah `PG-011` laporan pembelian/utang/pengeluaran kas (track `PG-F`, level 10) untuk menutup rujukan melingkar `C-009` ↔ `PG-009`; `EPIC-PG` dan `PG-009` diperbaiki di PR yang sama |

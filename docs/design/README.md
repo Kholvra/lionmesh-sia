@@ -44,7 +44,7 @@ measurements for history.
 |---|---|---|
 | Medium | Web — desktop browser, Next.js 16 | Internal app; no native or mobile client |
 | Target viewport | 1280 minimum · 1440 design target · 1440 max content | Office laptops are 1366×768; the module shell already fits 1280 |
-| App shell | Fixed **200px** sidebar · content starts at x=232 · 32px page padding | The module screens already use this and fit; the 288px hub shell overflows 608px |
+| App shell | Fixed **220px** sidebar · content starts at x=252 · 32px page padding | Adopted from the v2 file on 2026-11-23 (`D-62`); 375/375 screens agree. Replaces the v1 200px module shell |
 | Primary accent | `#ED8B00` with **ink text** `#1C2530` | 6.11:1, keeps the brand orange, passes WCAG AA |
 | Type family | **Inter** only, tabular numerals for money | Already dominant (5,628 of ~6,000 text nodes); one family for Operate mode |
 | Color strategy | Restrained: neutral surfaces + one accent | 60/30/10; orange reserved for primary actions and active state |
