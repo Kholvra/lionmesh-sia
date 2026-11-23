@@ -8,8 +8,8 @@ import { Pilihan } from "@/modules/penggajian/karyawan/components/pilihan";
 import { useAksiForm } from "@/modules/penggajian/karyawan/components/use-aksi-form";
 import { TIPE_KARYAWAN } from "@/modules/penggajian/karyawan/rules";
 import type { DaftarAktif, Karyawan } from "@/modules/penggajian/karyawan/types";
-import { Notice } from "@/modules/penggajian/shell/notice";
-import ui from "@/modules/penggajian/shell/ui.module.css";
+import { Notice } from "@/modules/penggajian/ui/notice";
+import ui from "@/modules/penggajian/ui/ui.module.css";
 
 type KaryawanFormProps = {
   aksi: (state: AksiState, formData: FormData) => Promise<AksiState>;

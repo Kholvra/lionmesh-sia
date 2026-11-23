@@ -10,9 +10,9 @@ import { formatRupiah, formatTanggal, formatWaktu } from "@/modules/penggajian/k
 import { getKaryawan, type DetailKaryawan } from "@/modules/penggajian/karyawan/queries";
 import { aksesSesi } from "@/modules/penggajian/karyawan/sesi";
 import { KEADAAN_GAJI, STATUS_KARYAWAN } from "@/modules/penggajian/karyawan/status";
-import { Notice } from "@/modules/penggajian/shell/notice";
-import { PageHeader } from "@/modules/penggajian/shell/page-header";
-import ui from "@/modules/penggajian/shell/ui.module.css";
+import { Notice } from "@/modules/penggajian/ui/notice";
+import { PageHeader } from "@/modules/penggajian/ui/page-header";
+import ui from "@/modules/penggajian/ui/ui.module.css";
 
 const ITEM = "GJ-001 Mengelola data karyawan";
 const KEMBALI = { href: "/penggajian/karyawan", label: "Data karyawan" };

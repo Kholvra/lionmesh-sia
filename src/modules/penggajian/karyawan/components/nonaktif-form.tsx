@@ -6,8 +6,8 @@ import { useRef, useState } from "react";
 import { ConfirmDialog, Form, FormField, Input } from "@/components/ui";
 import type { AksiState } from "@/modules/penggajian/karyawan/actions";
 import { useAksiForm } from "@/modules/penggajian/karyawan/components/use-aksi-form";
-import { Notice } from "@/modules/penggajian/shell/notice";
-import ui from "@/modules/penggajian/shell/ui.module.css";
+import { Notice } from "@/modules/penggajian/ui/notice";
+import ui from "@/modules/penggajian/ui/ui.module.css";
 
 type NonaktifFormProps = {
   aksi: (state: AksiState, formData: FormData) => Promise<AksiState>;
