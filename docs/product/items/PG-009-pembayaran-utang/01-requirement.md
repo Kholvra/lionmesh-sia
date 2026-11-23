@@ -62,7 +62,7 @@ Finance mencatat pembayaran kepada pemasok dan mengalokasikannya otomatis ke sat
 
 - Pengakuan utang dan pencocokan invoice (PG-008).
 - Rekonsiliasi mutasi bank (PG-010).
-- Laporan utang dan laporan pembelian sebagai layar (C-009, D-25).
+- Laporan utang dan laporan pembelian sebagai layar (PG-011); saldo utang di neraca tetap `C-009` (D-25).
 - Pembayaran gaji dan pembayaran pelanggan.
 - Portal pemasok (D-23).
 - Approval berjenjang pembayaran (D-51 (c)).
@@ -97,7 +97,7 @@ Finance mencatat pembayaran kepada pemasok dan mengalokasikannya otomatis ke sat
 - `R-09` Pembayaran yang sudah berhasil tidak dihapus. Pembalikan hanya dengan jurnal pembalik (D-35, D-48) oleh Finance dengan alasan wajib. Alokasi dibalik, status pembayaran menjadi `DIBATALKAN`, dan status invoice dihitung ulang dari sisa. Perubahan status invoice dicatat di riwayat ([USULAN-AGEN]; lihat pertentangan D-48 di `00-discussion.md`).
 - `R-10` Status invoice mengikuti D-46: `TERCATAT` → `DIBAYAR_SEBAGIAN` → `LUNAS`. `LUNAS` hanya bila sisa nol.
 - `R-11` Pemisahan tugas: pemohon PR tidak boleh membayar invoice dari PR-nya (D-42, telusur invoice → PO → PR). Finance mencatat dan Accounting memverifikasi, dua peran yang berbeda (D-33, D-48).
-- `R-12` Daftar pembayaran dan sisa per invoice tampil di layar PG-009. Saldo utang per pemasok dibaca dari core (service atau read model), tidak dari tabel modul lain (D-25). Laporan utang tampil di C-009 ([USULAN-AGEN]).
+- `R-12` Daftar pembayaran dan sisa per invoice tampil di layar PG-009. Saldo utang per pemasok dibaca dari core (service atau read model), tidak dari tabel modul lain (D-25). Laporan operasional (sisa utang per invoice, daftar pembelian, pengeluaran kas) tampil di `PG-011`; saldo utang di neraca dan aging sebagai lampiran tetap `C-009` ([USULAN-AGEN]).
 
 ### Alur utama
 

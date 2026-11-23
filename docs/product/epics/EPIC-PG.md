@@ -1,7 +1,7 @@
 # EPIC-PG — Siklus Pengeluaran
 
 **Status:** `active`
-**Track:** PG-A master · PG-B pengadaan · PG-C penerimaan · PG-D utang · PG-E bank
+**Track:** PG-A master · PG-B pengadaan · PG-C penerimaan · PG-D utang · PG-E bank · PG-F pelaporan
 **Milestone:** M1
 
 ## Outcome
@@ -17,6 +17,7 @@ Kebutuhan barang berubah menjadi permintaan, PO, penerimaan, utang yang tervalid
 | PG-C | `PG-006` penerimaan · `PG-007` QC bahan & retur |
 | PG-D | `PG-008` three-way match & utang · `PG-009` pembayaran |
 | PG-E | `PG-010` rekonsiliasi bank |
+| PG-F | `PG-011` laporan pembelian, utang, dan pengeluaran kas |
 
 ## Aturan yang mengikat
 
@@ -31,7 +32,7 @@ Kebutuhan barang berubah menjadi permintaan, PO, penerimaan, utang yang tervalid
 1. Satu permintaan mengalir sampai pembayaran.
 2. `PG-008` menolak invoice yang qty-nya melebihi penerimaan.
 3. `PG-010` bisa mencocokkan mutasi bank dengan pembayaran.
-4. Saldo utang di laporan sama dengan jurnal.
+4. Angka laporan `PG-011` sama dengan jurnal core dan saldo utang di `C-009`.
 
 ## Catatan jalur kritis
 
