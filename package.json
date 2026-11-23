@@ -8,6 +8,7 @@
     "start": "next start",
     "lint": "eslint",
     "typecheck": "tsc --noEmit",
+    "verify:pg001": "node scripts/verify-pg001-nominal.mjs",
     "test": "node --test --experimental-strip-types \"src/**/*.test.ts\"",
     "arch:check": "depcruise src --config .dependency-cruiser.cjs",
     "check:migrations": "node scripts/check-migrations.mjs",

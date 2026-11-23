@@ -129,6 +129,36 @@ form: toleransi_nominal = 9007199254740993 → simpan
 DB  : PT Presisi UI | 9007199254740993.00
 ```
 
+### Jalur baca juga harus teks (migrasi `0010`)
+
+Perbaikan pertama hanya menjaga jalur tulis. PostgREST mengirim `numeric` sebagai **JSON number**, jadi `JSON.parse` membulatkannya lagi:
+
+```text
+RAW JSON : [{"toleransi_nominal":9007199254740993.00}]
+typeof   : number
+nilai JS : 9007199254740992
+```
+
+Akibatnya detail menampilkan angka salah, form edit membawa angka salah, dan menyimpan form itu menimpa nilai benar.
+
+`0010_pg001_nominal_as_text.sql` membuat ulang view `pemasok_aman` dengan `toleransi_nominal::text` dan `toleransi_persen::text` (skala `0` dibuang agar form menampilkan teks yang diketik). Tipe `Pemasok` di repo sudah menyatakan `string`, jadi sekarang kode dan kenyataan cocok.
+
+Bukti round-trip, `pnpm verify:pg001`:
+
+```text
+simpan      : id=19a30916… nominal=9007199254740993
+baca        : typeof=string nilai=9007199254740993
+simpan ulang: nominal=9007199254740993
+[verify-pg001] lolos — nilai besar bertahan pada simpan → baca → simpan ulang
+```
+
+Bukti UI (sesi `purchasing@lionmesh.test`):
+
+```text
+/detail : Rp 9.007.199.254.740.993,00
+/edit   : name="toleransi_nominal" value="9007199254740993"
+```
+
 ## Screenshot 1280
 
 [`pg001-pemasok-1280.png`](pg001-pemasok-1280.png) — daftar + detail + riwayat status, sidebar 220px, konten mulai x=252.
