@@ -71,18 +71,30 @@ sesi valid + peran Purchasing → baris tersimpan
 
 ## Validasi form memakai zod (2026-11-23)
 
-`schema.ts` memakai `zod 4.6.7` (standar baru di `AGENTS.md`). Validasi RPC tidak berubah; zod adalah gerbang pertama di batas action. Kasus diperiksa langsung terhadap `parsePemasokForm`:
+`schema.ts` memakai `zod 4.6.7` (standar baru di `AGENTS.md`). Semua aturan satu field hidup di schema field itu: wajib-isi, format angka, presisi, dan rentang. Validasi RPC tidak berubah; zod adalah gerbang pertama di batas action.
+
+Format angka dibatasi pola `^-?\d+(\.\d+)?$` setelah koma desimal Indonesia dinormalkan, sehingga `1e3`, `0x10`, `.5`, dan `30.` ditolak sebagai "harus berupa angka" — bukan diam-diam menjadi angka lain.
 
 | Input | Hasil |
 |---|---|
 | kosong | `nama: Nama pemasok wajib diisi`, `termin_hari: Termin pembayaran wajib diisi` |
-| nama + termin 30, toleransi kosong | tersimpan dengan `toleransi_persen 0`, `toleransi_nominal 0` |
-| termin `abc` | `Termin pembayaran harus berupa angka` |
+| termin 30, toleransi kosong | `toleransi_persen 0`, `toleransi_nominal 0` (`D-15`) |
+| termin `abc` / `1e3` / `0x10` / `.5` / `30.` | `Termin pembayaran harus berupa angka` |
 | termin `-5` | `Termin pembayaran harus berupa angka bulat minimal 0` |
-| persen `0,755` | `Maksimal 2 angka desimal` (tidak dibulatkan diam-diam oleh `numeric(5,2)`) |
+| persen `100,01` | `Toleransi persen harus antara 0 dan 100` |
+| persen `0,755` | `Toleransi persen maksimal 2 angka desimal` |
 | nominal `-1` | `Toleransi nominal tidak boleh negatif` |
 | nominal `1.234,56` | `Toleransi nominal harus berupa angka` |
 | `0,75` / `1500` | tersimpan `0.75` / `1500` |
+
+Kasus di atas sekarang **test permanen**, bukan perintah ad-hoc:
+
+```text
+$ pnpm test
+ℹ tests 9   ℹ pass 9   ℹ fail 0
+```
+
+Test memakai test runner bawaan Node (`node --test`, tanpa framework baru), masuk `pnpm verify`, dan dijalankan CI.
 
 `zod` hanya diimpor `actions.ts` (`"use server"`) dan `form-state.ts` tidak mengimpornya, sehingga zod tidak masuk bundel browser. Dibuktikan setelah build:
 

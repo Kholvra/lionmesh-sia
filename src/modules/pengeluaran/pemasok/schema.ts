@@ -13,17 +13,72 @@ export type { PemasokActionState, PemasokField, PemasokFieldErrors };
 const PESAN_NAMA = "Nama pemasok wajib diisi";
 const PESAN_TERMIN = "Termin pembayaran wajib diisi";
 const PESAN_TERMIN_ANGKA = "Termin pembayaran harus berupa angka";
-const PESAN_TERMIN_BULAT = "Termin pembayaran harus berupa angka bulat minimal 0";
-const PESAN_PERSEN = "Toleransi persen harus antara 0 dan 100";
+const PESAN_TERMIN_RENTANG = "Termin pembayaran harus berupa angka bulat minimal 0";
 const PESAN_PERSEN_ANGKA = "Toleransi persen harus berupa angka";
-const PESAN_NOMINAL = "Toleransi nominal tidak boleh negatif";
+const PESAN_PERSEN_RENTANG = "Toleransi persen harus antara 0 dan 100";
+const PESAN_PERSEN_DESIMAL = "Toleransi persen maksimal 2 angka desimal";
 const PESAN_NOMINAL_ANGKA = "Toleransi nominal harus berupa angka";
-const PESAN_DESIMAL = "Maksimal 2 angka desimal";
+const PESAN_NOMINAL_RENTANG = "Toleransi nominal tidak boleh negatif";
+const PESAN_NOMINAL_DESIMAL = "Toleransi nominal maksimal 2 angka desimal";
 
 /** Reads a text field, keeping an empty input distinct from a missing one. */
 function teks(formData: FormData, field: PemasokField): string {
   const value = formData.get(field);
   return typeof value === "string" ? value : "";
+}
+
+type AturanAngka = {
+  pesanWajib: string;
+  pesanBukanAngka: string;
+  pesanDesimal: string;
+  pesanRentang: string;
+  min: number;
+  max?: number;
+  bulat?: boolean;
+  maksDesimal?: number;
+  /** Value used when the field is blank; omit to make the field required. */
+  kosongJadi?: number;
+};
+
+// Only digits, an optional sign, and the Indonesian decimal comma. This rejects
+// "1e3", "0x10", ".5" and "30." before they can become a surprising number.
+const POLA_ANGKA = /^-?\d+(\.\d+)?$/;
+
+function angka(aturan: AturanAngka) {
+  return z.string().transform((raw, ctx) => {
+    const trimmed = raw.trim();
+
+    if (trimmed.length === 0) {
+      if (aturan.kosongJadi !== undefined) return aturan.kosongJadi;
+      ctx.addIssue({ code: "custom", message: aturan.pesanWajib });
+      return z.NEVER;
+    }
+
+    const normal = trimmed.replace(",", ".");
+    if (!POLA_ANGKA.test(normal)) {
+      ctx.addIssue({ code: "custom", message: aturan.pesanBukanAngka });
+      return z.NEVER;
+    }
+
+    const nilai = Number(normal);
+    const desimal = normal.split(".")[1] ?? "";
+    if (aturan.maksDesimal !== undefined && desimal.length > aturan.maksDesimal) {
+      ctx.addIssue({ code: "custom", message: aturan.pesanDesimal });
+      return z.NEVER;
+    }
+
+    const diLuarRentang =
+      (aturan.bulat === true && !Number.isInteger(nilai)) ||
+      nilai < aturan.min ||
+      (aturan.max !== undefined && nilai > aturan.max);
+
+    if (diLuarRentang) {
+      ctx.addIssue({ code: "custom", message: aturan.pesanRentang });
+      return z.NEVER;
+    }
+
+    return nilai;
+  });
 }
 
 const pemasokFormSchema = z.object({
@@ -33,34 +88,34 @@ const pemasokFormSchema = z.object({
   kontak_perusahaan: z.string().trim(),
   kontak_pic_nama: z.string().trim(),
   kontak_pic_telepon: z.string().trim(),
-  termin_hari: z.string(),
-  toleransi_persen: z.string(),
-  toleransi_nominal: z.string(),
+  termin_hari: angka({
+    pesanWajib: PESAN_TERMIN,
+    pesanBukanAngka: PESAN_TERMIN_ANGKA,
+    pesanDesimal: PESAN_TERMIN_RENTANG,
+    pesanRentang: PESAN_TERMIN_RENTANG,
+    min: 0,
+    bulat: true,
+  }),
+  toleransi_persen: angka({
+    pesanWajib: PESAN_PERSEN_RENTANG,
+    pesanBukanAngka: PESAN_PERSEN_ANGKA,
+    pesanDesimal: PESAN_PERSEN_DESIMAL,
+    pesanRentang: PESAN_PERSEN_RENTANG,
+    min: 0,
+    max: 100,
+    maksDesimal: 2,
+    kosongJadi: 0,
+  }),
+  toleransi_nominal: angka({
+    pesanWajib: PESAN_NOMINAL_RENTANG,
+    pesanBukanAngka: PESAN_NOMINAL_ANGKA,
+    pesanDesimal: PESAN_NOMINAL_DESIMAL,
+    pesanRentang: PESAN_NOMINAL_RENTANG,
+    min: 0,
+    maksDesimal: 2,
+    kosongJadi: 0,
+  }),
 });
-
-type AngkaTerbaca = { nilai: number } | { pesan: string };
-
-function bacaAngka(
-  raw: string,
-  pesanWajib: string,
-  pesanBukanAngka: string,
-  maksDesimal: number | null,
-): AngkaTerbaca {
-  const trimmed = raw.trim();
-  if (trimmed.length === 0) return { pesan: pesanWajib };
-
-  // The form accepts the Indonesian decimal comma; anything else is a mistake.
-  const normal = trimmed.replace(",", ".");
-  const nilai = Number(normal);
-  if (!Number.isFinite(nilai)) return { pesan: pesanBukanAngka };
-
-  if (maksDesimal !== null) {
-    const [, desimal = ""] = normal.split(".");
-    if (desimal.length > maksDesimal) return { pesan: PESAN_DESIMAL };
-  }
-
-  return { nilai };
-}
 
 function kosongJadiNull(value: string): string | null {
   return value.length > 0 ? value : null;
@@ -70,7 +125,7 @@ export function parsePemasokForm(formData: FormData): {
   input: PemasokInput | null;
   fieldErrors: PemasokFieldErrors;
 } {
-  const mentah = {
+  const parsed = pemasokFormSchema.safeParse({
     nama: teks(formData, "nama"),
     alamat: teks(formData, "alamat"),
     npwp: teks(formData, "npwp"),
@@ -80,55 +135,16 @@ export function parsePemasokForm(formData: FormData): {
     termin_hari: teks(formData, "termin_hari"),
     toleransi_persen: teks(formData, "toleransi_persen"),
     toleransi_nominal: teks(formData, "toleransi_nominal"),
-  };
-
-  const fieldErrors: PemasokFieldErrors = {};
-  const parsed = pemasokFormSchema.safeParse(mentah);
+  });
 
   if (!parsed.success) {
+    const fieldErrors: PemasokFieldErrors = {};
     for (const issue of parsed.error.issues) {
       const key = issue.path[0];
       if (typeof key === "string" && !(key in fieldErrors)) {
         fieldErrors[key as PemasokField] = issue.message;
       }
     }
-  }
-
-  const termin = bacaAngka(mentah.termin_hari, PESAN_TERMIN, PESAN_TERMIN_ANGKA, null);
-  // D-15: both tolerances default to zero when the field is left empty.
-  const persen =
-    mentah.toleransi_persen.trim().length === 0
-      ? { nilai: 0 }
-      : bacaAngka(mentah.toleransi_persen, PESAN_PERSEN, PESAN_PERSEN_ANGKA, 2);
-  const nominal =
-    mentah.toleransi_nominal.trim().length === 0
-      ? { nilai: 0 }
-      : bacaAngka(mentah.toleransi_nominal, PESAN_NOMINAL, PESAN_NOMINAL_ANGKA, 2);
-
-  if ("pesan" in termin) {
-    fieldErrors.termin_hari = termin.pesan;
-  } else if (!Number.isInteger(termin.nilai) || termin.nilai < 0) {
-    fieldErrors.termin_hari = PESAN_TERMIN_BULAT;
-  }
-
-  if ("pesan" in persen) {
-    fieldErrors.toleransi_persen = persen.pesan;
-  } else if (persen.nilai < 0 || persen.nilai > 100) {
-    fieldErrors.toleransi_persen = PESAN_PERSEN;
-  }
-
-  if ("pesan" in nominal) {
-    fieldErrors.toleransi_nominal = nominal.pesan;
-  } else if (nominal.nilai < 0) {
-    fieldErrors.toleransi_nominal = PESAN_NOMINAL;
-  }
-
-  if (Object.keys(fieldErrors).length > 0 || !parsed.success) {
-    return { input: null, fieldErrors };
-  }
-
-  // Reaching here means every reading produced a number; narrow for TypeScript.
-  if ("pesan" in termin || "pesan" in persen || "pesan" in nominal) {
     return { input: null, fieldErrors };
   }
 
@@ -142,9 +158,9 @@ export function parsePemasokForm(formData: FormData): {
       kontakPerusahaan: kosongJadiNull(nilai.kontak_perusahaan),
       kontakPicNama: kosongJadiNull(nilai.kontak_pic_nama),
       kontakPicTelepon: kosongJadiNull(nilai.kontak_pic_telepon),
-      terminHari: termin.nilai,
-      toleransiPersen: persen.nilai,
-      toleransiNominal: nominal.nilai,
+      terminHari: nilai.termin_hari,
+      toleransiPersen: nilai.toleransi_persen,
+      toleransiNominal: nilai.toleransi_nominal,
     },
     fieldErrors: {},
   };

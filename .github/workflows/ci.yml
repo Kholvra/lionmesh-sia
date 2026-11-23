@@ -35,6 +35,9 @@ jobs:
       - name: Tipe
         run: pnpm typecheck
 
+      - name: Test
+        run: pnpm test
+
       - name: Batas modul
         run: pnpm arch:check
 

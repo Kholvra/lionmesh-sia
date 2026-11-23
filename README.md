@@ -113,7 +113,7 @@ http://localhost:3000/auth/callback
 pnpm verify
 ```
 
-Menjalankan lint, pemeriksaan tipe, pemeriksaan batas modul, dan build. CI menjalankan pemeriksaan yang sama pada setiap pull request.
+Menjalankan lint, pemeriksaan tipe, pemeriksaan batas modul, unit test, dan build. CI menjalankan pemeriksaan yang sama pada setiap pull request.
 
 ## Commands
 
@@ -126,7 +126,8 @@ Menjalankan lint, pemeriksaan tipe, pemeriksaan batas modul, dan build. CI menja
 | `pnpm typecheck` | `tsc --noEmit` |
 | `pnpm arch:check` | batas impor core ↔ modul (dependency-cruiser) |
 | `pnpm check:migrations` | validasi nama dan nomor migrasi |
-| `pnpm verify` | semua pemeriksaan di atas |
+| `pnpm test` | unit test dengan test runner bawaan Node |
+| `pnpm verify` | semua pemeriksaan di atas, termasuk test |
 
 ## Struktur penting
 

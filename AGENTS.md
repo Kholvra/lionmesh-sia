@@ -24,10 +24,10 @@ cp .env.example .env.local     # once; fill Supabase URL + publishable key
 pnpm db:setup                  # Docker must be running; applies migrations, resets
 pnpm db:seed                   # only after a reset
 pnpm dev                       # http://localhost:3000
-pnpm verify                    # lint + typecheck + arch:check + build
+pnpm verify                    # lint + typecheck + arch:check + test + build
 ```
 
-Supporting commands: `pnpm db:reset`, `pnpm db:stop`, `pnpm check:migrations`, `pnpm lint`, `pnpm typecheck`, `pnpm arch:check`, `pnpm build`.
+Supporting commands: `pnpm db:reset`, `pnpm db:stop`, `pnpm check:migrations`, `pnpm lint`, `pnpm typecheck`, `pnpm arch:check`, `pnpm test`, `pnpm build`.
 
 `pnpm build` reads Supabase environment variables. CI injects placeholders; locally use `.env.local` copied from `.env.example`. Never hardcode values to make the build pass.
 
