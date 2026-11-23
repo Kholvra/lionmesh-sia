@@ -75,6 +75,8 @@ export const MATRIKS_IZIN = {
   tetapkan_tarif_overhead: ["Accounting"],
   lihat_hpp_perintah_produksi: ["Produksi", "Accounting", "Manajemen"],
   transfer_antar_gudang: ["Gudang"],
+  opname_stok: ["Gudang"],
+  penyesuaian_stok: ["Gudang"],
   tutup_exception_selisih: ["Purchasing"],
   ajukan_retur_pemasok: ["Purchasing"],
   setujui_retur_pemasok: ["Accounting"],

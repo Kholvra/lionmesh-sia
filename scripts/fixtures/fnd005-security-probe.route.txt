@@ -1,0 +1,41 @@
+// Test-only synthetic document caller. Never deploy this route.
+import { createClient as createAdminClient } from "@supabase/supabase-js";
+import { getSesiUser } from "@/lib/auth/server";
+import { cekIzin } from "@/lib/auth/permissions";
+import { getSupabaseEnv } from "@/lib/supabase/env";
+import { catatMutasi } from "@/core/inventory";
+import { catatPenyesuaianUntukSesi, opnameStokUntukSesi, transferStokUntukSesi } from "@/core/inventory";
+
+async function syntheticDocument(input: unknown) {
+  const session = await getSesiUser();
+  if (!session || !cekIzin(session.profile.peran, "catat_qc_bahan")) return { ok: false as const };
+  if (typeof input !== "object" || input === null || Object.keys(input).length !== 1 || !("id" in input) || typeof input.id !== "string") return { ok: false as const };
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!key) return { ok: false as const };
+  const admin = createAdminClient(getSupabaseEnv().supabaseUrl, key, { auth: { persistSession: false } });
+  const { data, error } = await admin.from("fnd005_test_document").select("id,produk_id,gudang_id,qty::text,harga_satuan::text,lulus").eq("id", input.id).maybeSingle();
+  if (error || !data?.lulus) return { ok: false as const };
+  return catatMutasi(admin, { produkId: data.produk_id, gudangId: data.gudang_id, qty: data.qty, hargaSatuan: data.harga_satuan, tanggal: new Date().toISOString(), tipe: "MASUK", sumberTipe: "TEST_QC", sumberId: data.id, actorId: session.user.id });
+}
+
+export async function POST(request: Request) {
+  const body: unknown = await request.json();
+  if (typeof body !== "object" || body === null || !("operation" in body) || !("payload" in body)) {
+    return Response.json({ ok: false }, { status: 400 });
+  }
+  const result = body.operation === "document" ? await syntheticDocument(body.payload)
+    : body.operation === "transfer" ? await transferStokUntukSesi(body.payload)
+    : body.operation === "opname" ? await opnameStokUntukSesi(body.payload)
+      : body.operation === "adjustment" ? await catatPenyesuaianUntukSesi(body.payload)
+        : { ok: false as const, message: "Operasi tidak dikenal." };
+  return Response.json(result, { status: result.ok ? 200 : 403 });
+}
+
+export async function GET() {
+  const { defaultValuationStrategy: strategy } = await import("@/core/inventory");
+  return Response.json({
+    incoming: strategy.calculateIncoming("0", "0", "0", "900719925474.0993", "0.0001"),
+    outgoing: strategy.calculateOutgoing("900719925474.0993", "90071992.55", "0.0001", "900719925474.0993"),
+    rounding: strategy.calculateIncoming("0", "0", "0", "1", "0.0050"),
+  });
+}

@@ -1,5 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { fail, ok, type Result } from "@/lib/result";
+import { isDecimal } from "./decimal";
 import type {
   CatatMutasiInput,
   CatatMutasiResult,
@@ -17,11 +18,15 @@ export async function catatMutasi(
   supabase: SupabaseClient,
   input: CatatMutasiInput,
 ): Promise<Result<CatatMutasiResult>> {
-  if (input.qty === 0) {
+  if (!isDecimal(input.qty, false)) {
     return fail("Qty harus bukan nol.");
   }
 
-  if (input.tipe === "MASUK" && (input.hargaSatuan === undefined || input.hargaSatuan <= 0)) {
+  if (input.hargaSatuan !== undefined && !isDecimal(input.hargaSatuan, true, false)) {
+    return fail("Harga satuan tidak valid.");
+  }
+
+  if (input.tipe === "MASUK" && (input.hargaSatuan === undefined || !isDecimal(input.hargaSatuan, false, false))) {
     return fail("Harga satuan harus lebih dari nol.");
   }
 
@@ -54,13 +59,13 @@ export async function catatMutasi(
   return ok({
     mutasiId: data.mutasi_id,
     tipe: data.tipe,
-    qty: Number(data.qty),
-    hargaSatuan: Number(data.harga_satuan),
-    nilai: Number(data.nilai),
+    qty: data.qty,
+    hargaSatuan: data.harga_satuan,
+    nilai: data.nilai,
     saldo: {
-      qty: Number(data.saldo.qty),
-      nilai: Number(data.saldo.nilai),
-      hargaRata: Number(data.saldo.harga_rata),
+      qty: data.saldo.qty,
+      nilai: data.saldo.nilai,
+      hargaRata: data.saldo.harga_rata,
     },
   });
 }
@@ -73,7 +78,7 @@ export async function transferStok(
   supabase: SupabaseClient,
   input: TransferStokInput,
 ): Promise<Result<TransferStokResult>> {
-  if (input.qty <= 0) {
+  if (!isDecimal(input.qty, false, false)) {
     return fail("Qty harus bukan nol.");
   }
 
@@ -105,16 +110,16 @@ export async function transferStok(
     transferId: data.transfer_id,
     mutasiKeluarId: data.mutasi_keluar_id,
     mutasiMasukId: data.mutasi_masuk_id,
-    nilaiTransfer: Number(data.nilai_transfer),
+    nilaiTransfer: data.nilai_transfer,
     saldoAsal: {
-      qty: Number(data.saldo_asal.qty),
-      nilai: Number(data.saldo_asal.nilai),
-      hargaRata: Number(data.saldo_asal.harga_rata),
+      qty: data.saldo_asal.qty,
+      nilai: data.saldo_asal.nilai,
+      hargaRata: data.saldo_asal.harga_rata,
     },
     saldoTujuan: {
-      qty: Number(data.saldo_tujuan.qty),
-      nilai: Number(data.saldo_tujuan.nilai),
-      hargaRata: Number(data.saldo_tujuan.harga_rata),
+      qty: data.saldo_tujuan.qty,
+      nilai: data.saldo_tujuan.nilai,
+      hargaRata: data.saldo_tujuan.harga_rata,
     },
   });
 }
@@ -131,7 +136,7 @@ export async function opnameStok(
     return fail("Isi alasan penyesuaian stok.");
   }
 
-  if (input.qtyFisik < 0) {
+  if (!isDecimal(input.qtyFisik, true, false)) {
     return fail("Qty fisik tidak boleh negatif.");
   }
 
@@ -158,12 +163,12 @@ export async function opnameStok(
   return ok({
     opnameId: data.opname_id,
     mutasiId: data.mutasi_id,
-    selisih: Number(data.selisih),
-    nilaiPenyesuaian: Number(data.nilai_penyesuaian),
+    selisih: data.selisih,
+    nilaiPenyesuaian: data.nilai_penyesuaian,
     saldo: {
-      qty: Number(data.saldo.qty),
-      nilai: Number(data.saldo.nilai),
-      hargaRata: Number(data.saldo.harga_rata),
+      qty: data.saldo.qty,
+      nilai: data.saldo.nilai,
+      hargaRata: data.saldo.harga_rata,
     },
   });
 }

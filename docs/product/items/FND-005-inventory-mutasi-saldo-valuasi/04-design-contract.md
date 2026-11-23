@@ -23,9 +23,13 @@
 
 ## Otorisasi mutasi (keputusan tech lead, 2026-11-22)
 
-Mutasi yang timbul dari dokumen mengikuti izin aksi dokumen sumber. Transfer, opname, dan penyesuaian manual hanya boleh dijalankan Gudang. Server harus mengambil aktor dari sesi dan memverifikasi aksi serta dokumen sumber sebelum memanggil core; `actorId`, `sumberTipe`, atau `sumberId` dari payload bukan bukti identitas atau izin. Hak istimewa database hanya boleh dipakai oleh layanan server yang telah melakukan pemeriksaan tersebut.
+Mutasi yang timbul dari dokumen mengikuti izin aksi dokumen sumber. Transfer, opname, dan penyesuaian manual hanya boleh dijalankan Gudang. Jalur internal `src/core/inventory/server.ts`, yang diekspor melalui `src/core/inventory/index.ts`, memverifikasi sesi aktif dan izin Gudang sebelum membuat client `service_role`; input manual menolak properti selain yang diizinkan dan aktor selalu berasal dari sesi. Pemanggilnya harus mencegah retry otomatis dan tidak boleh meneruskan identitas atau sumber dokumen dari payload. Pemanggil untuk aksi dokumen tetap harus memverifikasi aksi dan dokumen sumber sebelum memanggil core.
 
-Migrasi RPC menolak peran klien secara langsung. Pemanggil server tepercaya dan verifikasi dokumen sumber belum tersedia; `PRE-01` dan AC-06 tetap parsial sampai jalur itu diuji bersama aksi sumber yang nyata.
+Migrasi RPC menolak peran klien secara langsung. Jalur server operasi manual sudah diuji dengan sesi nyata di lingkungan terisolasi. Caller UI dan aksi dokumen sumber belum tersedia; `PRE-01` untuk mutasi yang dipicu dokumen tetap parsial sampai diuji bersama aksi sumber yang sesuai.
+
+## Presisi desimal
+
+Kontrak input dan output kuantitas, harga, dan nilai menggunakan string desimal. Migrasi fix-forward `0005` mengubah serialisasi respons RPC tanpa mengubah data tersimpan; query membaca kolom numerik sebagai teks. Perhitungan transaksi tetap atomik di PostgreSQL; strategi valuasi di TypeScript memakai aritmetika bilangan bulat berskala. Nilai JSON numerik ditolak pada batas input operasi manual agar pembulatan JavaScript tidak diam-diam mengubah stok.
 
 ## Preconditions
 

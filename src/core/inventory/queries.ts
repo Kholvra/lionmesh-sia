@@ -9,7 +9,7 @@ export async function getSaldoStok(
 ): Promise<Result<SaldoStok | null>> {
   const { data, error } = await supabase
     .from("saldo_stok")
-    .select("*")
+    .select("*,qty::text,nilai::text,harga_rata::text")
     .eq("produk_id", produkId)
     .eq("gudang_id", gudangId)
     .maybeSingle();
@@ -25,9 +25,9 @@ export async function getSaldoStok(
   return ok({
     produk_id: data.produk_id,
     gudang_id: data.gudang_id,
-    qty: Number(data.qty),
-    nilai: Number(data.nilai),
-    harga_rata: Number(data.harga_rata),
+    qty: data.qty,
+    nilai: data.nilai,
+    harga_rata: data.harga_rata,
     created_by: data.created_by,
     created_at: data.created_at,
     updated_by: data.updated_by,
@@ -42,7 +42,7 @@ export async function listSaldoStok(
     gudangId?: string;
   },
 ): Promise<Result<SaldoStok[]>> {
-  let query = supabase.from("saldo_stok").select("*");
+  let query = supabase.from("saldo_stok").select("*,qty::text,nilai::text,harga_rata::text");
 
   if (filters?.produkId) {
     query = query.eq("produk_id", filters.produkId);
@@ -60,9 +60,9 @@ export async function listSaldoStok(
     (data ?? []).map((row) => ({
       produk_id: row.produk_id,
       gudang_id: row.gudang_id,
-      qty: Number(row.qty),
-      nilai: Number(row.nilai),
-      harga_rata: Number(row.harga_rata),
+      qty: row.qty,
+      nilai: row.nilai,
+      harga_rata: row.harga_rata,
       created_by: row.created_by,
       created_at: row.created_at,
       updated_by: row.updated_by,
@@ -81,7 +81,7 @@ export async function listMutasiStok(
 ): Promise<Result<MutasiStok[]>> {
   let query = supabase
     .from("mutasi_stok")
-    .select("*")
+    .select("*,qty::text,nilai::text,harga_satuan::text")
     .order("tanggal", { ascending: false })
     .order("created_at", { ascending: false });
 
@@ -107,9 +107,9 @@ export async function listMutasiStok(
       gudang_id: row.gudang_id,
       tanggal: row.tanggal,
       tipe: row.tipe,
-      qty: Number(row.qty),
-      harga_satuan: Number(row.harga_satuan),
-      nilai: Number(row.nilai),
+      qty: row.qty,
+      harga_satuan: row.harga_satuan,
+      nilai: row.nilai,
       sumber_tipe: row.sumber_tipe,
       sumber_id: row.sumber_id,
       alasan: row.alasan,

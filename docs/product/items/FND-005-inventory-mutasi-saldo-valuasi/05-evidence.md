@@ -15,7 +15,7 @@ Perintah verifikasi: `node scripts/verify-fnd-005.mjs` && `pnpm verify`
 | `AC-03` | Qty saldo = sum(mutasi_stok.qty) (`ARCH-001` `INV-03`) | `PASS` | `select sum(qty) from mutasi_stok` = 11, `saldo_stok.qty` = 11. Identik. |
 | `AC-04` | Nilai saldo sesuai qty × harga rata dalam toleransi (`0,01 + qty × 0,00005`, `INV-02`) | `PASS` | `saldo_stok.nilai` = 132; `qty * harga_rata` = 132; selisih = 0,000000 <= toleransi 0,010550. |
 | `AC-05` | Mutasi & saldo dalam satu transaksi; rollback bila gagal | `PASS` | Mutasi ilegal yang memicu error digagalkan: jumlah baris `mutasi_stok` sebelum dan sesudah tetap sama. |
-| `AC-06` | Role klien (`anon`, `authenticated`) ditolak DML langsung (`ARCH-04`) | `PARTIAL` | Penulisan langsung ditolak dan RPC terbatas ke `service_role`; RPC berhasil sebagai `service_role` pada DB uji terisolasi. Integrasi pemanggil `core/inventory` service-role belum tersedia; jalur session client akan ditolak. |
+| `AC-06` | `PASS` untuk operasi manual | DML/RPC klien ditolak; operasi sesi Gudang melalui server berhasil pada Supabase terisolasi. Dokumen sumber lintas siklus menunggu aksi pemilik. |
 | `AC-07` | Mutasi backdate ditolak | `PASS` | Mutasi dengan tanggal lebih awal dari mutasi terakhir ditolak: `"Tanggal mutasi tidak boleh mendahului mutasi terakhir (2026-11-22 12:00:00+00)."`; baris tidak bertambah. |
 | `AC-08` | Mutasi qty 0 ditolak | `PASS` | Ditolak dengan pesan: `"Qty harus bukan nol."`. |
 | `AC-09` | Mutasi tidak bisa diubah atau dihapus | `PASS` | Trigger `trg_mutasi_stok_immutable` menolak `UPDATE` dan `DELETE` dengan pesan: `"Mutasi stok tidak bisa diubah atau dihapus. Koreksi dengan mutasi baru."`. |
@@ -89,10 +89,42 @@ Migrasi `0004_inventory_mutasi_saldo.sql` dijalankan pada PostgreSQL 17 terisola
 
 Efek compatibility: caller aplikasi yang memakai JWT pengguna tidak dapat lagi menjalankan RPC ini. Pemanggil harus berupa kode server tepercaya dengan `service_role`; grant pengguna menunggu matriks izin FND-003.
 
+## Integrasi server internal (2026-11-22)
+
+- `src/core/inventory/server.ts` menyediakan jalur server internal untuk transfer, opname, dan penyesuaian manual, diekspor dari `src/core/inventory/index.ts`. Sesi aktif dan izin Gudang diperiksa sebelum client `service_role` dibuat; `actorId` diambil dari sesi. Input menolak properti sumber dokumen dan identitas dari caller.
+- `src/lib/auth/permissions.ts` memetakan izin `opname_stok` dan `penyesuaian_stok` ke Gudang sesuai `D-58` dan `docs/product/policies/matriks-izin.md`.
+- Pemanggil harus mencegah retry otomatis. Idempotency key belum tersedia di skema; jalur ini bukan Server Action publik dan belum dipasang ke UI atau aksi dokumen.
+- Pada tahap ini AC-06 masih `PARTIAL` karena sesi pengguna belum diuji. Pengujian runtime sesudahnya dicatat pada bagian Uji integrasi sesi server.
+- `pnpm verify` pada 2026-11-22, Node.js v24.22.2, pnpm 10.18.3: `lint`, `typecheck`, `arch:check` (48 modul, 83 dependensi), dan `next build` lulus. `git diff --check` juga lulus. Ini membuktikan mutu build, bukan perilaku runtime jalur sesi.
+
 Urutan migrasi wajib: FND-003 `0003_autentikasi_peran_rls.sql` lebih dulu mendefinisikan `public.is_active_staff()`, kemudian FND-005 `0004_inventory_mutasi_saldo.sql` membuat policy baca inventory yang memakainya.
 
 ## Pemeriksaan setelah integrasi skema FND-003
 
 - `node scripts/verify-fnd-005.mjs` pada database lokal sementara `fnd005_test_*` dengan migrasi 0001–0004: 15 pemeriksaan database lulus. Database uji dibuat terpisah dan dihapus setelah pengujian.
 - Skrip sekarang menolak dijalankan tanpa URL database uji lokal yang namanya diawali `fnd005_test_`; pembersihan mutasi terbatas pada produk uji.
-- AC-06 tetap parsial: jalur pemanggil aplikasi, otorisasi dan identitas sesi belum diintegrasikan. Pemeriksaan RPC service-role bukan bukti integrasi itu.
+- Pada tahap ini jalur sesi pengguna belum diuji. Pengujian runtime operasi manual sesudahnya dicatat pada bagian Uji integrasi sesi server; aksi dokumen sumber tetap menunggu item pemilik.
+
+## Uji integrasi sesi server — 2026-11-23
+
+Lingkungan: Node 24.22.2, pnpm 10.18.3, Supabase CLI 3.2.0; proyek Supabase sementara pada port non-default dengan migrasi 0001–0004, server Next.js terpisah, dan kredensial hanya melalui environment proses. Database bersama tidak disentuh.
+
+`node scripts/verify-fnd-005-session.mjs` menghasilkan 13 pemeriksaan lulus: tanpa sesi dan peran Penjualan ditolak; `actorId` dan sumber palsu ditolak; qty nol dan opname negatif ditolak tanpa mutasi; Gudang berhasil transfer, opname, dan penyesuaian; hasil saldo asal 6, tujuan 3, lima mutasi, empat actor sesuai sesi; RPC langsung oleh klien ditolak; sesi lama setelah perubahan peran ditolak.
+
+Pengujian terpisah tanpa konfigurasi service-role menghasilkan Result `Layanan stok belum tersedia. Hubungi administrator.` tanpa menambah mutasi. Fixture dan proyek pengujian dihapus setelah pengujian.
+
+Untuk mengulang: jalankan proyek Supabase **khusus uji** pada port selain 54321/54322, terapkan migrasi, salin `scripts/fixtures/fnd005-security-probe.route.txt` sementara ke `src/app/fnd005-security-probe/route.ts`, dan jalankan server Next.js dengan URL, publishable key, dan service-role key proyek uji. Jalankan skrip dengan `FND005_DISPOSABLE=1`, `FND005_TEST_API_URL`, `FND005_TEST_DB_URL`, `FND005_TEST_APP_URL`, `FND005_TEST_ANON_KEY`, dan `FND005_TEST_SERVICE_KEY` di environment. Skrip membuat data dan akun uji pada database tersebut; jangan gunakan database bersama. Setelah selesai hapus route sementara dan proyek uji.
+
+AC-06 untuk operasi manual kini memiliki bukti jalur server dan penolakan DML/RPC klien. Verifikasi dokumen sumber untuk mutasi yang dipicu siklus lain tetap menunggu aksi dan dokumen pemilik; jangan meneruskan `actorId` atau `sumberTipe` dari payload klien sebagai bukti otorisasi.
+
+
+## Presisi desimal — 2026-11-23
+
+Pada Supabase dan PostgreSQL lokal terisolasi, migrasi `0005_inventory_decimal_strings.sql` diterapkan setelah 0004. `node scripts/verify-fnd-005.mjs` menghasilkan 15 pemeriksaan database lulus. `node scripts/verify-fnd-005-session.mjs` memeriksa sesi dan batas desimal: `900719925474.0993` tetap sama pada respons RPC, transfer, dan hasil baca; angka JSON dan input dengan lima angka desimal ditolak. Strategi valuasi diuji dengan nilai besar, pengeluaran seluruh saldo, dan pembulatan `0.005` menjadi `0.01`. Pemeriksaan dokumen sumber tetap menunggu item pemilik.
+
+`node scripts/verify-fnd-005-decimal.mjs` juga menolak harga satuan penyesuaian yang tidak valid sebelum pemanggilan RPC, serta memeriksa pembulatan, batas `numeric(18,2)`, dan penolakan hasil melampaui `numeric(18,4)` pada strategi valuasi.
+
+
+## Integrasi dokumen sintetis — 2026-11-23
+
+`node scripts/verify-fnd-005-session.mjs` pada proyek Supabase terisolasi dengan migrasi 0001–0005 menghasilkan 25 pemeriksaan lulus. Enam pemeriksaan baru menggunakan tabel dan route fixture khusus uji yang memodelkan dokumen QC: peran Gudang ditolak untuk aksi QC; actor palsu, dokumen tidak ada, dan QC belum lulus ditolak tanpa mutasi; QC yang sah mencatat mutasi dengan ID sumber dan aktor sesi. Fixture bukan implementasi dokumen bisnis dan tidak membuktikan atomisitas perubahan status dokumen atau penanganan retry; pengujian terhadap aksi dokumen sebenarnya wajib dilakukan bersama item pemiliknya.
