@@ -96,3 +96,7 @@ AC-04 masih memerlukan uji pada aksi fitur sebenarnya; fixture membuktikan guard
 ### Verifikasi kebocoran status dengan sandi salah
 
 Pada 2026-11-23, pengujian di proyek Supabase terisolasi membandingkan empat permintaan `signInWithPassword` langsung. Email tidak terdaftar dan akun aktif dengan sandi salah menghasilkan HTTP 400 / `invalid_credentials`; akun nonaktif menghasilkan HTTP 400 / `user_banned`, baik saat sandinya salah maupun benar. Karena kode berbeda bahkan tanpa mengetahui sandi, respons jaringan dapat digunakan untuk membedakan akun nonaktif. AC-12 tetap parsial dan PR belum layak ditandai siap sampai batas akses endpoint atau mekanisme Auth diperbaiki dan diuji ulang.
+
+### Eksperimen Auth hook lokal
+
+Pada 2026-11-23, eksperimen terpisah menggunakan salinan migrasi dan konfigurasi Supabase lokal: penonaktifan tidak lagi mengatur `banned_until`, sedangkan custom access-token hook menolak penerbitan token bagi profil nonaktif. Endpoint langsung mengembalikan HTTP 400 / `invalid_credentials` untuk email tidak ada dan profil nonaktif dengan sandi salah; profil nonaktif dengan sandi benar ditolak HTTP 400 dengan kode `unknown`. Tidak ada sesi diterbitkan untuk akun nonaktif. Ini menunjukkan mitigasi terhadap enumerasi tanpa sandi, tetapi belum membuktikan AC-12 jika kode respons harus identik untuk semua kondisi. Hook memerlukan konfigurasi pada lingkungan deployment, yang jenisnya belum ditentukan. Eksperimen tidak diterapkan pada migrasi proyek atau konfigurasi produksi.
