@@ -22,6 +22,10 @@ export async function catatMutasi(
     return fail("Qty harus bukan nol.");
   }
 
+  if (input.hargaSatuan !== undefined && !isDecimal(input.hargaSatuan, true, false)) {
+    return fail("Harga satuan tidak valid.");
+  }
+
   if (input.tipe === "MASUK" && (input.hargaSatuan === undefined || !isDecimal(input.hargaSatuan, false, false))) {
     return fail("Harga satuan harus lebih dari nol.");
   }

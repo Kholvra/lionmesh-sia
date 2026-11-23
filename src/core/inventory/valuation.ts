@@ -8,9 +8,11 @@ function units(value: string, scale: number): bigint {
 }
 
 function decimal(value: bigint, scale: number): string {
-  const negative = value < BigInt(0);
-  const digits = (negative ? -value : value).toString().padStart(scale + 1, "0");
-  return `${negative ? "-" : ""}${digits.slice(0, -scale)}.${digits.slice(-scale)}`;
+  if (value < BigInt(0) || value.toString().length > 18) {
+    throw new Error("Hasil valuasi di luar batas saldo yang valid.");
+  }
+  const digits = value.toString().padStart(scale + 1, "0");
+  return `${digits.slice(0, -scale)}.${digits.slice(-scale)}`;
 }
 
 function divideRounded(numerator: bigint, denominator: bigint): bigint {

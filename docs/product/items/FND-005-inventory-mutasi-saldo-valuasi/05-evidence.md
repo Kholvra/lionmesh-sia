@@ -121,3 +121,5 @@ AC-06 untuk operasi manual kini memiliki bukti jalur server dan penolakan DML/RP
 ## Presisi desimal — 2026-11-23
 
 Pada Supabase dan PostgreSQL lokal terisolasi, migrasi `0005_inventory_decimal_strings.sql` diterapkan setelah 0004. `node scripts/verify-fnd-005.mjs` menghasilkan 15 pemeriksaan database lulus. `node scripts/verify-fnd-005-session.mjs` memeriksa sesi dan batas desimal: `900719925474.0993` tetap sama pada respons RPC, transfer, dan hasil baca; angka JSON dan input dengan lima angka desimal ditolak. Strategi valuasi diuji dengan nilai besar, pengeluaran seluruh saldo, dan pembulatan `0.005` menjadi `0.01`. Pemeriksaan dokumen sumber tetap menunggu item pemilik.
+
+`node scripts/verify-fnd-005-decimal.mjs` juga menolak harga satuan penyesuaian yang tidak valid sebelum pemanggilan RPC, serta memeriksa pembulatan, batas `numeric(18,2)`, dan penolakan hasil melampaui `numeric(18,4)` pada strategi valuasi.
