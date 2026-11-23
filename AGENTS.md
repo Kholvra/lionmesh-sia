@@ -122,17 +122,21 @@ const { data } = await supabase.from("pelanggan").select("id, nama");
 
 `FND-002` owns the actual table and column list. This table fixes the vocabulary every team must use; do not rename a term because a translation feels nicer.
 
+**Identifier vs table name.** A canonical identifier is what code, types, functions, and UI labels use. A physical table name is fixed by the migration that creates it and is never renamed to match the vocabulary (`D-61`). Where the two differ, the note names the table.
+
 | Concept | Canonical identifier | Note |
 |---|---|---|
 | Pelanggan | `pelanggan` | not `customer` |
 | Pemasok | `pemasok` | not `supplier` |
 | Pesanan pelanggan | `pesanan` | not `sales_order` |
 | Permintaan pembelian | `permintaan_pembelian` | |
-| Purchase order | `purchase_order` | already the term used in the backlog |
-| Penerimaan barang | `penerimaan_barang` | |
+| Purchase order | `purchase_order` | table name is `po` (`C-013`, `D-61`) |
+| Penerimaan barang | `penerimaan_barang` | table name is `penerimaan` (`C-013`, `D-61`) |
 | Faktur | `faktur` | qualified by cycle when needed: `faktur_penjualan` |
 | Piutang / utang | `piutang` / `utang` | |
-| Pembayaran | `pembayaran` | |
+| Pembayaran | `pembayaran` | the customer side only |
+| Pembayaran pemasok | `pembayaran_pemasok` | table name is `pembayaran_supplier` (`PG-009`, `D-61`) |
+| Invoice pemasok | `invoice_pemasok` | table name is `invoice_supplier` (`PG-008`, `D-61`) |
 | Retur | `retur` | |
 | Jurnal | `jurnal` | the approved API stays `postJournal()` |
 | Buku besar | `buku_besar` | |
