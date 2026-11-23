@@ -1,7 +1,7 @@
 # Design Contract: C-013 — Domain pengadaan
 
 - Source: `docs/product/items/C-013-domain-pengadaan/01-requirement.md` (`C-013`)
-- Acceptance criteria: `02-acceptance-criteria.md` (`AC-01`…`AC-10`)
+- Acceptance criteria: `02-acceptance-criteria.md` (`AC-01`…`AC-18`)
 - Status: `Proposed` — belum diverifikasi; semua aturan `Unverified`
 - Profile: product app — dokumen pembelian, stok, dan batas modul
 - Scope: PR, PO, penerimaan; status dokumen; pemanggilan stok dan approval
@@ -29,8 +29,8 @@
 |---|---|---|---|---|
 | `PRE-01` | PR diajukan | pemohon berperan Gudang atau Produksi (matriks-izin, D-33); jenis dokumen terdaftar | core pengadaan | tolak |
 | `PRE-02` | PO dibuat | PR berstatus `DISETUJUI`; pembuat berperan Purchasing (D-33) | core pengadaan | tolak; pesan menyebut status PR |
-| `PRE-03` | Penerimaan dicatat | PO berstatus aktif; periode sumber tidak terkunci (`C-010`) | core pengadaan | tolak |
-| `PRE-04` | Dokumen dibatalkan | status masih dalam batas PT-13 (`[USULAN-AGEN]`): PR sebelum PO terbit, PO sebelum penerimaan; alasan wajib (`D-48`) | core pengadaan | tolak |
+| `PRE-03` | Penerimaan dicatat | PO berstatus aktif; PO dapat menerima barang; pemeriksaan periode dilakukan saat posting jurnal melalui FND-006 | core pengadaan | tolak |
+| `PRE-04` | Dokumen dibatalkan | PR oleh pemohon sebelum PO terbit; PO oleh Purchasing pembuat sebelum penerimaan; alasan wajib (D-57, D-64) | core pengadaan | tolak |
 | `PRE-05` | PR disetujui | aktor bukan pemohon PR (`D-42`, `D-48`) | core pengadaan | tolak; pesan menyatakan pemohon tidak boleh menyetujui |
 
 ## Postconditions
@@ -55,7 +55,7 @@
 | `INV-06` | core pengadaan | total qty penerimaan untuk satu PO tidak melebihi qty PO (`D-49`) | penerimaan melewati qty PO |
 | `INV-07` | core pengadaan | pembatalan dan approval tidak menghapus dokumen; dokumen `DIBATALKAN` tetap ada (`D-48`, `D-50`) | `DELETE` pada dokumen |
 
-State transition (dari D-46 dan D-47; nama terjawab, PT-03; satu rantai status di diagram §5.2):
+State transition (dari D-46 dan D-47; nama terjawab, PT-03; status terpisah per dokumen menurut D-58):
 
 | Dokumen | Dari | Ke | Legal |
 |---|---|---|---|
@@ -69,7 +69,7 @@ State transition (dari D-46 dan D-47; nama terjawab, PT-03; satu rantai status d
 | PO | `PEMASOK_DITETAPKAN` (PR) → `DITERBITKAN` | PO terbit | ya |
 | PO | `DITERBITKAN` | `DITERIMA_SEBAGIAN` → `DITERIMA` | ya; total ≤ qty PO (`INV-06`, AC-12) |
 | Penerimaan QC | `DITERIMA` | `QC_LULUS` atau `QC_GAGAL` | ya; `QC_LULUS` memicu stok masuk dan jurnal (D-36, `POST-05`) |
-| PR | `DIAJUKAN`, `MENUNGGU_PERSETUJUAN`, `REVISI`, `DISETUJUI`, `PEMASOK_DITETAPKAN` | `DIBATALKAN` | ya, pemohon, alasan wajib, sebelum PO terbit (PT-13, `[USULAN-AGEN]`) |
+| PR | `DIAJUKAN`, `MENUNGGU_PERSETUJUAN`, `REVISI`, `DISETUJUI`, `PEMASOK_DITETAPKAN` | `DIBATALKAN` | ya, pemohon, alasan wajib, sebelum PO terbit (D-57) |
 | PO | `DITERBITKAN` | `DIBATALKAN` | ya, sebelum penerimaan pertama (PT-13) |
 | PO | sudah ada penerimaan | `DIBATALKAN` | tidak (AC-15) |
 
@@ -77,9 +77,9 @@ State transition (dari D-46 dan D-47; nama terjawab, PT-03; satu rantai status d
 
 | Kegagalan | Perilaku yang diwajibkan | Pemulihan |
 |---|---|---|
-| Mutasi stok gagal saat penerimaan | penerimaan dibatalkan seluruhnya | perbaiki sebab, catat ulang |
+| Mutasi stok gagal saat penerimaan | transaksi QC dibatalkan seluruhnya | perbaiki sebab, catat ulang |
 | Status PO tidak bisa diperbarui karena dokumen sudah diubah pengguna lain | tolak dengan pesan "dokumen sudah diproses" (optimistic lock, analisis §10.5 `[USULAN]`) | muat ulang dokumen |
-| Penerimaan dicatat ke periode terkunci | tolak (`PRE-03`) | pindahkan tanggal ke periode terbuka |
+| QC diposting ke periode terkunci | tolak (`PRE-03`) | pindahkan tanggal ke periode terbuka |
 
 ## Architecture boundaries
 
@@ -98,7 +98,7 @@ State transition (dari D-46 dan D-47; nama terjawab, PT-03; satu rantai status d
 | `PRE-01` | peran tidak berhak tidak bisa mengajukan | uji perilaku (hak: `D-33`, `D-42`) | `05-evidence.md` AC-01 | `Unverified` |
 | `PRE-05` | pemohon tidak bisa menyetujui PR miliknya | uji perilaku | `05-evidence.md` AC-14 | `Unverified` |
 | `PRE-02` | PO dari PR ditolak tidak tersimpan | uji perilaku | `05-evidence.md` AC-02, AC-03 | `Unverified` |
-| `PRE-03` | penerimaan ke periode terkunci ditolak | uji perilaku | `05-evidence.md` AC-10 | `Unverified` |
+| `PRE-03` | posting QC ke periode terkunci ditolak | uji perilaku | `05-evidence.md` AC-17 | `Unverified` |
 | `PRE-04` | pembatalan di luar batas PT-13 ditolak | uji perilaku | `05-evidence.md` AC-08, AC-15 | `Unverified` |
 | `POST-01` | PR punya nomor unik dan riwayat | uji fixture | `05-evidence.md` AC-01, AC-07 | `Unverified` |
 | `POST-02` | PO hanya dari PR `DISETUJUI` | uji fixture | `05-evidence.md` AC-03 | `Unverified` |
@@ -121,9 +121,13 @@ State transition (dari D-46 dan D-47; nama terjawab, PT-03; satu rantai status d
 | Waktu stok masuk (PT-02) | `Terjawab — D-36` (QC lulus) | saldo stok dan jurnal persediaan tidak sinkron jika salah |
 | Daftar status (PT-03) | `Terjawab — D-46`, `D-47` (nama dari diagram §5.2) | transisi tidak lengkap atau salah |
 | Cakupan tabel (PT-01) | `Terjawab — D-31` (QC masuk; utang dan pembayaran tidak) | utang dan pembayaran dibangun di dua tempat jika salah |
-| Satu tabel dengan `wo_id` (PT-05) | `Proposed` `[USULAN-AGEN]` (nullable, FK menyusul di `PR-002`) | dua tabel PR, atau referensi produksi yang rusak |
+| Satu tabel dengan `wo_id` (PT-05) | D-64: wajib untuk Produksi; FK dan validasi keberadaan setelah PR-002 tersedia | dua tabel PR, atau referensi produksi yang rusak |
 | Transisi `DITOLAK` → `DISETUJUI` (PT-14) | `Terjawab — D-46` (cabang akhir; AC-11) | — |
-| Pembatalan PR dan PO (PT-13) | `Proposed` `[USULAN-AGEN]`; bertentangan dengan `D-47` (d) | dokumen batal tanpa jejak, atau PO batal setelah barang datang |
-| Pembuktian DoD butir 1 (PT-09) | `Proposed` `[USULAN-AGEN]` (uji service) | tidak ada bukti akhir sebelum layar `PG-002` |
-| Tidak dipecah (PT-11) | `Proposed` `[USULAN-AGEN]` | item terlalu besar untuk satu track |
+| Pembatalan PR dan PO (PT-13) | D-57 dan D-64; menggantikan penundaan D-47(d) | dokumen batal tanpa jejak, atau PO batal setelah barang datang |
+| Pembuktian DoD butir 1 (PT-09) | D-58 dan persetujuan tech lead: uji service | tidak ada bukti akhir sebelum layar `PG-002` |
+| Tidak dipecah (PT-11) | D-58 dan persetujuan tech lead: satu item L | item terlalu besar untuk satu track |
 | Approval berjenjang (PT-10) | `Terjawab — D-37` (mesin di FND-004) | — |
+
+## Klarifikasi D-64
+
+QC lulus, perubahan status dan riwayat, stok, dan jurnal terjadi dalam satu transaksi; kegagalan salah satunya membatalkan semuanya. PR Produksi wajib membawa `wo_id`; validasi keberadaan dan FK mengikuti tersedianya PR-002. PO hanya dibatalkan Purchasing pembuat sebelum penerimaan pertama. Pemeriksaan periode oleh FND-006 berlaku pada posting jurnal.

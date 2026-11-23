@@ -40,7 +40,7 @@ Total 11. Terjawab `D-xx`: 8 (Q-04, Q-05, Q-06, Q-07, Q-08, Q-09, Q-10, Q-11; Q-
 
 - `LAPORAN_PENGERJAAN_PROYEK.txt` langkah 3 dan `diagram-sia-lengkap.md` PG06 menyebut PO memuat "ketentuan pembayaran", sedangkan `D-14` menaruh termin di pemasok dan faktur. `D-14` menang.
 - `proses-bisnis.md` §12 memakai status PO `terbuka → selesai`, dikalahkan `D-46`.
-- `D-46` tidak memuat pembatalan PO, sedangkan `D-48` memungkinkan pembatalan sebelum diposting. Paket mengikuti `D-48`; koordinator perlu mengonfirmasi bahwa "diposting" berarti sebelum penerimaan pertama.
+- D-64 mengesahkan pembatalan PO oleh Purchasing pembuat sebelum penerimaan pertama dengan alasan wajib.
 - `D-48` menyiratkan koreksi setelah diposting lewat jurnal pembalik (`D-35`), tetapi PO belum menghasilkan jurnal. Diartikan sebagai koreksi setelah penerimaan (jurnal di `PG-006`).
 - Backlog gate (`FND-007`) menyatakan item dengan primitive UI menunggu `FND-007`, tetapi `depends on` tidak mencantumkannya.
 - Format nomor PO: `proses-bisnis.md` memakai `PO-202609-0001`; `D-50` menang.

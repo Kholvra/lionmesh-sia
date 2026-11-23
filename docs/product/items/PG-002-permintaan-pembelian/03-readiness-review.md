@@ -31,7 +31,7 @@ Total 10. Terjawab `D-xx`: 6 (Q-01, Q-02, Q-07, Q-08, Q-09, Q-10; Q-07 dan Q-08 
 | Kode | Keputusan default | Alasan singkat |
 |---|---|---|
 | Q-03 | Dependensi `PG-001` dipertahankan sesuai backlog | keputusan dependensi wewenang tech lead; sumber mendukung bahwa PR tidak butuh pemasok |
-| Q-04 | `wo_id` opsional, tanpa validasi keberadaan sampai `PR-002` | `PR-002` belum ada; kewajiban di `PR-003` |
+| Q-04 | `wo_id` wajib untuk Produksi, opsional untuk Gudang; validasi keberadaan setelah `PR-002` tersedia | `PR-002` belum ada; kewajiban di `PR-003` |
 | Q-05 | Estimasi nilai IDR diisi Purchasing saat pemeriksaan, tidak wajib saat pengajuan | urutan approval sebelum pemilihan pemasok; sumber berbeda pendapat |
 | Q-06 | Tanggal butuh wajib; tidak ada prioritas di v0 | sumber tidak menyebut prioritas |
 | Q-07 (detail) | Pembatalan oleh pemohon dari lima status sebelum PO terbit | `D-48` mengizinkan sebelum diposting; `PO` terbit adalah batas |
