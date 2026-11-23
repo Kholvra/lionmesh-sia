@@ -2,28 +2,13 @@ import { z } from "zod";
 
 import type { PemasokInput } from "@/core/pemasok";
 
-export type PemasokField =
-  | "nama"
-  | "alamat"
-  | "npwp"
-  | "kontak_perusahaan"
-  | "kontak_pic_nama"
-  | "kontak_pic_telepon"
-  | "termin_hari"
-  | "toleransi_persen"
-  | "toleransi_nominal";
+import type {
+  PemasokActionState,
+  PemasokField,
+  PemasokFieldErrors,
+} from "./form-state";
 
-export type PemasokFieldErrors = Partial<Record<PemasokField, string>>;
-
-export type PemasokActionState = {
-  status: "idle" | "error" | "success";
-  message?: string;
-  fieldErrors?: PemasokFieldErrors;
-};
-
-export const INITIAL_PEMASOK_ACTION_STATE: PemasokActionState = {
-  status: "idle",
-};
+export type { PemasokActionState, PemasokField, PemasokFieldErrors };
 
 const PESAN_NAMA = "Nama pemasok wajib diisi";
 const PESAN_TERMIN = "Termin pembayaran wajib diisi";

@@ -8,11 +8,8 @@ import { cekIzin } from "@/lib/auth/permissions";
 import { getSesiUser } from "@/lib/auth/server";
 import { createClient } from "@/lib/supabase/server";
 import { PATH_PEMASOK } from "./constants";
-import {
-  isValidPemasokId,
-  parsePemasokForm,
-  type PemasokActionState,
-} from "./schema";
+import type { PemasokActionState } from "./form-state";
+import { isValidPemasokId, parsePemasokForm } from "./schema";
 
 const PESAN_IZIN = "Anda tidak punya izin mengubah data pemasok";
 

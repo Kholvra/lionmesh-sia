@@ -84,7 +84,12 @@ sesi valid + peran Purchasing → baris tersimpan
 | nominal `1.234,56` | `Toleransi nominal harus berupa angka` |
 | `0,75` / `1500` | tersimpan `0.75` / `1500` |
 
-`zod` hanya diimpor `actions.ts` (`"use server"`), jadi tidak masuk bundel browser.
+`zod` hanya diimpor `actions.ts` (`"use server"`) dan `form-state.ts` tidak mengimpornya, sehingga zod tidak masuk bundel browser. Dibuktikan setelah build:
+
+```text
+$ grep -rl --include="*.js" "ZodError" .next/static      → kosong
+$ grep -rl --include="*.js" "invalid_union" .next/static  → kosong
+```
 
 ## Screenshot 1280
 
