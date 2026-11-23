@@ -21,12 +21,12 @@ Sistem Informasi Akuntansi untuk PT Lionmesh Prima Tbk. Satu aplikasi, empat sik
 pnpm install
 pnpm db:setup          # nyalakan Supabase lokal + terapkan seluruh migrasi
 cp .env.example .env.local
-FND_TEST_PASSWORD=lionmesh-dev-2026 pnpm db:seed   # 13 akun uji lokal
+pnpm db:seed:local     # 13 akun uji lokal, sandi bersama
 ```
 
-`pnpm db:setup` memeriksa penomoran migrasi lebih dulu, lalu menerapkannya berurutan. Tidak ada langkah menempel SQL manual.
+`pnpm db:setup` memeriksa penomoran migrasi lebih dulu, lalu menerapkannya berurutan. Tidak ada langkah menempel SQL manual. `pnpm db:seed:local` menjalankan seed dengan sandi uji lokal bersama, jadi tidak perlu mengatur variabel apa pun — perintah ini aman dijalankan oleh agen.
 
-Tanpa langkah `db:seed`, database berisi skema tetapi **tanpa akun**, sehingga `/login` selalu menolak. Akun uji dan sandinya dijelaskan di bagian [Database](#database).
+Tanpa langkah seed, database berisi skema tetapi **tanpa akun**, sehingga `/login` selalu menolak. Akun uji dan sandinya ada di bagian [Database](#database).
 
 Isi `.env.local`. Untuk Supabase lokal, ambil nilainya dari:
 
@@ -57,16 +57,17 @@ Migrasi ada di `supabase/migrations/` dan diterapkan berurutan.
 |---|---|
 | `pnpm db:setup` | nyalakan Supabase lokal + terapkan migrasi |
 | `pnpm db:reset` | kosongkan database, terapkan ulang migrasi (tanpa seed) |
-| `pnpm db:seed` | isi data dasar; menolak bila sudah pernah di-seed |
+| `pnpm db:seed:local` | isi data dasar + 13 akun uji dengan sandi bersama (satu perintah, tanpa env) |
+| `pnpm db:seed` | sama, tetapi sandi diambil dari `FND_TEST_PASSWORD` (untuk sandi sendiri) |
 | `pnpm db:stop` | hentikan Supabase lokal |
 
-Seed membuat 13 akun uji lokal (`peran@lionmesh.test`). Sandi disediakan melalui `FND_TEST_PASSWORD`; mekanisme ini bagian dari `FND-008` dan skema tidak menyimpan sandi. Untuk database lokal, tim memakai satu sandi uji bersama supaya semua orang bisa masuk dengan akun yang sama:
+Seed membuat 13 akun uji lokal (`peran@lionmesh.test`). Sandi disediakan melalui `FND_TEST_PASSWORD`; mekanisme ini bagian dari `FND-008` dan skema tidak menyimpan sandi. Untuk database lokal, `pnpm db:seed:local` sudah mengisi sandi uji bersama:
 
 ```bash
-FND_TEST_PASSWORD=lionmesh-dev-2026 pnpm db:seed
+pnpm db:seed:local     # sandi: lionmesh-dev-2026
 ```
 
-Sandi itu hanya untuk 13 akun fiktif di database lokal Docker. Jangan memakainya di project Supabase hosted atau lingkungan lain. Kalau ingin sandi sendiri, pakai bentuk interaktif:
+Sandi itu hanya untuk 13 akun fiktif di database lokal Docker. Jangan memakainya di project Supabase hosted atau lingkungan lain. Kalau ingin sandi sendiri, pakai `pnpm db:seed` dengan bentuk interaktif:
 
 ```bash
 read -rs FND_TEST_PASSWORD

@@ -216,7 +216,7 @@ app/ (routing)  →  modules/<cycle>/  →  core/  →  lib/
 
 ## Design Rules
 
-The design authority is `docs/design/`. Read it before building any screen, in this order: `README.md` → `DESIGN_TOKENS.md` → `LAYOUTS.md` → `COMPONENTS.md` → `INFORMATION_ARCHITECTURE.md`.
+The design authority is `docs/design/`. Read it before building any screen, in this order: `README.md` → `INVENTORY.md` (find the screen and the backlog item it belongs to) → `DESIGN_TOKENS.md` → `LAYOUTS.md` → `COMPONENTS.md` → `INFORMATION_ARCHITECTURE.md`. Before writing a value down, check `FIGMA_V2_DELTAS.md`: if a delta is undecided, stop and ask. Never take a value from the Figma file, and never assume the locked value is final.
 
 Fixed values:
 
@@ -474,3 +474,27 @@ Options: <A / B, with the trade-off>
 - Inventing an approval flow, account code, or tax rate that the requirement does not state.
 - Committing `.env`, service keys, tokens, or Supabase temp folders.
 - Force-pushing, merging your own PR, or pushing to `main`.
+
+## Local Test Accounts
+
+`pnpm db:seed:local` fills the local database with one account per role and a shared password. It needs no environment variable, so an agent can run it. `pnpm db:seed` still exists for a custom password through `FND_TEST_PASSWORD`.
+
+| Role | Email |
+|---|---|
+| Penjualan | `penjualan@lionmesh.test` |
+| Pengiriman | `pengiriman@lionmesh.test` |
+| Gudang | `gudang@lionmesh.test` |
+| Purchasing | `purchasing@lionmesh.test` |
+| QC | `qc@lionmesh.test` |
+| Produksi | `produksi@lionmesh.test` |
+| Accounting | `accounting@lionmesh.test` |
+| Finance | `finance@lionmesh.test` |
+| Manajemen | `manajemen@lionmesh.test` |
+| Direksi | `direksi@lionmesh.test` |
+| HR | `hr@lionmesh.test` |
+| Supervisor Lapangan | `supervisor-lapangan@lionmesh.test` |
+| Karyawan | `karyawan@lionmesh.test` |
+
+- Shared password: **`lionmesh-dev-2026`**. Docker-local fake accounts only; never use it on a hosted project.
+- The seed refuses when `_seed_meta` already has rows. Run `pnpm db:reset` (it wipes the database), then `pnpm db:seed:local`.
+- **When a task touches a screen or action owned by a role, tell the teammate which account to sign in with, email and password, in the reply.** The owner comes from `MATRIKS_IZIN` in `src/lib/auth/permissions.ts`; do not guess.
