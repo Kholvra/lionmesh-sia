@@ -1,0 +1,38 @@
+// Test-only synthetic caller for the FND-006 session boundary. Never deploy this route.
+import {
+  postJournalUntukSesi,
+  reverseJournalUntukSesi,
+} from "@/core/ledger";
+import { isRecord } from "@/lib/validation";
+
+export async function POST(request: Request) {
+  let body: unknown;
+  try {
+    body = await request.json();
+  } catch {
+    return Response.json(
+      { ok: false, message: "Payload tidak valid." },
+      { status: 400 },
+    );
+  }
+
+  if (
+    !isRecord(body) ||
+    typeof body.operation !== "string" ||
+    !("payload" in body)
+  ) {
+    return Response.json(
+      { ok: false, message: "Payload tidak valid." },
+      { status: 400 },
+    );
+  }
+
+  const result =
+    body.operation === "post"
+      ? await postJournalUntukSesi(body.payload)
+      : body.operation === "reverse"
+        ? await reverseJournalUntukSesi(body.payload)
+        : { ok: false as const, message: "Operasi tidak dikenal." };
+
+  return Response.json(result, { status: result.ok ? 200 : 403 });
+}

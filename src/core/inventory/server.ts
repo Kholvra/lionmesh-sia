@@ -1,9 +1,14 @@
-import { createClient as createSupabaseClient } from "@supabase/supabase-js";
-
 import { getSesiUser } from "@/lib/auth/server";
 import { cekIzin, type AksiDomain } from "@/lib/auth/permissions";
 import { fail, type Result } from "@/lib/result";
-import { getSupabaseEnv } from "@/lib/supabase/env";
+import { createAdminClient } from "@/lib/supabase/admin";
+import {
+  hasOnlyKeys,
+  isIsoDate,
+  isNonBlankString,
+  isRecord,
+  isUuid,
+} from "@/lib/validation";
 import type {
   CatatMutasiResult,
   OpnameStokResult,
@@ -13,45 +18,6 @@ import { isDecimal } from "./decimal";
 import { catatMutasi, opnameStok, transferStok } from "./service";
 
 type InventorySession = NonNullable<Awaited<ReturnType<typeof getSesiUser>>>;
-type InputRecord = Record<string, unknown>;
-
-const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
-const ISO_DATE_PATTERN = /^(\d{4})-(\d{2})-(\d{2})(?:T\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:\d{2}))?$/;
-
-function isRecord(value: unknown): value is InputRecord {
-  return typeof value === "object" && value !== null && !Array.isArray(value);
-}
-
-function hasOnlyKeys(value: InputRecord, keys: readonly string[]): boolean {
-  return Object.keys(value).every((key) => keys.includes(key));
-}
-
-function isUuid(value: unknown): value is string {
-  return typeof value === "string" && UUID_PATTERN.test(value);
-}
-
-function isDate(value: unknown): value is string {
-  if (typeof value !== "string") return false;
-  const match = ISO_DATE_PATTERN.exec(value);
-  if (!match) return false;
-
-  const [, yearText, monthText, dayText] = match;
-  const year = Number(yearText);
-  const month = Number(monthText);
-  const day = Number(dayText);
-  const date = new Date(Date.UTC(year, month - 1, day));
-
-  return (
-    date.getUTCFullYear() === year &&
-    date.getUTCMonth() === month - 1 &&
-    date.getUTCDate() === day &&
-    !Number.isNaN(Date.parse(value))
-  );
-}
-
-function isReason(value: unknown): value is string {
-  return typeof value === "string" && value.trim().length > 0;
-}
 
 function parseTransferInput(value: unknown) {
   if (!isRecord(value) || !hasOnlyKeys(value, ["produkId", "gudangAsalId", "gudangTujuanId", "qty", "tanggal"])) {
@@ -62,7 +28,7 @@ function parseTransferInput(value: unknown) {
     !isUuid(value.gudangAsalId) ||
     !isUuid(value.gudangTujuanId) ||
     !isDecimal(value.qty, false, false) ||
-    (value.tanggal !== undefined && !isDate(value.tanggal))
+    (value.tanggal !== undefined && !isIsoDate(value.tanggal))
   ) {
     return null;
   }
@@ -83,8 +49,8 @@ function parseOpnameInput(value: unknown) {
     !isUuid(value.produkId) ||
     !isUuid(value.gudangId) ||
     !isDecimal(value.qtyFisik, true, false) ||
-    !isReason(value.alasan) ||
-    (value.tanggal !== undefined && !isDate(value.tanggal))
+    !isNonBlankString(value.alasan) ||
+    (value.tanggal !== undefined && !isIsoDate(value.tanggal))
   ) {
     return null;
   }
@@ -105,8 +71,8 @@ function parseAdjustmentInput(value: unknown) {
     !isUuid(value.produkId) ||
     !isUuid(value.gudangId) ||
     !isDecimal(value.qty, false) ||
-    !isReason(value.alasan) ||
-    (value.tanggal !== undefined && !isDate(value.tanggal))
+    !isNonBlankString(value.alasan) ||
+    (value.tanggal !== undefined && !isIsoDate(value.tanggal))
   ) {
     return null;
   }
@@ -130,20 +96,6 @@ async function requireInventoryPermission(aksi: AksiDomain): Promise<Result<Inve
   return { ok: true, data: session };
 }
 
-function createInventoryAdminClient() {
-  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  if (!serviceRoleKey) return null;
-
-  const { supabaseUrl } = getSupabaseEnv();
-  return createSupabaseClient(supabaseUrl, serviceRoleKey, {
-    auth: {
-      autoRefreshToken: false,
-      detectSessionInUrl: false,
-      persistSession: false,
-    },
-  });
-}
-
 /**
  * Jalur internal server untuk transfer manual. Pemanggil harus mencegah retry
  * otomatis dan tidak boleh meneruskan payload sumber dokumen atau actor.
@@ -155,7 +107,7 @@ export async function transferStokUntukSesi(input: unknown): Promise<Result<Tran
   const parsed = parseTransferInput(input);
   if (!parsed) return fail("Data transfer stok tidak valid.");
 
-  const admin = createInventoryAdminClient();
+  const admin = createAdminClient();
   if (!admin) return fail("Layanan stok belum tersedia. Hubungi administrator.");
 
   return transferStok(admin, {
@@ -172,7 +124,7 @@ export async function opnameStokUntukSesi(input: unknown): Promise<Result<Opname
   const parsed = parseOpnameInput(input);
   if (!parsed) return fail("Data opname stok tidak valid.");
 
-  const admin = createInventoryAdminClient();
+  const admin = createAdminClient();
   if (!admin) return fail("Layanan stok belum tersedia. Hubungi administrator.");
 
   return opnameStok(admin, {
@@ -189,7 +141,7 @@ export async function catatPenyesuaianUntukSesi(input: unknown): Promise<Result<
   const parsed = parseAdjustmentInput(input);
   if (!parsed) return fail("Data penyesuaian stok tidak valid.");
 
-  const admin = createInventoryAdminClient();
+  const admin = createAdminClient();
   if (!admin) return fail("Layanan stok belum tersedia. Hubungi administrator.");
 
   return catatMutasi(admin, {

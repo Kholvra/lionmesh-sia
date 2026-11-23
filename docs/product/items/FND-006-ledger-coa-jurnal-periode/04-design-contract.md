@@ -2,7 +2,7 @@
 
 - Source: `docs/product/items/FND-006-ledger-coa-jurnal-periode/01-requirement.md` (`FND-006`)
 - Acceptance criteria: `02-acceptance-criteria.md` (`AC-01`…`AC-16`)
-- Status: `Proposed`
+- Status: `Approved` (D-58, 2026-11-23)
 - Profile: product app / money and ledger
 - Scope: COA, peran akun, jurnal, fungsi posting, jurnal pembalik, periode akuntansi
 - Owner: tech lead
@@ -13,6 +13,16 @@
 **Intent.** Setiap jurnal dalam sistem lahir dari satu fungsi, selalu balance, dan tidak berubah setelah diposting.
 
 **Non-goals.** Laporan (`C-009`), tutup buku (`C-010`), jurnal modul, master mata uang.
+
+## Implementation decisions (2026-11-23)
+
+- `akun.peran` unik; modul memanggil akun lewat peran, bukan nomor. Seed `0011_fnd_006_coa.sql` memuat tepat 14 akun `D-41`.
+- `jenis_sumber_jurnal` adalah daftar tertutup. `peran_berhak` menentukan peran aktor; nilai `null` hanya dipakai `PEMBALIKAN` karena otorisasi pembatalan dimiliki aksi pemanggil. Core tetap menolak akun nonaktif dan peran `Karyawan`.
+- Baris `periode_akuntansi` dibuat `buka` saat posting pertama pada bulan kalender `Asia/Jakarta`, lalu dikunci/dibuka hanya oleh mekanisme `C-010`. Core menolak posting jika status bukan `buka`.
+- `post_journal()` dan `reverse_journal()` adalah `SECURITY DEFINER` yang hanya dapat dieksekusi `service_role`. DML tabel jurnal dicabut dari semua role aplikasi.
+- Header dan detail jurnal tidak dapat diubah atau dihapus. Constraint trigger tertunda memeriksa minimal dua baris dan debit = kredit saat commit.
+- Jurnal pembalik menyalin baris asal dengan debit/kredit tertukar, merujuk jurnal asal secara unik, dan tidak mengubah jurnal asal.
+- Boundary TypeScript ada di `src/core/ledger`: `postJournal`, `reverseJournal`, `postJournalUntukSesi`, dan `reverseJournalUntukSesi`. Aktor selalu diambil dari sesi pada jalur server.
 
 ## Trust boundary
 
@@ -76,35 +86,35 @@ Status periode: `buka` → `kunci`; `kunci` → `buka` hanya lewat prosedur `C-0
 
 | Contract ID | Observable oracle | Check type/owner | Evidence | Status |
 |---|---|---|---|---|
-| `B-01` | Jurnal tidak valid ditolak | AC-02, AC-03, AC-06, AC-08, AC-13, AC-15 | — | `Unverified` |
-| `B-02` | Kegagalan baris membatalkan header | AC-10 | — | `Unverified` |
-| `B-03` | Jurnal tidak balance tidak bisa commit | AC-02 (uji di database) | — | `Unverified` |
-| `PRE-01` | Aktor tidak berhak ditolak | AC-14 | — | `Unverified` |
-| `PRE-02` | Periode terkunci dan tidak balance ditolak | AC-02, AC-04 | — | `Unverified` |
-| `PRE-03` | Jurnal satu baris, sumber kosong, IDR ditolak | AC-06, AC-08, AC-15 | — | `Unverified` |
-| `PRE-04` | Pembalik ganda ditolak | AC-11 (uji tambahan) | — | `Unverified` |
-| `POST-01` | Jurnal balance tersimpan | AC-01 | — | `Unverified` |
-| `POST-02` | Penolakan tidak mengubah tabel | AC-02 | — | `Unverified` |
-| `POST-03` | Pembalik saldo-nol, jurnal asal utuh | AC-11 | — | `Unverified` |
-| `INV-01` | Debit = kredit untuk setiap jurnal tersimpan | AC-01 | — | `Unverified` |
-| `INV-02` | Jurnal posted tidak berubah | AC-05 | — | `Unverified` |
-| `INV-03` | Insert langsung ditolak | AC-07 | — | `Unverified` |
-| `INV-04` | Sumber wajib | AC-06 | — | `Unverified` |
-| `INV-05` | Akun tidak aktif tidak dipakai | AC-03, AC-09, AC-13 | — | `Unverified` |
-| `INV-06` | Hanya IDR | AC-15 | — | `Unverified` |
+| `B-01` | Jurnal tidak valid ditolak | AC-02, AC-03, AC-06, AC-08, AC-13, AC-15 | `node scripts/verify-fnd-006.mjs` | `PASS` |
+| `B-02` | Kegagalan baris membatalkan header | AC-10 | `node scripts/verify-fnd-006.mjs` | `PASS` |
+| `B-03` | Jurnal tidak balance tidak bisa commit | AC-02, AC-10 | `node scripts/verify-fnd-006.mjs` | `PASS` |
+| `PRE-01` | Aktor tidak berhak ditolak | AC-14 | `verify-fnd-006.mjs`, `verify-fnd-006-session.mjs` | `PASS` |
+| `PRE-02` | Periode terkunci dan tidak balance ditolak | AC-02, AC-04 | `node scripts/verify-fnd-006.mjs` | `PASS` |
+| `PRE-03` | Jurnal satu baris, sumber kosong, IDR ditolak | AC-06, AC-08, AC-15 | `node scripts/verify-fnd-006.mjs` | `PASS` |
+| `PRE-04` | Pembalik ganda ditolak | AC-11 | `node scripts/verify-fnd-006.mjs` | `PASS` |
+| `POST-01` | Jurnal balance tersimpan | AC-01 | `node scripts/verify-fnd-006.mjs` | `PASS` |
+| `POST-02` | Penolakan tidak mengubah tabel | AC-02 | `node scripts/verify-fnd-006.mjs` | `PASS` |
+| `POST-03` | Pembalik saldo-nol, jurnal asal utuh | AC-11, AC-12 | `node scripts/verify-fnd-006.mjs` | `PASS` |
+| `INV-01` | Debit = kredit untuk setiap jurnal tersimpan | AC-01 | `node scripts/verify-fnd-006.mjs` | `PASS` |
+| `INV-02` | Jurnal posted tidak berubah | AC-05 | `node scripts/verify-fnd-006.mjs` | `PASS` |
+| `INV-03` | Insert langsung ditolak | AC-07 | `node scripts/verify-fnd-006.mjs` | `PASS` |
+| `INV-04` | Sumber wajib | AC-06 | `node scripts/verify-fnd-006.mjs` | `PASS` |
+| `INV-05` | Akun tidak aktif tidak dipakai | AC-03, AC-09, AC-13 | `node scripts/verify-fnd-006.mjs` | `PASS` |
+| `INV-06` | Hanya IDR | AC-15 | `node scripts/verify-fnd-006.mjs` | `PASS` |
 
-## Open decisions and assumptions
+## Locked decisions and implementation assumptions
 
 | Hal | Status | Dampak bila salah |
 |---|---|---|
-| Bagan akun dasar (`D-41`) | Terjawab | Seed dan posting tidak bisa diuji |
-| Nomor akun baru (`D-51`) | Mekanisme berversi; nilai diverifikasi dan dikutip saat implementasi | Akun salah atau kurang di seed |
-| Akun 150, 159, 702 dicadangkan (`D-41`, `D-45`) | `[USULAN-AGEN]`: tanpa baris | Akun tak terpakai di COA |
-| Periode bulanan kalender (`D-50`) | Terjawab | — |
-| Jenis sumber dan pemanggil (`OQ-06-08`, `OQ-06-09`) | `[USULAN-AGEN]` | Jurnal dari pemicu tak berwenang |
-| Penegakan balance di database (`OQ-06-10`) | `[USULAN-AGEN]` | Jaminan balance hanya di layanan |
-| Pembulatan dua desimal (`OQ-06-11`) | `[USULAN-AGEN]` | Selisih kecil antar laporan |
-| Penempatan master mata uang (`OQ-06-07`) | Terjawab (`D-38`), konfirmasi koordinator | Kurs tidak tercatat |
+| Bagan akun dasar (`D-41`) | Terkunci; seed 14 akun | Seed dan posting tidak bisa diuji |
+| Nomor akun baru (`D-51`) | Mekanisme berversi; nilai dikutip item pemilik | Akun baru tidak boleh dikarang di sini |
+| Akun 150, 159, 702 dicadangkan (`D-41`, `D-45`) | Terkunci; tanpa baris | Akun tak terpakai di COA |
+| Periode bulanan kalender (`D-50`) | Terkunci | — |
+| Jenis sumber dan pemanggil (`OQ-06-08`, `OQ-06-09`) | Disahkan `D-58` | Jurnal dari pemicu tak berwenang |
+| Penegakan balance di database (`OQ-06-10`) | Disahkan `D-58`; constraint trigger | Jaminan balance hanya di layanan |
+| Pembulatan dua desimal (`OQ-06-11`) | Disahkan `D-58`; `numeric(18,2)` | Selisih kecil antar laporan |
+| Penempatan master mata uang (`OQ-06-07`) | Terjawab `D-38`; transaksi IDR | Kurs tidak tercatat |
 
 ## Aturan yang sengaja tidak dibuat
 
@@ -112,6 +122,6 @@ Status periode: `buka` → `kunci`; `kunci` → `buka` hanya lewat prosedur `C-0
 |---|---|
 | State machine dokumen | Tidak ada dokumen di item ini |
 | Loop/termination | Tidak ada algoritma berulang |
-| Otorisasi per peran | Milik `FND-003` (posting memakai hasilnya) |
+| Matriks izin aksi bisnis | Milik `FND-003` dan item pemilik aksi; core hanya menegakkan daftar peran per jenis sumber jurnal |
 | Jurnal manual | Dilarang `D-43` |
 | Revaluasi kurs | Tidak ada transaksi asing (`D-38`) |

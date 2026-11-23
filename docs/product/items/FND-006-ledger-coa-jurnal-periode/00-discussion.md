@@ -2,7 +2,7 @@
 
 ## Konteks
 
-`backlog.md` mendefinisikan `FND-006` sebagai "Ledger: COA, `postJournal()`, periode akuntansi", sequence 6, `depends on` `FND-002` dan `FND-003` (status `specified`, belum `done`). `D-07` mengunci bahwa jurnal hanya ditulis lewat `postJournal()` di `core/ledger`. Analisis §8.3 `[USULAN]` memisahkan "periode akuntansi" dari "periode penggajian".
+`backlog.md` mendefinisikan `FND-006` sebagai "Ledger: COA, `postJournal()`, periode akuntansi", sequence 6, `depends on` `FND-002` dan `FND-003` (pada saat diskusi keduanya `specified`; sekarang `done`). `D-07` mengunci bahwa jurnal hanya ditulis lewat `postJournal()` di `core/ledger`. Analisis §8.3 `[USULAN]` memisahkan "periode akuntansi" dari "periode penggajian".
 
 ## Pembaruan 2026-11-22
 
@@ -65,7 +65,7 @@ Satu fungsi posting menerima jurnal, menolaknya jika tidak balance, akun tidak a
 | `[USULAN-AGEN]` OQ-06-08..11 | Daftar jenis sumber di `core/ledger`; pemanggil dan aktor; balance di database dan layanan; uang `numeric(18,2)` | 2026-11-22 | tech lead (kunci koordinator) | AC-01, AC-06, AC-07 |
 | `[USULAN-AGEN]` pembalik | Jurnal pembalik adalah jurnal baru dengan sumber dokumen batal dan kolom referensi ke jurnal asal; jurnal asal tidak diubah | 2026-11-22 | tech lead (kunci koordinator) | AC-14 |
 | `[USULAN-AGEN]` seed akun | Akun 150, 159, dan 702 (dicadangkan `D-41`) tidak dibuat baris di seed awal; dibuat saat item `D-45` ada | 2026-11-22 | Accounting (kunci koordinator) | Tidak ada akun tak terpakai di COA |
-| `[USULAN-AGEN]` COA | Akun baru diberi nomor lewat mekanisme berversi (`D-51`) sebelum seed dibuat; nilai dikutip sumbernya | 2026-11-22 | Accounting | Seed `FND-006` menunggu nilai itu |
+| `[USULAN-AGEN]` COA | Akun baru diberi nomor lewat mekanisme berversi (`D-51`) sebelum seed dibuat; nilai dikutip sumbernya | 2026-11-22 | Accounting | Seed dasar memakai 14 akun `D-41`; akun baru menunggu nilai itu |
 
 ## Assumptions (agent-proposed)
 
@@ -82,4 +82,4 @@ Satu fungsi posting menerima jurnal, menolaknya jika tidak balance, akun tidak a
 
 ## Next step
 
-Accounting mengesahkan nilai akun baru (mekanisme `D-51`) dan koordinator mengunci keputusan `[USULAN-AGEN]`. Setelah `FND-002` dan `FND-003` `done`, item ini dapat menjadi `Ready` sesuai 03.
+`FND-002` dan `FND-003` sudah `done`. Keputusan `[USULAN-AGEN]` disahkan `D-58`. Implementasi, seed COA dasar, migrasi `0007`, boundary `core/ledger`, dan bukti AC-01–AC-16 tercatat di `05-evidence.md`. Nilai akun baru di luar `D-41` tetap menunggu item yang membutuhkannya dan mekanisme `D-51`.
