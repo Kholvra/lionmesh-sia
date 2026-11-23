@@ -77,7 +77,7 @@ Semua aturan kontrak berstatus `Unverified`.
 
 ## Readiness status
 
-`Blocked` (lihat Verdict). Tidak ada verdict `Ready`.
+`Done` — implementasi dan verifikasi selesai; sisa integrasi dokumen sumber dicatat sebagai tech debt.
 
 ## Handoff boundary
 

@@ -26,9 +26,9 @@ Satu pemilik: tech lead. Urutan wajib.
 |---|---|---|---|---|
 | `FND-001` | Lingkungan pengembangan yang dapat diulang + gerbang mutu | 1 | — | `done` |
 | `FND-002` | Skema domain inti + migrasi bernomor | 2 | `FND-001` | `done` |
-| `FND-003` | Autentikasi & 13 peran (12 staf + Karyawan self-service) dengan RLS | 3 | `FND-002` | `in progress` |
+| `FND-003` | Autentikasi & 13 peran (12 staf + Karyawan self-service) dengan RLS | 3 | `FND-002` | `done` |
 | `FND-004` | Dokumen: penomoran, status, riwayat, approval berjenjang | 4 | `FND-002`, `FND-003` | `specified` |
-| `FND-005` | Inventory: mutasi, saldo, valuasi rata-rata bergerak | 5 | `FND-002` | `in progress` |
+| `FND-005` | Inventory: mutasi, saldo, valuasi rata-rata bergerak | 5 | `FND-002` | `done` |
 | `FND-006` | Ledger: COA, `postJournal()`, periode akuntansi | 6 | `FND-002`, `FND-003` | `specified` |
 | `FND-007` | UI kit bersama: tabel, form, status badge, dialog | 7 | `FND-002` | `done` |
 | `FND-008` | Seed deterministik + reset ke skema `siap` | 8 | `FND-001`, `FND-002` | `done` |
@@ -182,3 +182,5 @@ Terbaca per level. Semua item dalam satu baris boleh dikerjakan serentak. `DISC-
 | 2026-11-22 | `FND-008` mulai dikerjakan setelah `FND-001` dan `FND-002` done; `D-54` mengecualikan item fondasi dari gate item modul |
 | 2026-11-22 | Implementasi seed dasar diverifikasi; seed akun FND-003 dan AC-05 masih tertunda |
 | 2026-11-22 | `FND-008` → `done`: AC-01–AC-09 dibuktikan pada Supabase lokal terisolasi; akun uji 13 peran ditambahkan; `pnpm verify` dan pemeriksaan finalisasi lulus |
+| 2026-11-23 | `FND-003` → `done`: implementasi login, guard, RLS, dan Auth hook selesai; tech lead mengonfirmasi hasil pengujian manual, sisa risiko deployment dicatat di `docs/tech-debt/fnd-003-auth-deployment.md` |
+| 2026-11-23 | `FND-005` → `done`: implementasi mutasi, saldo, valuasi, presisi desimal, dan integrasi sintetis selesai; tech lead mengonfirmasi hasil pengujian manual, sisa integrasi dokumen sumber dicatat di `docs/tech-debt/fnd-005-integrasi-dokumen.md` |

@@ -128,3 +128,7 @@ Pada Supabase dan PostgreSQL lokal terisolasi, migrasi `0005_inventory_decimal_s
 ## Integrasi dokumen sintetis — 2026-11-23
 
 `node scripts/verify-fnd-005-session.mjs` pada proyek Supabase terisolasi dengan migrasi 0001–0005 menghasilkan 25 pemeriksaan lulus. Enam pemeriksaan baru menggunakan tabel dan route fixture khusus uji yang memodelkan dokumen QC: peran Gudang ditolak untuk aksi QC; actor palsu, dokumen tidak ada, dan QC belum lulus ditolak tanpa mutasi; QC yang sah mencatat mutasi dengan ID sumber dan aktor sesi. Fixture bukan implementasi dokumen bisnis dan tidak membuktikan atomisitas perubahan status dokumen atau penanganan retry; pengujian terhadap aksi dokumen sebenarnya wajib dilakukan bersama item pemiliknya.
+
+## Closeout — 2026-11-23
+
+Tech lead mengonfirmasi FND-005 selesai setelah pengujian manual pada mutasi, saldo, valuasi, presisi desimal, dan integrasi sintetis. Sisa integrasi dokumen sumber tetap diikuti di `docs/tech-debt/fnd-005-integrasi-dokumen.md`.
