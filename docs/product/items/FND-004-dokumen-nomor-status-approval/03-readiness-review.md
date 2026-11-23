@@ -4,93 +4,57 @@
 
 | # | Kriteria | Status | Catatan |
 |---|---|---|---|
-| 1 | Outcome sebagai perilaku terlihat | lolos | Nomor, riwayat, approval, pembatalan, dan penolakan dinyatakan sebagai perilaku (01, Outcome) |
-| 2 | Aktor dan izin jelas | lolos | Pembuat, pemroses per level (`D-51` c), pemilik modul, dan tech lead; pemohon tidak menyetujui (`D-48`) |
-| 3 | Status dan transisi eksplisit | lolos | Tabel transisi lengkap dengan "oleh", syarat, dan jejak (01, Status); penambalan `D-47` dicatat per pemilik |
-| 4 | Validasi punya pesan yang bisa dibaca | lolos | Tabel pesan lengkap di 01 (Validasi); pesan konflik `[USULAN-AGEN]` |
-| 5 | Acceptance criteria bisa dibuktikan | lolos | AC-01 sampai AC-16 berupa langkah atau perintah; AC-02 dan AC-06 memakai skrip paralel |
-| 6 | Semua `depends on` `done` | belum | `FND-002` dan `FND-003` berstatus `specified`, belum `done` (`backlog.md`) |
-| 7 | Tidak ada pertanyaan pemblokir terbuka | lolos | Semua pertanyaan di 00 berstatus Terjawab (`D-31`, `D-46`–`D-48`, `D-50`, `D-51`, atau `[USULAN-AGEN]` menunggu kunci) |
-| 8 | Gate fondasi terpenuhi | belum | `FND-001`–`FND-006` belum seluruhnya `done` |
-| 9 | Ukuran masuk akal untuk satu orang dalam satu track | lolos | `L` `[USULAN]`: empat aspek (nomor, status, approval, konkurensi) tetapi satu mesin dan satu tabel riwayat; layar dan daftar status per jenis tetap milik pemilik modul |
-
-## Ringkasan pertanyaan terbuka (diperbarui 2026-11-22)
-
-| Status | Jumlah |
-|---|---|
-| Terbuka | 0 |
-| Terjawab (`D-xx`) | 9 |
-| Terjawab `[USULAN-AGEN]` menunggu kunci koordinator | 1 (OQ-04-08), ditambah tiga keputusan di Decisions |
-
-Pertanyaan `bisnis` yang memblokir: tidak ada. Ambang nominal seed masih placeholder bertanda belum final (`D-37`), bukan pertanyaan terbuka.
+| 1 | Outcome sebagai perilaku terlihat | lolos | Nomor, riwayat, approval, pembatalan, dan penolakan dinyatakan sebagai perilaku |
+| 2 | Aktor dan izin jelas | lolos | Pembuat, pemroses per level, pemilik modul, dan tech lead; pemohon tidak menyetujui |
+| 3 | Status dan transisi eksplisit | lolos | Daftar status dan transisi D-46/D-47, ditambah status yang disahkan D-53/D-58 |
+| 4 | Validasi punya pesan yang bisa dibaca | lolos | Pesan transisi, konflik, alasan, posting, dan penghapusan diuji |
+| 5 | Acceptance criteria bisa dibuktikan | lolos | AC-01–AC-16 diuji dengan skrip database dan sesi |
+| 6 | Semua `depends on` `done` | lolos | `FND-002` dan `FND-003` `done` |
+| 7 | Tidak ada pertanyaan pemblokir terbuka | lolos | Seluruh pertanyaan di 00 terjawab; D-58 mengesahkan usulan agen |
+| 8 | Gate fondasi terpenuhi | lolos | `D-54`: item `FND-*` hanya mengikuti `depends on` |
+| 9 | Ukuran masuk akal untuk satu orang dalam satu track | lolos | Nomor, status, riwayat, approval, dan konkurensi berada dalam satu mesin core |
 
 ## Verdict
 
-**`Blocked`**
+**`Done`**
 
-Alasan (satu): dependensi belum `done`: `FND-002` dan `FND-003` (keduanya `specified`). Butir 6 belum; butir 8 belum karena gate `FND-001`–`FND-006` juga belum.
+`FND-002` dan `FND-003` sudah `done`. Migrasi `0007`, service `core/dokumen`, seed aturan approval, dan seluruh AC telah diverifikasi pada Supabase lokal terisolasi.
 
-Siap menjadi Ready begitu dependensi done; tidak ada pemblokir lain.
+## Implementasi
 
-## Blockers / decisions needed
-
-Tidak ada pertanyaan terbuka. Keputusan yang menunggu kunci koordinator:
-
-| ID | Keputusan | Owner |
-|---|---|---|
-| OQ-04-04 | pemilik modul mendaftarkan status dan penanda diposting | koordinator |
-| OQ-04-08 | teks pesan konflik | koordinator |
-| catatan approval | persetujuan sebagai baris `riwayat_status` | koordinator |
-
-## Agent suggestions awaiting approval
-
-| Hal | Usulan | Kenapa |
-|---|---|---|
-| Prioritas | `high` `[USULAN]` | memblokir `PD-002`, `PG-003`, `PR-002`, `GJ-005`, `C-012`, `C-013`, `C-014` |
-| Ukuran | `L` `[USULAN]` | empat aspek sekaligus tetapi satu mesin |
-| Penanda diposting | fail-safe: dianggap diposting bila tidak terbaca `[USULAN]` | mencegah pembatalan dokumen yang sudah berefek |
+- Migrasi `0007_dokumen_nomor_status_approval.sql`: registry status, transisi global, jenis dokumen, counter, dokumen, aturan approval, riwayat append-only, trigger, RLS, dan RPC core.
+- `src/core/dokumen/`: tipe, service, query, dan konteks sesi server.
+- `supabase/seeds/0010_fnd_004_aturan_approval.sql`: placeholder D-51(c), seed versi `0004`.
+- `scripts/verify-fnd-004.mjs`: AC-01–AC-16 pada database terisolasi.
+- `scripts/verify-fnd-004-session.mjs` dan fixture route: membuktikan aktor berasal dari sesi.
 
 ## Kontrak desain
 
-`04-design-contract.md` berstatus `Proposed`. Item ini menyentuh status dokumen dan nominal approval, sehingga kontrak wajib.
+Kontrak `04-design-contract.md` berstatus `Approved`. Semua invariant utama terverifikasi, kecuali pemeriksaan periode sumber yang menunggu tabel periode `FND-006`.
 
-| Tipe kontrak | Dipakai | Alasan |
+## Risiko dan batas
+
+| Risiko / batas | Dampak | Mitigasi |
 |---|---|---|
-| Preconditions | ya | periode, status asal, level, dan pemisahan |
-| Postconditions | ya | nomor, riwayat, dan gugur approval |
-| Invariants | ya | nomor unik, riwayat tambah-saja, status final, status terdaftar |
-| Trust boundary | ya | pemroses, klien, dan penanda posting |
-| State transition | ya | tabel transisi |
-| Loop/termination | tidak | tidak ada algoritma berulang |
-| Architecture boundary | ya, merujuk ARCH-001 | `ARCH-05` |
-
-Semua aturan kontrak berstatus `Unverified`.
-
-## Risiko
-
-| Risiko | Dampak | Mitigasi |
-|---|---|---|
-| Ambang seed placeholder dianggap final | approval salah di produksi | penanda belum final di seed (`D-37`); kunci ambang di Accounting |
-| Pola status dipaksakan ke semua modul | modul kehilangan status yang sah | daftar status hanya dari `D-46`/`D-47` (`INV-07`) |
-| Konkurensi tidak teruji | nomor atau status ganda | AC-02 dan AC-06 dijalankan paralel |
-| Penanda posting tidak konsisten antar modul | pembatalan dokumen posting lolos | fail-safe (`B-03`) |
+| Periode sumber belum dapat diperiksa | Dokumen sumber dapat dibuat sebelum integrasi FND-006 | Dicatat di `docs/tech-debt/fnd-004-periode-dokumen.md` |
+| Kode tipe seed masih placeholder | Modul dapat memilih kode berbeda | Seed dan evidence menyatakan kode belum final |
+| Approval rule berubah setelah review | Keputusan dapat berubah di tengah approval | Snapshot aturan disimpan di dokumen saat `PERIKSA` |
+| Retry otomatis aksi berstatus | Dapat dianggap konflik | API memakai versi dokumen; pemanggil tidak boleh retry otomatis |
 
 ## Readiness status
 
-`Blocked` (lihat Verdict). Tidak ada verdict `Ready`.
+`Done` — siap dipakai item modul. Gate migrasi tetap dipegang tech lead.
 
 ## Handoff boundary
 
 - Parent epic / milestone: `EPIC-FND` / `M0`
-- Lane / sequence / predecessor: `active` / `4` / `FND-002`, `FND-003` (keduanya `specified`, belum `done`)
-- Foundation status / evidence: `missing` untuk dokumen (`backlog.md`, status fondasi "Service bersama")
-- Artifact role / canonical source: `canonical`: `docs/product/items/FND-004-dokumen-nomor-status-approval/`
-- Next domain: `quick-dev` setelah DoR `Ready`
-- Required input artifacts: `docs/product/decisions.md` (D-08, D-33, D-35, D-37, D-42, D-43, D-46, D-47, D-48, D-50, D-51); `docs/architecture/contracts/ARCH-001-batas-core-modul/contract.md` (ARCH-05, INV-04, INV-05); analisis §2.3, §8, §10.4, §10.5; `diagram-sia-lengkap.md` §5
-- Implementation plan: `Not created`
-- Out of scope for this skill: setup execution, technical task breakdown, contract compilation, test strategy, and code changes.
+- Lane / sequence / predecessor: `active` / `4` / `FND-002`, `FND-003` (`done`)
+- Artifact role / canonical source: `docs/product/items/FND-004-dokumen-nomor-status-approval/`
+- Bukti: `05-evidence.md`
+- Implementasi: `supabase/migrations/0007_dokumen_nomor_status_approval.sql`, `src/core/dokumen/`, `scripts/verify-fnd-004*.mjs`
 
 ## Links
 
 - `00-discussion.md`, `01-requirement.md`, `02-acceptance-criteria.md`, `04-design-contract.md`, `05-evidence.md`
-- `docs/product/backlog.md`, `docs/product/decisions.md`, `docs/product/epics/EPIC-FND.md`
+- `docs/product/backlog.md`, `docs/product/epics/EPIC-FND.md`
+- `docs/tech-debt/fnd-004-periode-dokumen.md`

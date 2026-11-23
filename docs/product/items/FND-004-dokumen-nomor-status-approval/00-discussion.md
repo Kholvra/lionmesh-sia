@@ -78,3 +78,7 @@ Dokumen baru mendapat nomor unik dari sistem. Setiap transisi status tercatat de
 ## Next step
 
 Koordinator mengunci tiga `[USULAN-AGEN]` di atas. Setelah `FND-002` dan `FND-003` `done`, item ini dapat menjadi `Ready` sesuai 03.
+
+## Status akhir — 2026-11-23
+
+`FND-002` dan `FND-003` sudah `done`; implementasi selesai. Migrasi `0007`, service `core/dokumen`, seed approval versi `0004`, dan AC-01–AC-16 telah diverifikasi. Pemeriksaan periode sumber menunggu `FND-006` dan dicatat di `docs/tech-debt/fnd-004-periode-dokumen.md`.
