@@ -8,6 +8,8 @@
     "start": "next start",
     "lint": "eslint",
     "typecheck": "tsc --noEmit",
+    "verify:pg001": "node scripts/verify-pg001-nominal.mjs",
+    "test": "node --test --experimental-strip-types \"src/**/*.test.ts\"",
     "arch:check": "depcruise src --config .dependency-cruiser.cjs",
     "check:migrations": "node scripts/check-migrations.mjs",
     "db:setup": "pnpm check:migrations && node scripts/db-guard.mjs setup && supabase start && supabase db reset",
@@ -15,14 +17,15 @@
     "db:seed": "node scripts/db-seed.mjs",
     "db:seed:local": "node scripts/db-seed-local.mjs",
     "db:stop": "supabase stop",
-    "verify": "pnpm lint && pnpm typecheck && pnpm arch:check && pnpm build"
+    "verify": "pnpm lint && pnpm typecheck && pnpm arch:check && pnpm test && pnpm build"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.7",
     "@supabase/supabase-js": "^2.118.0",
     "next": "16.4.6",
     "react": "19.3.0",
-    "react-dom": "19.3.0"
+    "react-dom": "19.3.0",
+    "zod": "^4.6.7"
   },
   "devDependencies": {
     "@tailwindcss/turbopack": "^4",

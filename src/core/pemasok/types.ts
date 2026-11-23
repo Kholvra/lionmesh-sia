@@ -33,7 +33,8 @@ export interface PemasokInput {
   kontakPicTelepon: string | null;
   terminHari: number;
   toleransiPersen: number;
-  toleransiNominal: number;
+  /** Decimal string: numeric(18,2) must not pass through a JS number. */
+  toleransiNominal: string;
 }
 
 export interface PemasokListOptions {

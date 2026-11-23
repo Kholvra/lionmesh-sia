@@ -7,7 +7,7 @@ import { FormField, Input } from "@/components/ui";
 import type { Pemasok } from "@/core/pemasok";
 import { simpanPemasokAction } from "../actions";
 import { PATH_PEMASOK } from "../constants";
-import { INITIAL_PEMASOK_ACTION_STATE } from "../schema";
+import { INITIAL_PEMASOK_ACTION_STATE } from "../form-state";
 import styles from "../pemasok.module.css";
 
 type PemasokFormProps = {

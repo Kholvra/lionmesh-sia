@@ -69,6 +69,96 @@ sesi valid + peran Gudang     → 42501
 sesi valid + peran Purchasing → baris tersimpan
 ```
 
+## Validasi form memakai zod (2026-11-23)
+
+`schema.ts` memakai `zod 4.6.7` (standar baru di `AGENTS.md`). Semua aturan satu field hidup di schema field itu: wajib-isi, format angka, presisi, dan rentang. Validasi RPC tidak berubah; zod adalah gerbang pertama di batas action.
+
+Format angka dibatasi pola `^-?\d+(\.\d+)?$` setelah koma desimal Indonesia dinormalkan, sehingga `1e3`, `0x10`, `.5`, dan `30.` ditolak sebagai "harus berupa angka" — bukan diam-diam menjadi angka lain.
+
+| Input | Hasil |
+|---|---|
+| kosong | `nama: Nama pemasok wajib diisi`, `termin_hari: Termin pembayaran wajib diisi` |
+| termin 30, toleransi kosong | `toleransi_persen 0`, `toleransi_nominal 0` (`D-15`) |
+| termin `abc` / `1e3` / `0x10` / `.5` / `30.` | `Termin pembayaran harus berupa angka` |
+| termin `-5` | `Termin pembayaran harus berupa angka bulat minimal 0` |
+| persen `100,01` | `Toleransi persen harus antara 0 dan 100` |
+| persen `0,755` | `Toleransi persen maksimal 2 angka desimal` |
+| nominal `-1` | `Toleransi nominal tidak boleh negatif` |
+| nominal `1.234,56` | `Toleransi nominal harus berupa angka` |
+| `0,75` / `1500` | tersimpan `0.75` / `1500` |
+
+Kasus di atas sekarang **test permanen**, bukan perintah ad-hoc:
+
+```text
+$ pnpm test
+ℹ tests 9   ℹ pass 9   ℹ fail 0
+```
+
+Test memakai test runner bawaan Node (`node --test`, tanpa framework baru), masuk `pnpm verify`, dan dijalankan CI.
+
+`zod` hanya diimpor `actions.ts` (`"use server"`) dan `form-state.ts` tidak mengimpornya, sehingga zod tidak masuk bundel browser. Dibuktikan setelah build:
+
+```text
+$ grep -rl --include="*.js" "ZodError" .next/static      → kosong
+$ grep -rl --include="*.js" "invalid_union" .next/static  → kosong
+```
+
+## Presisi angka besar (2026-11-23)
+
+Ditemukan setelah review PR: `Number()` kehilangan presisi di atas `Number.MAX_SAFE_INTEGER` (9007199254740991).
+
+| Uji | Hasil |
+|---|---|
+| `Number("9007199254740993")` | `9007199254740992` — berubah senyap |
+| `select 9007199254740993::numeric(18,2)` | `9007199254740993.00` — DB bisa menyimpan tepat |
+| `select 10000000000000000::numeric(18,2)` | `numeric field overflow` (error DB, bukan pesan per field) |
+| `select 2147483648::integer` | `integer out of range` |
+| RPC dengan parameter string `"9007199254740993.00"` | `200`, tersimpan tepat |
+
+Perbaikan:
+
+- `toleransi_nominal` sekarang **string desimal** dari form sampai RPC (`PemasokInput`), mengikuti konvensi `core/ledger/money.ts` dan `core/inventory/decimal.ts`. `Number()` tidak lagi menyentuhnya.
+- `termin_hari` tetap `number`, dengan batas kapasitas `int4` (2.147.483.647) dan pesan per field.
+- `formatRupiah` memformat dari string (`BigInt`) supaya tampilan juga tidak membulatkan.
+- Test: 14 kasus, termasuk nominal besar tersimpan persis, 17 digit ditolak, termin di atas `int4` ditolak.
+
+Buki end-to-end lewat UI (bukan hanya unit test):
+
+```text
+form: toleransi_nominal = 9007199254740993 → simpan
+DB  : PT Presisi UI | 9007199254740993.00
+```
+
+### Jalur baca juga harus teks (migrasi `0010`)
+
+Perbaikan pertama hanya menjaga jalur tulis. PostgREST mengirim `numeric` sebagai **JSON number**, jadi `JSON.parse` membulatkannya lagi:
+
+```text
+RAW JSON : [{"toleransi_nominal":9007199254740993.00}]
+typeof   : number
+nilai JS : 9007199254740992
+```
+
+Akibatnya detail menampilkan angka salah, form edit membawa angka salah, dan menyimpan form itu menimpa nilai benar.
+
+`0010_pg001_nominal_as_text.sql` membuat ulang view `pemasok_aman` dengan `toleransi_nominal::text` dan `toleransi_persen::text` (skala `0` dibuang agar form menampilkan teks yang diketik). Tipe `Pemasok` di repo sudah menyatakan `string`, jadi sekarang kode dan kenyataan cocok.
+
+Bukti round-trip, `pnpm verify:pg001`:
+
+```text
+simpan      : id=19a30916… nominal=9007199254740993
+baca        : typeof=string nilai=9007199254740993
+simpan ulang: nominal=9007199254740993
+[verify-pg001] lolos — nilai besar bertahan pada simpan → baca → simpan ulang
+```
+
+Bukti UI (sesi `purchasing@lionmesh.test`):
+
+```text
+/detail : Rp 9.007.199.254.740.993,00
+/edit   : name="toleransi_nominal" value="9007199254740993"
+```
+
 ## Screenshot 1280
 
 [`pg001-pemasok-1280.png`](pg001-pemasok-1280.png) — daftar + detail + riwayat status, sidebar 220px, konten mulai x=252.

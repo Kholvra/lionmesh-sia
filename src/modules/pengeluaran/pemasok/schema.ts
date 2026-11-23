@@ -1,99 +1,220 @@
+import { z } from "zod";
+
 import type { PemasokInput } from "@/core/pemasok";
 
-export type PemasokField =
-  | "nama"
-  | "alamat"
-  | "npwp"
-  | "kontak_perusahaan"
-  | "kontak_pic_nama"
-  | "kontak_pic_telepon"
-  | "termin_hari"
-  | "toleransi_persen"
-  | "toleransi_nominal";
+import type {
+  PemasokActionState,
+  PemasokField,
+  PemasokFieldErrors,
+} from "./form-state";
 
-export type PemasokFieldErrors = Partial<Record<PemasokField, string>>;
+export type { PemasokActionState, PemasokField, PemasokFieldErrors };
 
-export type PemasokActionState = {
-  status: "idle" | "error" | "success";
-  message?: string;
-  fieldErrors?: PemasokFieldErrors;
-};
+const PESAN_NAMA = "Nama pemasok wajib diisi";
+const PESAN_TERMIN = "Termin pembayaran wajib diisi";
+const PESAN_TERMIN_ANGKA = "Termin pembayaran harus berupa angka";
+const PESAN_TERMIN_RENTANG = "Termin pembayaran harus berupa angka bulat minimal 0";
+const PESAN_TERMIN_BESAR = "Termin pembayaran terlalu besar";
+const PESAN_NOMINAL_BESAR = "Toleransi nominal terlalu besar";
+const PESAN_PERSEN_ANGKA = "Toleransi persen harus berupa angka";
+const PESAN_PERSEN_RENTANG = "Toleransi persen harus antara 0 dan 100";
+const PESAN_PERSEN_DESIMAL = "Toleransi persen maksimal 2 angka desimal";
+const PESAN_NOMINAL_ANGKA = "Toleransi nominal harus berupa angka";
+const PESAN_NOMINAL_RENTANG = "Toleransi nominal tidak boleh negatif";
+const PESAN_NOMINAL_DESIMAL = "Toleransi nominal maksimal 2 angka desimal";
 
-export const INITIAL_PEMASOK_ACTION_STATE: PemasokActionState = {
-  status: "idle",
-};
-
-function textValue(value: FormDataEntryValue | null): string {
-  return typeof value === "string" ? value.trim() : "";
+/** Reads a text field, keeping an empty input distinct from a missing one. */
+function teks(formData: FormData, field: PemasokField): string {
+  const value = formData.get(field);
+  return typeof value === "string" ? value : "";
 }
 
-function optionalText(value: FormDataEntryValue | null): string | null {
-  const text = textValue(value);
-  return text.length > 0 ? text : null;
+type AturanAngka = {
+  pesanWajib: string;
+  pesanBukanAngka: string;
+  pesanDesimal: string;
+  pesanRentang: string;
+  min: number;
+  max?: number;
+  pesanMaks?: string;
+  bulat?: boolean;
+  maksDesimal?: number;
+  /** Value used when the field is blank; omit to make the field required. */
+  kosongJadi?: number;
+};
+
+// Only digits, an optional sign, and the Indonesian decimal comma. This rejects
+// "1e3", "0x10", ".5" and "30." before they can become a surprising number.
+const POLA_ANGKA = /^-?\d+(\.\d+)?$/;
+
+function angka(aturan: AturanAngka) {
+  return z.string().transform((raw, ctx) => {
+    const trimmed = raw.trim();
+
+    if (trimmed.length === 0) {
+      if (aturan.kosongJadi !== undefined) return aturan.kosongJadi;
+      ctx.addIssue({ code: "custom", message: aturan.pesanWajib });
+      return z.NEVER;
+    }
+
+    const normal = trimmed.replace(",", ".");
+    if (!POLA_ANGKA.test(normal)) {
+      ctx.addIssue({ code: "custom", message: aturan.pesanBukanAngka });
+      return z.NEVER;
+    }
+
+    const nilai = Number(normal);
+    const desimal = normal.split(".")[1] ?? "";
+    if (aturan.maksDesimal !== undefined && desimal.length > aturan.maksDesimal) {
+      ctx.addIssue({ code: "custom", message: aturan.pesanDesimal });
+      return z.NEVER;
+    }
+
+    if (aturan.max !== undefined && nilai > aturan.max && aturan.pesanMaks) {
+      ctx.addIssue({ code: "custom", message: aturan.pesanMaks });
+      return z.NEVER;
+    }
+
+    const diLuarRentang =
+      (aturan.bulat === true && !Number.isInteger(nilai)) ||
+      nilai < aturan.min ||
+      (aturan.max !== undefined && nilai > aturan.max);
+
+    if (diLuarRentang) {
+      ctx.addIssue({ code: "custom", message: aturan.pesanRentang });
+      return z.NEVER;
+    }
+
+    return nilai;
+  });
 }
 
-function parseNumber(value: FormDataEntryValue | null, fallback: number): number {
-  const text = textValue(value);
-  if (text.length === 0) return fallback;
-  return Number(text.replace(",", "."));
+// numeric(18,2) must not become a JS number: 9007199254740993 would arrive as
+// 9007199254740992. Keep it a string all the way to the RPC, like core/ledger.
+const MAKS_DIGIT_BULAT_UANG = 16;
+
+function uang(aturan: {
+  pesanBukanAngka: string;
+  pesanDesimal: string;
+  pesanBesar: string;
+  pesanNegatif: string;
+}) {
+  return z.string().transform((raw, ctx) => {
+    const trimmed = raw.trim();
+    if (trimmed.length === 0) return "0";
+
+    const normal = trimmed.replace(",", ".");
+
+    if (normal.startsWith("-") && /^\d+(\.\d+)?$/.test(normal.slice(1))) {
+      ctx.addIssue({ code: "custom", message: aturan.pesanNegatif });
+      return z.NEVER;
+    }
+
+    if (!/^\d+(\.\d+)?$/.test(normal)) {
+      ctx.addIssue({ code: "custom", message: aturan.pesanBukanAngka });
+      return z.NEVER;
+    }
+
+    const [bulat, desimal = ""] = normal.split(".");
+    if (desimal.length > 2) {
+      ctx.addIssue({ code: "custom", message: aturan.pesanDesimal });
+      return z.NEVER;
+    }
+    if (bulat.length > MAKS_DIGIT_BULAT_UANG) {
+      ctx.addIssue({ code: "custom", message: aturan.pesanBesar });
+      return z.NEVER;
+    }
+
+    return normal;
+  });
+}
+
+const pemasokFormSchema = z.object({
+  nama: z.string().trim().min(1, PESAN_NAMA),
+  alamat: z.string().trim(),
+  npwp: z.string().trim(),
+  kontak_perusahaan: z.string().trim(),
+  kontak_pic_nama: z.string().trim(),
+  kontak_pic_telepon: z.string().trim(),
+  termin_hari: angka({
+    pesanWajib: PESAN_TERMIN,
+    pesanBukanAngka: PESAN_TERMIN_ANGKA,
+    pesanDesimal: PESAN_TERMIN_RENTANG,
+    pesanRentang: PESAN_TERMIN_RENTANG,
+    min: 0,
+    max: 2_147_483_647,
+    pesanMaks: PESAN_TERMIN_BESAR,
+    bulat: true,
+  }),
+  toleransi_persen: angka({
+    pesanWajib: PESAN_PERSEN_RENTANG,
+    pesanBukanAngka: PESAN_PERSEN_ANGKA,
+    pesanDesimal: PESAN_PERSEN_DESIMAL,
+    pesanRentang: PESAN_PERSEN_RENTANG,
+    min: 0,
+    max: 100,
+    maksDesimal: 2,
+    kosongJadi: 0,
+  }),
+  toleransi_nominal: uang({
+    pesanBukanAngka: PESAN_NOMINAL_ANGKA,
+    pesanDesimal: PESAN_NOMINAL_DESIMAL,
+    pesanBesar: PESAN_NOMINAL_BESAR,
+    pesanNegatif: PESAN_NOMINAL_RENTANG,
+  }),
+});
+
+function kosongJadiNull(value: string): string | null {
+  return value.length > 0 ? value : null;
 }
 
 export function parsePemasokForm(formData: FormData): {
   input: PemasokInput | null;
   fieldErrors: PemasokFieldErrors;
 } {
-  const fieldErrors: PemasokFieldErrors = {};
+  const parsed = pemasokFormSchema.safeParse({
+    nama: teks(formData, "nama"),
+    alamat: teks(formData, "alamat"),
+    npwp: teks(formData, "npwp"),
+    kontak_perusahaan: teks(formData, "kontak_perusahaan"),
+    kontak_pic_nama: teks(formData, "kontak_pic_nama"),
+    kontak_pic_telepon: teks(formData, "kontak_pic_telepon"),
+    termin_hari: teks(formData, "termin_hari"),
+    toleransi_persen: teks(formData, "toleransi_persen"),
+    toleransi_nominal: teks(formData, "toleransi_nominal"),
+  });
 
-  const nama = textValue(formData.get("nama"));
-  if (nama.length === 0) {
-    fieldErrors.nama = "Nama pemasok wajib diisi";
-  }
-
-  const terminText = textValue(formData.get("termin_hari"));
-  const terminHari = Number(terminText);
-  if (terminText.length === 0) {
-    fieldErrors.termin_hari = "Termin pembayaran wajib diisi";
-  } else if (!Number.isInteger(terminHari) || terminHari < 0) {
-    fieldErrors.termin_hari = "Termin pembayaran harus berupa angka bulat minimal 0";
-  }
-
-  const toleransiPersen = parseNumber(formData.get("toleransi_persen"), 0);
-  if (
-    !Number.isFinite(toleransiPersen) ||
-    toleransiPersen < 0 ||
-    toleransiPersen > 100
-  ) {
-    fieldErrors.toleransi_persen = "Toleransi persen harus antara 0 dan 100";
-  }
-
-  const toleransiNominal = parseNumber(formData.get("toleransi_nominal"), 0);
-  if (!Number.isFinite(toleransiNominal) || toleransiNominal < 0) {
-    fieldErrors.toleransi_nominal = "Toleransi nominal tidak boleh negatif";
-  }
-
-  if (Object.keys(fieldErrors).length > 0) {
+  if (!parsed.success) {
+    const fieldErrors: PemasokFieldErrors = {};
+    for (const issue of parsed.error.issues) {
+      const key = issue.path[0];
+      if (typeof key === "string" && !(key in fieldErrors)) {
+        fieldErrors[key as PemasokField] = issue.message;
+      }
+    }
     return { input: null, fieldErrors };
   }
 
+  const nilai = parsed.data;
+
   return {
     input: {
-      nama,
-      alamat: optionalText(formData.get("alamat")),
-      npwp: optionalText(formData.get("npwp")),
-      kontakPerusahaan: optionalText(formData.get("kontak_perusahaan")),
-      kontakPicNama: optionalText(formData.get("kontak_pic_nama")),
-      kontakPicTelepon: optionalText(formData.get("kontak_pic_telepon")),
-      terminHari,
-      toleransiPersen,
-      toleransiNominal,
+      nama: nilai.nama,
+      alamat: kosongJadiNull(nilai.alamat),
+      npwp: kosongJadiNull(nilai.npwp),
+      kontakPerusahaan: kosongJadiNull(nilai.kontak_perusahaan),
+      kontakPicNama: kosongJadiNull(nilai.kontak_pic_nama),
+      kontakPicTelepon: kosongJadiNull(nilai.kontak_pic_telepon),
+      terminHari: nilai.termin_hari,
+      toleransiPersen: nilai.toleransi_persen,
+      toleransiNominal: nilai.toleransi_nominal,
     },
-    fieldErrors,
+    fieldErrors: {},
   };
 }
 
-const UUID_PATTERN =
-  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+const pemasokIdSchema = z.uuid();
 
 export function isValidPemasokId(value: unknown): value is string {
-  return typeof value === "string" && UUID_PATTERN.test(value);
+  return pemasokIdSchema.safeParse(value).success;
 }

@@ -4,7 +4,7 @@ import { useActionState, useRef, useState } from "react";
 
 import { ConfirmDialog } from "@/components/ui";
 import { ubahStatusPemasokAction } from "../actions";
-import { INITIAL_PEMASOK_ACTION_STATE } from "../schema";
+import { INITIAL_PEMASOK_ACTION_STATE } from "../form-state";
 import styles from "../pemasok.module.css";
 
 type PemasokStatusButtonProps = {
