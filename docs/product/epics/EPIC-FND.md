@@ -56,9 +56,9 @@ Tanpa epic ini, empat siklus yang berjalan paralel akan menghasilkan empat defin
 |---|---|---|---|---|
 | `FND-001` | Lingkungan dapat diulang + gerbang mutu | 1 | — | `done` |
 | `FND-002` | Skema domain inti + migrasi bernomor | 2 | `FND-001` | `done` |
-| `FND-003` | Autentikasi & 13 peran dengan RLS | 3 | `FND-002` | `specified` |
+| `FND-003` | Autentikasi & 13 peran dengan RLS | 3 | `FND-002` | `done` |
 | `FND-004` | Dokumen: nomor, status, riwayat, approval | 4 | `FND-002`, `FND-003` | `specified` |
-| `FND-005` | Inventory: mutasi, saldo, valuasi | 5 | `FND-002` | `specified` |
+| `FND-005` | Inventory: mutasi, saldo, valuasi | 5 | `FND-002` | `done` |
 | `FND-006` | Ledger: COA, `postJournal()`, periode | 6 | `FND-002`, `FND-003` | `specified` |
 | `FND-007` | UI kit bersama | 7 | `FND-002` | `done` |
 | `FND-008` | Seed deterministik + reset | 8 | `FND-001`, `FND-002` | `done` |

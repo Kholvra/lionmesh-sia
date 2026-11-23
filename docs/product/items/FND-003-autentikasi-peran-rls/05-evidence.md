@@ -109,3 +109,7 @@ Migrasi fix-forward `0006` menyediakan custom access-token hook dan membatasi `i
 Batas bukti: kode JSON Auth langsung untuk akun nonaktif dengan sandi benar adalah `unknown`, sedangkan sandi salah atau akun tidak ada menghasilkan `invalid_credentials`; HTTP dan pesannya identik. AC-12 yang mensyaratkan kode identik tetap parsial. Eksperimen ini menghilangkan kebocoran status akun tanpa mengetahui sandi, bukan menyamakan seluruh kode Auth.
 
 **Gate deployment:** migrasi menghapus sentinel ban yang ditetapkan migrasi 0003 dan bergantung pada hook aktif untuk mencegah penerbitan token akun nonaktif. Lakukan rollout dalam jendela pemeliharaan dengan akses login dan refresh ditutup: terapkan migrasi, aktifkan hook di Auth deployment yang bersangkutan, uji hook serta timebox, login nonaktif, refresh, dan RLS, lalu baru buka akses. `supabase/config.toml` saja tidak mengonfigurasi Supabase Cloud secara otomatis. Jika penyedia tidak dapat menutup akses selama konfigurasi, gunakan deployment bertahap yang diverifikasi lebih dulu; jangan terapkan migrasi ini secara langsung. Migrasi 0005 FND-005 harus diterapkan lebih dahulu agar riwayat migrasi tetap berurutan.
+
+## Closeout — 2026-11-23
+
+Tech lead mengonfirmasi FND-003 selesai setelah pengujian manual pada jalur login, guard sesi, RLS, dan Auth hook. Sisa risiko deployment tetap diikuti di `docs/tech-debt/fnd-003-auth-deployment.md`.
