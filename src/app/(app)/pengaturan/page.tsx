@@ -1,4 +1,3 @@
-import { SignOutButton } from "@/components/sign-out-button";
 import { requireSesi } from "@/lib/auth/server";
 
 import styles from "./page.module.css";
@@ -18,7 +17,6 @@ export default async function PengaturanPage() {
             Informasi akun dan peran yang digunakan untuk mengakses SIA.
           </p>
         </div>
-        <SignOutButton variant="light" />
       </header>
 
       <section className={styles.card} aria-labelledby="account-title">

@@ -52,7 +52,7 @@ $ grep -o "Belum tersedia" home.html | wc -l
 5      # Pendapatan, Pengeluaran, Produksi, Penggajian, Laporan
 ```
 
-## AC-03, AC-04 — lebar dari satu token
+## AC-03, AC-04 — lebar dan konten
 
 ```text
 $ grep -n "layout-" src/app/globals.css
@@ -64,6 +64,17 @@ $ grep -n "layout-" src/app/globals.css
 `nav` memakai `width: var(--layout-sidebar-width)` dan `main` memakai
 `margin-inline-start: var(--layout-sidebar-width)`; tidak ada `220px` literal di
 komponen. Lebar 220px ditetapkan `D-62`.
+
+Screenshot 1280 × 900 (produksi, bukan dev): sidebar mengisi 220px, konten mulai
+di x=252, tidak ada scroll horizontal pada halaman pendek.
+
+| Berkas | Isi |
+|---|---|
+| [`fnd009-appshell-1280.png`](fnd009-appshell-1280.png) | Dashboard: sidebar, 5 item `BELUM`, keadaan kosong, footer identitas |
+| [`fnd009-pengaturan-1280.png`](fnd009-pengaturan-1280.png) | `/pengaturan` di dalam shell, item aktif oranye, tombol keluar tunggal |
+
+Screenshot diambil dengan Brave headless + CDP (`Emulation.setDeviceMetricsOverride`
+1280×900) terhadap `pnpm build && pnpm start`, memakai sesi `purchasing@lionmesh.test`.
 
 ## AC-11 — hanya satu shell
 
@@ -84,28 +95,21 @@ exit 0
 
 Rute hasil build: `/`, `/_not-found`, `/auth/callback`, `/login`, `/pengaturan` — `/` dan `/pengaturan` dinamis (`ƒ`) karena membaca cookie sesi.
 
-## AC-07, AC-09, AC-10 — bukti kode
+## AC-09, AC-10 — keadaan fokus dan kegagalan
 
 | AC | Bukti |
 |---|---|
-| AC-07 | `src/components/shell/sidebar.tsx` footer: `nama`, `peran`, `PT Lionmesh Prima Tbk`, `SignOutButton` |
+| AC-07 | `src/components/shell/sidebar.tsx` footer: `nama`, `peran`, `PT Lionmesh Prima Tbk`, `SignOutButton` — satu tombol keluar, milik shell |
 | AC-09 | `src/app/(app)/layout.tsx` baris skip link `#konten` sebelum `<Sidebar>`; `main` memakai `id="konten"` |
 | AC-10 | `src/app/(app)/loading.tsx` (`aria-busy`, `aria-live`) dan `error.tsx` (`role="alert"`, tombol coba lagi) |
 
-## Screenshot 1280px — ⚠️ belum ada
+## Catatan penyimpangan
 
-Screenshot otomatis tidak bisa diambil di lingkungan ini: browser MCP memblokir
-`localhost`, dan Firefox headless menolak cookie sesi yang disuntikkan (selalu
-jatuh ke `/login`). Bukti fungsional di atas memakai sesi nyata lewat HTTP.
+`pengaturan` sebelumnya merender tombol keluar sendiri di header. Setelah masuk
+shell, tombol itu dihapus supaya hanya ada satu aksi keluar (footer sidebar,
+`COMPONENTS.md` §2). `min-height: 100vh` di halaman itu juga dihapus karena
+shell sudah menyediakan tinggi penuh; menyisakannya memunculkan dua scrollbar.
 
-Cara menyelesaikan (satu menit, manual):
+## Kesimpulan
 
-```text
-1. pnpm dev
-2. buka http://localhost:3000/login, masuk sebagai purchasing@lionmesh.test / lionmesh-dev-2026
-3. jendela 1280×900, buka http://localhost:3000/, simpan sebagai
-   docs/product/items/FND-009-appshell/fnd009-appshell-1280.png
-```
-
-Status AC-03 dan AC-04 karena itu dibuktikan lewat token dan CSS, bukan piksel.
-Item **belum boleh** disebut selesai sampai screenshot itu ada.
+AC-01 sampai AC-12 terbukti. Item boleh ditandai `done` setelah PR di-merge.
