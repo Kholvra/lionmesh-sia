@@ -72,10 +72,10 @@ export function AuthForm() {
     }
   }
 
-  const inputClass = "h-[calc(var(--control-height)+var(--space-3))] w-full rounded-[var(--radius-md)] border border-[var(--border-subtle)] bg-[var(--bg-surface)] py-0 pr-[var(--space-4)] pl-[var(--space-10)] text-[length:var(--font-size-body)] leading-[var(--line-height-body)] text-[color:var(--text-primary)] placeholder:text-[color:var(--text-muted)] hover:border-[var(--border-strong)] focus-visible:border-[var(--border-focus)] focus-visible:outline-[length:var(--focus-ring-width)] focus-visible:outline-[var(--border-focus)] focus-visible:outline-offset-[var(--focus-ring-offset)]";
+  const inputClass = "h-[var(--control-height)] w-full rounded-[var(--radius-md)] border border-[var(--border-subtle)] bg-[var(--bg-surface)] py-0 pr-[var(--space-4)] pl-[var(--space-10)] text-[length:var(--font-size-body)] leading-[var(--line-height-body)] text-[color:var(--text-primary)] placeholder:text-[color:var(--text-muted)] hover:border-[var(--border-strong)] focus-visible:border-[var(--border-focus)] focus-visible:outline-[length:var(--focus-ring-width)] focus-visible:outline-[var(--border-focus)] focus-visible:outline-offset-[var(--focus-ring-offset)]";
 
   return (
-    <form className="m-0 flex flex-col gap-[var(--space-6)]" onSubmit={handleSubmit}>
+    <form className="m-0 flex flex-col gap-[var(--space-4)]" onSubmit={handleSubmit}>
       <div className="flex flex-col gap-[var(--space-2)]">
         <label className="text-[length:var(--font-size-label)] leading-[var(--line-height-label)] font-semibold text-[color:var(--text-primary)]" htmlFor="email">Email perusahaan</label>
         <div className="relative flex items-center">
@@ -96,7 +96,7 @@ export function AuthForm() {
       </div>
 
       {error && <p className={styles.error} role="alert">{error}</p>}
-      <button className="flex min-h-[calc(var(--button-lg-height)+var(--space-2))] cursor-pointer items-center justify-center gap-[var(--space-2)] rounded-[var(--radius-md)] border-0 bg-[var(--brand-500)] px-[var(--space-4)] text-[length:var(--font-size-body)] font-semibold text-[color:var(--text-on-brand)] transition-colors duration-[var(--motion-fast)] hover:bg-[var(--brand-600)] focus-visible:outline-[length:var(--focus-ring-width)] focus-visible:outline-[var(--border-focus)] focus-visible:outline-offset-[var(--focus-ring-offset)] disabled:cursor-wait disabled:opacity-70" disabled={isLoading} type="submit">
+      <button className="flex min-h-[var(--button-lg-height)] cursor-pointer items-center justify-center gap-[var(--space-2)] rounded-[var(--radius-md)] border-0 bg-[var(--brand-500)] px-[var(--space-4)] text-[length:var(--font-size-body)] font-semibold text-[color:var(--text-on-brand)] transition-colors duration-[var(--motion-fast)] hover:bg-[var(--brand-600)] focus-visible:outline-[length:var(--focus-ring-width)] focus-visible:outline-[var(--border-focus)] focus-visible:outline-offset-[var(--focus-ring-offset)] disabled:cursor-wait disabled:opacity-70" disabled={isLoading} type="submit">
         {isLoading ? "Memproses..." : "Masuk ke SIA"}
         {!isLoading && <svg aria-hidden="true" className="h-[var(--space-4)] w-[var(--space-4)]" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.75" viewBox="0 0 24 24"><path d="M5 12h14m-7-7 7 7-7 7" /></svg>}
       </button>

@@ -29,7 +29,7 @@ Verifikasi mutu:
 
 ## Pemeriksaan UI dan sesi tambahan
 
-- Viewport CSS 1280 × 900 (2026-11-23): panel kiri 352 CSS px (27,5%), lebar dokumen 1280 CSS px tanpa overflow; screenshot [`login-1280.png`](login-1280.png). Label terhubung ke input dan tombol kata sandi mengubah input menjadi teks.
+- Viewport CSS 1280 × 900 (2026-11-23): panel kiri 560 CSS px (43,75%), konten kanan 420 px, field 36 px, tombol 40 px sesuai `LAYOUTS.md`; lebar dokumen 1280 px tanpa overflow. Screenshot [`login-1280.png`](login-1280.png). Label terhubung ke input dan tombol kata sandi mengubah input menjadi teks.
 - Proyek Supabase terisolasi: login nonaktif ditolak Auth; payload `updated_by` palsu diganti ID sesi. Token lama setelah pergantian peran tidak dapat membaca profil sendiri melalui REST. Database bersama tidak di-reset.
 - Screenshot halaman `/pengaturan` belum tersedia: worktree ini tidak memiliki `.env.local`, Supabase lokal tidak berjalan, dan tidak ada sesi uji untuk membuka halaman setelah login.
 
@@ -75,3 +75,24 @@ export async function POST() {
 Untuk mengulang, siapkan Supabase lokal terisolasi dengan migrasi FND-003 dan akun uji Gudang, lalu jalankan server Next.js yang terhubung ke proyek itu. `curl -i http://localhost:<port>/fnd003-verify` tanpa cookie menghasilkan 307 ke `/login`. Masuk sebagai Gudang di browser, lalu kirim `fetch('/fnd003-verify', { method: 'POST' })` dari halaman yang sama; hasil 403. Jangan gunakan akun produksi untuk pengujian.
 
 - Audit terhadap `matriks-izin.md` menemukan aksi menerima bahan dan barang jadi belum memiliki entri izin tersendiri; keduanya ditambahkan untuk peran Gudang. Uji endpoint modul tetap dilakukan saat fitur terkait tersedia.
+
+## Pengujian keamanan tambahan — 2026-11-23
+
+Lingkungan: Node v24.22.2, pnpm 10.18.3, Supabase CLI 3.2.0; Supabase dan PostgreSQL berjalan pada proyek lokal terisolasi `fnd003-security-verify`, dengan migrasi 0001–0004. Server Next.js di port 3195 menggunakan kredensial proyek sementara melalui environment proses. Database proyek lain tidak di-reset atau ditulis.
+
+Fixture route sementara memanggil `requireSesi()` pada GET dan `assertIzin("buat_pesanan")` pada POST. Akun uji dibuat pada proyek terisolasi dan menggunakan cookie SSR nyata. Hasil pengujian:
+
+- Tanpa sesi, GET `/pengaturan` menghasilkan HTTP 307 ke `/login`.
+- Akun Gudang mengirim POST langsung untuk aksi Penjualan: HTTP 403 dengan pesan `Peran Anda tidak berwenang melakukan tindakan ini.` Akun Penjualan dengan sesi baru: HTTP 200.
+- Setelah peran diubah, cookie lama menghasilkan HTTP 403 pada fixture dan HTTP 307 ke `/login` pada `/pengaturan`; login ulang menerima peran baru.
+- Setelah penonaktifan, cookie lama menghasilkan HTTP 403 pada fixture dan HTTP 307 ke `/login` pada `/pengaturan`; login ulang ditolak.
+- Uji UI dengan browser headless: login aktif menuju `/pengaturan` dan menampilkan peran; akun tidak ada, sandi salah, dan akun nonaktif masing-masing menampilkan `Username atau password salah.`
+- Endpoint Supabase Auth langsung mengembalikan HTTP 400 untuk ketiganya, tetapi kode JSON berbeda: `invalid_credentials` untuk akun tidak ada/sandi salah dan `user_banned` untuk akun nonaktif. Karena browser memanggil Auth langsung, respons jaringan dapat membedakan kedua keadaan. Perlu keputusan/perbaikan agar tidak mengungkap status akun; jangan menganggap kesamaan pesan UI saja sebagai bukti AC-12 sepenuhnya.
+
+AC-04 masih memerlukan uji pada aksi fitur sebenarnya; fixture membuktikan guard tetapi bukan endpoint bisnis. Audit seluruh pasangan aksi/peran berdasarkan sumber matriks yang independen juga masih diperlukan untuk AC-03. Fixture, akun uji, dan proyek terisolasi dihapus setelah pengujian.
+
+`pnpm verify` pada worktree yang sama selesai dengan exit code 0 setelah file tipe Next.js yang dihasilkan untuk fixture sementara dibersihkan; lint, typecheck, pemeriksaan arsitektur, dan build lulus.
+
+### Verifikasi kebocoran status dengan sandi salah
+
+Pada 2026-11-23, pengujian di proyek Supabase terisolasi membandingkan empat permintaan `signInWithPassword` langsung. Email tidak terdaftar dan akun aktif dengan sandi salah menghasilkan HTTP 400 / `invalid_credentials`; akun nonaktif menghasilkan HTTP 400 / `user_banned`, baik saat sandinya salah maupun benar. Karena kode berbeda bahkan tanpa mengetahui sandi, respons jaringan dapat digunakan untuk membedakan akun nonaktif. AC-12 tetap parsial dan PR belum layak ditandai siap sampai batas akses endpoint atau mekanisme Auth diperbaiki dan diuji ulang.

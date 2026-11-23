@@ -80,13 +80,13 @@ function SecurityIcon() {
 
 function BrandPanel() {
   return (
-    <aside className="flex min-h-screen w-[27.5%] min-w-[calc(var(--space-16)*5.5)] shrink-0 flex-col justify-between bg-[var(--bg-sidebar)] px-[var(--space-8)] py-[var(--space-12)] text-[color:var(--text-inverse)]">
+    <aside className="flex min-h-screen w-[43.75%] shrink-0 flex-col justify-between bg-[var(--bg-sidebar)] px-[var(--space-12)] py-[var(--space-12)] text-[color:var(--text-inverse)]">
       <header>
         <p className="m-0 text-[calc(var(--font-size-display)+var(--space-1))] font-bold leading-[calc(var(--line-height-display)+var(--space-1))]">Lionmesh</p>
         <p className="mt-[var(--space-1)] mb-0 text-[length:var(--font-size-body-sm)] leading-[var(--line-height-body-sm)] text-[color:var(--ink-200)]">PT Lionmesh Prima Tbk</p>
       </header>
 
-      <div className="w-full max-w-[calc(var(--space-16)*6)]">
+      <div className="w-full max-w-[calc(var(--dialog-confirm-width)-var(--space-4)*5)]">
         <div>
           <span className="inline-flex min-h-[var(--button-sm-height)] items-center rounded-[var(--radius-full)] bg-[var(--brand-50)] px-[var(--space-3)] text-[length:var(--font-size-label)] font-semibold uppercase tracking-[var(--letter-spacing-caption)] text-[color:var(--brand-700)]">
             Sistem Informasi Bisnis
@@ -129,7 +129,7 @@ export default function LoginPage() {
           <span>Butuh bantuan? Hubungi IT</span>
         </div>
 
-        <section aria-labelledby="login-title" className="my-auto w-full max-w-[calc(var(--dialog-form-width)+var(--space-5)*2)] self-center">
+        <section aria-labelledby="login-title" className="my-auto w-full max-w-[calc(var(--dialog-confirm-width)-var(--space-5)*3)] self-center">
           <header className="mb-[var(--space-8)]">
             <span className="inline-flex min-h-[var(--button-sm-height)] items-center rounded-[var(--radius-full)] bg-[var(--brand-50)] px-[var(--space-3)] text-[length:var(--font-size-label)] font-semibold uppercase tracking-[var(--letter-spacing-caption)] text-[color:var(--brand-700)]">Portal internal</span>
             <h1 className="mt-[var(--space-4)] mb-0 text-[calc(var(--font-size-display)+var(--space-1))] font-bold leading-[calc(var(--line-height-display)+var(--space-1))] tracking-[-0.02em] text-[color:var(--text-primary)]" id="login-title">Selamat datang kembali</h1>
@@ -148,7 +148,7 @@ export default function LoginPage() {
           <p className="mt-[var(--space-5)] mb-0 text-[length:var(--font-size-body-sm)] leading-[var(--line-height-body-sm)] text-[color:var(--text-secondary)]">Tidak dapat masuk? Hubungi administrator sistem.</p>
         </section>
 
-        <footer className="w-full max-w-[calc(var(--dialog-form-width)+var(--space-5)*2)] self-center text-[length:var(--font-size-body-sm)] leading-[var(--line-height-body-sm)] text-[color:var(--text-muted)]">
+        <footer className="w-full max-w-[calc(var(--dialog-confirm-width)-var(--space-5)*3)] self-center text-[length:var(--font-size-body-sm)] leading-[var(--line-height-body-sm)] text-[color:var(--text-muted)]">
           © 2026 PT Lionmesh Prima Tbk. Seluruh hak dilindungi.
         </footer>
       </main>
