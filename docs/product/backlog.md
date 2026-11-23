@@ -105,7 +105,7 @@ Sebagian tidak memblokir siklus mana pun. Dua di antaranya (`C-011`, `C-013`) me
 
 | ID | Fitur | Track | Level | Depends on | Status |
 |---|---|---|---|---|---|
-| `C-009` | Laporan keuangan | CORE-A laporan | 1 | `FND-006` | `ready` |
+| `C-009` | Laporan keuangan | CORE-A laporan | 1 | `FND-006` | `in progress` |
 | `C-010` | Tutup buku & jurnal penutup | CORE-B tutup | 2 | `C-009`, `FND-006` | `specified` |
 | `C-011` | Master data terpadu: produk, gudang, satuan | CORE-C master | 1 | `FND-002` | `done` |
 | `C-012` | Notifikasi in-app + email | CORE-C master | 1 | `FND-004` | `ready` |
@@ -202,3 +202,4 @@ Terbaca per level. Semua item dalam satu baris boleh dikerjakan serentak. `DISC-
 | 2026-11-26 | `C-011` → `done`: PR #35 merge; migrasi `0011`, `core/master`, empat layar master, seed IDR `0005`. Sisa bukti lintas item (pemilihan di dokumen, dokumen lama) menunggu `PD-002`/`PG-002` |
 | 2026-11-26 | `C-013` → `done`: PR #37 merge; domain pengadaan, aturan status, harness 17/17 lulus. AC-18 menunggu `PR-002`; read model TS menyusul di `PG-002` |
 | 2026-11-26 | `C-014` → `done`: PR #34 merge; read model `src/core/dashboard`, layar `/`, dan bukti AC-01–AC-08 di `05-evidence.md`; urutan prioritas mengikuti D-65 |
+| 2026-11-24 | `C-009` → `in progress`: tujuh laporan, filter satu bulan, hak PT-02, dan bukti AC-01–AC-11 ditulis; `pnpm verify` lulus. Menunggu review tech lead sebelum `done` |

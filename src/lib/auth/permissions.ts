@@ -73,6 +73,8 @@ export const MATRIKS_IZIN = {
   kelola_satuan: ["Produksi"],
   kelola_gudang: ["Gudang"],
   kelola_mata_uang: ["Accounting"],
+  // Laporan keuangan lintas siklus (C-009, PT-02)
+  lihat_laporan_keuangan: ["Accounting", "Manajemen", "Direksi"],
 
   // Tambahan default (D-58)
   ubah_batal_perintah_produksi: ["Produksi"],
