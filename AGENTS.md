@@ -216,7 +216,7 @@ app/ (routing)  →  modules/<cycle>/  →  core/  →  lib/
 
 ## Design Rules
 
-The design authority is `docs/design/`. Read it before building any screen, in this order: `README.md` → `DESIGN_TOKENS.md` → `LAYOUTS.md` → `COMPONENTS.md` → `INFORMATION_ARCHITECTURE.md`.
+The design authority is `docs/design/`. Read it before building any screen, in this order: `README.md` → `INVENTORY.md` (find the screen and the backlog item it belongs to) → `DESIGN_TOKENS.md` → `LAYOUTS.md` → `COMPONENTS.md` → `INFORMATION_ARCHITECTURE.md`. Before writing a value down, check `FIGMA_V2_DELTAS.md`: if a delta is undecided, stop and ask. Never take a value from the Figma file, and never assume the locked value is final.
 
 Fixed values:
 
