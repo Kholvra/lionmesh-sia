@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
-import { assertPeran, MATRIKS_IZIN } from "@/lib/auth";
+import { assertIzin } from "@/lib/auth";
 import type { Profile } from "@/lib/auth";
 import type { Result } from "@/lib/result";
 import {
@@ -59,7 +59,7 @@ function gagal(errors: FieldErrors): AksiState {
 
 /** The actor comes from the server session, never from the form (B-02). */
 async function aktorHr(): Promise<Result<Profile>> {
-  return assertPeran([...MATRIKS_IZIN.kelola_data_karyawan]);
+  return assertIzin("kelola_data_karyawan");
 }
 
 function namaAktor(profile: Profile) {
