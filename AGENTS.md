@@ -80,6 +80,62 @@ Core services: dokumen (numbering), ledger (none for master data)
 AC to prove: AC-01, AC-03
 ```
 
+## AI-Assisted Workflow (first-time contributors)
+
+A teammate may hand an item to an AI agent without being able to code. The agent drives the work; the teammate confirms decisions and reviews. Always tell the teammate which state the item is in, in Indonesian.
+
+### Conversation states
+
+| State | Meaning | Agent behaviour |
+|---|---|---|
+| `BLOCKED` | Item is not `ready`, a dependency is missing, or an input is undecided | No edits. Emit the STOP card with `Owner` and `Kabari`. |
+| `WORKING` | Intake passed and the plan was confirmed | Implement in small commits; report progress in Indonesian. |
+| `SIAP REVIEW` | Evidence written, `pnpm verify` passes, PR open | Emit the handoff card. |
+| `MENUNGGU REVIEW` | PR open and waiting for the tech lead | No further edits unless there is review feedback. A `done` row in `backlog.md` is a proposal until the PR merges. |
+| `DONE` | The tech lead merged the PR | Only now tell the teammate the item is shipped. |
+
+Never announce `DONE` yourself. `D-02` gives the merge to the tech lead.
+
+### Sync before starting
+
+Run this before reading the item package or creating a branch, every time:
+
+```bash
+git fetch origin
+git switch main
+git pull --ff-only origin main
+git status --short
+```
+
+- Branch from that fresh `main`: `<item-id>-<slug>`, lowercase.
+- If `git status --short` shows changes, **stop and list them**. Never stash, discard, reset, or commit someone else's work to make the tree clean.
+- Before opening or updating a PR, run `git fetch origin && git rebase origin/main`. On conflict, stop and ask. Never force-push a branch under review.
+- Never push to `main`. Never use `reset --hard`, `clean -fd`, `checkout -- .`, or `push --force` without explicit approval.
+- Confirm the current branch matches the item slug before committing. If the diff contains another item's files, stop.
+
+### What the agent may and may not do
+
+May: create the branch, commit, run `pnpm verify` and `pnpm check:migrations`, write `05-evidence.md`, push the branch, open the PR, and draft the PR body.
+
+May not: merge the PR, claim the item is shipped before merge, change `backlog.md` before the handoff card exists and `pnpm verify` passes, erase a blocker from a readiness review, invent a missing rule, add a dependency, commit secrets, or work a second item in the same branch.
+
+### Handoff card
+
+Emit this after the PR is open, before telling the teammate to notify the reviewer. The teammate must be able to review from the card alone.
+
+```text
+SIAP REVIEW — <ITEM-ID>
+PR: <url> · Branch: <name> (<n> commit)
+AC: AC-01 ✅ (<command → result>) … AC-nn ⚠️ (reason)
+Gate: pnpm verify ✅ exit 0 · pnpm check:migrations ✅ · git diff --check ✅ · screenshot 1280px ✅
+Bukti: docs/product/items/<ID>/05-evidence.md
+Risiko / penyimpangan: …
+Tidak dikerjakan: …
+Tindakan manusia: kabari tech lead (reviewer PR) dan tag di PR. Jangan merge sendiri; backlog baru benar-benar `done` setelah review.
+```
+
+`⚠️` or `❌` on any AC means this is not a completion claim. Explain the gap instead of hiding it.
+
 ## Non-negotiables
 
 1. **One item, one branch, one cycle.** Never mix two backlog items or two cycles in one change.
