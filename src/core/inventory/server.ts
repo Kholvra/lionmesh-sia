@@ -90,6 +90,7 @@ function parseOpnameInput(value: unknown) {
     !isUuid(value.produkId) ||
     !isUuid(value.gudangId) ||
     !isQuantity(value.qtyFisik, true) ||
+    value.qtyFisik < 0 ||
     !isReason(value.alasan) ||
     (value.tanggal !== undefined && !isDate(value.tanggal))
   ) {
@@ -138,12 +139,10 @@ async function requireInventoryPermission(aksi: AksiDomain): Promise<Result<Inve
 }
 
 function createInventoryAdminClient() {
-  const { supabaseUrl } = getSupabaseEnv();
   const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  if (!serviceRoleKey) {
-    throw new Error("SUPABASE_SERVICE_ROLE_KEY belum dikonfigurasi di lingkungan server.");
-  }
+  if (!serviceRoleKey) return null;
 
+  const { supabaseUrl } = getSupabaseEnv();
   return createSupabaseClient(supabaseUrl, serviceRoleKey, {
     auth: {
       autoRefreshToken: false,
@@ -164,7 +163,10 @@ export async function transferStokUntukSesi(input: unknown): Promise<Result<Tran
   const parsed = parseTransferInput(input);
   if (!parsed) return fail("Data transfer stok tidak valid.");
 
-  return transferStok(createInventoryAdminClient(), {
+  const admin = createInventoryAdminClient();
+  if (!admin) return fail("Layanan stok belum tersedia. Hubungi administrator.");
+
+  return transferStok(admin, {
     ...parsed,
     actorId: session.data.user.id,
   });
@@ -178,7 +180,10 @@ export async function opnameStokUntukSesi(input: unknown): Promise<Result<Opname
   const parsed = parseOpnameInput(input);
   if (!parsed) return fail("Data opname stok tidak valid.");
 
-  return opnameStok(createInventoryAdminClient(), {
+  const admin = createInventoryAdminClient();
+  if (!admin) return fail("Layanan stok belum tersedia. Hubungi administrator.");
+
+  return opnameStok(admin, {
     ...parsed,
     actorId: session.data.user.id,
   });
@@ -192,7 +197,10 @@ export async function catatPenyesuaianUntukSesi(input: unknown): Promise<Result<
   const parsed = parseAdjustmentInput(input);
   if (!parsed) return fail("Data penyesuaian stok tidak valid.");
 
-  return catatMutasi(createInventoryAdminClient(), {
+  const admin = createInventoryAdminClient();
+  if (!admin) return fail("Layanan stok belum tersedia. Hubungi administrator.");
+
+  return catatMutasi(admin, {
     ...parsed,
     tanggal: parsed.tanggal ?? new Date().toISOString(),
     tipe: "PENYESUAIAN",

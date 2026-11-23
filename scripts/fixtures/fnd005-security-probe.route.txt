@@ -1,0 +1,13 @@
+import { catatPenyesuaianUntukSesi, opnameStokUntukSesi, transferStokUntukSesi } from "@/core/inventory";
+
+export async function POST(request: Request) {
+  const body: unknown = await request.json();
+  if (typeof body !== "object" || body === null || !("operation" in body) || !("payload" in body)) {
+    return Response.json({ ok: false }, { status: 400 });
+  }
+  const result = body.operation === "transfer" ? await transferStokUntukSesi(body.payload)
+    : body.operation === "opname" ? await opnameStokUntukSesi(body.payload)
+      : body.operation === "adjustment" ? await catatPenyesuaianUntukSesi(body.payload)
+        : { ok: false as const, message: "Operasi tidak dikenal." };
+  return Response.json(result, { status: result.ok ? 200 : 403 });
+}
