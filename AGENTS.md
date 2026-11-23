@@ -498,4 +498,3 @@ Options: <A / B, with the trade-off>
 - Shared password: **`lionmesh-dev-2026`**. Docker-local fake accounts only; never use it on a hosted project.
 - The seed refuses when `_seed_meta` already has rows. Run `pnpm db:reset` (it wipes the database), then `pnpm db:seed:local`.
 - **When a task touches a screen or action owned by a role, tell the teammate which account to sign in with, email and password, in the reply.** The owner comes from `MATRIKS_IZIN` in `src/lib/auth/permissions.ts`; do not guess.
-- There is no superuser account. Seeing every screen means signing in as each role in turn; one account that can create, approve, and pay would break the separation of duties in `D-42`.
