@@ -3,6 +3,12 @@
 One component per job. Variants are props, not copies. Every component uses the
 tokens in `DESIGN_TOKENS.md`; no raw hex or arbitrary pixel values.
 
+> **Snapshot.** The Figma source was rebuilt on 2026-11-23 as “SIA Liomesh
+> (Copy)” (`VS9PagBMlKi2McPPfCdsRV`, 371 screens). The values below are still the
+> locked v0.1 values and match the shipped UI kit. Every disagreement in the v2
+> file is measured in `FIGMA_V2_DELTAS.md`; none of it is adopted until the tech
+> lead decides.
+
 Status legend: **Exists** (in Figma and usable), **Modify** (in Figma but
 inconsistent), **New** (not in Figma).
 

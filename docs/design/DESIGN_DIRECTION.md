@@ -4,6 +4,12 @@
 
 **Chosen: Industrial Ledger.**
 
+> **Snapshot.** The Figma source was rebuilt on 2026-11-23 as “SIA Liomesh
+> (Copy)” (`VS9PagBMlKi2McPPfCdsRV`, 371 screens). The values below are still the
+> locked v0.1 values and match the shipped UI kit. Every disagreement in the v2
+> file is measured in `FIGMA_V2_DELTAS.md`; none of it is adopted until the tech
+> lead decides.
+
 A steel ledger for a steel-mesh factory: an ink-navy frame, a single safety-
 orange signal, white paper surfaces, and numbers aligned like a ledger book.
 

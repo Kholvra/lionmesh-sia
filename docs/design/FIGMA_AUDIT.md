@@ -295,3 +295,104 @@ Do these in order; each step makes the next cheaper.
   counts; a single text node with the same fill contributes once per node.
 - The file was read-only during the audit. The current page was switched to
   `keseluruhan` for inspection and restored to `pengeluaran & produksi`.
+
+---
+
+# Audit v2 — “SIA Liomesh (Copy)”
+
+Date: 2026-11-23
+File: **SIA Liomesh (Copy)** — key `VS9PagBMlKi2McPPfCdsRV`
+Last modified: 2026-11-23T02:34:17Z · version `2424873986294529564`
+Method: Desktop Bridge plugin — node tree, style definitions
+(`getLocalPaintStylesAsync`, `getLocalTextStylesAsync`), geometry over all 375
+shell frames. Read-only; nothing in the file was changed.
+
+Sections 1–6 above describe the retired file **“DESAIN UI SIA (Copy)”**
+(`Np8oosi3jZuSuoaQGbf5sb`). They are kept as history. The numbers below replace
+them. Where v2 contradicts a locked decision, the delta is listed in
+`FIGMA_V2_DELTAS.md`; it is not resolved here.
+
+## 7. Structure
+
+| Page | Contents |
+|---|---|
+| `01 · Prototipe SIA` | 6 sections wrapping 38 sub-sections, 583 frames total: 371 screens, 174 `Catatan / <ID>`, 38 `Ringkasan / <section>` |
+| `02 · Komponen` | 38 components and 3 documentation frames |
+
+Labels on the prototype page are role-first: `<Role> / <flow> / <Judul>`, e.g.
+`Penjualan / Verifikasi pesanan`, `QC / SPK-2611-013 lolos`,
+`HR / hr_fix / Perbaiki rekap milik HR`. The `flow` token is the URL-safe prestate
+name, which makes the naming stable enough to map onto routes.
+
+Screen frames are **1440×960**; Accounting screens are **1440×1132**
+(`Accounting / Daftar jurnal November`, `Accounting / Laporan keuangan · neraca`,
+…). Taller frames appear where a screen overflows: `1440×1480`
+(`Accounting / HPP final SPK-2611-013`), `1440×1425`
+(`QC / Rework tetap tidak lolos`).
+
+Bullets per cycle:
+
+- UMUM: 24 screens, 5 sub-sections (`0`, `C1`–`C4`).
+- Penggajian: 175 screens, 10 sub-sections (`1`, `1b`, `1c`, `2`, `3`, `3.1`,
+  `4`–`7`).
+- Pendapatan: 63 screens, 8 sub-sections (`8`, `8b`, `9`–`13`, `11b`).
+- Pengeluaran: 61 screens, 9 sub-sections (`14`, `15`, `15b`, `16`–`19`, `17b`,
+  `18b`).
+- Produksi: 48 screens, 6 sub-sections (`20`, `20b`, `21`–`24`).
+
+## 8. Styles
+
+| Item | Count | Detail |
+|---|---|---|
+| Color styles | **17** | `SIA v2 / navy`, `orange`, `orangeDark`, `bg`, `white`, `ink`, `muted`, `line`, `green`, `greenBg`, `amber`, `amberBg`, `red`, `redBg`, `blue`, `blueBg`, `soft` |
+| Text styles | **5** | `SIA v2 / Display` (30/150% Bold), `Heading` (20/150% Semi Bold), `Body` (14/150% Regular), `Label` (13/150% Semi Bold), `Caption` (12/150% Regular) |
+| Effect styles | **0** | no shadow token exists in the file |
+| Variable collections | **0** | tokens are styles, not variables |
+| Variables | **0** | no modes, no aliases |
+
+The styles exist but are **not used**. Measured on page `01`: 33,035 solid fills,
+**0** of them bound to a paint style or a variable; 23,811 text nodes, **0** of
+them carrying a text style. The file therefore has 67 distinct raw hex values and
+21 distinct font sizes; the `SIA v2 / …` styles describe the intended palette and
+type scale, and assigning them is `FND-007` work. Spacing, radius, and shadow were
+never tokenised in either file.
+
+## 9. Shell
+
+| Element | Measured | Consistency |
+|---|---|---|
+| Sidebar | 220px | 375 of 375 shell frames — a single value |
+| Page padding | 32px | content starts at x=32 inside `Area kerja` |
+| Work area | x=220, width 1220 at 1440 | — |
+| Content width | 1156 at 1440 | = 1220 − 64 |
+| Screen height | 960 / 1132 | two values by cycle |
+
+The v1 hub shell (288px sidebar, 1568px content, 608px clipped) no longer
+exists. The login panel clipping is gone as well: the login frame is 1440×960
+and its identity panel fits.
+
+## 10. Gaps in v2
+
+- Print layouts: no invoice, purchase order, or payslip print frame.
+- Empty/loading/error screens exist only for payroll (`7. Keadaan kosong,
+  memuat, dan gagal`, 24 screens). The other three cycles have inline error
+  variants but no dedicated state screens.
+- Responsive behavior below 1280: still a documented non-goal.
+- `Payroll v4 / Button / danger` sits on the prototype page instead of
+  `02 · Komponen`.
+- Three component generations coexist (v1 unprefixed, `SIA v3 /`, `Payroll v4 /`);
+  consolidation is `FND-007` work.
+- Two screens carry no `Catatan` card at all: `Semua peran / login_fail` and
+  `Semua peran / logout`.
+
+## 11. Method And Limits
+
+- Structure and geometry came from `figma_execute` scripts that walked the page
+  tree; counts are node counts, not style counts.
+- Style values came from the style definitions themselves, so the hex and type
+  numbers above are exact.
+- Screenshots could not be exported in bulk: the Figma REST image endpoint
+  returned HTTP 429 (plan quota), and the plugin sandbox cannot reach
+  `localhost` to push bytes. Screens were inspected structurally and via the
+  `Catatan` / `Ringkasan` text. See `screenshots/README.md`.
+- The file was read-only during the audit.
