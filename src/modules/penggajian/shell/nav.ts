@@ -49,7 +49,7 @@ const NAV_PER_PERAN: Partial<Record<Peran, readonly GrupNav[]>> = {
 
 export const NAV_BAWAH: readonly ItemNav[] = [
   { label: "Notifikasi" },
-  { label: "Pengaturan akun" },
+  { label: "Pengaturan akun", href: "/pengaturan" },
 ];
 
 export function navUntuk(peran: Peran | null): readonly GrupNav[] {
