@@ -1,8 +1,8 @@
 # GJ-001 — Bukti Verifikasi
 
-Tanggal: 2026-11-23. Lingkungan: Node 24, pnpm 10.18.3, Next.js 16.4.6 (`pnpm dev`), Supabase lokal (migrasi 0001–0006, seed 0003, akun uji 13 peran). Branch `gj-001-data-karyawan`.
+Tanggal: 2026-11-23. Lingkungan: Node 24, pnpm 10.18.3, Next.js 16.4.6 (`pnpm dev`), Supabase lokal (akun uji 13 peran). Branch `gj-001-karyawan-gaji-pokok-ptkp` dari `main` `ac62cd4`. Layar dirender di AppShell bersama (`FND-009`, `D-62`); tidak ada sidebar modul.
 
-**Batas bukti:** tabel karyawan, gaji pokok, dan PTKP milik core (`D-31`) belum punya migrasi. Layar memakai store sementara di memori (`src/modules/penggajian/karyawan/store.ts`) di belakang `queries.ts` dan `actions.ts`; usulan skema dan RLS ada di `06-ddl-proposal.sql`. Pembatasan baca oleh database (RLS) untuk AC-08 dan AC-13 belum bisa dibuktikan; yang dibuktikan adalah penyaringan field di server per peran.
+**Batas bukti:** tabel karyawan, gaji pokok, dan PTKP milik core (`D-31`) belum punya migrasi. Layar memakai store sementara di memori (`src/modules/penggajian/karyawan/store.ts`) di belakang `queries.ts` dan `actions.ts`; usulan skema dan RLS ada di `06-ddl-proposal.sql`, mengikuti pola `0009` (`PG-001`): view per peran, fungsi tulis dengan guard HR, dan `karyawan_riwayat_status` (`D-63`). Usulan itu lolos dijalankan di atas migrasi `0001`–`0009` dalam transaksi yang di-rollback. Pembatasan baca oleh database (RLS) untuk AC-08 dan AC-13 belum bisa dibuktikan; yang dibuktikan adalah penyaringan field di server per peran.
 
 Uji otomatis memakai skrip Playwright di luar repo (Brave headless, lebar 1280).
 
@@ -27,3 +27,17 @@ Uji otomatis memakai skrip Playwright di luar repo (Brave headless, lebar 1280).
 Bug di luar item yang dilaporkan: `ConfirmDialog` (FND-007) tampil di pojok kiri atas karena margin dialog direset preflight Tailwind.
 
 `pnpm verify` (2026-11-23): lint, typecheck, arch:check, dan build lulus, exit code 0.
+
+## Layar
+
+Sumber: Figma "SIA Liomesh (Copy)" `VS9PagBMlKi2McPPfCdsRV`, daftar di `docs/design/inventory/penggajian.md`.
+
+| Layar | Node | Route |
+|---|---|---|
+| Data karyawan | `141:2521` | `/penggajian/karyawan` |
+| Tambah karyawan | `141:2584` | `/penggajian/karyawan/tambah` |
+| Detail karyawan | `141:2779` | `/penggajian/karyawan/[id]` |
+| Edit data karyawan | `141:2833` | `/penggajian/karyawan/[id]/ubah` |
+| Ubah status karyawan | `141:2923` | `/penggajian/karyawan/[id]/status` |
+
+Menu "Penggajian" di sidebar bersama masih `tersedia: false`; sampai menu modul diputuskan tech lead, layar dibuka lewat route di atas.
