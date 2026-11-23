@@ -118,3 +118,8 @@ Karyawan tidak melihat `profiles` orang lain.
 | Loop/termination | Tidak ada algoritma berulang |
 | Batas modul penuh | Milik `ARCH-001` |
 | Pemisahan tugas per aksi | Milik item pemilik aksi (`D-42`) |
+
+
+## Batas penerbitan token dan sesi
+
+`active_profile_access_token_hook` menolak penerbitan token untuk profil tidak aktif dan sesi yang usianya delapan jam atau lebih. `is_session_current()` juga memeriksa usia sesi pada permintaan RLS agar JWT yang sudah terbit tidak memperpanjang akses setelah batas. Konfigurasi deployment wajib mengaktifkan hook sebelum penggunaan migrasi 0006; lihat gate dan batas bukti pada `05-evidence.md`.

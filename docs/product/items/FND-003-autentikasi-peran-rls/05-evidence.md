@@ -19,7 +19,7 @@ Pengujian Supabase dan skrip dilakukan pada 2026-11-22 di lingkungan lokal via `
 | `AC-10` | Lolos | Satu akun hanya punya satu peran; percobaan insert baris kedua dengan `id` sama ditolak primary key `profiles_pkey`. |
 | `AC-11` | Lolos | Karyawan hanya membaca profil sendiri (1 baris), profil orang lain (0 baris), dan tabel domain `satuan` (0 baris). |
 | `AC-12` | Parsial | Tiga hasil login API dikonversi menjadi pesan generik di skrip; penyamaan kode respons endpoint aplikasi belum diuji. |
-| `AC-13` | Lolos | Konfigurasi `jwt_expiry = 28800` di `supabase/config.toml` (tepat 8 jam, D-42). |
+| `AC-13` | Lolos lokal | Sesi sembilan jam ditolak RLS dan refresh dalam uji hook terisolasi; konfigurasi deployment masih harus diverifikasi. |
 | `AC-14` | Lolos | `enable_signup = false` di `supabase/config.toml`, UI `/login` tidak menyediakan pendaftaran mandiri, dan API `signUp` menolak pendaftaran langsung. |
 
 Verifikasi mutu:
@@ -100,3 +100,12 @@ Pada 2026-11-23, pengujian di proyek Supabase terisolasi membandingkan empat per
 ### Eksperimen Auth hook lokal
 
 Pada 2026-11-23, eksperimen terpisah menggunakan salinan migrasi dan konfigurasi Supabase lokal: penonaktifan tidak lagi mengatur `banned_until`, sedangkan custom access-token hook menolak penerbitan token bagi profil nonaktif. Endpoint langsung mengembalikan HTTP 400 / `invalid_credentials` untuk email tidak ada dan profil nonaktif dengan sandi salah; profil nonaktif dengan sandi benar ditolak HTTP 400 dengan kode `unknown`. Tidak ada sesi diterbitkan untuk akun nonaktif. Ini menunjukkan mitigasi terhadap enumerasi tanpa sandi, tetapi belum membuktikan AC-12 jika kode respons harus identik untuk semua kondisi. Hook memerlukan konfigurasi pada lingkungan deployment, yang jenisnya belum ditentukan. Eksperimen tidak diterapkan pada migrasi proyek atau konfigurasi produksi.
+
+
+### Implementasi Auth hook dan batas sesi — 2026-11-23
+
+Migrasi fix-forward `0006` menyediakan custom access-token hook dan membatasi `is_session_current()` berdasarkan `auth.sessions.created_at`. Konfigurasi lokal mengaktifkan hook dan timebox delapan jam. `node scripts/verify-fnd-003-hook.mjs` terhadap proyek Supabase lokal terisolasi menghasilkan 10 pemeriksaan lulus: login aktif, pencabutan sesi, penolakan token lama, respons identik untuk akun tidak ada dan nonaktif dengan sandi salah, penolakan token saat nonaktif dengan sandi benar, pesan/status generik, reaktivasi, penolakan akses dan refresh untuk sesi berumur sembilan jam, dan pemeliharaan ban administratif bertanggal lain. Pengujian memanipulasi tanggal sesi di database khusus uji; tidak menunggu sembilan jam.
+
+Batas bukti: kode JSON Auth langsung untuk akun nonaktif dengan sandi benar adalah `unknown`, sedangkan sandi salah atau akun tidak ada menghasilkan `invalid_credentials`; HTTP dan pesannya identik. AC-12 yang mensyaratkan kode identik tetap parsial. Eksperimen ini menghilangkan kebocoran status akun tanpa mengetahui sandi, bukan menyamakan seluruh kode Auth.
+
+**Gate deployment:** migrasi menghapus sentinel ban yang ditetapkan migrasi 0003 dan bergantung pada hook aktif untuk mencegah penerbitan token akun nonaktif. Lakukan rollout dalam jendela pemeliharaan dengan akses login dan refresh ditutup: terapkan migrasi, aktifkan hook di Auth deployment yang bersangkutan, uji hook serta timebox, login nonaktif, refresh, dan RLS, lalu baru buka akses. `supabase/config.toml` saja tidak mengonfigurasi Supabase Cloud secara otomatis. Jika penyedia tidak dapat menutup akses selama konfigurasi, gunakan deployment bertahap yang diverifikasi lebih dulu; jangan terapkan migrasi ini secara langsung. Migrasi 0005 FND-005 harus diterapkan lebih dahulu agar riwayat migrasi tetap berurutan.
