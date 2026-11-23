@@ -8,7 +8,7 @@ lane: active
 sequence: 8
 type: chore
 req_status: specified
-delivery_status: in_progress
+delivery_status: done
 priority: medium
 size: M
 depends_on:
