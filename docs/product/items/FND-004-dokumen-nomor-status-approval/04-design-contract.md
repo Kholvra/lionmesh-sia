@@ -2,7 +2,7 @@
 
 - Source: `docs/product/items/FND-004-dokumen-nomor-status-approval/01-requirement.md` (`FND-004`)
 - Acceptance criteria: `02-acceptance-criteria.md` (`AC-01`…`AC-16`)
-- Status: `Proposed`
+- Status: `Approved`
 - Profile: product app / document lifecycle
 - Scope: nomor dokumen, status, riwayat, approval berjenjang, pembatalan, revisi, konkurensi
 - Owner: tech lead
@@ -68,7 +68,7 @@ Status yang dipakai: `DRAFT`, `DIAJUKAN`, `DIPERIKSA`, `DISETUJUI`, `DIPROSES`, 
 
 ## Architecture boundaries
 
-- `ARCH-05`: nomor, status, dan riwayat hanya lewat `core/dokumen`. Penegakan: review; belum ada pemeriksa otomatis (`Unverified`).
+- `ARCH-05`: nomor, status, dan riwayat hanya lewat `core/dokumen`. Hak tulis tabel dicabut dari `anon`/`authenticated`; RPC hanya untuk server tepercaya. Penegakan tambahan lewat review.
 - `D-48`: aturan pembatalan, revisi, dan approval berlaku di semua item modul melalui item ini.
 
 ## Data dan nominal
@@ -80,37 +80,37 @@ Status yang dipakai: `DRAFT`, `DIAJUKAN`, `DIPERIKSA`, `DISETUJUI`, `DIPROSES`, 
 
 | Contract ID | Observable oracle | Check type/owner | Evidence | Status |
 |---|---|---|---|---|
-| `B-01` | Aktor dari sesi; transisi tidak ada ditolak | AC-04, AC-08 | — | `Unverified` |
-| `B-02` | Dua aksi bersamaan, satu menang | AC-02, AC-06 | — | `Unverified` |
-| `B-03` | Penanda tidak terbaca membuat pembatalan ditolak | AC-13 | — | `Unverified` |
-| `PRE-01` | Jenis tidak terdaftar ditolak | AC-01 (jenis terdaftar) | — | `Unverified` |
-| `PRE-02` | Status asal salah ditolak | AC-04 | — | `Unverified` |
-| `PRE-03` | Level belum lengkap ditolak | AC-07 | — | `Unverified` |
-| `PRE-04` | Pemohon tidak menyetujui sendiri | AC-08 | — | `Unverified` |
-| `PRE-05` | Batal setelah posting dan tanpa alasan ditolak | AC-10, AC-13 | — | `Unverified` |
-| `PRE-06` | Tolak tanpa alasan ditolak | AC-12 | — | `Unverified` |
-| `PRE-07` | Level lompat ditolak | AC-07 | — | `Unverified` |
-| `POST-01` | Nomor unik dan riwayat pertama | AC-01, AC-03 | — | `Unverified` |
-| `POST-02` | Riwayat bertambah satu | AC-05 | — | `Unverified` |
-| `POST-03` | Penolakan tidak mengubah apa pun | AC-04 | — | `Unverified` |
-| `POST-04` | Revisi menggugurkan approval | AC-11 | — | `Unverified` |
-| `INV-01` | Nomor tidak ganda | AC-02, AC-15 | — | `Unverified` |
-| `INV-02` | Setiap transisi ada riwayat | AC-03, AC-05 | — | `Unverified` |
-| `INV-03` | Riwayat lama tidak berubah | AC-05 | — | `Unverified` |
-| `INV-04` | Tidak ada hapus dokumen | AC-09 | — | `Unverified` |
-| `INV-05` | Level berurutan | AC-07 | — | `Unverified` |
-| `INV-06` | Status final tidak berubah | AC-12 | — | `Unverified` |
-| `INV-07` | Status di luar daftar ditolak | AC-14 | — | `Unverified` |
+| `B-01` | Aktor dari sesi; transisi tidak ada ditolak | AC-04, AC-08; uji sesi | `05-evidence.md` | `PASS` |
+| `B-02` | Dua aksi bersamaan, satu menang | AC-02, AC-06 | `05-evidence.md` | `PASS` |
+| `B-03` | Penanda posting membuat pembatalan ditolak | AC-13 | `05-evidence.md` | `PASS` |
+| `PRE-01` | Jenis/status tidak terdaftar ditolak; periode sumber belum diperiksa | AC-01, AC-14 | `05-evidence.md` | `PARTIAL` |
+| `PRE-02` | Status asal salah ditolak | AC-04 | `05-evidence.md` | `PASS` |
+| `PRE-03` | Level belum lengkap ditolak | AC-07 | `05-evidence.md` | `PASS` |
+| `PRE-04` | Pemohon tidak menyetujui sendiri | AC-08 | `05-evidence.md` | `PASS` |
+| `PRE-05` | Batal setelah posting dan tanpa alasan ditolak | AC-10, AC-13 | `05-evidence.md` | `PASS` |
+| `PRE-06` | Tolak tanpa alasan ditolak | AC-12 | `05-evidence.md` | `PASS` |
+| `PRE-07` | Level lompat ditolak | AC-07 | `05-evidence.md` | `PASS` |
+| `POST-01` | Nomor unik dan riwayat pertama | AC-01, AC-03 | `05-evidence.md` | `PASS` |
+| `POST-02` | Riwayat bertambah satu | AC-05 | `05-evidence.md` | `PASS` |
+| `POST-03` | Penolakan tidak mengubah apa pun | AC-04 | `05-evidence.md` | `PASS` |
+| `POST-04` | Revisi menggugurkan approval | AC-11 | `05-evidence.md` | `PASS` |
+| `INV-01` | Nomor tidak ganda | AC-02, AC-15 | `05-evidence.md` | `PASS` |
+| `INV-02` | Setiap transisi ada riwayat | AC-03, AC-05 | `05-evidence.md` | `PASS` |
+| `INV-03` | Riwayat lama tidak berubah | AC-05, AC-11 | `05-evidence.md` | `PASS` |
+| `INV-04` | Tidak ada hapus dokumen | AC-09 | `05-evidence.md` | `PASS` |
+| `INV-05` | Level berurutan | AC-07 | `05-evidence.md` | `PASS` |
+| `INV-06` | Status final tidak berubah | AC-12 | `05-evidence.md` | `PASS` |
+| `INV-07` | Status di luar daftar ditolak | AC-14 | `05-evidence.md` | `PASS` |
 
 ## Open decisions and assumptions
 
 | Hal | Status | Dampak bila salah |
 |---|---|---|
-| Format nomor (`OQ-04-01`, `D-50`) | Terjawab | Nomor di dokumen cetak berubah |
-| Ambang dan level (`OQ-04-02`, `D-51` c) | Terjawab; seed placeholder belum final (`D-37`) | Approval seed salah sampai koreksi |
-| Status per jenis (`OQ-04-04`) | Terjawab (`D-46`, `D-47`); pendaftar `[USULAN-AGEN]` | Bentuk API dokumen |
-| Penanda diposting dan fail-safe (`B-03`) | `[USULAN-AGEN]` | Pembatalan dokumen posting bisa lolos |
-| Approval sebagai baris riwayat (`D-08`) | `[USULAN-AGEN]` | Tabel approval kedua |
+| Format nomor (`OQ-04-01`, `D-50`) | Terjawab dan diuji | Nomor di dokumen cetak berubah |
+| Ambang dan level (`OQ-04-02`, `D-51` c) | Seed placeholder `PERMINTAAN_PEMBELIAN`/`PERIODE_GAJI`; belum final | Approval seed salah sampai koreksi |
+| Status per jenis (`OQ-04-04`) | Terjawab; registry tipe/status diimplementasikan | Bentuk API dokumen |
+| Penanda diposting dan fail-safe (`B-03`) | Diuji dengan AC-13 | Pembatalan dokumen posting bisa lolos |
+| Approval sebagai baris riwayat (`D-08`) | Diimplementasikan tanpa tabel approval terpisah | Tabel approval kedua |
 
 ## Aturan yang sengaja tidak dibuat
 

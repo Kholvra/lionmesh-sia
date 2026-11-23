@@ -1,0 +1,30 @@
+import { buatDokumen, getDokumenExecutionContext } from "@/core/dokumen";
+
+export async function GET() {
+  const context = await getDokumenExecutionContext();
+  if (!context.ok) {
+    return Response.json(context, { status: 403 });
+  }
+
+  return Response.json({
+    ok: true,
+    actorId: context.data.actorId,
+    peran: context.data.peran,
+  });
+}
+
+export async function POST() {
+  const context = await getDokumenExecutionContext();
+  if (!context.ok) {
+    return Response.json(context, { status: 403 });
+  }
+
+  const result = await buatDokumen(context.data.supabase, {
+    tipe: "PERMINTAAN_PEMBELIAN",
+    actorId: context.data.actorId,
+    nominal: "1000.00",
+    tanggal: "2026-11-23",
+  });
+
+  return Response.json(result, { status: result.ok ? 200 : 400 });
+}
