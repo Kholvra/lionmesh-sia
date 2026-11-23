@@ -7,7 +7,7 @@ milestone: M1–M2
 lane: active
 sequence: 5
 type: feature
-req_status: specified
+req_status: ready
 delivery_status: not_started
 priority: P0
 size: L
@@ -15,6 +15,7 @@ depends_on:
   - FND-002
   - FND-004
   - FND-005
+  - FND-006
 blocks:
   - PG-002
   - PR-003
@@ -37,7 +38,7 @@ Ada satu domain pembelian di core yang dipanggil oleh dua siklus:
 - PO hanya dapat dibuat dari PR yang sudah disetujui.
 - Penerimaan barang mencatat qty yang diterima, dan selisihnya tercatat sebagai exception. Penerimaan yang melebihi qty PO ditolak (`D-49`).
 - Penerimaan parsial diizinkan sampai total qty sama dengan qty PO (`D-49`, `D-46`).
-- Pemohon bisa membatalkan dokumennya sebelum batas yang ditetapkan (PT-13, `[USULAN-AGEN]`).
+- Pemohon membatalkan PR sebelum PO terbit; Purchasing pembuat PO membatalkan PO sebelum penerimaan pertama, dengan alasan wajib (D-57, D-64).
 - Setiap perubahan status tercatat di riwayat.
 
 Pengeluaran tetap memiliki layar dan alur approval. Produksi memanggil `pengadaan.ajukanPR()` dan tidak menulis tabel pengadaan langsung.
@@ -75,7 +76,7 @@ Pengeluaran tetap memiliki layar dan alur approval. Produksi memanggil `pengadaa
 Daftar status mengikuti diagram state machine (`D-46`, catatan `diagram-sia-lengkap.md` §5.2). Nama status terjawab (PT-03). Alur di item ini (pembagian dengan PG-008 dan PG-009 `[USULAN]`):
 
 - PR: `DIAJUKAN` → `MENUNGGU_PERSETUJUAN` (diperiksa Purchasing) → `DISETUJUI` atau `DITOLAK`. Cabang `DIAJUKAN` → `REVISI` → `DIAJUKAN`.
-- PR: `DISETUJUI` → `PEMASOK_DITETAPKAN` (pilih pemasok). PO terbit → `DITERBITKAN` → `DITERIMA_SEBAGIAN` atau `DITERIMA` (satu rantai status di diagram §5.2).
+- PR: `DISETUJUI` → `PEMASOK_DITETAPKAN` (pilih pemasok). PO memiliki status sendiri: `DITERBITKAN` → `DITERIMA_SEBAGIAN` atau `DITERIMA` (D-58).
 - Penerimaan dan QC: `DITERIMA` → `QC_LULUS` atau `QC_GAGAL`. `QC_LULUS` memicu stok masuk (`D-36`).
 - Setelah `QC_LULUS` (`COCOK`, `SELISIH`, `TERCATAT`, `DIBAYAR_SEBAGIAN`, `LUNAS`) milik `PG-008` dan `PG-009`.
 
@@ -88,9 +89,9 @@ Yang sudah jelas dari sumber (tabel di bawah) tetap berlaku:
 | PR | `DITOLAK` | (tidak bisa jadi PO) | — | aturan core (analisis §8.1) |
 | PR | `DIAJUKAN`, `MENUNGGU_PERSETUJUAN`, `REVISI` | `DIBATALKAN` | pembatalan oleh pemohon, alasan wajib (`D-48`) | pemohon; tercatat di `riwayat_status` (PT-13) |
 | PR | `DISETUJUI`, `PEMASOK_DITETAPKAN` | `DIBATALKAN` | pembatalan oleh pemohon sebelum PO terbit (`D-48`) | pemohon; tercatat di `riwayat_status` (PT-13) |
-| PO | `DITERBITKAN` | `DIBATALKAN` | pembatalan sebelum penerimaan pertama (PT-13) | Purchasing atau pemohon PR; tercatat di riwayat |
+| PO | `DITERBITKAN` | `DIBATALKAN` | pembatalan sebelum penerimaan pertama (PT-13) | Purchasing pembuat PO; tercatat di riwayat |
 
-Status `DIBATALKAN` tidak ada di diagram §5.2 (ada di §5.1 dan §5.3). `D-47` (d) tidak menambahkannya untuk PR dan PO, tetapi `D-48` mengizinkan pembatalan sebelum posting. Keputusan (PT-13, `[USULAN-AGEN]`): `DIBATALKAN` dipakai untuk PR dan PO, dengan batas di tabel di atas. Penerimaan yang sudah `QC_LULUS` dan berjurnal tidak bisa dibatalkan; koreksinya lewat jurnal pembalik (`D-35`). Pembatalan dokumen yang sudah berjurnal memakai jurnal pembalik (`D-35`).
+D-57 dan D-64 mengatur pembatalan PR dan PO, menggantikan penundaan D-47(d). Penerimaan yang sudah `QC_LULUS` dan berjurnal tidak bisa dibatalkan; koreksinya lewat jurnal pembalik (`D-35`). Pembatalan dokumen yang sudah berjurnal memakai jurnal pembalik (`D-35`).
 
 ## Validasi dan pesan
 
@@ -118,6 +119,7 @@ Teks final ditentukan implementasi.
 - `FND-002` harus `done`: skema domain inti.
 - `FND-004` harus `done`: penomoran, status, riwayat, dan approval berjenjang.
 - `FND-005` harus `done`: mutasi dan saldo stok untuk penerimaan.
+- `FND-006` harus `done`: posting jurnal dan pemeriksaan periode saat QC lulus.
 
 ## Yang membuka jalan
 
@@ -126,6 +128,10 @@ Teks final ditentukan implementasi.
 
 ## Catatan serah terima
 
-Cakupan dipersempit `D-31` (permintaan, PO, penerimaan, QC; invoice dan utang keluar). Tidak dipecah (PT-11, `[USULAN-AGEN]`); pemecahan lewat `decompose` tetap pilihan tech lead.
+Cakupan dipersempit `D-31` (permintaan, PO, penerimaan, QC; invoice dan utang keluar). Tidak dipecah; tech lead menyetujui ukuran L.
 
 Nomor urut `sequence: 5` mengikuti urutan baris Core di `backlog.md`. Lihat catatan di `C-009`.
+
+## Klarifikasi D-64
+
+PR Produksi wajib membawa `wo_id`; Gudang boleh kosong. Validasi keberadaan mengikuti tersedianya domain Produksi (PR-002), tanpa FK sampai target tersedia. QC lulus, mutasi stok, jurnal dan riwayat harus atomik; kegagalan satu bagian menggagalkan semuanya. Ledger FND-006 menolak jurnal ke periode `kunci`; penerimaan yang belum menghasilkan jurnal tidak ditolak semata karena periode terkunci.
