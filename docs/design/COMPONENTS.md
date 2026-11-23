@@ -20,8 +20,8 @@ inconsistent), **New** (not in Figma).
 work area, and the page scroll.
 
 **Anatomy**
-- Fixed sidebar, 200px.
-- Work area: starts at x=232 (32px gap), max content 1440, 32px page padding.
+- Fixed sidebar, 220px.
+- Work area: starts at x=252 (220 + 32), max content 1440, 32px page padding.
 - Optional right rail inside the work area, not outside it.
 
 **Rules**
@@ -54,7 +54,7 @@ work area, and the page scroll.
 - Group: collapsed (not in v1) / expanded.
 
 **Sizes**
-- Width 200px; item height 40px; icon 16px; label `text-body-sm` 13/20.
+- Width 220px; item height 40px; icon 16px; label `text-body-sm` 13/20.
 - Horizontal padding 12px; icon-to-label gap 8px.
 
 **Rules**

@@ -206,7 +206,7 @@ No colored glows, no inner shadows, no gradient shadows.
 
 | Token | Value |
 |---|---|
-| `sidebar-width` | 200px |
+| `sidebar-width` | 220px |
 | `page-padding` | 32px |
 | `content-max` | 1440px |
 | `grid-columns` | 12 |

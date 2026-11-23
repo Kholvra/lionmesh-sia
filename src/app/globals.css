@@ -104,6 +104,15 @@
   --dialog-form-width: 640px;
   --badge-dot-size: 6px;
   --layout-content-max: 1440px;
+  --layout-min-width: 1280px;
+  --layout-sidebar-width: 220px;
+  --layout-page-gap: 32px;
+
+  --sidebar-text: #c3ccd8;
+  --sidebar-muted: #9ba8ba;
+  --sidebar-hover: #263241;
+  --sidebar-active-bg: var(--brand-500);
+  --sidebar-active-text: var(--ink-900);
 
   --motion-fast: 120ms;
   --motion-base: 180ms;

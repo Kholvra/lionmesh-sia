@@ -64,7 +64,7 @@ Run this before the first edit and report the result to the user.
 
 1. **Name the item.** Confirm the ID exists in `docs/product/backlog.md`.
 2. **Check status and dependencies.** The item must be `ready` or `in progress`. Every `depends on` item must be `done`. Do not start an `idea` item.
-3. **Check the foundation gate.** No module item may start before `FND-001`–`FND-006` are `done`. `FND-007` (UI kit) and `FND-008` (seed) may finish in parallel; an item that adds a new UI primitive waits for `FND-007` (see `docs/product/backlog.md`).
+3. **Check the foundation gate.** No module item may start before `FND-001`–`FND-009` are `done` (`D-54`, `D-62`). `FND-008` (seed) may finish in parallel; an item that adds a new UI primitive waits for `FND-007` (see `docs/product/backlog.md`).
 4. **Read the package in order:** `00` → `01` → `02` → `03` → `04`. `05` is written at the end.
 5. **State the plan before coding:** item ID, cycle, files to touch, core services to call, and the AC you will prove.
 6. **Touch only your cycle's folders.** `src/modules/<cycle>/` plus its routes in `src/app/(app)/<cycle>/`.
@@ -220,9 +220,9 @@ The design authority is `docs/design/`. Read it before building any screen, in t
 
 Fixed values:
 
-- **Shell:** one shell, fixed **200px** sidebar, content starts at x=232, 32px page padding.
+- **Shell:** one shell, fixed **220px** sidebar, content starts at x=252, 32px page padding (`D-62`).
 - **Width:** 1280 minimum, 1440 design target, 1440 max content. Below 1280 keep the min-width and scroll; do not invent a mobile layout.
-- **Grid:** 12 columns, 24px gutter. Content is 1016 wide at 1280, 1176 at 1440.
+- **Grid:** 12 columns, 24px gutter. Content is 996 wide at 1280, 1156 at 1440.
 - **Density:** table rows 48px, controls 36px, icon targets 44px.
 - **Type:** Inter only; money uses tabular numerals.
 - **Color:** tokens only. Primary `#ED8B00` with ink text `#1C2530`; app background `#F7F9FC`. Never a raw hex in a component.

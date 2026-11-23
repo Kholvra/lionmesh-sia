@@ -25,7 +25,7 @@ hubs, dashboards, payroll, or reports.
 
 ```
 ┌──────────────────────┬───────────────────────────────────────────────────────┐
-│ Sidebar 200          │ Work area = viewport − 200                            │
+│ Sidebar 220          │ Work area = viewport − 220                            │
 │ fixed, full height   │                                                       │
 │                      │ 32px page padding                                     │
 │ Lionmesh             │ ┌───────────────────────────────────────────────────┐ │
@@ -47,7 +47,7 @@ hubs, dashboards, payroll, or reports.
 ### Width formula
 
 ```
-work area = viewport − 200
+work area = viewport − 220
 content   = min(1440, work area − 64)
 ```
 
@@ -56,9 +56,9 @@ and centred once the viewport is wide enough for the maximum.
 
 | Viewport | Work area | Content | Side padding |
 |---:|---:|---:|---:|
-| 1280 (minimum) | 1080 | **1016** | 32 |
+| 1280 (minimum) | 1060 | **996** | 32 |
 | 1366 | 1166 | 1102 | 32 |
-| 1440 (target) | 1240 | **1176** | 32 |
+| 1440 (target) | 1220 | **1156** | 32 |
 | 1536 | 1336 | 1272 | 32 |
 | 1600 | 1400 | 1336 | 32 |
 | 1704 | 1504 | **1440** | 32 |
@@ -97,7 +97,7 @@ gap; the differences are drift. Implement 80 + 32.
 
 The sidebar never collapses in v1. The active cycle stays orange on every child
 screen. Some module sidebars omit the footer (Data Pelanggan); the hub sidebar
-is 288px. Both are replaced by this 200px shell with a footer.
+is 288px. Both are replaced by this 220px shell with a footer.
 
 ---
 
@@ -125,7 +125,7 @@ Use this rule instead of a single default:
 | Both sides simple, list ≤5 columns | **6/6** | 496 / 496 | Data Pelanggan, PG02 |
 | Form has line items, many fields, or a document preview | **7/5** | 583 / 409 | Pesanan, PG06 |
 | List has 6+ columns or is the main working surface | **5/7** | 409 / 583 | Data Produksi |
-| No side panel | **12** | 1016 | Lists, reports, ledgers |
+| No side panel | **12** | 996 | Lists, reports, ledgers |
 
 At 1440 the same spans resolve to 576/576, 676/476, and 476/676. Use
 `grid-column: span 6`, `span 7`, etc. Do not write `width: 500px`.
@@ -368,9 +368,9 @@ At 1440 the same spans resolve to 576/576, 676/476, and 476/676. Use
 | Width | Behavior |
 |---|---|
 | < 1280 | Not supported. Keep a 1280 min-width and allow horizontal scroll. No mobile reflow. |
-| 1280–1359 | 2×2 dashboard cards; hub 8/4 only if the table has ≤6 columns, otherwise stack the rail; 6/6 or 5/7 splits; content 1016. |
-| 1360–1439 | 4×1 dashboard cards; hub 8/4; content 1102–1176. |
-| 1440–1599 | Design target. 4×1 cards, 8/4 hub, 6/6 or 7/5 splits; content 1176. |
+| 1280–1359 | 2×2 dashboard cards; hub 8/4 only if the table has ≤6 columns, otherwise stack the rail; 6/6 or 5/7 splits; content 996. |
+| 1360–1439 | 4×1 dashboard cards; hub 8/4; content 1082–1156. |
+| 1440–1599 | Design target. 4×1 cards, 8/4 hub, 6/6 or 7/5 splits; content 1156. |
 | ≥1600 | Content max 1440, centred in the work area. |
 
 The sidebar never collapses. Tables never become cards on narrow screens. If a
