@@ -49,7 +49,7 @@ Satu pemilik: tech lead. Urutan wajib.
 | `PD-008` | Jurnal penjualan & HPP | PD-D pelaporan | 7 | `PD-004`…`PD-007`, `FND-006` | `specified` |
 | `PD-009` | Laporan penjualan, piutang, aging | PD-D pelaporan | 7 | `PD-005`…`PD-007`, `C-009` | `specified` |
 
-## Siklus Pengeluaran — 5 track
+## Siklus Pengeluaran — 6 track
 
 | ID | Fitur | Track | Level | Depends on | Status |
 |---|---|---|---|---|---|
@@ -63,8 +63,11 @@ Satu pemilik: tech lead. Urutan wajib.
 | `PG-008` | Three-way match & utang usaha | PG-D utang | 8 | `PG-007`, `FND-006` | `specified` |
 | `PG-009` | Pembayaran utang | PG-D utang | 9 | `PG-008`, `FND-006` | `specified` |
 | `PG-010` | Rekonsiliasi bank | PG-E bank | 1 | `FND-006` | `specified` |
+| `PG-011` | Laporan pembelian, utang, dan pengeluaran kas | PG-F pelaporan | 10 | `PG-008`, `PG-009`, `C-009` | `idea` |
 
 `PG-010` sengaja berdiri sendiri. Ia tidak menunggu rantai PO selesai — hanya butuh ledger; format mutasi bank diisi pengguna lewat pemetaan kolom (`D-60`e).
+
+`PG-011` memiliki laporan **operasional** siklus ini (daftar pembelian per pemasok/periode, daftar pembayaran dan pengeluaran kas, sisa utang per invoice). Saldo utang di neraca dan aging sebagai lampiran laporan keuangan tetap milik `C-009`; tanpa `PG-011`, rujukan `C-009` ↔ `PG-009` tidak punya pemilik.
 
 ## Siklus Produksi — 4 track
 
@@ -146,7 +149,7 @@ Terbaca per level. Semua item dalam satu baris boleh dikerjakan serentak. `DISC-
 | 7 | `PD-008` `PD-009` | `PG-007` | `PR-006` | `GJ-007` | — | — | — | 5 |
 | 8 | — | `PG-008` | `PR-007` | — | — | — | — | 2 |
 | 9 | — | `PG-009` | — | — | — | — | — | 1 |
-| 10 | — | — | — | — | — | — | `INT-001` | 1 |
+| 10 | — | `PG-011` | — | — | — | — | `INT-001` | 2 |
 | 11 | — | — | — | — | — | — | `INT-002` `INT-003` | 2 |
 
 **Puncak paralel: 11 item serentak di level 1, dan baru terbuka setelah gate `FND-001`–`FND-007` selesai.** Setelah itu turun karena rantai dokumen memang berurutan.
@@ -186,3 +189,4 @@ Terbaca per level. Semua item dalam satu baris boleh dikerjakan serentak. `DISC-
 | 2026-11-23 | `FND-005` → `done`: implementasi mutasi, saldo, valuasi, presisi desimal, dan integrasi sintetis selesai; tech lead mengonfirmasi hasil pengujian manual, sisa integrasi dokumen sumber dicatat di `docs/tech-debt/fnd-005-integrasi-dokumen.md` |
 | 2026-11-23 | `FND-004` → `done`: migrasi `0007`, `core/dokumen`, registry status/tipe, approval berjenjang, seed versi `0004`, AC-01–AC-16, uji sesi, dan `pnpm verify` lulus. Pemeriksaan periode sumber dicatat menunggu `FND-006` |
 | 2026-11-23 | `FND-006` → `done`: migrasi `0008`, seed COA `D-41`, `postJournal()`/`reverseJournal()`, periode, RLS, dan immutability selesai; AC-01–AC-16 serta jalur sesi server dibuktikan, `pnpm verify` lulus |
+| 2026-11-23 | Tambah `PG-011` laporan pembelian/utang/pengeluaran kas (track `PG-F`, level 10) untuk menutup rujukan melingkar `C-009` ↔ `PG-009`; `EPIC-PG` dan `PG-009` diperbaiki di PR yang sama |
