@@ -9,18 +9,16 @@
 | 3 | Status dan transisi eksplisit | lolos | tidak ada state machine; status periode dibaca dari `FND-006` (`terbuka`, `terkunci`); laporan saat terkunci tetap bisa dibuka (`[USULAN]`) |
 | 4 | Validasi punya pesan yang bisa dibaca | lolos | kondisi gagal lengkap termasuk rentang lebih dari satu bulan (D-50); teks final ditentukan implementasi |
 | 5 | Acceptance criteria bisa dibuktikan | lolos | AC-01 sampai AC-11 punya langkah atau perintah; AC-03 memakai akun peran (D-41); AC-04 memakai PT-03 (`[USULAN-AGEN]`); AC-08 memakai PT-02 (`[USULAN-AGEN]`) |
-| 6 | Semua `depends on` berstatus `done` | belum | `FND-006` berstatus `specified` |
+| 6 | Semua `depends on` berstatus `done` | lolos | `FND-006` `done` (2026-11-23) |
 | 7 | Tidak ada pertanyaan pemblokir terbuka | lolos | 10 pertanyaan: 10 terjawab (6 keputusan terkunci, 4 `[USULAN-AGEN]`), 0 terbuka |
-| 8 | Gate fondasi terpenuhi | belum | `FND-001`–`FND-006` wajib `done`; baru `FND-001` yang `done` |
+| 8 | Gate fondasi terpenuhi | lolos | `FND-001`–`FND-009` `done` (2026-11-23, `D-54`, `D-62`) |
 | 9 | Ukuran masuk akal untuk satu orang dalam satu track | lolos | ukuran L (usulan paket, `D-50`): empat laporan, penelusuran, dan pembanding angka uji |
 
 ## Verdict
 
-`Blocked`
+`Ready`
 
-Alasan (dependensi): `FND-006` belum `done`; gate fondasi `FND-001`–`FND-006` belum terpenuhi (DoR butir 6 dan 8).
-
-Siap menjadi Ready begitu dependensi done; tidak ada pemblokir lain.
+Semua kriteria DoR terpenuhi sejak 2026-11-23. Fondasi `FND-001`–`FND-009` sudah `done`, termasuk AppShell (`D-62`), sehingga layar item ini punya tempat render. Bila item membuat tabel, DDL dikirim sebagai usulan `06-ddl-proposal.sql` dan dinomori tech lead (`D-09`); layar dicari di `docs/design/inventory/<siklus>.md`.
 
 ## Blockers / decisions needed
 

@@ -9,9 +9,9 @@
 | 3 | Status dan transisi eksplisit | lolos | `aktif ⇄ nonaktif`, jalur gagal (validasi, izin) ada di `01-requirement.md` dan `04-design-contract.md` |
 | 4 | Validasi punya pesan yang bisa dibaca | lolos | seluruh kondisi gagal punya pesan di `01-requirement.md` bagian Validations |
 | 5 | Acceptance criteria dapat dibuktikan | lolos | `AC-01`..`AC-11`, setiap AC punya cara membuktikan |
-| 6 | Semua `depends on` berstatus `done` | belum | `FND-003` masih `specified` (`backlog.md`) |
+| 6 | Semua `depends on` berstatus `done` | lolos | `FND-003` `done` (2026-11-23) |
 | 7 | Tidak ada pertanyaan pemblokir terbuka | lolos | 7 pertanyaan, 0 terbuka; semua terjawab (D-16, D-31, D-33, D-50, sumber makalah, atau `[USULAN-AGEN]`) |
-| 8 | Gate fondasi terpenuhi | belum | `FND-001` sudah `done`; `FND-002`–`FND-006` dan `FND-007` (tabel, form, status badge) belum `done` |
+| 8 | Gate fondasi terpenuhi | lolos | `FND-001`–`FND-009` `done` (2026-11-23, `D-54`, `D-62`) |
 | 9 | Ukuran masuk akal untuk satu orang dalam satu track | lolos | ukuran `S` (`D-50`: ukuran memakai usulan di paket): master CRUD dengan tiga aturan nilai dan satu izin |
 
 Kriteria bersyarat:
@@ -30,11 +30,9 @@ Total 7 pertanyaan. Terjawab 7 · terjawab sebagian 0 · terbuka 0. Rincian di `
 
 ## Verdict
 
-**`Blocked`**
+`Ready`
 
-Alasan tunggal: dependensi belum `done`. Daftar: `FND-003` (langsung), beserta gate fondasi `FND-002`–`FND-006` dan `FND-007` (primitive UI), yang menjadi prasyarat `FND-003`.
-
-Siap menjadi Ready begitu dependensi done; tidak ada pemblokir lain.
+Semua kriteria DoR terpenuhi sejak 2026-11-23. Fondasi `FND-001`–`FND-009` sudah `done`, termasuk AppShell (`D-62`), sehingga layar item ini punya tempat render. Bila item membuat tabel, DDL dikirim sebagai usulan `06-ddl-proposal.sql` dan dinomori tech lead (`D-09`); layar dicari di `docs/design/inventory/<siklus>.md`.
 
 ## Blockers / decisions needed
 

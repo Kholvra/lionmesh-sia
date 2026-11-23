@@ -40,7 +40,7 @@ Satu pemilik: tech lead. Urutan wajib.
 
 | ID | Fitur | Track | Level | Depends on | Status |
 |---|---|---|---|---|---|
-| `PD-001` | Pelanggan, termin, batas kredit | PD-A master | 1 | `FND-003` | `specified` |
+| `PD-001` | Pelanggan, termin, batas kredit | PD-A master | 1 | `FND-003` | `ready` |
 | `PD-002` | Pesanan penjualan + cek kredit | PD-B transaksi | 2 | `PD-001`, `FND-004` | `specified` |
 | `PD-003` | Cek & reservasi stok | PD-B transaksi | 3 | `FND-005`, `C-011`, `PD-002` | `specified` |
 | `PD-004` | Pengiriman + surat jalan | PD-B transaksi | 4 | `PD-002`, `PD-003` | `specified` |
@@ -54,7 +54,7 @@ Satu pemilik: tech lead. Urutan wajib.
 
 | ID | Fitur | Track | Level | Depends on | Status |
 |---|---|---|---|---|---|
-| `PG-001` | Pemasok, termin, toleransi match | PG-A master | 1 | `FND-003` | `specified` |
+| `PG-001` | Pemasok, termin, toleransi match | PG-A master | 1 | `FND-003` | `ready` |
 | `PG-002` | Permintaan pembelian | PG-B pengadaan | 2 | `C-013`, `C-011` | `specified` |
 | `PG-003` | Approval berjenjang | PG-B pengadaan | 3 | `PG-002`, `FND-004` | `specified` |
 | `PG-004` | Pemilihan pemasok & perbandingan harga | PG-B pengadaan | 4 | `PG-002`, `PG-001`, `PG-003` | `specified` |
@@ -63,7 +63,7 @@ Satu pemilik: tech lead. Urutan wajib.
 | `PG-007` | QC bahan & retur ke pemasok | PG-C penerimaan | 7 | `PG-006`, `FND-005` | `specified` |
 | `PG-008` | Three-way match & utang usaha | PG-D utang | 8 | `PG-007`, `FND-006` | `specified` |
 | `PG-009` | Pembayaran utang | PG-D utang | 9 | `PG-008`, `FND-006` | `specified` |
-| `PG-010` | Rekonsiliasi bank | PG-E bank | 1 | `FND-006` | `specified` |
+| `PG-010` | Rekonsiliasi bank | PG-E bank | 1 | `FND-006` | `ready` |
 | `PG-011` | Laporan pembelian, utang, dan pengeluaran kas | PG-F pelaporan | 10 | `PG-008`, `PG-009`, `C-009` | `idea` |
 
 `PG-010` sengaja berdiri sendiri. Ia tidak menunggu rantai PO selesai — hanya butuh ledger; format mutasi bank diisi pengguna lewat pemetaan kolom (`D-60`e).
@@ -90,7 +90,7 @@ Satu pemilik: tech lead. Urutan wajib.
 
 | ID | Fitur | Track | Level | Depends on | Status |
 |---|---|---|---|---|---|
-| `GJ-001` | Karyawan, gaji pokok, PTKP | GJ-A master | 1 | `FND-003` | `specified` |
+| `GJ-001` | Karyawan, gaji pokok, PTKP | GJ-A master | 1 | `FND-003` | `ready` |
 | `GJ-002` | Presensi & pengajuan lembur | GJ-B presensi | 2 | `GJ-001`, `FND-004` | `specified` |
 | `GJ-003` | Rekap & validasi presensi | GJ-B presensi | 3 | `GJ-002` | `specified` |
 | `GJ-004` | Hitung payroll | GJ-C payroll | 4 | `GJ-003`, `FND-002` | `specified` |
@@ -105,10 +105,10 @@ Sebagian tidak memblokir siklus mana pun. Dua di antaranya (`C-011`, `C-013`) me
 
 | ID | Fitur | Track | Level | Depends on | Status |
 |---|---|---|---|---|---|
-| `C-009` | Laporan keuangan | CORE-A laporan | 1 | `FND-006` | `specified` |
+| `C-009` | Laporan keuangan | CORE-A laporan | 1 | `FND-006` | `ready` |
 | `C-010` | Tutup buku & jurnal penutup | CORE-B tutup | 2 | `C-009`, `FND-006` | `specified` |
-| `C-011` | Master data terpadu: produk, gudang, satuan | CORE-C master | 1 | `FND-002` | `specified` |
-| `C-012` | Notifikasi in-app + email | CORE-C master | 1 | `FND-004` | `specified` |
+| `C-011` | Master data terpadu: produk, gudang, satuan | CORE-C master | 1 | `FND-002` | `ready` |
+| `C-012` | Notifikasi in-app + email | CORE-C master | 1 | `FND-004` | `ready` |
 | `C-013` | Domain pengadaan: tabel + aturan status (permintaan, PO, penerimaan) | CORE-D pengadaan | 1 | `FND-002`, `FND-004`, `FND-005` | `specified` |
 | `C-014` | Dashboard: ringkasan + antrean "menunggu tindakan saya" (fitur `C8`) | CORE-E dashboard | 1 | `FND-003`, `FND-004` | `idea` |
 
@@ -192,3 +192,4 @@ Terbaca per level. Semua item dalam satu baris boleh dikerjakan serentak. `DISC-
 | 2026-11-23 | `FND-006` → `done`: migrasi `0008`, seed COA `D-41`, `postJournal()`/`reverseJournal()`, periode, RLS, dan immutability selesai; AC-01–AC-16 serta jalur sesi server dibuktikan, `pnpm verify` lulus |
 | 2026-11-23 | `FND-009` → `done`: AppShell 220px (`D-62`) di `src/app/(app)/layout.tsx`, sidebar bersama, guard sesi, dan route `/pengaturan` dipindah ke dalam shell; gate fondasi jadi `FND-001`–`FND-009` |
 | 2026-11-23 | Tambah `PG-011` laporan pembelian/utang/pengeluaran kas (track `PG-F`, level 10) untuk menutup rujukan melingkar `C-009` ↔ `PG-009`; `EPIC-PG` dan `PG-009` diperbaiki di PR yang sama |
+| 2026-11-23 | Gelombang 1 → `ready`: `PD-001`, `PG-001`, `PG-010`, `GJ-001`, `C-009`, `C-011`, `C-012`. Readiness review disegarkan setelah `FND-009` `done`; DDL tetap lewat usulan dan nomor tech lead (`D-09`) |
