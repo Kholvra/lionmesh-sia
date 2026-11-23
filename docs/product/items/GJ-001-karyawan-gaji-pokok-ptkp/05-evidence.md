@@ -17,9 +17,9 @@ Uji otomatis memakai skrip Playwright di luar repo (Brave headless, lebar 1280).
 | AC-07 | Lolos (UI + server) | Accounting dan Finance tidak punya tombol ubah; server action menolak lewat `assertIzin("kelola_data_karyawan")` |
 | AC-08 | Sebagian | Accounting melihat identitas, gaji, dan PTKP tanpa rekening; Finance melihat nama dan rekening; Direksi dan Karyawan "tidak punya akses". RLS menunggu tabel |
 | AC-09 | Lolos (UI) | Setiap tambah, ubah, gaji baru, dan nonaktif menambah baris riwayat dengan pelaku dan waktu |
-| AC-10 | Sebagian | Draft payroll menyimpan angka gaji yang dipakai dan dikunci saat disetujui (GJ-005); gaji pokok baru tidak mengubah draft yang sudah dihitung |
+| AC-10 | Ditunda | Ditunda ke GJ-005 sesuai `02-acceptance-criteria.md`: butuh payroll yang disetujui dan dikunci, yang belum ada di item ini |
 | AC-11 | Lolos (UI) | Gaji pokok kedua dengan tanggal berlaku yang sama → ditolak dengan pesan tanggal |
-| AC-12 | Lolos (UI) | Karyawan nonaktif tidak muncul di pilihan karyawan untuk presensi, lembur, dan pemetaan mesin (GJ-002, GJ-008) |
+| AC-12 | Sebagian | Setelah dinonaktifkan, data dan riwayat gaji tetap tampil di detail dengan status Nonaktif. Pilihan karyawan untuk dokumen baru dibuat oleh item pemakainya (GJ-002 presensi, GJ-008 pemetaan mesin); bagian itu dibuktikan di sana |
 | AC-13 | Lolos (UI) | Akun Karyawan membuka data karyawan → "Anda tidak punya akses" |
 | AC-14 | Lolos (UI) | NIK bukan 16 digit → "NIK harus 16 digit angka." |
 | AC-15 | Lolos (UI) | Rekening tanpa nama bank, nomor berdigit, atau nama pemilik → ditolak dengan pesan per kolom |
