@@ -103,6 +103,32 @@ $ grep -rl --include="*.js" "ZodError" .next/static      → kosong
 $ grep -rl --include="*.js" "invalid_union" .next/static  → kosong
 ```
 
+## Presisi angka besar (2026-11-23)
+
+Ditemukan setelah review PR: `Number()` kehilangan presisi di atas `Number.MAX_SAFE_INTEGER` (9007199254740991).
+
+| Uji | Hasil |
+|---|---|
+| `Number("9007199254740993")` | `9007199254740992` — berubah senyap |
+| `select 9007199254740993::numeric(18,2)` | `9007199254740993.00` — DB bisa menyimpan tepat |
+| `select 10000000000000000::numeric(18,2)` | `numeric field overflow` (error DB, bukan pesan per field) |
+| `select 2147483648::integer` | `integer out of range` |
+| RPC dengan parameter string `"9007199254740993.00"` | `200`, tersimpan tepat |
+
+Perbaikan:
+
+- `toleransi_nominal` sekarang **string desimal** dari form sampai RPC (`PemasokInput`), mengikuti konvensi `core/ledger/money.ts` dan `core/inventory/decimal.ts`. `Number()` tidak lagi menyentuhnya.
+- `termin_hari` tetap `number`, dengan batas kapasitas `int4` (2.147.483.647) dan pesan per field.
+- `formatRupiah` memformat dari string (`BigInt`) supaya tampilan juga tidak membulatkan.
+- Test: 14 kasus, termasuk nominal besar tersimpan persis, 17 digit ditolak, termin di atas `int4` ditolak.
+
+Buki end-to-end lewat UI (bukan hanya unit test):
+
+```text
+form: toleransi_nominal = 9007199254740993 → simpan
+DB  : PT Presisi UI | 9007199254740993.00
+```
+
 ## Screenshot 1280
 
 [`pg001-pemasok-1280.png`](pg001-pemasok-1280.png) — daftar + detail + riwayat status, sidebar 220px, konten mulai x=252.

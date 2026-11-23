@@ -10,12 +10,14 @@ export function statusPemasok(aktif: boolean): "aktif" | "nonaktif" {
 }
 
 export function formatRupiah(value: string | number): string {
-  return new Intl.NumberFormat("id-ID", {
-    style: "currency",
-    currency: "IDR",
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  }).format(Number(value));
+  // Format from the decimal string so a value beyond Number.MAX_SAFE_INTEGER
+  // still displays exactly what the database holds.
+  const teks = typeof value === "number" ? String(value) : value;
+  const [bulatRaw = "0", desimalRaw = ""] = teks.split(".");
+  const bulat = BigInt(bulatRaw === "" ? "0" : bulatRaw);
+  const desimal = desimalRaw.padEnd(2, "0").slice(0, 2);
+  const grup = new Intl.NumberFormat("id-ID").format(bulat);
+  return `Rp ${grup},${desimal}`;
 }
 
 export function formatPersen(value: string | number): string {

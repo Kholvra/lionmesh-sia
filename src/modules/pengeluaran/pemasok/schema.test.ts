@@ -25,7 +25,7 @@ test("toleransi kosong disimpan sebagai nol (D-15)", () => {
   const hasil = parsePemasokForm(formData({ nama: "PT A", termin_hari: "30" }));
   assert.ok(hasil.input);
   assert.equal(hasil.input.toleransiPersen, 0);
-  assert.equal(hasil.input.toleransiNominal, 0);
+  assert.equal(hasil.input.toleransiNominal, "0");
 });
 
 test("termin wajib berupa angka", () => {
@@ -97,8 +97,31 @@ test("koma desimal diterima dan dikonversi", () => {
   assert.ok(hasil.input);
   assert.equal(hasil.input.nama, "PT A");
   assert.equal(hasil.input.toleransiPersen, 0.75);
-  assert.equal(hasil.input.toleransiNominal, 1500);
+  assert.equal(hasil.input.toleransiNominal, "1500");
   assert.equal(hasil.input.npwp, null);
+});
+
+test("nominal besar tidak kehilangan presisi", () => {
+  const besar = "9007199254740993";
+  const hasil = parsePemasokForm(
+    formData({ nama: "PT A", termin_hari: "30", toleransi_nominal: besar }),
+  );
+  assert.ok(hasil.input);
+  assert.equal(hasil.input.toleransiNominal, besar);
+});
+
+test("nominal melebihi kapasitas numeric(18,2) ditolak per field", () => {
+  const errors = pesan({
+    nama: "PT A",
+    termin_hari: "30",
+    toleransi_nominal: "10000000000000000",
+  });
+  assert.equal(errors.toleransi_nominal, "Toleransi nominal terlalu besar");
+});
+
+test("termin melebihi kapasitas int4 ditolak per field", () => {
+  const errors = pesan({ nama: "PT A", termin_hari: "2147483648" });
+  assert.equal(errors.termin_hari, "Termin pembayaran terlalu besar");
 });
 
 test("id pemasok harus uuid", () => {

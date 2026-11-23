@@ -14,6 +14,8 @@ const PESAN_NAMA = "Nama pemasok wajib diisi";
 const PESAN_TERMIN = "Termin pembayaran wajib diisi";
 const PESAN_TERMIN_ANGKA = "Termin pembayaran harus berupa angka";
 const PESAN_TERMIN_RENTANG = "Termin pembayaran harus berupa angka bulat minimal 0";
+const PESAN_TERMIN_BESAR = "Termin pembayaran terlalu besar";
+const PESAN_NOMINAL_BESAR = "Toleransi nominal terlalu besar";
 const PESAN_PERSEN_ANGKA = "Toleransi persen harus berupa angka";
 const PESAN_PERSEN_RENTANG = "Toleransi persen harus antara 0 dan 100";
 const PESAN_PERSEN_DESIMAL = "Toleransi persen maksimal 2 angka desimal";
@@ -34,6 +36,7 @@ type AturanAngka = {
   pesanRentang: string;
   min: number;
   max?: number;
+  pesanMaks?: string;
   bulat?: boolean;
   maksDesimal?: number;
   /** Value used when the field is blank; omit to make the field required. */
@@ -67,6 +70,11 @@ function angka(aturan: AturanAngka) {
       return z.NEVER;
     }
 
+    if (aturan.max !== undefined && nilai > aturan.max && aturan.pesanMaks) {
+      ctx.addIssue({ code: "custom", message: aturan.pesanMaks });
+      return z.NEVER;
+    }
+
     const diLuarRentang =
       (aturan.bulat === true && !Number.isInteger(nilai)) ||
       nilai < aturan.min ||
@@ -78,6 +86,46 @@ function angka(aturan: AturanAngka) {
     }
 
     return nilai;
+  });
+}
+
+// numeric(18,2) must not become a JS number: 9007199254740993 would arrive as
+// 9007199254740992. Keep it a string all the way to the RPC, like core/ledger.
+const MAKS_DIGIT_BULAT_UANG = 16;
+
+function uang(aturan: {
+  pesanBukanAngka: string;
+  pesanDesimal: string;
+  pesanBesar: string;
+  pesanNegatif: string;
+}) {
+  return z.string().transform((raw, ctx) => {
+    const trimmed = raw.trim();
+    if (trimmed.length === 0) return "0";
+
+    const normal = trimmed.replace(",", ".");
+
+    if (normal.startsWith("-") && /^\d+(\.\d+)?$/.test(normal.slice(1))) {
+      ctx.addIssue({ code: "custom", message: aturan.pesanNegatif });
+      return z.NEVER;
+    }
+
+    if (!/^\d+(\.\d+)?$/.test(normal)) {
+      ctx.addIssue({ code: "custom", message: aturan.pesanBukanAngka });
+      return z.NEVER;
+    }
+
+    const [bulat, desimal = ""] = normal.split(".");
+    if (desimal.length > 2) {
+      ctx.addIssue({ code: "custom", message: aturan.pesanDesimal });
+      return z.NEVER;
+    }
+    if (bulat.length > MAKS_DIGIT_BULAT_UANG) {
+      ctx.addIssue({ code: "custom", message: aturan.pesanBesar });
+      return z.NEVER;
+    }
+
+    return normal;
   });
 }
 
@@ -94,6 +142,8 @@ const pemasokFormSchema = z.object({
     pesanDesimal: PESAN_TERMIN_RENTANG,
     pesanRentang: PESAN_TERMIN_RENTANG,
     min: 0,
+    max: 2_147_483_647,
+    pesanMaks: PESAN_TERMIN_BESAR,
     bulat: true,
   }),
   toleransi_persen: angka({
@@ -106,14 +156,11 @@ const pemasokFormSchema = z.object({
     maksDesimal: 2,
     kosongJadi: 0,
   }),
-  toleransi_nominal: angka({
-    pesanWajib: PESAN_NOMINAL_RENTANG,
+  toleransi_nominal: uang({
     pesanBukanAngka: PESAN_NOMINAL_ANGKA,
     pesanDesimal: PESAN_NOMINAL_DESIMAL,
-    pesanRentang: PESAN_NOMINAL_RENTANG,
-    min: 0,
-    maksDesimal: 2,
-    kosongJadi: 0,
+    pesanBesar: PESAN_NOMINAL_BESAR,
+    pesanNegatif: PESAN_NOMINAL_RENTANG,
   }),
 });
 
