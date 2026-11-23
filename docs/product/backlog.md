@@ -109,7 +109,7 @@ Sebagian tidak memblokir siklus mana pun. Dua di antaranya (`C-011`, `C-013`) me
 | `C-010` | Tutup buku & jurnal penutup | CORE-B tutup | 2 | `C-009`, `FND-006` | `specified` |
 | `C-011` | Master data terpadu: produk, gudang, satuan | CORE-C master | 1 | `FND-002` | `in progress` |
 | `C-012` | Notifikasi in-app + email | CORE-C master | 1 | `FND-004` | `ready` |
-| `C-013` | Domain pengadaan: tabel + aturan status (permintaan, PO, penerimaan) | CORE-D pengadaan | 1 | `FND-002`, `FND-004`, `FND-005`, `FND-006` | `ready` |
+| `C-013` | Domain pengadaan: tabel + aturan status (permintaan, PO, penerimaan) | CORE-D pengadaan | 1 | `FND-002`, `FND-004`, `FND-005`, `FND-006` | `in progress` |
 | `C-014` | Dashboard: ringkasan + antrean "menunggu tindakan saya" (fitur `C8`) | CORE-E dashboard | 1 | `FND-003`, `FND-004` | `ready` |
 
 `C-013` adalah penerapan `D-05`. Ia **memblokir** `PG-002` dan `PR-003`, tapi bukan seluruh siklus: layar dan alur approval tetap milik track Pengeluaran. Karena itu ia ada di core, bukan di `PG-*` — supaya Produksi tidak ikut menunggu siklus Pengeluaran selesai.
@@ -196,3 +196,4 @@ Terbaca per level. Semua item dalam satu baris boleh dikerjakan serentak. `DISC-
 | 2026-11-23 | `PG-001` mulai dikerjakan setelah fondasi `FND-001`–`FND-007` selesai; migrasi `0009`, core service, UI, dan validasi server ditambahkan. Verifikasi database tertunda karena Docker tidak tersedia |
 | 2026-11-24 | `C-013` dan `C-014` → `ready` setelah keputusan tech lead D-64; lima track core boleh paralel sesuai D-65 |
 | 2026-11-24 | `C-011` → `in progress`: migrasi `0011`, `core/master`, empat layar master di `/pengaturan`, seed mata uang IDR versi `0005`, dan bukti AC-01–AC-11. Sisa bukti lintas item (pemilihan di dokumen dan dokumen lama) menunggu `PD-002`/`PG-002` |
+| 2026-11-24 | `C-013` → `in progress`: implementasi pengadaan dan bukti awal tersedia; pemeriksaan D-64 dan AC tambahan sedang diselesaikan |
