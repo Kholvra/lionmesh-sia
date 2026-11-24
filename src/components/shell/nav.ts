@@ -20,7 +20,7 @@ export type NavItem = {
 
 export const NAV_PRIMARY: NavItem[] = [
   { label: "Dashboard", href: "/", icon: "dashboard", tersedia: true },
-  { label: "Pendapatan", href: "/pendapatan", icon: "pendapatan", tersedia: false },
+  { label: "Pendapatan", href: "/pendapatan", icon: "pendapatan", tersedia: true },
   { label: "Pengeluaran", href: "/pengeluaran", icon: "pengeluaran", tersedia: false },
   { label: "Produksi", href: "/produksi", icon: "produksi", tersedia: false },
   { label: "Penggajian", href: "/penggajian", icon: "penggajian", tersedia: false },

@@ -40,7 +40,7 @@ Satu pemilik: tech lead. Urutan wajib.
 
 | ID | Fitur | Track | Level | Depends on | Status |
 |---|---|---|---|---|---|
-| `PD-001` | Pelanggan, termin, batas kredit | PD-A master | 1 | `FND-003` | `ready` |
+| `PD-001` | Pelanggan, termin, batas kredit | PD-A master | 1 | `FND-003` | `done` |
 | `PD-002` | Pesanan penjualan + cek kredit | PD-B transaksi | 2 | `PD-001`, `FND-004` | `specified` |
 | `PD-003` | Cek & reservasi stok | PD-B transaksi | 3 | `FND-005`, `C-011`, `PD-002` | `specified` |
 | `PD-004` | Pengiriman + surat jalan | PD-B transaksi | 4 | `PD-002`, `PD-003` | `specified` |
