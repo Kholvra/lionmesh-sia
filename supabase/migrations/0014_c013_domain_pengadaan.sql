@@ -351,6 +351,10 @@ declare
     v_elem jsonb;
     v_qty numeric(18,4);
 begin
+    if (select peran from public.profiles where id = v_aktor) = 'Produksi' and p_wo_id is null then
+        raise exception 'Perintah produksi wajib diisi untuk permintaan Produksi.';
+    end if;
+
     if p_gudang_id is null then
         raise exception 'Gudang tujuan wajib diisi.';
     end if;
@@ -687,23 +691,23 @@ as $$
 declare
     v_aktor uuid := public.pengadaan_aktor(p_aktor_id);
     v_peran text;
-    v_pr_pembuat uuid;
+    v_po_pembuat uuid;
 begin
     select peran into v_peran
     from public.profiles
     where id = v_aktor and aktif = true;
 
-    select d.pembuat_id into v_pr_pembuat
+    select d.pembuat_id into v_po_pembuat
     from public.po p
-    join public.dokumen d on d.id = p.permintaan_id
+    join public.dokumen d on d.id = p.dokumen_id
     where p.dokumen_id = p_dokumen_id;
 
     if not found then
         raise exception 'Purchase order tidak ditemukan.';
     end if;
 
-    if v_peran is distinct from 'Purchasing' and v_pr_pembuat <> v_aktor then
-        raise exception 'Hanya Purchasing atau pemohon PR yang dapat membatalkan PO ini.';
+    if v_peran is distinct from 'Purchasing' or v_po_pembuat is distinct from v_aktor then
+        raise exception 'Hanya Purchasing pembuat PO yang dapat membatalkan PO ini.';
     end if;
 
     if exists (select 1 from public.penerimaan where po_id = p_dokumen_id) then
@@ -1044,6 +1048,10 @@ begin
 
             v_total_nilai := v_total_nilai + round(v_item.qty_lulus * v_item.harga_satuan, 2);
         end loop;
+
+        if v_total_nilai <= 0 then
+            raise exception 'Nilai barang lulus QC harus menghasilkan nilai jurnal lebih dari nol.';
+        end if;
 
         if v_total_nilai > 0 then
             v_jurnal := public.post_journal(

@@ -1,5 +1,7 @@
 # C-013 — Bukti Verifikasi
 
+> Review 2026-11-24: skenario baru diuji pada database PostgreSQL lokal terisolasi yang menyalin skema/data C-011, kemudian menerapkan DDL C-013. `node scripts/verify-c013.mjs` menghasilkan 17/17 skenario lulus: termasuk Produksi tanpa `wo_id` ditolak, PR Gudang tanpa `wo_id` diterima, pembatalan oleh pemohon PR ditolak, injeksi kegagalan stok/jurnal/riwayat, periode terkunci, serta penolakan QC bila nilai jurnal setelah pembulatan nol. Perubahan akibat uji di-rollback. AC-18 validasi keberadaan menunggu PR-002; AC-10 snapshot identik pada dua database terisolasi hasil salinan kondisi awal yang sama; perintah reset dan seed literal tidak dijalankan untuk menjaga database bersama. Item belum siap dinyatakan selesai.
+
 **Tanggal:** 2026-11-24
 **Branch:** `c-013-domain-pengadaan`
 **Lingkungan:** PostgreSQL 17.12 (Supabase lokal, `127.0.0.1:54322`), Node 24, pnpm 10.18.3
@@ -83,7 +85,7 @@ src/core/pengadaan/service.ts → rpc("batalkan_po")
 2. **QC per baris dengan satu status dokumen.** `qty_lulus` disimpan per `penerimaan_item`; status penerimaan `QC_LULUS` bila total lulus > 0, `QC_GAGAL` bila total 0. Retur barang gagal milik `PG-007`.
 3. **Over-receipt dicatat lalu ditolak.** RPC mengembalikan `{diterima:false, pesan, exception_ids}` setelah menulis exception, tanpa membuat baris `penerimaan` dan tanpa mutasi stok. Service memetakannya menjadi `Result` gagal.
 4. **Pembatalan penerimaan dan penutupan exception tidak dibuat di C-013.** Keduanya milik `PG-006` (R-08, R-10) dan tidak ada AC-nya di item ini. Dokumen penerimaan sudah punya status `DIBATALKAN` di daftar status agar `PG-006` bisa menambah transisinya.
-5. **Tipe dokumen dan sumber jurnal.** Migrasi 0011 mendaftarkan `PURCHASE_ORDER`, `PENERIMAAN_BARANG`, daftar statusnya, dan sumber jurnal `PENERIMAAN_BARANG` (`peran_berhak = QC`). `PERMINTAAN_PEMBELIAN` tetap didaftarkan seed `FND-004` (0010).
+5. **Tipe dokumen dan sumber jurnal.** Migrasi 0014 mendaftarkan `PURCHASE_ORDER`, `PENERIMAAN_BARANG`, daftar statusnya, dan sumber jurnal `PENERIMAAN_BARANG` (`peran_berhak = QC`). `PERMINTAAN_PEMBELIAN` tetap didaftarkan seed `FND-004` (0010).
 6. **`wo_id` nullable tanpa foreign key** (`PT-05`). FK ke `perintah_produksi` menyusul di `PR-002`.
 7. **Akses tulis hanya `service_role`.** RPC `SECURITY DEFINER` mencabut hak `public/anon/authenticated`; aktor diambil dari parameter yang diisi server dari sesi. Modul wajib memakai `src/core/pengadaan/service.ts`.
 8. **Read model TS belum ada.** `queries.ts` sengaja tidak dibuat karena belum ada konsumen; layar `PG-002` akan menambahkannya di core.
@@ -105,3 +107,9 @@ src/core/pengadaan/service.ts → rpc("batalkan_po")
 | Modul menulis tabel pengadaan | Tidak ada grant tulis ke klien; `ARCH-06`; AC-09 |
 | Toleransi qty dipakai diam-diam | Exception `SELISIH_QTY` selalu dibuat; `D-15`; AC-04 |
 | Perbedaan tafsir QC parsial dengan `PG-007` | Dicatat di atas; `PG-007` memutuskan retur/rework |
+
+## Keputusan tech lead: nilai jurnal nol
+
+Untuk mencegah perubahan stok tanpa jurnal yang diwajibkan D-44, QC lulus ditolak ketika jumlah nilai setelah pembulatan menjadi nol. Nilai positif yang terlalu kecil, misalnya qty 1 × harga 0,0001, termasuk kondisi ini; transaksi di-rollback dan pesan meminta nilai jurnal lebih dari nol. Keputusan ini tidak menetapkan kebijakan barang gratis; perlakuan barang gratis memerlukan keputusan terpisah sebelum diaktifkan. Uji AC-19 pada database terisolasi memastikan saldo dan status tidak berubah.
+
+- AC-10 ulang 2026-11-24: dua database uji terisolasi (`lionmesh_c013_v2`, `lionmesh_c013_v3`) disiapkan dari kondisi awal yang sama dan DDL 0014; `diff -u` hasil baris SNAPSHOT kosong. Pengujian tidak mereset database bersama.

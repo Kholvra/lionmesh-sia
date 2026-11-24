@@ -197,3 +197,5 @@ Terbaca per level. Semua item dalam satu baris boleh dikerjakan serentak. `DISC-
 | 2026-11-24 | `C-013` dan `C-014` → `ready` setelah keputusan tech lead D-64; lima track core boleh paralel sesuai D-65 |
 | 2026-11-24 | `C-011` → `in progress`: migrasi `0011`, `core/master`, empat layar master di `/pengaturan`, seed mata uang IDR versi `0005`, dan bukti AC-01–AC-11. Sisa bukti lintas item (pemilihan di dokumen dan dokumen lama) menunggu `PD-002`/`PG-002` |
 | 2026-11-24 | `C-013` → `in progress`: implementasi pengadaan dan bukti awal tersedia; pemeriksaan D-64 dan AC tambahan sedang diselesaikan |
+
+| 2026-11-24 | `C-013` tetap `in progress`: aturan D-64 dan uji atomisitas diperbaiki; bukti yang masih parsial perlu dituntaskan |

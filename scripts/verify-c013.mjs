@@ -3,8 +3,6 @@
 // Run after `pnpm db:reset && pnpm db:seed`. Every value asserted here is the
 // contract from docs/product/items/C-013-domain-pengadaan/02-acceptance-criteria.md.
 
-import { readFileSync } from "node:fs";
-
 import { Client } from "pg";
 
 const DB_URL =
@@ -41,19 +39,13 @@ const JAM_MUTASI = [
 const client = new Client({ connectionString: DB_URL });
 await client.connect();
 
-// Several worktrees share one local Supabase stack. If another worktree reset it
-// with a migration set that predates C-013, re-apply 0011 once so the harness can
-// still prove this item before the transaction starts.
+// Never install a migration into the shared local database from a test harness.
 const { rows: fungsi } = await client.query(
   "select to_regprocedure('public.ajukan_pr(uuid,uuid,date,jsonb,text,uuid,date)') as ada",
 );
 if (!fungsi[0].ada) {
-  const migration = readFileSync(
-    new URL("../supabase/migrations/0011_c013_domain_pengadaan.sql", import.meta.url),
-    "utf8",
-  );
-  await client.query(migration);
-  console.log("[setup] migration 0011 re-applied (the shared local stack had been reset)");
+  await client.end();
+  throw new Error("Migrasi C-013 belum tersedia; gunakan database uji terisolasi yang sudah dimigrasi.");
 }
 
 // Keep the harness atomic: every row it creates is rolled back, so repeated runs
@@ -262,8 +254,8 @@ const [satuan] = await q(
    on conflict (kode) do update set nama = excluded.nama returning id`,
 );
 const [produk] = await q(
-  `insert into public.produk (kode, nama, satuan_dasar_id, aktif)
-   values ('C013-PROD-1', 'Produk uji C-013', $1, true)
+  `insert into public.produk (kode, nama, satuan_dasar_id, aktif, tipe)
+   values ('C013-PROD-1', 'Produk uji C-013', $1, true, 'bahan')
    on conflict (kode) do update set nama = excluded.nama, satuan_dasar_id = excluded.satuan_dasar_id
    returning id`,
   [satuan.id],
@@ -727,6 +719,15 @@ await recordResult("AC-15", "PO tanpa penerimaan bisa dibatalkan; setelah peneri
     baris: [{ produkId: MASTER.produk, qty: "2", hargaSatuan: "10" }],
   });
   const sebelumBatal = await doc(poBatal.po_id);
+  await expectError(() => q("select public.batalkan_po($1, $2, $3, $4)", [
+    poBatal.po_id, sebelumBatal.versi, "tidak berwenang", AKTOR.gudang,
+  ]), "Hanya Purchasing pembuat PO");
+  await q("savepoint c013_purchasing_lain");
+  await q("update public.profiles set peran = 'Purchasing' where id = $1", [AKTOR.produksi]);
+  await expectError(() => q("select public.batalkan_po($1, $2, $3, $4)", [
+    poBatal.po_id, sebelumBatal.versi, "bukan pembuat", AKTOR.produksi,
+  ]), "Hanya Purchasing pembuat PO");
+  await q("rollback to savepoint c013_purchasing_lain");
   await q("select public.batalkan_po($1, $2, $3, $4)", [
     poBatal.po_id,
     sebelumBatal.versi,
@@ -764,6 +765,64 @@ await recordResult("AC-15", "PO tanpa penerimaan bisa dibatalkan; setelah peneri
 
   snapshot.pembatalan_po = { tanpa_penerimaan: sesudahBatal.status, setelah_penerimaan: "DITOLAK" };
   return `PO tanpa penerimaan → DIBATALKAN; setelah penerimaan → ${pesan}`;
+});
+
+// D-64 / AC-18: production requires a production-order reference.
+await recordResult("AC-18", "Produksi wajib menyertakan wo_id", async () => {
+  await expectError(() => ajukanPR({ actor: AKTOR.produksi, baris: barisProduk }), "Perintah produksi wajib diisi");
+  const gudang = await ajukanPR({ actor: AKTOR.gudang, baris: barisProduk });
+  assert(gudang.permintaan_id, "Gudang tanpa wo_id harus berhasil");
+  return "Produksi tanpa wo_id ditolak; Gudang tanpa wo_id berhasil";
+});
+
+await recordResult("AC-19", "QC bernilai jurnal nol ditolak tanpa mutasi", async () => {
+  const pr = await ajukanPR({ actor: AKTOR.gudang, baris: barisProduk });
+  await periksa(pr.permintaan_id);
+  await setujui(pr.permintaan_id);
+  const po = await buatPO({ prId: pr.permintaan_id, baris: [{ produkId: MASTER.produk, qty: "1", hargaSatuan: "0.0001" }] });
+  const [item] = await barisPO(po.po_id);
+  const receipt = await terima({ poId: po.po_id, jenis: "PENUH", baris: [{ po_item_id: item.id, qty_diterima: "1" }] });
+  const [line] = await barisPenerimaan(receipt.penerimaan_id);
+  const before = await saldo(MASTER.produk, MASTER.gudang);
+  await expectError(() => qc({ penerimaanId: receipt.penerimaan_id, baris: [{ penerimaan_item_id: line.id, qty_lulus: "1" }] }), "nilai jurnal lebih dari nol");
+  assert(await saldo(MASTER.produk, MASTER.gudang) === before, "saldo tidak boleh berubah");
+  assert((await doc(receipt.penerimaan_id)).status === "DITERIMA", "status penerimaan tidak boleh berubah");
+  return "nilai nol ditolak dan saldo serta status tidak berubah";
+});
+
+// Fail each side effect inside the same transaction and verify all effects roll back.
+await recordResult("AC-16/17", "QC gagal atomik dan periode terkunci ditolak", async () => {
+  const pr = await ajukanPR({ actor: AKTOR.gudang, baris: barisProduk });
+  await periksa(pr.permintaan_id);
+  await setujui(pr.permintaan_id);
+  const po = await buatPO({ prId: pr.permintaan_id, baris: [{ produkId: MASTER.produk, qty: "1", hargaSatuan: "10" }] });
+  const [item] = await barisPO(po.po_id);
+  const penerimaan = await terima({ poId: po.po_id, jenis: "PENUH", baris: [{ po_item_id: item.id, qty_diterima: "1" }] });
+  const id = penerimaan.penerimaan_id;
+  const [baris] = await barisPenerimaan(id);
+  const before = await q(`select (select count(*) from public.mutasi_stok)::int as stok,
+    (select count(*) from public.jurnal)::int as jurnal,
+    (select count(*) from public.riwayat_status)::int as riwayat,
+    (select status from public.dokumen where id = $1) as status`, [id]);
+  await q("create function pg_temp.c013_fail() returns trigger language plpgsql as $$ begin raise exception 'uji gagal atomik'; end $$");
+  for (const table of ["mutasi_stok", "jurnal", "riwayat_status"]) {
+    await q(`create trigger c013_fail before insert on public.${table} for each row execute function pg_temp.c013_fail()`);
+    await expectError(() => qc({ penerimaanId: id, baris: [{ penerimaan_item_id: baris.id, qty_lulus: "1" }] }), "uji gagal atomik");
+    await q(`drop trigger c013_fail on public.${table}`);
+    const after = await q(`select (select count(*) from public.mutasi_stok)::int as stok,
+      (select count(*) from public.jurnal)::int as jurnal,
+      (select count(*) from public.riwayat_status)::int as riwayat,
+      (select status from public.dokumen where id = $1) as status`, [id]);
+    assert(JSON.stringify(after) === JSON.stringify(before), `perubahan parsial setelah ${table}`);
+  }
+  await q("insert into public.periode_akuntansi (tahun, bulan, status) values (2026, 11, 'kunci') on conflict (tahun, bulan) do update set status = 'kunci'");
+  await expectError(() => qc({ penerimaanId: id, baris: [{ penerimaan_item_id: baris.id, qty_lulus: "1" }] }), "dikunci");
+  const after = await q(`select (select count(*) from public.mutasi_stok)::int as stok,
+    (select count(*) from public.jurnal)::int as jurnal,
+    (select count(*) from public.riwayat_status)::int as riwayat,
+    (select status from public.dokumen where id = $1) as status`, [id]);
+  assert(JSON.stringify(after) === JSON.stringify(before), "perubahan parsial pada periode terkunci");
+  return "stok, jurnal, riwayat dan status tidak berubah pada kegagalan dan periode terkunci";
 });
 
 // ---------------------------------------------------------------------------
