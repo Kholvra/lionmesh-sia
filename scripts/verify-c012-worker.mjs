@@ -54,3 +54,30 @@ for (const scenario of ["timeout", "completion-fails", "success"]) {
   assert.equal(row.percobaan, 1);
   console.log(`[PASS] ${scenario}: ${row.status}, ${sends} pengiriman`);
 }
+
+{
+  const row = entry();
+  const client = clientFor(row);
+  let sends = 0;
+  let release;
+  let started;
+  const startedPromise = new Promise((resolve) => { started = resolve; });
+  const finishPromise = new Promise((resolve) => { release = resolve; });
+  const options = {
+    sekarang: new Date("2026-11-24T00:00:00Z"),
+    kirim: async () => {
+      sends += 1;
+      started();
+      await finishPromise;
+      return { ok: true, data: undefined };
+    },
+  };
+  const first = prosesAntreanEmail(client, options);
+  await startedPromise;
+  await prosesAntreanEmail(client, options);
+  release();
+  await first;
+  assert.equal(sends, 1);
+  assert.equal(row.status, "terkirim");
+  console.log("[PASS] concurrent: satu pengiriman selama worker lain berjalan");
+}
