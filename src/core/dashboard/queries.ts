@@ -3,6 +3,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { getDokumenExecutionContext } from "@/core/dokumen";
 import { DAFTAR_PERAN, type Peran } from "@/lib/auth/types";
 import { isRecord } from "@/lib/validation";
+import { readAllPages } from "./pagination";
 
 import {
   hitungKartu,
@@ -114,16 +115,18 @@ async function ambilDokumen(
     return { daftar: [], error: null };
   }
 
-  const { data, error } = await supabase
+  const { data, error } = await readAllPages((from, to) => supabase
     .from("dokumen")
     .select(
       "id,tipe,nomor,status,pembuat_id,approval_snapshot,siklus_approval,updated_at",
     )
     .in("status", [...statusMenunggu])
-    .order("updated_at", { ascending: true });
+    .order("updated_at", { ascending: true })
+    .order("id", { ascending: true })
+    .range(from, to));
 
   if (error) {
-    return { daftar: [], error: error.message };
+    return { daftar: [], error };
   }
 
   const daftar: DokumenMenunggu[] = [];
@@ -160,14 +163,18 @@ async function ambilPersetujuan(
     return { daftar: [], error: null };
   }
 
-  const { data, error } = await supabase
-    .from("riwayat_status")
-    .select("dokumen_id,level,actor_id,siklus_approval")
-    .in("dokumen_id", [...dokumenIds])
-    .eq("aksi", "SETUJUI");
-
-  if (error) {
-    return { daftar: [], error: error.message };
+  const data: unknown[] = [];
+  for (let index = 0; index < dokumenIds.length; index += 100) {
+    const ids = dokumenIds.slice(index, index + 100);
+    const result = await readAllPages((from, to) => supabase
+      .from("riwayat_status")
+      .select("dokumen_id,level,actor_id,siklus_approval")
+      .in("dokumen_id", [...ids])
+      .eq("aksi", "SETUJUI")
+      .order("id", { ascending: true })
+      .range(from, to));
+    if (result.error) return { daftar: [], error: result.error };
+    data.push(...result.data);
   }
 
   const daftar: PersetujuanTercatat[] = [];

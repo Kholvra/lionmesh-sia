@@ -1,5 +1,9 @@
 # C-014 — Bukti Verifikasi
 
+## Review pagination (2026-11-24)
+
+Query dokumen dan riwayat persetujuan dibaca per halaman, dengan urutan stabil; ID riwayat dibagi menjadi kelompok untuk membatasi panjang permintaan. Jika satu halaman gagal, hasil parsial ditolak. `node --test --experimental-strip-types src/core/dashboard/pagination.test.ts` menghasilkan 2 lulus, 0 gagal (2.001 baris dan kegagalan halaman kedua). `pnpm verify` menghasilkan 27 tes lulus, lint, typecheck, arch:check, dan build lulus pada Node 24 / pnpm 10.18.3. Ini belum menguji perubahan data bersamaan selama pagination atau database dengan lebih dari 1.000 dokumen.
+
 Tanggal: 2026-11-24
 Lingkungan: Node 24.22.2, pnpm 10.18.3, Next.js 16.4.6, Supabase lokal terisolasi
 (`127.0.0.1:55321`, database `127.0.0.1:55322`, seed versi `0004`).
