@@ -205,3 +205,5 @@ Terbaca per level. Semua item dalam satu baris boleh dikerjakan serentak. `DISC-
 | 2026-11-24 | `C-009` → `in progress`: tujuh laporan, filter satu bulan, hak PT-02, dan bukti AC-01–AC-11 ditulis; `pnpm verify` lulus. Menunggu review tech lead sebelum `done` |
 | 2026-11-26 | `C-009` → `done`: PR #36 merge; tujuh laporan, rekonsiliasi kartu vs buku besar (D-57), bukti dokumen batal end-to-end, AC-01–AC-11 PASS, screenshot 1280px berisi data |
 | 2026-11-24 | `C-012` → `done`: migrasi `0012` (notifikasi + antrean email), `core/notifikasi` (kejadian, jadwal percobaan, adaptor email, pemroses antrean), layar `/notifikasi`, dan `POST /api/notifikasi/kirim`. AC-01–AC-09 terbukti lewat `scripts/verify-c012-notifikasi.mjs`; AC-10 baru terbukti pada batas notifikasi karena rute dokumen tujuan belum ada. Usulan `done`, menunggu review tech lead |
+
+| 2026-11-24 | `C-012` tetap `in progress`: AC-10 parsial dan hasil kirim email yang tidak pasti memerlukan penanganan sebelum review selesai |

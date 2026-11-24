@@ -96,4 +96,5 @@ test("status gagal dan terkirim tidak pernah dicoba lagi (INV-03, AC-08)", () =>
   assert.equal(bolehDicoba("menunggu"), true);
   assert.equal(bolehDicoba("terkirim"), false);
   assert.equal(bolehDicoba("gagal"), false);
+  assert.equal(bolehDicoba("perlu_pemeriksaan"), false);
 });

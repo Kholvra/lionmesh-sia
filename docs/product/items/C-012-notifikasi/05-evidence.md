@@ -2,7 +2,7 @@
 
 Implementasi 2026-11-24 pada branch `c-012-notifikasi` oleh core track (owner item: tech lead). Semua verifikasi dijalankan terhadap Supabase lokal (Docker) dan dev server Next.js 16.
 
-Status item: **`done` (usulan, menunggu review tech lead)**. Kesepuluh AC terbukti; `AC-10` hanya terbukti pada batas notifikasi karena rute dokumen tujuan belum ada di repo ini (lihat catatan AC).
+Status item: **`in progress`**. AC-10 baru terbukti pada batas notifikasi; rute dokumen tujuan belum diuji. Penanganan hasil pengiriman yang tidak pasti masih perlu diperbaiki sebelum siap review.
 
 ## Lingkungan verifikasi
 
@@ -71,9 +71,9 @@ Setelah `jadwal.ts`, `isi.ts`, dan `date.ts` ditulis, tes yang sama berubah hija
 | `AC-01` | ✅ | `buat_notifikasi('DOKUMEN_MENUNGGU_PERSETUJUAN', [manajemen], 'UJI/2026/11/3382', …)` sebagai Purchasing → baris muncul di `select … from notifikasi` milik Manajemen; layar `/notifikasi` menampilkan judul "Dokumen menunggu persetujuan Anda — UJI/2026/11/3382" |
 | `AC-02` | ✅ | `GET /rest/v1/notifikasi?id=eq.<id>` sebagai `hr@lionmesh.test` → `[]` (RLS `penerima_id = auth.uid()`) |
 | `AC-03` | ✅ | Pemroses dengan penyedia uji mode `ok` → penyedia menerima 1 email ke `manajemen@lionmesh.test`; `pengiriman_email.status = 'terkirim'`, `terkirim_at` terisi |
-| `AC-04` | ✅ | Penyedia mode `gagal`, empat pemanggilan dengan jadwal dimajukan: `menunggu/1 → menunggu/2 → menunggu/3 → gagal/4`; `alasan` = "Email gagal setelah tiga percobaan otomatis. Alasan terakhir: Penyedia email menolak pengiriman (HTTP 500)." |
+| `AC-04` | ⚠️ bukti lama | Penyedia mode `gagal`, empat pemanggilan dengan jadwal dimajukan: `menunggu/1 → menunggu/2 → menunggu/3 → gagal/4`; `alasan` = "Email gagal setelah tiga percobaan otomatis. Alasan terakhir: Penyedia email menolak pengiriman (HTTP 500)." |
 | `AC-05` | ✅ | Penerima tanpa alamat email → `pengiriman_email.status = 'gagal'`, `alasan = 'Alamat email penerima belum diisi.'`; baris `notifikasi` tetap ada dan terbaca penerima |
-| `AC-06` | ✅ | Penyedia mode `down` (koneksi diputus): `buat_notifikasi` tetap sukses, baris notifikasi + antrean tersimpan, status tetap `menunggu` setelah percobaan pertama. Catatan: transaksi pemicu diwakili RPC `buat_notifikasi` karena modul dokumen pemakai (`PG-003`, `GJ-005`) belum ada |
+| `AC-06` | ⚠️ bukti lama | Penyedia mode `down` (koneksi diputus): `buat_notifikasi` tetap sukses, baris notifikasi + antrean tersimpan, status tetap `menunggu` setelah percobaan pertama. Catatan: transaksi pemicu diwakili RPC `buat_notifikasi` karena modul dokumen pemakai (`PG-003`, `GJ-005`) belum ada |
 | `AC-07` | ✅ | `rpc('tandai_notifikasi_dibaca')` sebagai penerima → `dibaca_at` terisi; layar menampilkan badge "Sudah dibaca" dan tombol hilang |
 | `AC-08` | ✅ | `update pengiriman_email set status='menunggu' where status='gagal'` → ditolak trigger: "Pengiriman email yang gagal tidak bisa dikirim ulang di versi awal." Pencarian kode: satu-satunya penulisan status ada di `prosesAntreanEmail`, dan `bolehDicoba()` hanya mengizinkan `menunggu` |
 | `AC-09` | ✅ | Payload email uji hanya memuat `subject`, `text`, `to`, `from`; teks berisi judul, nomor dokumen, dan tautan absolut — tanpa `Rp`, tanpa nominal. Fungsi `susunEmail()` hanya menerima tiga field tersebut |
@@ -159,3 +159,7 @@ State lain: `loading.tsx` (memuat notifikasi) dan `error.tsx` (notifikasi gagal 
 2. Penjadwal (cron) yang memanggil `POST /api/notifikasi/kirim`; pemilihan vendor SMTP (`PT-03`) saat adaptor disambungkan ke penyedia nyata.
 3. Layar antrean untuk pengelola sistem, bila `PT-05` dikunci dengan peran baru.
 4. Tautan notifikasi baru bisa diuji setelah rute dokumen tujuan ada (`AC-10`).
+
+## Review pengiriman tidak pasti — 2026-11-24
+
+Keputusan tech lead mengganti retry otomatis atas hasil yang tidak pasti: klaim menandai `perlu_pemeriksaan` sebelum menghubungi penyedia; tidak ada pengambilan ulang otomatis. `node --experimental-strip-types scripts/verify-c012-worker.mjs` menghasilkan PASS untuk timeout, kegagalan penyimpanan setelah pengiriman, dan sukses; masing-masing hanya satu pengiriman. DDL migrasi 0012 dan perubahan yang kini bernomor 0013 diterapkan pada salinan database terisolasi; uji SQL mengonfirmasi status, klaim kedua 0 baris, transisi ke terkirim, dan rollback. Uji integrasi penyedia end-to-end dan AC-10 masih perlu diperbarui; bukti AC-04/AC-06 lama di atas tidak berlaku untuk aturan baru.

@@ -20,6 +20,7 @@ const STATUS_EMAIL: readonly StatusOption[] = [
   { label: "Menunggu", tone: "warning", value: "menunggu" },
   { label: "Terkirim", tone: "success", value: "terkirim" },
   { label: "Gagal", tone: "danger", value: "gagal" },
+  { label: "Perlu pemeriksaan", tone: "warning", value: "perlu_pemeriksaan" },
 ];
 
 const STATUS_BACA: readonly StatusOption[] = [
@@ -94,7 +95,7 @@ export function DaftarNotifikasi({ errorMessage, rows }: DaftarNotifikasiProps) 
             <span className={`${styles.cellStack} ${styles.cellEmail}`}>
               <StatusBadge status={kirim.status} statuses={STATUS_EMAIL} />
               <span className={styles.cellMeta}>
-                {kirim.status === "gagal"
+                {kirim.status === "gagal" || kirim.status === "perlu_pemeriksaan"
                   ? (kirim.alasan ?? "Alasan tidak tersedia.")
                   : `${kirim.alamat} · ${kirim.percobaan} percobaan`}
               </span>

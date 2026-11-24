@@ -16,8 +16,8 @@ export interface HalamanNotifikasiData {
 
 /**
  * Antrean email diproses saat layar dibuka: belum ada penjadwal di lingkungan
- * ini, dan percobaan tetap dibatasi serta diberi jeda (PT-07). Kegagalan kirim
- * hanya mengubah status antrean, tidak menyentuh transaksi pemicu (INV-02).
+ * ini. Hasil pengiriman yang belum pasti menunggu pemeriksaan manusia;
+ * transaksi pemicu tetap tidak terpengaruh (INV-02).
  */
 async function prosesAntreanYangJatuhTempo(): Promise<void> {
   const konteks = await getNotifikasiQueueContext();

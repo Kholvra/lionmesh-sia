@@ -39,7 +39,7 @@ Item ini tidak memegang uang atau stok. Namun menyentuh **data pribadi** (alamat
 | ID | On success, MUST guarantee | Preserved values/state | Side effects |
 |---|---|---|---|
 | `POST-01` | notifikasi tersimpan untuk penerima yang berhak | transaksi pemicu | — |
-| `POST-02` | setiap email punya status `menunggu`, `terkirim`, atau `gagal` | — | antrean |
+| `POST-02` | setiap email punya status `menunggu`, `terkirim`, `gagal`, atau `perlu_pemeriksaan` | — | antrean |
 | `POST-03` | isi email tidak memuat angka keuangan (PT-05, `[USULAN-AGEN]`) | — | — |
 
 ## Invariants and state transitions
@@ -53,15 +53,16 @@ Item ini tidak memegang uang atau stok. Namun menyentuh **data pribadi** (alamat
 
 | Dari | Ke | Pemicu |
 |---|---|---|
-| `menunggu` | `terkirim` | penyedia menerima |
-| `menunggu` | `gagal` | tiga percobaan otomatis habis (PT-07, `[USULAN-AGEN]`) |
+| `menunggu` | `perlu_pemeriksaan` | diklaim sebelum panggilan penyedia |
+| `perlu_pemeriksaan` | `terkirim` | penyedia menerima dan hasil tercatat |
+| `menunggu` | `gagal` | alamat kosong |
 | `gagal` | — | tidak ada transisi keluar di versi awal (PT-07) |
 
 ## Failure and recovery semantics
 
 | Kegagalan | Perilaku yang diwajibkan | Pemulihan |
 |---|---|---|
-| Penyedia email mati | status tetap `menunggu`; transaksi tidak batal `[USULAN]` | percobaan otomatis sampai tiga kali (PT-07), lalu `gagal` |
+| Penyedia email mati atau hasil tidak pasti | status `perlu_pemeriksaan`; transaksi tidak batal | pemeriksaan manual; tidak ada retry otomatis |
 | Alamat kosong | `gagal` dengan alasan | perbaiki data penerima |
 
 ## Architecture boundaries
@@ -79,7 +80,7 @@ Item ini tidak memegang uang atau stok. Namun menyentuh **data pribadi** (alamat
 | `INV-03` | tidak ada kirim ulang manual atau `gagal` → `menunggu` | pencarian kode | `05-evidence.md` AC-08 | `Unverified` |
 | `INV-04` | tautan tanpa hak ditolak | uji perilaku | `05-evidence.md` AC-10 | `Unverified` |
 | `PRE-02` | alamat kosong → `gagal` | uji perilaku | `05-evidence.md` AC-05 | `Unverified` |
-| `POST-02` | status selalu salah satu dari tiga nilai | uji fixture | `05-evidence.md` AC-03, AC-04 | `Unverified` |
+| `POST-02` | status selalu salah satu dari empat nilai | uji fixture | `05-evidence.md` AC-03, AC-04 | `Unverified` |
 | `INV-01` | notifikasi tidak bocor | uji perilaku | `05-evidence.md` AC-02 | `Unverified` |
 | `INV-02` | transaksi tidak batal karena email gagal | uji perilaku | `05-evidence.md` AC-06 | `Unverified` |
 
@@ -94,3 +95,7 @@ Item ini tidak memegang uang atau stok. Namun menyentuh **data pribadi** (alamat
 | Batas `FND-007` (PT-06) | `Proposed` `[USULAN-AGEN]` (koordinasi) | dependensi UI tidak tercatat |
 | Preferensi pengguna (PT-08) | `Terjawab — D-50` (ditunda) | — |
 | Email slip karyawan (makalah penggajian) vs `D-18` slip dicetak | `Terjawab — D-18`, `D-53` | kanal email untuk karyawan tidak dibangun |
+
+## Keputusan tech lead 2026-11-24
+
+Hasil yang tidak pasti tidak dicoba ulang otomatis; status `perlu_pemeriksaan` dicatat sebelum memanggil penyedia. Ini menggantikan PT-07 untuk kegagalan pengiriman yang hasilnya tidak dapat dibuktikan. Bila proses berhenti atau penyimpanan hasil gagal, status itu tetap tersimpan. Uji worker mencakup timeout, kegagalan menyimpan hasil, dan sukses.

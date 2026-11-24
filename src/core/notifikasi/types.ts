@@ -1,4 +1,4 @@
-export const STATUS_PENGIRIMAN_EMAIL = ["menunggu", "terkirim", "gagal"] as const;
+export const STATUS_PENGIRIMAN_EMAIL = ["menunggu", "terkirim", "gagal", "perlu_pemeriksaan"] as const;
 
 export type StatusPengirimanEmail = (typeof STATUS_PENGIRIMAN_EMAIL)[number];
 

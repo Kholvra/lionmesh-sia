@@ -83,6 +83,7 @@ async function periksa(id, nama, fn) {
 
 const emailDiterima = [];
 let modeEmail = "ok";
+let panggilanEmail = 0;
 
 const serverEmail = createServer((req, res) => {
   if (req.url === "/kontrol" && req.method === "POST") {
@@ -104,6 +105,7 @@ const serverEmail = createServer((req, res) => {
     return;
   }
 
+  panggilanEmail += 1;
   if (modeEmail === "down") {
     req.socket.destroy();
     return;
@@ -313,29 +315,21 @@ await periksa("AC-09", "isi email tanpa angka keuangan", async () => {
 });
 
 // AC-04 -----------------------------------------------------------------------
-await periksa("AC-04", "empat percobaan gagal menandai status gagal dengan alasan", async () => {
+await periksa("AC-04", "hasil tidak pasti tidak dicoba ulang otomatis", async () => {
   const id = await buat(purchasing, "PR_DITOLAK", [idHr], `${NOMOR}-TOLAK`, "/pengeluaran/permintaan-pembelian");
   await aturMode("gagal");
-
-  const jejak = [];
-  for (let i = 0; i < 4; i += 1) {
-    await majukanJadwal(id);
-    await jalankanPemroses();
-    const baris = await barisNotifikasi(id);
-    jejak.push(`${i + 1}:${baris.status}/${baris.percobaan}`);
-
-    if (i < 3) {
-      assert(baris.status === "menunggu", `percobaan ${i + 1} seharusnya menunggu, dapat ${baris.status}`);
-      assert(baris.jadwal_berikutnya !== null, "jadwal berikutnya kosong saat menunggu");
-    } else {
-      assert(baris.status === "gagal", `percobaan 4 seharusnya gagal, dapat ${baris.status}`);
-      assert(baris.jadwal_berikutnya === null, "status gagal masih punya jadwal");
-      assert(/tiga percobaan otomatis/.test(baris.alasan ?? ""), `alasan: ${baris.alasan}`);
-    }
-  }
-
+  await majukanJadwal(id);
+  const sebelum = panggilanEmail;
+  await jalankanPemroses();
+  const pertama = await barisNotifikasi(id);
+  assert(pertama.status === "perlu_pemeriksaan", `status ${pertama.status}`);
+  assert(pertama.percobaan === 1 && pertama.jadwal_berikutnya === null, "pengiriman tidak boleh dijadwalkan ulang");
+  await jalankanPemroses();
+  const kedua = await barisNotifikasi(id);
+  assert(kedua.status === "perlu_pemeriksaan" && kedua.percobaan === 1, "status atau jumlah percobaan berubah");
+  assert(panggilanEmail === sebelum + 1, "penyedia dipanggil lebih dari sekali");
   await aturMode("ok");
-  return jejak.join(" → ");
+  return "status perlu_pemeriksaan; satu panggilan penyedia meskipun pemroses dijalankan dua kali";
 });
 
 // AC-05 -----------------------------------------------------------------------
@@ -374,11 +368,11 @@ await periksa("AC-06", "penyedia email mati tidak menggagalkan kejadian pemicu",
   await majukanJadwal(id);
   const proses = await jalankanPemroses();
   const sesudah = await barisNotifikasi(id);
-  assert(sesudah.status === "menunggu", `status setelah gagal kirim ${sesudah.status}`);
+  assert(sesudah.status === "perlu_pemeriksaan", `status setelah gagal kirim ${sesudah.status}`);
   assert(sesudah.percobaan === 1, `percobaan ${sesudah.percobaan}`);
 
   await aturMode("ok");
-  return `kejadian tetap tersimpan; status menunggu setelah percobaan pertama (diproses ${proses.diproses})`;
+  return `kejadian tetap tersimpan; status perlu_pemeriksaan setelah percobaan pertama (diproses ${proses.diproses})`;
 });
 
 // AC-07 -----------------------------------------------------------------------

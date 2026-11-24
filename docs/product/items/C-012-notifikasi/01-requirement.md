@@ -30,7 +30,7 @@ Pengguna yang berhak menerima notifikasi:
 
 - melihat notifikasi di dalam aplikasi;
 - menerima email untuk notifikasi yang memang dikirim lewat email;
-- dapat melihat status setiap pengiriman, apakah `menunggu`, `terkirim`, atau `gagal`.
+- dapat melihat status setiap pengiriman, apakah `menunggu`, `terkirim`, `gagal`, atau `perlu_pemeriksaan`.
 
 Pengguna yang tidak berhak tidak melihat notifikasi itu.
 
@@ -63,8 +63,9 @@ Pengguna yang tidak berhak tidak melihat notifikasi itu.
 | Entitas | Dari | Ke | Pemicu |
 |---|---|---|---|
 | Notifikasi in-app | `belum dibaca` | `sudah dibaca` | penerima membuka notifikasi `[USULAN]` |
-| Pengiriman email | `menunggu` | `terkirim` | email diterima penyedia |
-| Pengiriman email | `menunggu` | `gagal` | tiga percobaan otomatis habis (PT-07, `[USULAN-AGEN]`) |
+| Pengiriman email | `menunggu` | `perlu_pemeriksaan` | diklaim sebelum permintaan ke penyedia; hasil belum pasti |
+| Pengiriman email | `perlu_pemeriksaan` | `terkirim` | penyedia menyatakan berhasil dan hasil tercatat |
+| Pengiriman email | `menunggu` | `gagal` | alamat penerima kosong |
 | Pengiriman email | `gagal` | — | tidak ada transisi keluar; tidak ada kirim ulang manual di versi awal (PT-07) |
 
 ## Validasi dan pesan
@@ -72,7 +73,7 @@ Pengguna yang tidak berhak tidak melihat notifikasi itu.
 | Kondisi gagal | Perilaku yang diharapkan |
 |---|---|
 | Alamat email penerima kosong | pengiriman email ditandai `gagal` dengan alasan yang bisa dibaca; notifikasi in-app tetap ada |
-| Penyedia email tidak bisa dijangkau | status `menunggu` selama percobaan, `gagal` setelah tiga percobaan (PT-07); transaksi pemicu tidak gagal `[USULAN]` |
+| Penyedia email tidak bisa dijangkau atau hasil tidak pasti | status `perlu_pemeriksaan`, tanpa retry otomatis; transaksi pemicu tidak gagal |
 | Penerima tidak berhak | notifikasi tidak muncul di daftarnya |
 
 Teks final ditentukan implementasi.
@@ -98,3 +99,7 @@ Teks final ditentukan implementasi.
 Prioritas di analisis (P2) berbeda dari level di backlog (1). Urutan sudah ditulis di `D-34` (gelombang 2); prioritas P2 disahkan `D-50`.
 
 Nomor urut `sequence: 4` mengikuti urutan baris Core di `backlog.md`. Lihat catatan di `C-009`.
+
+## Klarifikasi tech lead 2026-11-24
+
+Kebijakan tiga retry PT-07 diganti untuk hasil pengiriman tidak pasti: status `perlu_pemeriksaan` disimpan sebelum memanggil penyedia dan tidak dicoba ulang otomatis, termasuk setelah timeout, crash atau kegagalan menyimpan hasil. Pengiriman ulang atau rekonsiliasi manual melalui UI belum tersedia; verifikasi dilakukan di penyedia oleh operator. Alamat kosong tetap `gagal`.
