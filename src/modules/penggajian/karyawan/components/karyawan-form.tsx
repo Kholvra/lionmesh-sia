@@ -9,7 +9,7 @@ import { useAksiForm } from "@/modules/penggajian/karyawan/components/use-aksi-f
 import { TIPE_KARYAWAN } from "@/modules/penggajian/karyawan/rules";
 import type { DaftarAktif, Karyawan } from "@/modules/penggajian/karyawan/types";
 import { Notice } from "@/modules/penggajian/ui/notice";
-import ui from "@/modules/penggajian/ui/ui.module.css";
+import { ui } from "@/modules/penggajian/ui/kelas";
 
 type KaryawanFormProps = {
   aksi: (state: AksiState, formData: FormData) => Promise<AksiState>;
@@ -101,7 +101,7 @@ export function KaryawanForm({ aksi, batalHref, daftar, karyawan }: KaryawanForm
       )}
 
       <div className={ui.formActions}>
-        <button className={`${ui.button} ${ui.primary}`} disabled={pending} type="submit">
+        <button className={ui.buttonPrimary} disabled={pending} type="submit">
           {pending ? "Menyimpan…" : ubah ? "Simpan perubahan" : "Simpan karyawan"}
         </button>
         <Link className={ui.button} href={batalHref}>

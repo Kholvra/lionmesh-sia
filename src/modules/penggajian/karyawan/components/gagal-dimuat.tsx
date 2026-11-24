@@ -1,6 +1,6 @@
 "use client";
 
-import ui from "@/modules/penggajian/ui/ui.module.css";
+import { ui } from "@/modules/penggajian/ui/kelas";
 
 export function KaryawanGagalDimuat({ onRetry }: { onRetry: () => void }) {
   return (

@@ -7,7 +7,7 @@ import { ConfirmDialog, Form, FormField, Input } from "@/components/ui";
 import type { AksiState } from "@/modules/penggajian/karyawan/actions";
 import { useAksiForm } from "@/modules/penggajian/karyawan/components/use-aksi-form";
 import { Notice } from "@/modules/penggajian/ui/notice";
-import ui from "@/modules/penggajian/ui/ui.module.css";
+import { ui } from "@/modules/penggajian/ui/kelas";
 
 type NonaktifFormProps = {
   aksi: (state: AksiState, formData: FormData) => Promise<AksiState>;
@@ -48,7 +48,7 @@ export function NonaktifForm({ aksi, batalHref, nama }: NonaktifFormProps) {
           </FormField>
         </div>
         <div className={ui.formActions}>
-          <button className={`${ui.button} ${ui.danger}`} disabled={pending} type="submit">
+          <button className={ui.buttonDanger} disabled={pending} type="submit">
             {pending ? "Menyimpan…" : "Nonaktifkan karyawan"}
           </button>
           <Link className={ui.button} href={batalHref}>

@@ -8,7 +8,7 @@ import type { DataTableColumn, TableSort } from "@/components/ui";
 import { samarkanRekening } from "@/modules/penggajian/karyawan/format";
 import type { BarisKaryawan } from "@/modules/penggajian/karyawan/queries";
 import { STATUS_KARYAWAN } from "@/modules/penggajian/karyawan/status";
-import ui from "@/modules/penggajian/ui/ui.module.css";
+import { ui } from "@/modules/penggajian/ui/kelas";
 
 type FilterStatus = "AKTIF" | "NONAKTIF" | "SEMUA";
 
@@ -63,7 +63,7 @@ function buildColumns(
       header: "Aksi",
       align: "right",
       render: (row) => (
-        <Link className={`${ui.button} ${ui.small}`} href={`/penggajian/karyawan/${row.id}`}>
+        <Link className={ui.buttonSmall} href={`/penggajian/karyawan/${row.id}`}>
           Lihat
         </Link>
       ),

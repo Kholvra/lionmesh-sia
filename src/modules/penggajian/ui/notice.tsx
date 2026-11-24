@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 
-import styles from "@/modules/penggajian/ui/ui.module.css";
+import { ui } from "@/modules/penggajian/ui/kelas";
 
 type NoticeProps = {
   tone: "success" | "danger" | "warning" | "info";
@@ -10,9 +10,9 @@ type NoticeProps = {
 
 export function Notice({ children, title, tone }: NoticeProps) {
   return (
-    <div className={styles.notice} data-tone={tone} role={tone === "danger" ? "alert" : "status"}>
-      <p className={styles.noticeTitle}>{title}</p>
-      {children ? <div className={styles.noticeBody}>{children}</div> : null}
+    <div className={ui.notice} data-tone={tone} role={tone === "danger" ? "alert" : "status"}>
+      <p className={ui.noticeTitle}>{title}</p>
+      {children ? <div className={ui.noticeBody}>{children}</div> : null}
     </div>
   );
 }

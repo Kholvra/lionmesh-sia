@@ -1,6 +1,6 @@
 import Link from "next/link";
 
-import ui from "@/modules/penggajian/ui/ui.module.css";
+import { ui } from "@/modules/penggajian/ui/kelas";
 
 export function TidakBerwenang() {
   return (
@@ -29,7 +29,7 @@ export function BelumAdaKaryawan({ bolehTambah }: { bolehTambah: boolean }) {
       <h3 className={ui.cardTitle}>Belum ada data karyawan</h3>
       <p>Tambahkan karyawan pertama agar presensi dan penggajian bisa dicatat.</p>
       {bolehTambah ? (
-        <Link className={`${ui.button} ${ui.primary}`} href="/penggajian/karyawan/tambah">
+        <Link className={ui.buttonPrimary} href="/penggajian/karyawan/tambah">
           Tambah karyawan
         </Link>
       ) : null}

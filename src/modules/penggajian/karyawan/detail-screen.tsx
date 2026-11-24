@@ -12,7 +12,7 @@ import { aksesSesi } from "@/modules/penggajian/karyawan/sesi";
 import { KEADAAN_GAJI, STATUS_KARYAWAN } from "@/modules/penggajian/karyawan/status";
 import { Notice } from "@/modules/penggajian/ui/notice";
 import { PageHeader } from "@/modules/penggajian/ui/page-header";
-import ui from "@/modules/penggajian/ui/ui.module.css";
+import { ui } from "@/modules/penggajian/ui/kelas";
 
 const ITEM = "GJ-001 Mengelola data karyawan";
 const KEMBALI = { href: "/penggajian/karyawan", label: "Data karyawan" };
@@ -158,7 +158,7 @@ async function DetailKonten({ id, pesan }: { id: string; pesan?: string }) {
             <div className={ui.formActions}>
               {bolehUbah ? (
                 <>
-                  <Link className={`${ui.button} ${ui.primary}`} href={`/penggajian/karyawan/${id}/ubah`}>Edit data</Link>
+                  <Link className={ui.buttonPrimary} href={`/penggajian/karyawan/${id}/ubah`}>Edit data</Link>
                   <Link className={ui.button} href={`/penggajian/karyawan/${id}/status`}>Ubah status</Link>
                 </>
               ) : null}

@@ -8,7 +8,7 @@ import { getDaftarAktif, getKaryawanUntukUbah } from "@/modules/penggajian/karya
 import { aksesSesi } from "@/modules/penggajian/karyawan/sesi";
 import { Notice } from "@/modules/penggajian/ui/notice";
 import { PageHeader } from "@/modules/penggajian/ui/page-header";
-import ui from "@/modules/penggajian/ui/ui.module.css";
+import { ui } from "@/modules/penggajian/ui/kelas";
 
 const ITEM = "GJ-001 Mengelola data karyawan";
 const DAFTAR = { href: "/penggajian/karyawan", label: "Data karyawan" };

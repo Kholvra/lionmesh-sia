@@ -1,7 +1,7 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 
-import styles from "@/modules/penggajian/ui/ui.module.css";
+import { ui } from "@/modules/penggajian/ui/kelas";
 
 type PageHeaderProps = {
   item: string;
@@ -13,21 +13,21 @@ type PageHeaderProps = {
 
 export function PageHeader({ actions, back, description, item, title }: PageHeaderProps) {
   return (
-    <header className={styles.header}>
+    <header className={ui.header}>
       {back ? (
-        <Link className={styles.backLink} href={back.href}>
+        <Link className={ui.backLink} href={back.href}>
           ← {back.label}
         </Link>
       ) : null}
-      <p className={styles.breadcrumb}>
-        <span className={styles.breadcrumbCycle}>Siklus Penggajian</span> / {item}
+      <p className={ui.breadcrumb}>
+        <span className={ui.breadcrumbCycle}>Siklus Penggajian</span> / {item}
       </p>
-      <div className={styles.headerRow}>
-        <div className={styles.headerText}>
-          <h1 className={styles.title}>{title}</h1>
-          {description ? <p className={styles.description}>{description}</p> : null}
+      <div className={ui.headerRow}>
+        <div className={ui.headerText}>
+          <h1 className={ui.title}>{title}</h1>
+          {description ? <p className={ui.description}>{description}</p> : null}
         </div>
-        {actions ? <div className={styles.actions}>{actions}</div> : null}
+        {actions ? <div className={ui.actions}>{actions}</div> : null}
       </div>
     </header>
   );

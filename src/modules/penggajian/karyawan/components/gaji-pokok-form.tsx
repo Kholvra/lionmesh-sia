@@ -4,7 +4,7 @@ import { Form, FormField, Input } from "@/components/ui";
 import type { AksiState } from "@/modules/penggajian/karyawan/actions";
 import { useAksiForm } from "@/modules/penggajian/karyawan/components/use-aksi-form";
 import { Notice } from "@/modules/penggajian/ui/notice";
-import ui from "@/modules/penggajian/ui/ui.module.css";
+import { ui } from "@/modules/penggajian/ui/kelas";
 
 type GajiPokokFormProps = {
   aksi: (state: AksiState, formData: FormData) => Promise<AksiState>;
@@ -27,7 +27,7 @@ export function GajiPokokForm({ aksi }: GajiPokokFormProps) {
         <Input type="date" />
       </FormField>
       <div className={ui.formActions}>
-        <button className={`${ui.button} ${ui.primary}`} disabled={pending} type="submit">
+        <button className={ui.buttonPrimary} disabled={pending} type="submit">
           {pending ? "Menyimpan…" : "Tambah gaji pokok"}
         </button>
       </div>

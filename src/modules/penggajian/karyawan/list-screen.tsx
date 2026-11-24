@@ -6,7 +6,7 @@ import { KaryawanTable, KaryawanTableLoading } from "@/modules/penggajian/karyaw
 import { listKaryawan } from "@/modules/penggajian/karyawan/queries";
 import { aksesSesi } from "@/modules/penggajian/karyawan/sesi";
 import { PageHeader } from "@/modules/penggajian/ui/page-header";
-import ui from "@/modules/penggajian/ui/ui.module.css";
+import { ui } from "@/modules/penggajian/ui/kelas";
 
 const ITEM = "GJ-001 Mengelola data karyawan";
 const JUDUL = "Data karyawan";
@@ -29,7 +29,7 @@ async function DaftarKaryawan() {
       <PageHeader
         actions={
           akses.bolehMengubah ? (
-            <Link className={`${ui.button} ${ui.primary}`} href="/penggajian/karyawan/tambah">
+            <Link className={ui.buttonPrimary} href="/penggajian/karyawan/tambah">
               Tambah karyawan
             </Link>
           ) : null
