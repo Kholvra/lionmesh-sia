@@ -3,7 +3,7 @@
 Tanggal: 2026-11-24
 Lingkungan: Supabase lokal Docker (`127.0.0.1:54322`), Next.js 16.4.6 dev
 (`http://127.0.0.1:3002`), Node 24.22.2, Firefox 159 (headless, bukti teks).
-Status: **SIAP REVIEW** — belum di-merge, belum boleh disebut `done`.
+Status: **BELUM SIAP REVIEW** — AC-09 dan AC-11 masih parsial. Screenshot 1280px tersedia di bawah.
 
 ## Perintah yang dijalankan
 
@@ -72,9 +72,9 @@ Kartu persediaan November: saldo awal **100 unit / 1.000.000,00**; masuk
 | `AC-06` | PASS | Buku besar dibuka dua kali; seluruh nilai `Rp …` yang diekstrak dari teks halaman identik. |
 | `AC-07` | PASS | `detail_jurnal.debit` tersimpan `5000000.00` (query `::text`) dan tampil `Rp 5.000.000,00`. Unit test `formatRupiah` memakai BigInt sen, bukan floating point. |
 | `AC-08` | PASS | Login `penjualan@lionmesh.test` membuka `/laporan/neraca-saldo?periode=2026-11`: halaman “Akses ditolak” dan tidak ada pola `Rp <angka>,00` di respons. |
-| `AC-09` | PASS* | Daftar jurnal: 8 jurnal / 16 baris / total Rp 12.700.000,00 — sama dengan hitung `detail_jurnal`. Arus kas: 5 baris akun 102. Kartu persediaan: 3 mutasi, total masuk/keluar dan saldo sama dengan buku stok. Lihat catatan penyimpangan di bawah. |
+| `AC-09` | ⚠️ parsial | Daftar jurnal: 8 jurnal / 16 baris / total Rp 12.700.000,00 — sama dengan hitung `detail_jurnal`. Arus kas: 5 baris akun 102. Kartu persediaan: 3 mutasi, total masuk/keluar dan saldo sama dengan buku stok. Lihat catatan penyimpangan di bawah. |
 | `AC-10` | PASS | `GET /laporan/neraca-saldo?periode=2026-11,2026-12`: pesan “Pilih tepat satu bulan kalender” dan tidak ada angka laporan. |
-| `AC-11` | PASS* | Buku besar menampilkan jurnal asal `UJI-C009-009` dan jurnal pembalik `UJI-C009-010`; saldo akhir tetap Rp 11.000.000,00 (netto nol). Dokumen batal tanpa jurnal tidak mungkin muncul karena laporan hanya membaca `detail_jurnal`. Lihat catatan. |
+| `AC-11` | ⚠️ parsial | Buku besar menampilkan jurnal asal `UJI-C009-009` dan jurnal pembalik `UJI-C009-010`; saldo akhir tetap Rp 11.000.000,00 (netto nol). Dokumen batal tanpa jurnal tidak mungkin muncul karena laporan hanya membaca `detail_jurnal`. Lihat catatan. |
 
 ## Penyimpangan dan keterbatasan
 
@@ -88,12 +88,7 @@ Kartu persediaan November: saldo awal **100 unit / 1.000.000,00**; masuk
    dokumen pada periode uji ini. Sifat laporan yang hanya membaca `detail_jurnal`
    membuat dokumen tanpa jurnal tidak dapat muncul; kasus jurnal pembalik
    dibuktikan penuh. Uji dokumen batal end-to-end menunggu modul dokumen.
-3. **Screenshot 1280px belum tersedia.** Sesi desktop Hyprland terkunci saat
-   pengambilan gambar, dan browser headless tidak mempertahankan cookie sesi
-   Supabase. Bukti visual diganti dengan pembacaan teks halaman yang dirender
-   server pada 1280px (lebar konten mengikuti token `--layout-content-max`).
-   Jalankan `pnpm dev`, masuk sebagai Accounting, lalu buka
-   `/laporan/buku-besar?periode=2026-11` pada 1280px untuk melihat layar.
+3. **Screenshot 1280px.** [`c009-neraca-saldo-1280.png`](c009-neraca-saldo-1280.png) diambil 2026-11-24 pada browser Brave headless, sesi Accounting, `http://localhost:3009/laporan/neraca-saldo?periode=2026-11`. Database lokal pada saat pengambilan tidak memiliki jurnal untuk periode ini, sehingga screenshot membuktikan tata letak dan empty state, bukan nilai laporan. Badge dev Next.js masih terlihat; lihat ISSUE-002.
 4. **Periode tanpa jurnal** menampilkan nol dan tabel kosong; halaman tidak
    melempar error. Ini mengikuti edge case `01-requirement.md`.
 5. **Hak akses** mengikuti PT-02 `[USULAN-AGEN]`: Accounting, Manajemen,
