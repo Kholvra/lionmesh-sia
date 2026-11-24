@@ -784,7 +784,10 @@ await recordResult("AC-19", "QC bernilai jurnal nol ditolak tanpa mutasi", async
   const receipt = await terima({ poId: po.po_id, jenis: "PENUH", baris: [{ po_item_id: item.id, qty_diterima: "1" }] });
   const [line] = await barisPenerimaan(receipt.penerimaan_id);
   const before = await saldo(MASTER.produk, MASTER.gudang);
+  const [jurnalBefore] = await q("select count(*)::int as jumlah from public.jurnal");
   await expectError(() => qc({ penerimaanId: receipt.penerimaan_id, baris: [{ penerimaan_item_id: line.id, qty_lulus: "1" }] }), "nilai jurnal lebih dari nol");
+  const [jurnalAfter] = await q("select count(*)::int as jumlah from public.jurnal");
+  assert(jurnalAfter.jumlah === jurnalBefore.jumlah, "jurnal tidak boleh berubah");
   assert(await saldo(MASTER.produk, MASTER.gudang) === before, "saldo tidak boleh berubah");
   assert((await doc(receipt.penerimaan_id)).status === "DITERIMA", "status penerimaan tidak boleh berubah");
   return "nilai nol ditolak dan saldo serta status tidak berubah";

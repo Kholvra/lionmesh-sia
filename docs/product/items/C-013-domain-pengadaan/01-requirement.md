@@ -135,3 +135,5 @@ Nomor urut `sequence: 5` mengikuti urutan baris Core di `backlog.md`. Lihat cata
 ## Klarifikasi D-64
 
 PR Produksi wajib membawa `wo_id`; Gudang boleh kosong. Validasi keberadaan mengikuti tersedianya domain Produksi (PR-002), tanpa FK sampai target tersedia. QC lulus, mutasi stok, jurnal dan riwayat harus atomik; kegagalan satu bagian menggagalkan semuanya. Ledger FND-006 menolak jurnal ke periode `kunci`; penerimaan yang belum menghasilkan jurnal tidak ditolak semata karena periode terkunci.
+
+QC lulus ditolak tanpa efek bila nilai jurnal setelah pembulatan nol; kebijakan khusus barang gratis belum ditetapkan (keputusan tech lead di `00-discussion.md`).

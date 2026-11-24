@@ -1,7 +1,7 @@
 # Design Contract: C-013 — Domain pengadaan
 
 - Source: `docs/product/items/C-013-domain-pengadaan/01-requirement.md` (`C-013`)
-- Acceptance criteria: `02-acceptance-criteria.md` (`AC-01`…`AC-18`)
+- Acceptance criteria: `02-acceptance-criteria.md` (`AC-01`…`AC-19`)
 - Status: `Proposed` — sinkronisasi dan verifikasi penuh masih diperlukan; lihat `05-evidence.md`
 - Profile: product app — dokumen pembelian, stok, dan batas modul
 - Scope: PR, PO, penerimaan; status dokumen; pemanggilan stok dan approval
