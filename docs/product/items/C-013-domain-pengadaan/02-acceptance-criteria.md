@@ -19,11 +19,10 @@ Setiap kriteria harus bisa dibuktikan dengan perintah atau langkah yang bisa diu
 | `AC-13` | Setiap QC lulus menghasilkan jurnal Dr `persediaan_bahan` / Cr `gr_ir` senilai qty lolos × harga PO (`D-44` (1), `D-35`). Penerimaan yang belum QC tidak menghasilkan jurnal. | Catat penerimaan lalu QC lulus untuk qty uji. Hitung baris jurnal sebelum dan sesudah. Periksa akun dan nilai. |
 | `AC-14` | Pemohon PR tidak bisa menyetujui PR miliknya sendiri (`D-42`, `D-48`). | Login sebagai pemohon, coba setujui PR-nya. Ditolak dengan pesan. |
 | `AC-15` | Pembatalan PR `DISETUJUI` oleh pemohon atau PO `DITERBITKAN` tanpa penerimaan oleh Purchasing pembuat dengan alasan berhasil. Setelah penerimaan pertama, PO tidak bisa dibatalkan (D-64). | Batalkan PO tanpa penerimaan: berhasil dengan alasan. Catat satu PO yang sudah punya penerimaan, coba batalkan: ditolak. |
-
 | `AC-16` | QC lulus bersifat atomik untuk status, riwayat, mutasi, saldo dan jurnal. | Paksa kegagalan stok, jurnal, dan riwayat masing-masing; bandingkan seluruh data sebelum dan sesudah, tidak ada perubahan parsial. Ulangi tanpa kegagalan dan periksa semuanya tersimpan. |
 | `AC-17` | Posting QC pada periode `kunci` ditolak tanpa perubahan status, stok, riwayat atau jurnal. | Kunci periode pada fixture terisolasi; coba QC lulus dan bandingkan seluruh data sebelum dan sesudah. |
 | `AC-18` | PR Produksi tanpa `wo_id` ditolak; validasi keberadaan dilakukan bila domain PR-002 tersedia. | Uji PR Produksi tanpa referensi dan PR Gudang tanpa referensi; uji referensi tidak ada setelah integrasi PR-002 tersedia. |
-
+| `AC-19` | QC lulus dengan nilai jurnal setelah pembulatan nol ditolak tanpa mengubah stok, jurnal atau status. | Buat penerimaan qty 1 dengan harga 0,0001, coba QC lulus, lalu bandingkan saldo, jurnal dan status sebelum dan sesudah. |
 
 ## Edge cases (optional)
 
@@ -37,3 +36,5 @@ Setiap kriteria harus bisa dibuktikan dengan perintah atau langkah yang bisa diu
 - AC-08 → hitung baris dan pencarian kode.
 - AC-09 → pencarian kode yang bisa diulang; hasilnya dicatat di `05-evidence.md`.
 - AC-10 → pembanding snapshot, bukan pemeriksaan manual.
+
+- AC-16 sampai AC-19 → uji kegagalan atomik, periode terkunci, referensi Produksi, dan nilai jurnal nol pada database uji terisolasi.

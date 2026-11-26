@@ -1,8 +1,8 @@
 # Design Contract: C-013 — Domain pengadaan
 
 - Source: `docs/product/items/C-013-domain-pengadaan/01-requirement.md` (`C-013`)
-- Acceptance criteria: `02-acceptance-criteria.md` (`AC-01`…`AC-18`)
-- Status: `Proposed` — belum diverifikasi; semua aturan `Unverified`
+- Acceptance criteria: `02-acceptance-criteria.md` (`AC-01`…`AC-19`)
+- Status: `Proposed` — sinkronisasi dan verifikasi penuh masih diperlukan; lihat `05-evidence.md`
 - Profile: product app — dokumen pembelian, stok, dan batas modul
 - Scope: PR, PO, penerimaan; status dokumen; pemanggilan stok dan approval
 - Owner: tech lead
@@ -29,7 +29,7 @@
 |---|---|---|---|---|
 | `PRE-01` | PR diajukan | pemohon berperan Gudang atau Produksi (matriks-izin, D-33); jenis dokumen terdaftar | core pengadaan | tolak |
 | `PRE-02` | PO dibuat | PR berstatus `DISETUJUI`; pembuat berperan Purchasing (D-33) | core pengadaan | tolak; pesan menyebut status PR |
-| `PRE-03` | Penerimaan dicatat | PO berstatus aktif; PO dapat menerima barang; pemeriksaan periode dilakukan saat posting jurnal melalui FND-006 | core pengadaan | tolak |
+| `PRE-03` | Penerimaan dicatat | PO berstatus aktif; periode diperiksa saat posting jurnal QC oleh FND-006 | core pengadaan | tolak |
 | `PRE-04` | Dokumen dibatalkan | PR oleh pemohon sebelum PO terbit; PO oleh Purchasing pembuat sebelum penerimaan; alasan wajib (D-57, D-64) | core pengadaan | tolak |
 | `PRE-05` | PR disetujui | aktor bukan pemohon PR (`D-42`, `D-48`) | core pengadaan | tolak; pesan menyatakan pemohon tidak boleh menyetujui |
 
@@ -70,14 +70,14 @@ State transition (dari D-46 dan D-47; nama terjawab, PT-03; status terpisah per 
 | PO | `DITERBITKAN` | `DITERIMA_SEBAGIAN` → `DITERIMA` | ya; total ≤ qty PO (`INV-06`, AC-12) |
 | Penerimaan QC | `DITERIMA` | `QC_LULUS` atau `QC_GAGAL` | ya; `QC_LULUS` memicu stok masuk dan jurnal (D-36, `POST-05`) |
 | PR | `DIAJUKAN`, `MENUNGGU_PERSETUJUAN`, `REVISI`, `DISETUJUI`, `PEMASOK_DITETAPKAN` | `DIBATALKAN` | ya, pemohon, alasan wajib, sebelum PO terbit (D-57) |
-| PO | `DITERBITKAN` | `DIBATALKAN` | ya, sebelum penerimaan pertama (PT-13) |
+| PO | `DITERBITKAN` | `DIBATALKAN` | ya, oleh Purchasing pembuat sebelum penerimaan pertama (D-64) |
 | PO | sudah ada penerimaan | `DIBATALKAN` | tidak (AC-15) |
 
 ## Failure and recovery semantics
 
 | Kegagalan | Perilaku yang diwajibkan | Pemulihan |
 |---|---|---|
-| Mutasi stok gagal saat penerimaan | transaksi QC dibatalkan seluruhnya | perbaiki sebab, catat ulang |
+| Mutasi stok gagal saat QC | transaksi QC dibatalkan seluruhnya | perbaiki sebab, catat ulang |
 | Status PO tidak bisa diperbarui karena dokumen sudah diubah pengguna lain | tolak dengan pesan "dokumen sudah diproses" (optimistic lock, analisis §10.5 `[USULAN]`) | muat ulang dokumen |
 | QC diposting ke periode terkunci | tolak (`PRE-03`) | pindahkan tanggal ke periode terbuka |
 
@@ -92,9 +92,9 @@ State transition (dari D-46 dan D-47; nama terjawab, PT-03; status terpisah per 
 
 | Contract ID | Observable oracle | Check type/owner | Evidence | Status |
 |---|---|---|---|---|
-| `B-02` | `actor_id` dari klien diabaikan | uji perilaku | `05-evidence.md` AC-02 | `Unverified` |
+| `B-02` | `actor_id` dari klien diabaikan | uji lintas sesi | belum tersedia | `Unverified` |
 | `B-03` | Produksi tidak menulis tabel PR langsung | pencarian kode | `05-evidence.md` AC-09 | `Unverified` |
-| `B-04` | mutasi gagal → penerimaan tidak tersimpan | uji fixture | `05-evidence.md` AC-06 | `Unverified` |
+| `B-04` | mutasi gagal → transaksi QC tidak mengubah penerimaan atau stok | uji fixture | `05-evidence.md` AC-16 | `Verified` |
 | `PRE-01` | peran tidak berhak tidak bisa mengajukan | uji perilaku (hak: `D-33`, `D-42`) | `05-evidence.md` AC-01 | `Unverified` |
 | `PRE-05` | pemohon tidak bisa menyetujui PR miliknya | uji perilaku | `05-evidence.md` AC-14 | `Unverified` |
 | `PRE-02` | PO dari PR ditolak tidak tersimpan | uji perilaku | `05-evidence.md` AC-02, AC-03 | `Unverified` |
@@ -131,3 +131,7 @@ State transition (dari D-46 dan D-47; nama terjawab, PT-03; status terpisah per 
 ## Klarifikasi D-64
 
 QC lulus, perubahan status dan riwayat, stok, dan jurnal terjadi dalam satu transaksi; kegagalan salah satunya membatalkan semuanya. PR Produksi wajib membawa `wo_id`; validasi keberadaan dan FK mengikuti tersedianya PR-002. PO hanya dibatalkan Purchasing pembuat sebelum penerimaan pertama. Pemeriksaan periode oleh FND-006 berlaku pada posting jurnal.
+
+## Penyesuaian hasil review
+
+QC ditolak jika nilai jurnal setelah pembulatan nol; lihat bukti AC-19. PR Produksi tanpa `wo_id` ditolak (AC-18); keberadaan referensi diuji setelah PR-002 tersedia.
