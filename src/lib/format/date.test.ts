@@ -13,4 +13,5 @@ test("tanggal dan waktu tampil dalam Asia/Jakarta", () => {
 
 test("tanggal tidak valid ditandai, bukan dikarang", () => {
   assert.equal(formatTanggal("bukan-tanggal"), "—");
+  assert.equal(formatTanggalWaktu(""), "—");
 });

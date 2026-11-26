@@ -108,7 +108,7 @@ Sebagian tidak memblokir siklus mana pun. Dua di antaranya (`C-011`, `C-013`) me
 | `C-009` | Laporan keuangan | CORE-A laporan | 1 | `FND-006` | `done` |
 | `C-010` | Tutup buku & jurnal penutup | CORE-B tutup | 2 | `C-009`, `FND-006` | `specified` |
 | `C-011` | Master data terpadu: produk, gudang, satuan | CORE-C master | 1 | `FND-002` | `done` |
-| `C-012` | Notifikasi in-app + email | CORE-C master | 1 | `FND-004` | `ready` |
+| `C-012` | Notifikasi in-app + email | CORE-C master | 1 | `FND-004` | `done` |
 | `C-013` | Domain pengadaan: tabel + aturan status (permintaan, PO, penerimaan) | CORE-D pengadaan | 1 | `FND-002`, `FND-004`, `FND-005`, `FND-006` | `done` |
 | `C-014` | Dashboard: ringkasan + antrean "menunggu tindakan saya" (fitur `C8`) | CORE-E dashboard | 1 | `FND-003`, `FND-004` | `done` |
 
@@ -204,3 +204,7 @@ Terbaca per level. Semua item dalam satu baris boleh dikerjakan serentak. `DISC-
 | 2026-11-26 | `C-014` → `done`: PR #34 merge; read model `src/core/dashboard`, layar `/`, dan bukti AC-01–AC-08 di `05-evidence.md`; urutan prioritas mengikuti D-65 |
 | 2026-11-24 | `C-009` → `in progress`: tujuh laporan, filter satu bulan, hak PT-02, dan bukti AC-01–AC-11 ditulis; `pnpm verify` lulus. Menunggu review tech lead sebelum `done` |
 | 2026-11-26 | `C-009` → `done`: PR #36 merge; tujuh laporan, rekonsiliasi kartu vs buku besar (D-57), bukti dokumen batal end-to-end, AC-01–AC-11 PASS, screenshot 1280px berisi data |
+| 2026-11-24 | `C-012` → `done`: migrasi `0012` (notifikasi + antrean email), `core/notifikasi` (kejadian, jadwal percobaan, adaptor email, pemroses antrean), layar `/notifikasi`, dan `POST /api/notifikasi/kirim`. AC-01–AC-09 terbukti lewat `scripts/verify-c012-notifikasi.mjs`; AC-10 baru terbukti pada batas notifikasi karena rute dokumen tujuan belum ada. Usulan `done`, menunggu review tech lead |
+
+| 2026-11-24 | `C-012` tetap `in progress`: AC-10 parsial dan hasil kirim email yang tidak pasti memerlukan penanganan sebelum review selesai |
+| 2026-11-26 | `C-012` → `done`: PR #33 merge; migrasi `0012`+`0013`, `core/notifikasi`, layar `/notifikasi`, aturan `D-66` terbukti (worker 4/4, skrip 11/11). AC-10 pada batas notifikasi; pemicu nyata menunggu modul pemilik |

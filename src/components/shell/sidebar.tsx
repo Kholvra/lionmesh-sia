@@ -11,6 +11,8 @@ import styles from "./sidebar.module.css";
 const ICON_PATHS: Record<NavIcon, string> = {
   dashboard:
     "M4 13h6V4H4v9Zm0 7h6v-5H4v5Zm9 0h7v-9h-7v9Zm0-16v5h7V4h-7Z",
+  notifikasi:
+    "M12 4a5 5 0 0 0-5 5v3.5L5 17h14l-2-4.5V9a5 5 0 0 0-5-5Zm0 17a2.5 2.5 0 0 0 2.45-2h-4.9A2.5 2.5 0 0 0 12 21Z",
   pendapatan: "M12 3v18M8 7h6a3 3 0 0 1 0 6H8m0 0h7",
   pengeluaran:
     "M3 7h18v10H3V7Zm14 5h2M3 10h18",

@@ -1,5 +1,6 @@
 export type NavIcon =
   | "dashboard"
+  | "notifikasi"
   | "pendapatan"
   | "pengeluaran"
   | "produksi"
@@ -28,6 +29,7 @@ export const NAV_PRIMARY: NavItem[] = [
 ];
 
 export const NAV_UTILITY: NavItem[] = [
+  { label: "Notifikasi", href: "/notifikasi", icon: "notifikasi", tersedia: true },
   { label: "Pengaturan", href: "/pengaturan", icon: "pengaturan", tersedia: true },
 ];
 
