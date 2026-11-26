@@ -87,3 +87,10 @@ Total 10. Terjawab `D-xx`: 6 (Q-01, Q-02, Q-07, Q-08, Q-09, Q-10; Q-07 dan Q-08 
 - `docs/product/policies/matriks-izin.md` (Pengeluaran: ajukan PR, periksa PR)
 - `docs/product/reference/analisis-sia.md` §2.3, §4.1, §5.3, §6.4, §8.1, §8.2
 - `docs/architecture/contracts/ARCH-001-batas-core-modul/contract.md`
+
+## Catatan eksekusi (2026-11-26)
+
+- Implementasi dimulai pada branch stacked di atas C-011 dan C-013 karena PR #35 dan #37 belum merge.
+- Layar dan actions PG-002 ada di `src/modules/pengeluaran/permintaan/`; query baca ada di `src/core/pengadaan/queries.ts`.
+- Status dependency tetap belum `done`; item ini belum boleh di-merge ke `main` sebelum C-011/C-013 masuk.
+- Bukti database belum dijalankan karena tidak ada Supabase lokal.
