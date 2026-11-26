@@ -161,3 +161,46 @@ export function hitungKartuPersediaan(
     saldoAkhirNilaiCents: saldoNilai.toString(),
   };
 }
+
+export interface RekonsiliasiPersediaan {
+  nilaiMutasiCents: string;
+  nilaiJurnalCents: string;
+  selisihCents: string;
+  cocok: boolean;
+}
+
+/**
+ * Net signed mutasi value (masuk − keluar) in cents for one set of movements.
+ * Sign follows qty so callers never reinterpret `tipe` labels.
+ */
+export function hitungTotalNilaiMutasiCents(
+  mutasi: readonly MutasiKartu[],
+): string {
+  let total = BigInt(0);
+  for (const item of mutasi) {
+    const qty = parseDesimal(item.qty, SKALA_QTY);
+    const nilai = parseDesimal(item.nilai, SKALA_UANG);
+    total += qty > BigInt(0) ? nilai : -nilai;
+  }
+  return total.toString();
+}
+
+/**
+ * Aggregate control total comparing stock movements against persediaan
+ * journals (D-57 "dicocokkan"). A non-zero selisih is surfaced, never hidden;
+ * per-product linkage waits for the product → account mapping (PR-006/INT-003).
+ */
+export function rekonsiliasiPersediaan(
+  nilaiMutasiCents: string | bigint,
+  nilaiJurnalCents: string | bigint,
+): RekonsiliasiPersediaan {
+  const mutasi = BigInt(nilaiMutasiCents);
+  const jurnal = BigInt(nilaiJurnalCents);
+  const selisih = mutasi - jurnal;
+  return {
+    nilaiMutasiCents: mutasi.toString(),
+    nilaiJurnalCents: jurnal.toString(),
+    selisihCents: selisih.toString(),
+    cocok: selisih === BigInt(0),
+  };
+}

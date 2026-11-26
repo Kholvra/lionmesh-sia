@@ -4,6 +4,8 @@ import test from "node:test";
 import {
   hitungKartuPersediaan,
   hitungSaldoKartu,
+  hitungTotalNilaiMutasiCents,
+  rekonsiliasiPersediaan,
   uangMentahKeCents,
   type MutasiKartu,
 } from "./report.ts";
@@ -96,4 +98,28 @@ test("kartu persediaan tanpa mutasi menampilkan saldo awal", () => {
   assert.equal(laporan.baris.length, 0);
   assert.equal(laporan.saldoAkhirQty, "7,5");
   assert.equal(laporan.saldoAkhirNilaiCents, "9000");
+});
+
+test("total nilai mutasi memakai tanda qty, bukan label tipe", () => {
+  const rows = [
+    mutasi("MASUK", "50.0000", "600000"),
+    mutasi("KELUAR", "-30.0000", "300000"),
+  ];
+
+  assert.equal(hitungTotalNilaiMutasiCents(rows), "30000000");
+  assert.equal(hitungTotalNilaiMutasiCents([]), "0");
+});
+
+test("rekonsiliasi cocok saat selisih nol dan menandai selisih", () => {
+  const cocok = rekonsiliasiPersediaan("8333333", "8333333");
+
+  assert.equal(cocok.cocok, true);
+  assert.equal(cocok.selisihCents, "0");
+
+  const selisih = rekonsiliasiPersediaan("8333333", "-150000000");
+
+  assert.equal(selisih.cocok, false);
+  assert.equal(selisih.nilaiMutasiCents, "8333333");
+  assert.equal(selisih.nilaiJurnalCents, "-150000000");
+  assert.equal(selisih.selisihCents, "158333333");
 });

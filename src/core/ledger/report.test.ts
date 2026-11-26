@@ -6,8 +6,10 @@ import {
   hitungLabaRugi,
   hitungNeraca,
   hitungNeracaSaldo,
+  isPeranPersediaan,
   saldoNetoCents,
   susunDaftarJurnal,
+  totalJurnalPersediaanCents,
   type BarisLaporan,
 } from "./report.ts";
 
@@ -294,4 +296,30 @@ test("angka laporan identik untuk data yang sama", () => {
   assert.deepEqual(hitungLabaRugi(rows), hitungLabaRugi(rows));
   assert.deepEqual(hitungNeracaSaldo(rows), hitungNeracaSaldo(rows));
   assert.deepEqual(hitungBukuBesar(rows, AKUN.kas, "0"), hitungBukuBesar(rows, AKUN.kas, "0"));
+});
+
+test("total jurnal persediaan hanya menjumlah akun peran persediaan", () => {
+  const rows = [
+    baris("persediaan_bahan", "1500000.00", "0.00"),
+    baris("kas", "2000000.00", "0.00"),
+    baris("persediaan_bahan", "0.00", "3000000.00"),
+  ];
+
+  assert.equal(totalJurnalPersediaanCents(rows), "-150000000");
+});
+
+test("total jurnal persediaan nol saat tidak ada baris persediaan", () => {
+  assert.equal(
+    totalJurnalPersediaanCents([baris("kas", "10.00", "0.00")]),
+    "0",
+  );
+  assert.equal(totalJurnalPersediaanCents([]), "0");
+});
+
+test("isPeranPersediaan mengenali tiga peran akun persediaan", () => {
+  assert.equal(isPeranPersediaan("persediaan_bahan"), true);
+  assert.equal(isPeranPersediaan("barang_dalam_proses"), true);
+  assert.equal(isPeranPersediaan("persediaan_barang_jadi"), true);
+  assert.equal(isPeranPersediaan("kas_bank"), false);
+  assert.equal(isPeranPersediaan("hpp"), false);
 });

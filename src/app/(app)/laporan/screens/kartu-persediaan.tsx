@@ -3,12 +3,15 @@ import type { ReactNode } from "react";
 import {
   hitungKartuPersediaan,
   hitungSaldoKartu,
+  hitungTotalNilaiMutasiCents,
   listGudangRingkas,
   listMutasiKartu,
+  listMutasiPeriode,
   listProdukRingkas,
+  rekonsiliasiPersediaan,
   uangMentahKeCents,
 } from "@/core/inventory";
-import { parsePeriode } from "@/core/ledger";
+import { listBarisJurnal, parsePeriode, totalJurnalPersediaanCents } from "@/core/ledger";
 import type { Profile } from "@/lib/auth/types";
 import { formatTanggal } from "@/lib/format/date";
 import { formatRupiah } from "@/lib/format/money";
@@ -123,9 +126,37 @@ export async function KartuPersediaanScreen({ profil, params }: Props) {
       periode.data.kunci,
     );
   }
-
   const saldoAwal = hitungSaldoKartu(mutasiSebelum.data);
   const laporan = hitungKartuPersediaan(mutasiPeriode.data, saldoAwal);
+
+  const [semuaMutasi, semuaBarisJurnal] = await Promise.all([
+    listMutasiPeriode(supabase, {
+      mulai: periode.data.mulai,
+      selesai: periode.data.selesai,
+    }),
+    listBarisJurnal(supabase, {
+      mulai: periode.data.mulai,
+      selesai: periode.data.selesai,
+    }),
+  ]);
+
+  if (!semuaMutasi.ok) {
+    return bingkai(
+      <GagalMemuat pesan={semuaMutasi.message} />,
+      periode.data.kunci,
+    );
+  }
+  if (!semuaBarisJurnal.ok) {
+    return bingkai(
+      <GagalMemuat pesan={semuaBarisJurnal.message} />,
+      periode.data.kunci,
+    );
+  }
+
+  const rekonsiliasi = rekonsiliasiPersediaan(
+    hitungTotalNilaiMutasiCents(semuaMutasi.data),
+    totalJurnalPersediaanCents(semuaBarisJurnal.data),
+  );
 
   const rows: ReportRow[] = laporan.baris.map((item) => ({
     key: item.id,
@@ -209,6 +240,32 @@ export async function KartuPersediaanScreen({ profil, params }: Props) {
           ]}
           emptyMessage="Belum ada mutasi stok pada periode ini."
           rows={rows}
+        />
+      </section>
+      <section>
+        <SectionHeader
+          judul="Rekonsiliasi dengan buku besar"
+          meta={`${periode.data.label} · agregat seluruh produk dan gudang`}
+        />
+        <Ringkasan
+          items={[
+            {
+              label: "Total nilai mutasi",
+              nilai: formatRupiah(rekonsiliasi.nilaiMutasiCents),
+            },
+            {
+              label: "Total jurnal persediaan",
+              nilai: formatRupiah(rekonsiliasi.nilaiJurnalCents),
+            },
+            {
+              label: "Selisih",
+              nilai: formatRupiah(rekonsiliasi.selisihCents),
+            },
+            {
+              label: "Status",
+              nilai: rekonsiliasi.cocok ? "Cocok" : "Selisih",
+            },
+          ]}
         />
       </section>
     </>,

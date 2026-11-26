@@ -113,6 +113,57 @@ export async function listMutasiKartu(
   return ok(hasil);
 }
 
+export interface FilterMutasiPeriode {
+  /** Batas bawah inklusif, ISO dengan offset. */
+  mulai?: string;
+  /** Batas atas eksklusif, ISO dengan offset. */
+  selesai?: string;
+}
+
+/**
+ * All stock movements in a period across products and warehouses. Used only
+ * for the aggregate reconciliation control total; per-product cards keep
+ * using `listMutasiKartu`.
+ */
+export async function listMutasiPeriode(
+  supabase: SupabaseClient,
+  filter: FilterMutasiPeriode = {},
+): Promise<Result<MutasiKartu[]>> {
+  const hasil: MutasiKartu[] = [];
+
+  for (let offset = 0; ; offset += UKURAN_HALAMAN) {
+    let query = supabase
+      .from("mutasi_stok")
+      .select(
+        "id, tanggal, tipe, qty::text, nilai::text, harga_satuan::text, sumber_tipe, sumber_id, alasan",
+      )
+      .order("tanggal", { ascending: true })
+      .order("id", { ascending: true })
+      .range(offset, offset + UKURAN_HALAMAN - 1);
+
+    if (filter.mulai) query = query.gte("tanggal", filter.mulai);
+    if (filter.selesai) query = query.lt("tanggal", filter.selesai);
+
+    const { data, error } = await query;
+    if (error) {
+      return fail(`Gagal membaca mutasi stok: ${error.message}`);
+    }
+    if (!Array.isArray(data)) {
+      return fail("Respons mutasi stok tidak valid.");
+    }
+
+    for (const item of data) {
+      const mutasi = petakanMutasi(item);
+      if (!mutasi) return fail("Data mutasi stok tidak lengkap.");
+      hasil.push(mutasi);
+    }
+
+    if (data.length < UKURAN_HALAMAN) break;
+  }
+
+  return ok(hasil);
+}
+
 export async function listProdukRingkas(
   supabase: SupabaseClient,
 ): Promise<Result<ProdukRingkas[]>> {

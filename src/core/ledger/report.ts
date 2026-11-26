@@ -40,6 +40,32 @@ export function kelompokAkun(peran: string): KelompokAkun {
   return null;
 }
 
+const PERAN_PERSEDIAAN = [
+  "persediaan_bahan",
+  "barang_dalam_proses",
+  "persediaan_barang_jadi",
+] as const;
+
+export function isPeranPersediaan(peran: string): boolean {
+  return (PERAN_PERSEDIAAN as readonly string[]).includes(peran);
+}
+
+/**
+ * Net persediaan journal movement (debit − credit) in cents for one period.
+ * Used by the kartu persediaan reconciliation control total (D-57): journals
+ * carry no product breakdown, so the ledger side is always aggregate.
+ */
+export function totalJurnalPersediaanCents(
+  baris: readonly BarisLaporan[],
+): string {
+  let total = BigInt(0);
+  for (const item of baris) {
+    if (!isPeranPersediaan(item.akunPeran)) continue;
+    total += moneyToCents(item.debit) - moneyToCents(item.kredit);
+  }
+  return total.toString();
+}
+
 export interface BarisLaporan {
   barisId: string;
   jurnalId: string;

@@ -94,9 +94,9 @@ async function siapkanFixture() {
   );
 
   await client.query(
-    `insert into public.produk (id, kode, nama, satuan_dasar_id)
+    `insert into public.produk (id, kode, nama, satuan_dasar_id, tipe)
      values ($1, 'UJI-C009', 'Produk uji C-009',
-       'f0080000-0000-4000-8000-000000000001')
+       'f0080000-0000-4000-8000-000000000001', 'barang_jadi')
      on conflict (kode) do nothing`,
     [PRODUK_UJI],
   );
@@ -379,13 +379,42 @@ await harusMemuat(
     "Qty keluar",
     "50",
     "100 unit · Rp 1.083.333,33",
+    "Rekonsiliasi dengan buku besar",
+    "Total nilai mutasi",
+    "Rp 83.333,33",
+    "Total jurnal persediaan",
+    "-Rp 1.500.000,00",
+    "Rp 1.583.333,33",
+    "Status",
+    "Selisih",
   ],
   "AC-09 kartu persediaan",
 );
+
+const { rows: [rekJurnal] } = await client.query(
+  `select round(sum(d.debit - d.kredit), 2)::text as neto
+   from public.detail_jurnal d
+   join public.jurnal j on j.id = d.jurnal_id
+   join public.akun a on a.id = d.akun_id
+   where j.tanggal >= '2026-11-01T00:00:00+07:00'
+     and j.tanggal < '2026-12-01T00:00:00+07:00'
+     and a.peran in (
+       'persediaan_bahan', 'barang_dalam_proses', 'persediaan_barang_jadi'
+     )`,
+);
+assert.equal(rekJurnal.neto, "-1500000.00", "AC-09: sisi jurnal rekonsiliasi");
+
+const { rows: [rekMutasi] } = await client.query(
+  `select round(sum(case when qty > 0 then nilai else -nilai end), 2)::text as neto
+   from public.mutasi_stok
+   where tanggal >= '2026-11-01T00:00:00+07:00'
+     and tanggal < '2026-12-01T00:00:00+07:00'`,
+);
+assert.equal(rekMutasi.neto, "83333.33", "AC-09: sisi mutasi rekonsiliasi");
 catat(
   "AC-09",
   "daftar jurnal, arus kas, dan kartu persediaan memakai baris ledger",
-  "8 jurnal / 16 baris / 3 mutasi",
+  "8 jurnal / 16 baris / 3 mutasi / rekonsiliasi cocok-SQL",
 );
 
 const sesudah = await hitungBaris();
@@ -449,12 +478,50 @@ assert.ok(
 );
 catat("AC-10", "rentang lebih dari satu bulan ditolak");
 
+const jurnalSebelumDokumen = await hitungBaris();
+const { rows: [dibuat] } = await client.query(
+  `select public.buat_dokumen(
+     'PERMINTAAN_PEMBELIAN', $1::uuid, 1500000, '2026-11-18'
+   ) as hasil`,
+  [ACTOR_ACCOUNTING],
+);
+const dokumenUji = dibuat.hasil.dokumen;
+assert.ok(dokumenUji && dokumenUji.id, "AC-11: dokumen uji harus terbuat");
+await client.query(
+  `select public.batalkan_dokumen(
+     $1::uuid, $2::bigint, $3::uuid, 'Uji batal C-009'
+   )`,
+  [dokumenUji.id, dokumenUji.versi, ACTOR_ACCOUNTING],
+);
+const jurnalSesudahDokumen = await hitungBaris();
+assert.deepEqual(
+  jurnalSesudahDokumen,
+  jurnalSebelumDokumen,
+  "AC-11: dokumen batal tanpa jurnal tidak boleh menulis jurnal",
+);
+const nomorDokumen = String(dokumenUji.nomor ?? dokumenUji.id);
+const bukuBesarUlang = await ambil(
+  cookieAccounting,
+  `/laporan/buku-besar?periode=2026-11&akun=${akun.kas}`,
+);
+assert.ok(
+  !bukuBesarUlang.teks.includes(nomorDokumen),
+  "AC-11: nomor dokumen batal tidak boleh muncul di buku besar",
+);
+const daftarUlang = await ambil(
+  cookieAccounting,
+  "/laporan/daftar-jurnal?periode=2026-11",
+);
+assert.ok(
+  !daftarUlang.teks.includes(nomorDokumen),
+  "AC-11: nomor dokumen batal tidak boleh muncul di daftar jurnal",
+);
 assert.ok(
   bukuBesar.teks.includes("UJI-C009-009") &&
     bukuBesar.teks.includes("UJI-C009-010"),
   "AC-11: jurnal asal dan jurnal pembalik harus tampil",
 );
-catat("AC-11", "jurnal asal dan pembalik tampil, saldo netto nol");
+catat("AC-11", "dokumen batal tanpa jurnal tidak muncul; jurnal pembalik netto nol");
 
 console.log("");
 console.log(`C-009 verification: ${lulus} pemeriksaan lulus.`);
