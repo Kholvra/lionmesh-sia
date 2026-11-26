@@ -68,6 +68,12 @@ export const MATRIKS_IZIN = {
   jurnal_payroll: ["Accounting"],
   lihat_laporan_payroll: ["HR", "Accounting", "Direksi"],
 
+  // Core master data (C-011, PT-06)
+  kelola_kategori_produk: ["Produksi"],
+  kelola_satuan: ["Produksi"],
+  kelola_gudang: ["Gudang"],
+  kelola_mata_uang: ["Accounting"],
+
   // Tambahan default (D-58)
   ubah_batal_perintah_produksi: ["Produksi"],
   lihat_bom: ["Produksi", "Gudang", "Purchasing", "Manajemen", "Accounting"],

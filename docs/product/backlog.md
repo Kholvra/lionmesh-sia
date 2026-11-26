@@ -107,7 +107,7 @@ Sebagian tidak memblokir siklus mana pun. Dua di antaranya (`C-011`, `C-013`) me
 |---|---|---|---|---|---|
 | `C-009` | Laporan keuangan | CORE-A laporan | 1 | `FND-006` | `ready` |
 | `C-010` | Tutup buku & jurnal penutup | CORE-B tutup | 2 | `C-009`, `FND-006` | `specified` |
-| `C-011` | Master data terpadu: produk, gudang, satuan | CORE-C master | 1 | `FND-002` | `ready` |
+| `C-011` | Master data terpadu: produk, gudang, satuan | CORE-C master | 1 | `FND-002` | `in progress` |
 | `C-012` | Notifikasi in-app + email | CORE-C master | 1 | `FND-004` | `ready` |
 | `C-013` | Domain pengadaan: tabel + aturan status (permintaan, PO, penerimaan) | CORE-D pengadaan | 1 | `FND-002`, `FND-004`, `FND-005`, `FND-006` | `ready` |
 | `C-014` | Dashboard: ringkasan + antrean "menunggu tindakan saya" (fitur `C8`) | CORE-E dashboard | 1 | `FND-003`, `FND-004` | `ready` |
@@ -194,5 +194,5 @@ Terbaca per level. Semua item dalam satu baris boleh dikerjakan serentak. `DISC-
 | 2026-11-23 | Tambah `PG-011` laporan pembelian/utang/pengeluaran kas (track `PG-F`, level 10) untuk menutup rujukan melingkar `C-009` ↔ `PG-009`; `EPIC-PG` dan `PG-009` diperbaiki di PR yang sama |
 | 2026-11-23 | Gelombang 1 → `ready`: `PD-001`, `PG-001`, `PG-010`, `GJ-001`, `C-009`, `C-011`, `C-012`. Readiness review disegarkan setelah `FND-009` `done`; DDL tetap lewat usulan dan nomor tech lead (`D-09`) |
 | 2026-11-23 | `PG-001` mulai dikerjakan setelah fondasi `FND-001`–`FND-007` selesai; migrasi `0009`, core service, UI, dan validasi server ditambahkan. Verifikasi database tertunda karena Docker tidak tersedia |
-
 | 2026-11-24 | `C-013` dan `C-014` → `ready` setelah keputusan tech lead D-64; lima track core boleh paralel sesuai D-65 |
+| 2026-11-24 | `C-011` → `in progress`: migrasi `0011`, `core/master`, empat layar master di `/pengaturan`, seed mata uang IDR versi `0005`, dan bukti AC-01–AC-11. Sisa bukti lintas item (pemilihan di dokumen dan dokumen lama) menunggu `PD-002`/`PG-002` |
