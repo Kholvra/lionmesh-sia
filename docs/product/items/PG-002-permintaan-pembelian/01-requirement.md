@@ -8,7 +8,7 @@ lane: active
 sequence: unset # graph (D-03); bukan urutan serial
 type: feature
 req_status: specified
-delivery_status: not_started
+delivery_status: in_progress
 priority: P0 # usulan dari analisis-sia §5.3; belum dikonfirmasi
 size: M # usulan agen; belum disetujui
 depends_on:

@@ -181,3 +181,18 @@ export interface HasilQC {
   totalNilai: string;
   jurnalId: string | null;
 }
+
+export interface PermintaanPembelianView {
+  dokumenId: string;
+  nomor: string;
+  status: StatusDokumen;
+  versi: number;
+  pemohonId: string;
+  pemohonNama: string;
+  gudangId: string;
+  woId: string | null;
+  keterangan: string | null;
+  tanggalButuh: string;
+  createdAt: string;
+  updatedAt: string;
+}
