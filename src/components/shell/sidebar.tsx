@@ -4,7 +4,14 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 import { SignOutButton } from "@/components/sign-out-button";
-import { cocokRute, NAV_PRIMARY, NAV_UTILITY, type NavIcon } from "./nav";
+import type { Peran } from "@/lib/auth/types";
+import {
+  cocokRute,
+  NAV_PRIMARY,
+  NAV_UTILITY,
+  type NavIcon,
+  type NavItem,
+} from "./nav";
 
 import styles from "./sidebar.module.css";
 
@@ -22,6 +29,8 @@ const ICON_PATHS: Record<NavIcon, string> = {
     "M16 20v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M9 10a4 4 0 1 0 0-8 4 4 0 0 0 0 8Zm9-7a4 4 0 0 1 0 7.7",
   laporan:
     "M4 20V6m0 14h16M8 16V9m4 7v-4m4 4V7",
+  periode:
+    "M12 6v6l4 2M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z",
   pengaturan:
     "M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6Zm7.4-3a7.4 7.4 0 0 0-.1-1.2l2-1.5-2-3.4-2.3 1a7.4 7.4 0 0 0-2-1.2L14.6 3h-4l-.4 2.5a7.4 7.4 0 0 0-2 1.2l-2.3-1-2 3.4 2 1.5a7.4 7.4 0 0 0 0 2.4l-2 1.5 2 3.4 2.3-1a7.4 7.4 0 0 0 2 1.2l.4 2.5h4l.4-2.5a7.4 7.4 0 0 0 2-1.2l2.3 1 2-3.4-2-1.5c.1-.4.1-.8.1-1.2Z",
 };
@@ -48,12 +57,23 @@ export function Sidebar({
   peran,
 }: {
   nama: string;
-  peran: string | null;
+  peran: Peran | null;
 }) {
   const pathname = usePathname();
+  const primary = NAV_PRIMARY.filter(
+    (item) => !item.peran || (peran !== null && item.peran.includes(peran)),
+  );
+  const utility = NAV_UTILITY.filter(
+    (item) => !item.peran || (peran !== null && item.peran.includes(peran)),
+  );
+  // Keep the parent section active on child screens, matching the shell
+  // pattern: Laporan stays orange while /laporan/periode is open.
+  const activeHref = [...primary, ...utility].find(
+    (item) => item.tersedia && cocokRute(pathname, item.href),
+  )?.href;
 
-  function renderItem(item: (typeof NAV_PRIMARY)[number]) {
-    const aktif = cocokRute(pathname, item.href);
+  function renderItem(item: NavItem) {
+    const aktif = item.href === activeHref;
 
     if (!item.tersedia) {
       return (
@@ -88,10 +108,10 @@ export function Sidebar({
         <span className={styles.caption}>Sistem Informasi Akuntansi</span>
       </div>
 
-      <ul className={styles.group}>{NAV_PRIMARY.map(renderItem)}</ul>
+      <ul className={styles.group}>{primary.map(renderItem)}</ul>
 
       <ul className={`${styles.group} ${styles.utility}`}>
-        {NAV_UTILITY.map(renderItem)}
+        {utility.map(renderItem)}
       </ul>
 
       <div className={styles.footer}>

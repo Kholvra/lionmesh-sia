@@ -1,4 +1,4 @@
-import { getSesiUser } from "@/lib/auth/server";
+import { assertIzin, getSesiUser } from "@/lib/auth/server";
 import { fail, type Result } from "@/lib/result";
 import { createAdminClient } from "@/lib/supabase/admin";
 import {
@@ -9,6 +9,12 @@ import {
   isUuid,
 } from "@/lib/validation";
 import { postJournal, reverseJournal } from "./service";
+import {
+  tutupBukuTahunan,
+  tutupPeriode,
+  type HasilTutupPeriode,
+  type HasilTutupTahun,
+} from "./tutup-buku";
 import {
   AKUN_PERAN_PATTERN,
   SUMBER_TIPE_PATTERN,
@@ -157,4 +163,63 @@ export async function reverseJournalUntukSesi(
     ...parsed,
     actorId: session.user.id,
   });
+}
+
+function parseTutupPeriodeInput(
+  value: unknown,
+): { tahun: number; bulan: number } | null {
+  if (!isRecord(value) || !hasOnlyKeys(value, ["tahun", "bulan"])) {
+    return null;
+  }
+  if (
+    typeof value.tahun !== "number" ||
+    !Number.isInteger(value.tahun) ||
+    typeof value.bulan !== "number" ||
+    !Number.isInteger(value.bulan)
+  ) {
+    return null;
+  }
+  return { tahun: value.tahun, bulan: value.bulan };
+}
+
+function parseTutupTahunInput(value: unknown): { tahun: number } | null {
+  if (!isRecord(value) || !hasOnlyKeys(value, ["tahun"])) return null;
+  if (typeof value.tahun !== "number" || !Number.isInteger(value.tahun)) {
+    return null;
+  }
+  return { tahun: value.tahun };
+}
+
+export async function tutupPeriodeUntukSesi(
+  input: unknown,
+): Promise<Result<HasilTutupPeriode>> {
+  const izin = await assertIzin("tutup_periode");
+  if (!izin.ok) return fail(izin.message);
+
+  const parsed = parseTutupPeriodeInput(input);
+  if (!parsed) return fail("Data periode tidak valid.");
+
+  const admin = createAdminClient();
+  if (!admin) {
+    return fail("Layanan tutup buku belum tersedia. Hubungi administrator.");
+  }
+
+  return tutupPeriode(admin, { ...parsed, actorId: izin.data.id });
+}
+
+export async function tutupTahunUntukSesi(
+  input: unknown,
+): Promise<Result<HasilTutupTahun>> {
+  const izin = await assertIzin("tutup_tahun_buku");
+  if (!izin.ok) return fail(izin.message);
+
+  const parsed = parseTutupTahunInput(input);
+  if (!parsed) return fail("Data tahun buku tidak valid.");
+
+  const admin = createAdminClient();
+  if (!admin) {
+    return fail("Layanan tutup buku belum tersedia. Hubungi administrator.");
+  }
+
+  return tutupBukuTahunan(admin, { ...parsed, actorId: izin.data.id });
 }
