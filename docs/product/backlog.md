@@ -207,3 +207,4 @@ Terbaca per level. Semua item dalam satu baris boleh dikerjakan serentak. `DISC-
 | 2026-11-24 | `C-012` → `done`: migrasi `0012` (notifikasi + antrean email), `core/notifikasi` (kejadian, jadwal percobaan, adaptor email, pemroses antrean), layar `/notifikasi`, dan `POST /api/notifikasi/kirim`. AC-01–AC-09 terbukti lewat `scripts/verify-c012-notifikasi.mjs`; AC-10 baru terbukti pada batas notifikasi karena rute dokumen tujuan belum ada. Usulan `done`, menunggu review tech lead |
 
 | 2026-11-24 | `C-012` tetap `in progress`: AC-10 parsial dan hasil kirim email yang tidak pasti memerlukan penanganan sebelum review selesai |
+| 2026-11-26 | `C-012` → `done`: PR #33 merge; migrasi `0012`+`0013`, `core/notifikasi`, layar `/notifikasi`, aturan `D-66` terbukti (worker 4/4, skrip 11/11). AC-10 pada batas notifikasi; pemicu nyata menunggu modul pemilik |

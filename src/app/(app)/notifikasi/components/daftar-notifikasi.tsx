@@ -11,7 +11,7 @@ import {
   type StatusOption,
 } from "@/components/ui";
 import type { Notifikasi } from "@/core/notifikasi";
-import { formatWaktu } from "@/lib/format/date";
+import { formatTanggalWaktu } from "@/lib/format/date";
 
 import { tandaiDibacaAction } from "../actions";
 import styles from "../notifikasi.module.css";
@@ -47,7 +47,7 @@ export function DaftarNotifikasi({ errorMessage, rows }: DaftarNotifikasiProps) 
         render: (row) => (
           <span className={styles.cellStack}>
             <span className={styles.cellTitle}>{row.judul}</span>
-            <span className={styles.cellMeta}>{formatWaktu(row.created_at)}</span>
+            <span className={styles.cellMeta}>{formatTanggalWaktu(row.created_at)}</span>
           </span>
         ),
       },
