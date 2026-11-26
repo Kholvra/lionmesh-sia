@@ -1,6 +1,6 @@
 # PG-002 — Bukti Verifikasi
 
-Status: **in progress**. Implementasi dimulai 2026-11-26 pada branch stacked `pg-002-permintaan-pembelian`, di atas PR `C-011` (#35) dan `C-013` (#37) yang belum merge. Item belum bisa di-merge ke `main` sebelum kedua dependency itu masuk.
+Status: **`done` dengan utang bukti**. Stack `C-011`/`C-013` sudah di `main` (PR #35 + #37) dan PR #40 di-merge 2026-11-27 sebagai cherry-pick satu commit. Seluruh AC database belum dibuktikan (author tanpa Docker); pelacakan di `docs/tech-debt/pg-002-bukti-db.md`.
 
 ## Lingkungan
 

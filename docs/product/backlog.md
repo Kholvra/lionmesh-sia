@@ -55,7 +55,7 @@ Satu pemilik: tech lead. Urutan wajib.
 | ID | Fitur | Track | Level | Depends on | Status |
 |---|---|---|---|---|---|
 | `PG-001` | Pemasok, termin, toleransi match | PG-A master | 1 | `FND-003` | `done` |
-| `PG-002` | Permintaan pembelian | PG-B pengadaan | 2 | `C-013`, `C-011` | `ready` |
+| `PG-002` | Permintaan pembelian | PG-B pengadaan | 2 | `C-013`, `C-011` | `done` |
 | `PG-003` | Approval berjenjang | PG-B pengadaan | 3 | `PG-002`, `FND-004` | `specified` |
 | `PG-004` | Pemilihan pemasok & perbandingan harga | PG-B pengadaan | 4 | `PG-002`, `PG-001`, `PG-003` | `specified` |
 | `PG-005` | Purchase order | PG-B pengadaan | 5 | `PG-003`, `PG-004` | `specified` |
@@ -214,3 +214,4 @@ Terbaca per level. Semua item dalam satu baris boleh dikerjakan serentak. `DISC-
 | 2026-11-26 | `PG-002` → `ready`: `C-011` dan `C-013` `done`; readiness disegarkan, tidak ada pemblokir lain |
 | 2026-11-26 | Teks gate diselaraskan ke `FND-001`–`FND-009` (`D-67`); `EPIC-FND` → `done` |
 | 2026-11-27 | `GJ-001` → `done`: PR #38 merge dengan mock store; migrasi `0016` dicadangkan, swap Supabase + bukti ulang DB tercatat di `docs/tech-debt/gj-001-mock-store.md` |
+| 2026-11-27 | `PG-002` → `done`: PR #40 merge (cherry-pick delta murni, stack C-011/C-013 dibuang); bukti AC-DB menyusul, tercatat di `docs/tech-debt/pg-002-bukti-db.md` |
