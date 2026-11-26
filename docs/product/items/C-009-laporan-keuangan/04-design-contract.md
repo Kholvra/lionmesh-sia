@@ -1,12 +1,12 @@
 # Design Contract: C-009 — Laporan keuangan
 
 - Source: `docs/product/items/C-009-laporan-keuangan/01-requirement.md` (`C-009`)
-- Acceptance criteria: `02-acceptance-criteria.md` (`AC-01`…`AC-08`)
-- Status: `Proposed` — belum diverifikasi; semua aturan `Unverified`
+- Acceptance criteria: `02-acceptance-criteria.md` (`AC-01`…`AC-11`)
+- Status: `Verified` — 2026-11-26 (verifikasi ulang: INV-05 penuh + POST-05 rekonsiliasi; putaran awal 2026-11-24). Keputusan PT-02, PT-03, dan PT-08 tetap `[USULAN-AGEN]` sampai koordinator mengunci
 - Profile: product app — laporan baca-saja di atas jurnal
-- Scope: penyusunan buku besar, neraca saldo, laba rugi, neraca dari jurnal
+- Scope: penyusunan buku besar, neraca saldo, laba rugi, neraca, daftar jurnal, arus kas, dan kartu persediaan
 - Owner: tech lead
-- Keputusan yang dipakai: `D-35`, `D-41`, `D-43`, `D-44` (4) dan (5), `D-50`, `D-52`
+- Keputusan yang dipakai: `D-35`, `D-41`, `D-43`, `D-44` (4) dan (5), `D-50`, `D-52`, `D-57` (rekonsiliasi nilai persediaan)
 
 ## Intent and non-goals
 
@@ -38,6 +38,7 @@
 | `POST-02` | saldo buku besar = saldo awal + total debit − total kredit per akun | jurnal sumber | tidak ada |
 | `POST-03` | neraca saldo menampilkan total debit dan total kredit; bila berbeda, selisih tampil | — | tidak ada |
 | `POST-04` | neraca periode bulanan memuat baris "laba tahun berjalan" di ekuitas (`[USULAN-AGEN]`, PT-03) | — | tidak ada |
+| `POST-05` | kartu persediaan menampilkan total nilai mutasi agregat, total jurnal persediaan agregat, selisih, dan status Cocok/Selisih (`D-57`) | jurnal dan mutasi sumber | tidak ada |
 
 ## Invariants and state transitions
 
@@ -70,18 +71,26 @@ Laporan tidak punya state machine. Status periode dibaca dari `FND-006`.
 
 | Contract ID | Observable oracle | Check type/owner | Evidence | Status |
 |---|---|---|---|---|
-| `PRE-01` | aktor tanpa hak ditolak | uji perilaku (PT-02 `[USULAN-AGEN]`) | `05-evidence.md` AC-08 | `Unverified` |
-| `PRE-02` | periode tidak ada ditolak | uji perilaku | `05-evidence.md` AC-01 | `Unverified` |
-| `PRE-03` | rentang lebih dari satu bulan ditolak | uji perilaku | `05-evidence.md` AC-10 | `Unverified` |
-| `POST-01` | jumlah baris sebelum = sesudah | perintah hitung baris | `05-evidence.md` AC-05 | `Unverified` |
-| `POST-02` | saldo buku besar = saldo awal + mutasi | uji fixture | `05-evidence.md` AC-01 | `Unverified` |
-| `POST-03` | total debit = total kredit atau selisih tampil | uji fixture | `05-evidence.md` AC-02 | `Unverified` |
-| `INV-01` | tidak ada tulisan dari laporan | pencarian kode + uji | `05-evidence.md` AC-05 | `Unverified` |
-| `POST-04` | laba tahun berjalan di ekuitas, neraca seimbang | uji fixture | `05-evidence.md` AC-04 | `Unverified` |
-| `INV-04` | akun lewat peran, tidak lewat nomor | pencarian kode | `05-evidence.md` AC-03, AC-09 | `Unverified` |
-| `INV-05` | dokumen batal tidak mengubah angka tanpa jurnal | uji fixture | `05-evidence.md` AC-11 | `Unverified` |
-| `INV-02` | angka tertelusur ke baris jurnal | uji fixture | `05-evidence.md` AC-01 | `Unverified` |
-| `INV-03` | dua kali buka = angka identik | perintah bandingkan | `05-evidence.md` AC-06 | `Unverified` |
+| `PRE-01` | aktor tanpa hak ditolak | uji perilaku (PT-02 `[USULAN-AGEN]`) | `05-evidence.md` AC-08 | `PASS` |
+| `PRE-02` | periode tidak ada ditolak | uji perilaku | `05-evidence.md` AC-01 | `PASS*` |
+| `PRE-03` | rentang lebih dari satu bulan ditolak | uji perilaku | `05-evidence.md` AC-10 | `PASS` |
+| `POST-01` | jumlah baris sebelum = sesudah | perintah hitung baris | `05-evidence.md` AC-05 | `PASS` |
+| `POST-02` | saldo buku besar = saldo awal + mutasi | uji fixture | `05-evidence.md` AC-01 | `PASS` |
+| `POST-03` | total debit = total kredit atau selisih tampil | uji fixture | `05-evidence.md` AC-02 | `PASS` |
+| `INV-01` | tidak ada tulisan dari laporan | pencarian kode + uji | `05-evidence.md` AC-05 | `PASS` |
+| `POST-04` | laba tahun berjalan di ekuitas, neraca seimbang | uji fixture | `05-evidence.md` AC-04 | `PASS` |
+| `INV-04` | akun lewat peran, tidak lewat nomor | pencarian kode | `05-evidence.md` AC-03, AC-09 | `PASS` |
+| `INV-05` | dokumen batal tidak mengubah angka tanpa jurnal | uji fixture | `05-evidence.md` AC-11 | `PASS` |
+| `INV-02` | angka tertelusur ke baris jurnal | uji fixture | `05-evidence.md` AC-01 | `PASS` |
+| `POST-05` | total mutasi vs total jurnal persediaan + status tampil | uji fixture + hitung SQL langsung | `05-evidence.md` AC-09 | `PASS` |
+
+`PASS*` berarti perilaku terbukti dengan satu batas yang dicatat:
+
+- `PRE-02`: bulan yang belum punya baris `periode_akuntansi` tetap menampilkan
+  nol, bukan ditolak. Requirement bagian validasi menetapkan edge case ini lebih
+  dulu daripada precondition kontrak; validasi server menolak format, bulan di
+  luar 1–12, dan rentang lebih dari satu bulan.
+- `INV-05`: tertutup 2026-11-26 — dokumen batal tanpa jurnal dibuktikan end-to-end lewat `buat_dokumen` + `batalkan_dokumen` core.
 
 ## Open decisions and assumptions
 
