@@ -90,7 +90,7 @@ Satu pemilik: tech lead. Urutan wajib.
 
 | ID | Fitur | Track | Level | Depends on | Status |
 |---|---|---|---|---|---|
-| `GJ-001` | Karyawan, gaji pokok, PTKP | GJ-A master | 1 | `FND-003` | `ready` |
+| `GJ-001` | Karyawan, gaji pokok, PTKP | GJ-A master | 1 | `FND-003` | `done` |
 | `GJ-002` | Presensi & pengajuan lembur | GJ-B presensi | 2 | `GJ-001`, `FND-004` | `specified` |
 | `GJ-003` | Rekap & validasi presensi | GJ-B presensi | 3 | `GJ-002` | `specified` |
 | `GJ-004` | Hitung payroll | GJ-C payroll | 4 | `GJ-003`, `FND-002` | `specified` |
@@ -213,3 +213,4 @@ Terbaca per level. Semua item dalam satu baris boleh dikerjakan serentak. `DISC-
 | 2026-11-27 | `C-010` → `done`: PR #41 merge; migrasi `0015`, core ledger, UI `/laporan/periode`, 39 pemeriksaan, evidence + screenshot 1280px |
 | 2026-11-26 | `PG-002` → `ready`: `C-011` dan `C-013` `done`; readiness disegarkan, tidak ada pemblokir lain |
 | 2026-11-26 | Teks gate diselaraskan ke `FND-001`–`FND-009` (`D-67`); `EPIC-FND` → `done` |
+| 2026-11-27 | `GJ-001` → `done`: PR #38 merge dengan mock store; migrasi `0016` dicadangkan, swap Supabase + bukti ulang DB tercatat di `docs/tech-debt/gj-001-mock-store.md` |
