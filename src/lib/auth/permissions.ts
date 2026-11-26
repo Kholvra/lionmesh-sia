@@ -75,6 +75,9 @@ export const MATRIKS_IZIN = {
   kelola_mata_uang: ["Accounting"],
   // Laporan keuangan lintas siklus (C-009, PT-02)
   lihat_laporan_keuangan: ["Accounting", "Manajemen", "Direksi"],
+  // Tutup buku (C-010, D-50, D-68)
+  tutup_periode: ["Accounting"],
+  tutup_tahun_buku: ["Accounting"],
 
   // Tambahan default (D-58)
   ubah_batal_perintah_produksi: ["Produksi"],

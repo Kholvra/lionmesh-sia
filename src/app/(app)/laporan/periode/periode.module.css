@@ -1,0 +1,267 @@
+.backLink {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  margin-bottom: var(--space-2);
+  color: var(--text-link);
+  font-size: var(--font-size-label);
+  font-weight: 600;
+  line-height: var(--line-height-label);
+  text-decoration: none;
+}
+
+.backLink:hover {
+  text-decoration: underline;
+}
+
+.backIcon {
+  width: var(--space-4);
+  height: var(--space-4);
+}
+
+.section {
+  margin-bottom: var(--space-6);
+}
+
+.sectionHeader {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-4);
+  margin-bottom: var(--space-2);
+}
+
+.sectionTitle {
+  margin: 0;
+  color: var(--text-primary);
+  font-size: var(--font-size-section);
+  font-weight: 600;
+  line-height: var(--line-height-section);
+}
+
+.sectionMeta {
+  max-width: var(--dialog-form-width);
+  margin: 0;
+  color: var(--text-muted);
+  font-size: var(--font-size-label);
+  line-height: var(--line-height-label);
+}
+
+.panel {
+  padding: var(--space-5);
+  border: var(--border-width-default) solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  background: var(--bg-surface);
+  box-shadow: var(--shadow-sm);
+}
+
+.pemeriksaanGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-5);
+  margin: var(--space-4) 0 0;
+}
+
+.pemeriksaanItem {
+  display: grid;
+  gap: var(--space-1);
+}
+
+.pemeriksaanLabel {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: var(--font-size-label);
+  line-height: var(--line-height-label);
+}
+
+.pemeriksaanValue {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  margin: 0;
+  color: var(--text-primary);
+  font-size: var(--font-size-body);
+  line-height: var(--line-height-body);
+}
+
+.valueSuccess {
+  color: var(--status-success-text);
+  font-weight: 600;
+}
+
+.valueDanger {
+  color: var(--status-danger-text);
+  font-weight: 600;
+}
+
+.warning {
+  margin: var(--space-5) 0;
+  padding: var(--space-4);
+  border: var(--border-width-default) solid var(--status-warning-bg);
+  border-radius: var(--radius-md);
+  background: var(--status-warning-bg);
+  color: var(--status-warning-text);
+}
+
+.warningTitle {
+  margin: 0 0 var(--space-1);
+  font-size: var(--font-size-section);
+  font-weight: 600;
+  line-height: var(--line-height-section);
+}
+
+.warningText {
+  margin: 0;
+  font-size: var(--font-size-body-sm);
+  line-height: var(--line-height-body-sm);
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3);
+  margin-top: var(--space-5);
+}
+
+.formInline {
+  margin: 0;
+}
+
+.primaryButton {
+  display: inline-flex;
+  min-height: var(--control-height);
+  align-items: center;
+  justify-content: center;
+  padding-inline: var(--space-4);
+  border: 0;
+  border-radius: var(--radius-md);
+  background: var(--brand-500);
+  color: var(--text-on-brand);
+  cursor: pointer;
+  font-size: var(--font-size-body);
+  font-weight: 600;
+  line-height: var(--line-height-body);
+  transition: background-color var(--motion-fast) ease-out;
+}
+
+.primaryButton:hover:not(:disabled) {
+  background: var(--brand-600);
+}
+
+.primaryButton:disabled {
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+.primaryButton:focus-visible {
+  outline: var(--focus-ring-width) solid var(--border-focus);
+  outline-offset: var(--focus-ring-offset);
+}
+
+.secondaryButton {
+  display: inline-flex;
+  min-height: var(--control-height);
+  align-items: center;
+  justify-content: center;
+  padding-inline: var(--space-4);
+  border: var(--border-width-default) solid var(--border-input);
+  border-radius: var(--radius-md);
+  background: var(--bg-surface);
+  color: var(--text-primary);
+  cursor: pointer;
+  font-size: var(--font-size-body);
+  font-weight: 600;
+  line-height: var(--line-height-body);
+  text-decoration: none;
+  transition: background-color var(--motion-fast) ease-out;
+}
+
+.secondaryButton:hover {
+  background: var(--bg-subtle);
+}
+
+.secondaryButton:focus-visible {
+  outline: var(--focus-ring-width) solid var(--border-focus);
+  outline-offset: var(--focus-ring-offset);
+}
+
+.alertSuccess,
+.alertDanger {
+  margin: var(--space-4) 0;
+  padding: var(--space-3) var(--space-4);
+  border: var(--border-width-default) solid transparent;
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-body-sm);
+  line-height: var(--line-height-body-sm);
+}
+
+.alertSuccess {
+  border-color: var(--status-success-bg);
+  background: var(--status-success-bg);
+  color: var(--status-success-text);
+}
+
+.alertDanger {
+  border-color: var(--status-danger-bg);
+  background: var(--status-danger-bg);
+  color: var(--status-danger-text);
+}
+
+.error {
+  margin: var(--space-3) 0 0;
+  color: var(--status-danger-text);
+  font-size: var(--font-size-body-sm);
+  line-height: var(--line-height-body-sm);
+}
+
+.reasonList {
+  margin: var(--space-3) 0 0;
+  padding-left: var(--space-5);
+  color: var(--status-danger-text);
+  font-size: var(--font-size-body-sm);
+  line-height: var(--line-height-body-sm);
+}
+
+.tableMeta {
+  color: var(--text-muted);
+  font-size: var(--font-size-body-sm);
+  line-height: var(--line-height-body-sm);
+}
+
+.yearFilter {
+  margin-bottom: var(--space-4);
+}
+
+.yearSection {
+  scroll-margin-top: var(--space-8);
+}
+
+.yearHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-4);
+}
+
+.dialogStack {
+  display: grid;
+  gap: var(--space-3);
+}
+
+.dialogStack p {
+  margin: 0;
+}
+
+.dialogList {
+  margin: 0;
+  padding-left: var(--space-5);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .primaryButton,
+  .secondaryButton {
+    transition-duration: var(--motion-none);
+  }
+}
