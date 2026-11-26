@@ -54,8 +54,8 @@ Satu pemilik: tech lead. Urutan wajib.
 
 | ID | Fitur | Track | Level | Depends on | Status |
 |---|---|---|---|---|---|
-| `PG-001` | Pemasok, termin, toleransi match | PG-A master | 1 | `FND-003` | `in progress` |
-| `PG-002` | Permintaan pembelian | PG-B pengadaan | 2 | `C-013`, `C-011` | `specified` |
+| `PG-001` | Pemasok, termin, toleransi match | PG-A master | 1 | `FND-003` | `done` |
+| `PG-002` | Permintaan pembelian | PG-B pengadaan | 2 | `C-013`, `C-011` | `ready` |
 | `PG-003` | Approval berjenjang | PG-B pengadaan | 3 | `PG-002`, `FND-004` | `specified` |
 | `PG-004` | Pemilihan pemasok & perbandingan harga | PG-B pengadaan | 4 | `PG-002`, `PG-001`, `PG-003` | `specified` |
 | `PG-005` | Purchase order | PG-B pengadaan | 5 | `PG-003`, `PG-004` | `specified` |
@@ -106,7 +106,7 @@ Sebagian tidak memblokir siklus mana pun. Dua di antaranya (`C-011`, `C-013`) me
 | ID | Fitur | Track | Level | Depends on | Status |
 |---|---|---|---|---|---|
 | `C-009` | Laporan keuangan | CORE-A laporan | 1 | `FND-006` | `done` |
-| `C-010` | Tutup buku & jurnal penutup | CORE-B tutup | 2 | `C-009`, `FND-006` | `specified` |
+| `C-010` | Tutup buku & jurnal penutup | CORE-B tutup | 2 | `C-009`, `FND-006` | `done` |
 | `C-011` | Master data terpadu: produk, gudang, satuan | CORE-C master | 1 | `FND-002` | `done` |
 | `C-012` | Notifikasi in-app + email | CORE-C master | 1 | `FND-004` | `done` |
 | `C-013` | Domain pengadaan: tabel + aturan status (permintaan, PO, penerimaan) | CORE-D pengadaan | 1 | `FND-002`, `FND-004`, `FND-005`, `FND-006` | `done` |
@@ -153,13 +153,13 @@ Terbaca per level. Semua item dalam satu baris boleh dikerjakan serentak. `DISC-
 | 10 | — | `PG-011` | — | — | — | — | `INT-001` | 2 |
 | 11 | — | — | — | — | — | — | `INT-002` `INT-003` | 2 |
 
-**Puncak paralel: 11 item serentak di level 1, dan baru terbuka setelah gate `FND-001`–`FND-007` selesai.** Setelah itu turun karena rantai dokumen memang berurutan.
+**Puncak paralel: 11 item serentak di level 1, dan baru terbuka setelah gate `FND-001`–`FND-009` selesai.** Setelah itu turun karena rantai dokumen memang berurutan.
 
 **Titik kritis awal: `C-013`.** Dua siklus menunggunya. Ia harus selesai di gelombang pertama, bukan menyusul.
 
 ## Aturan gate
 
-1. **Gate fondasi** — tidak ada item modul `ready` sebelum `FND-001`–`FND-007` `done`. `FND-008` boleh menyusul paralel. Item `FND-*` tidak terkena gate ini (`D-54`).
+1. **Gate fondasi** — tidak ada item modul `ready` sebelum `FND-001`–`FND-009` `done`. `FND-008` boleh menyusul paralel. Item `FND-*` tidak terkena gate ini (`D-54`, `D-67`).
 2. **Gate per item** — `depends on` harus `done`, bukan sekadar "hampir".
 3. **Gate migrasi** — DDL dari kelompok berupa usulan; tech lead yang menomori dan merge.
 4. **Gate join** — `INT-001` tidak boleh mulai sebelum seluruh jurnal siklus ada.
@@ -208,3 +208,8 @@ Terbaca per level. Semua item dalam satu baris boleh dikerjakan serentak. `DISC-
 
 | 2026-11-24 | `C-012` tetap `in progress`: AC-10 parsial dan hasil kirim email yang tidak pasti memerlukan penanganan sebelum review selesai |
 | 2026-11-26 | `C-012` → `done`: PR #33 merge; migrasi `0012`+`0013`, `core/notifikasi`, layar `/notifikasi`, aturan `D-66` terbukti (worker 4/4, skrip 11/11). AC-10 pada batas notifikasi; pemicu nyata menunggu modul pemilik |
+| 2026-11-26 | `PG-001` → `done`: PR #22 + #29 merge; master pemasok, termin, toleransi match, validasi zod. AC-07/AC-09 lintas item menunggu `PG-005`/`PG-006` |
+| 2026-11-26 | `C-010` → `ready`: `C-009` dan `FND-006` `done`; readiness disegarkan, tidak ada pemblokir lain |
+| 2026-11-27 | `C-010` → `done`: PR #41 merge; migrasi `0015`, core ledger, UI `/laporan/periode`, 39 pemeriksaan, evidence + screenshot 1280px |
+| 2026-11-26 | `PG-002` → `ready`: `C-011` dan `C-013` `done`; readiness disegarkan, tidak ada pemblokir lain |
+| 2026-11-26 | Teks gate diselaraskan ke `FND-001`–`FND-009` (`D-67`); `EPIC-FND` → `done` |

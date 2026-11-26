@@ -1,6 +1,6 @@
 # EPIC-FND — Fondasi Bersama
 
-**Status:** `active`
+**Status:** `done` (2026-11-26; seluruh anak `done`, gate modul terpenuhi, migrasi berjalan dari kosong via `db:reset`)
 **Pemilik:** tech lead
 **Milestone:** M0
 **Topologi:** serial

@@ -9,18 +9,16 @@
 | 3 | Status dan transisi eksplisit; jalur gagal juga | lolos | daftar status `D-46`; transisi `D-48` dan revisi sukarela ditulis dengan pemicu dan siapa. Jalur gagal (bukan pemohon, setelah PO, status berubah) ada |
 | 4 | Validasi punya pesan yang bisa dibaca | lolos | tabel Validasi memuat pesan untuk setiap kondisi gagal. Teks pesan ditandai `[USULAN]` dan ikut kunci koordinator. Aturan satuan mengikuti spec `C-011` (`D-38`) |
 | 5 | Acceptance criteria bisa dibuktikan | lolos | AC-01 sampai AC-14 punya langkah UI dari `pnpm db:reset`. AC-15 lintas item dan disebut eksplisit |
-| 6 | Semua `depends on` berstatus `done` | belum | `PG-001`, `C-011`, dan `C-013` masih `specified`, belum `done` |
+| 6 | Semua `depends on` berstatus `done` | lolos | `C-011` `done` (PR #35), `C-013` `done` (PR #37) pada 2026-11-26 (`D-57` mengeluarkan `PG-001` dari deps) |
 | 7 | Tidak ada pertanyaan pemblokir terbuka | lolos | 10 pertanyaan: 6 terjawab `D-xx`, 4 terjawab `[USULAN-AGEN]`. Terbuka: 0 |
-| 8 | Gate fondasi terpenuhi | belum | `FND-001` `done`; `FND-002` sampai `FND-006` masih `specified`. `FND-007` juga belum (lihat Dependensi) |
+| 8 | Gate fondasi terpenuhi | lolos | `FND-001`–`FND-009` `done` (2026-11-23, `D-54`, `D-62`, `D-67`), termasuk `FND-007` untuk tabel dan form |
 | 9 | Ukuran masuk akal untuk satu orang dalam satu track | lolos | usulan `M` (agen). Form, antrean, riwayat, pembatalan, dan revisi satu track |
 
 ## Verdict
 
-`Blocked`
+`Ready`
 
-Alasan (dependensi belum `done`): `PG-001`, `C-011`, dan `C-013` (`depends on` di `backlog.md`), beserta gate fondasi `FND-002` sampai `FND-006` yang menjadi prasyarat ketiganya; serta `FND-007` karena item ini memakai tabel dan form (primitive UI).
-
-Siap menjadi Ready begitu dependensi done; tidak ada pemblokir lain.
+Semua kriteria DoR terpenuhi sejak 2026-11-26. Fondasi `FND-001`–`FND-009` sudah `done` dan `C-011`/`C-013` sudah `done`, sehingga layar pengajuan punya master dan domain pengadaan untuk ditulis. Bila item membuat tabel, DDL dikirim sebagai usulan `06-ddl-proposal.sql` dan dinomori tech lead (`D-09`).
 
 ## Pertanyaan terbuka (2026-11-22)
 
@@ -30,7 +28,7 @@ Total 10. Terjawab `D-xx`: 6 (Q-01, Q-02, Q-07, Q-08, Q-09, Q-10; Q-07 dan Q-08 
 
 | Kode | Keputusan default | Alasan singkat |
 |---|---|---|
-| Q-03 | Dependensi `PG-001` dipertahankan sesuai backlog | keputusan dependensi wewenang tech lead; sumber mendukung bahwa PR tidak butuh pemasok |
+| Q-03 | Dependensi `PG-001` dihapus dari `PG-002` (`D-57`); PR tidak butuh pemasok | keputusan dependensi wewenang tech lead; backlog 2026-11-22 sudah selaras |
 | Q-04 | `wo_id` wajib untuk Produksi, opsional untuk Gudang; validasi keberadaan setelah `PR-002` tersedia | `PR-002` belum ada; kewajiban di `PR-003` |
 | Q-05 | Estimasi nilai IDR diisi Purchasing saat pemeriksaan, tidak wajib saat pengajuan | urutan approval sebelum pemilihan pemasok; sumber berbeda pendapat |
 | Q-06 | Tanggal butuh wajib; tidak ada prioritas di v0 | sumber tidak menyebut prioritas |
