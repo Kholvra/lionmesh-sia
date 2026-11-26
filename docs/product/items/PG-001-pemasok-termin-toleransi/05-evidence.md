@@ -2,7 +2,7 @@
 
 Implementasi dimulai 2026-11-23 pada branch `feat/pg-001-pemasok` oleh track Pengeluaran. Di-rebase ke `origin/main` dan diverifikasi ulang oleh tech lead pada hari yang sama setelah `FND-009` (AppShell) selesai.
 
-Status item: **`in progress`**. Sebelas dari tiga belas AC terbukti; `AC-07` dan `AC-09` sengaja lintas item dan baru bisa dibuktikan saat dokumen pemakai (`PG-005`, `PG-006`) ada.
+Status item: **`done`** (2026-11-26; PR #22 + #29 merge). Sebelas dari tiga belas AC terbukti; `AC-07` dan `AC-09` sengaja lintas item dan baru bisa dibuktikan saat dokumen pemakai (`PG-005`, `PG-006`) ada.
 
 ## Lingkungan verifikasi
 
