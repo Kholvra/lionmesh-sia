@@ -167,7 +167,8 @@ sudah dibump `0005`→`0006` via commit `3bb8f96`), branch ini rebase
 sesudahnya (konflik `karyawan/actions.ts` kecil, ekspektasi).
 Coret (tidak dikerjakan): module actions pesan-kustom, rewrite
 round-trip riwayat, keIsoString/SELECT_MUTASI (tidak ada di source).
-K10: 5 rekomendasi skema ditulis tech-lead-agent untuk review user.
+K10: 5 rekomendasi skema (R1–R5) disampaikan di chat 27 Nov, menunggu
+review user sebelum dieksekusi.
 Bukti 2026-11-27 (branch `post-merge-consolidation`, 3 agen paralel):
 F1–F3 hijau — `typecheck`/`lint`/`arch:check`/`check-migrations`,
 `pnpm test` 124/124; `0017`+`0018` dry-run apply + rollback bersih di
