@@ -12,7 +12,7 @@ export type ProfilPemetaan = {
   diubahPada: string;
 };
 
-export type PemetaanId = { idMesin: string; karyawanId: string; oleh: string; pada: string };
+export type PemetaanId = { idMesin: string; karyawanId: string; nama: string; nik: string; oleh: string; pada: string };
 
 export type JenisLewat = "TIDAK_TERPETAKAN" | "BENTROK" | "DI_LUAR_PERIODE" | "NONAKTIF";
 

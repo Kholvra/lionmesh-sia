@@ -1,5 +1,6 @@
 import type { FormatTanggal, ProfilPemetaan } from "@/modules/penggajian/impor/types";
-import { menitDariJam } from "@/modules/penggajian/shared/waktu";
+// Relative with extension so node --test can load it without the @/ alias.
+import { menitDariJam } from "../shared/waktu.ts";
 
 export type BarisCsv = { baris: number; idMesin: string; tanggal: string; jamMasuk: string; jamPulang: string };
 

@@ -3,9 +3,10 @@ import { Suspense } from "react";
 
 import { sesiPenggajian } from "@/modules/penggajian/akun/akun";
 import { formatTanggal, formatWaktu } from "@/modules/penggajian/karyawan/format";
-import { cariKaryawan, semuaKaryawan } from "@/modules/penggajian/karyawan/store";
 import { addPemetaan, importPresensi, saveProfil } from "@/modules/penggajian/impor/actions";
-import { profil, semuaHasil, semuaPemetaan } from "@/modules/penggajian/impor/store";
+import { profil, semuaHasil, semuaPemetaan } from "@/modules/penggajian/impor/queries";
+import type { ProfilPemetaan } from "@/modules/penggajian/impor/types";
+import { listKaryawanAktifUntukCatat } from "@/modules/penggajian/presensi/queries";
 import { listPeriodeTerbaru } from "@/modules/penggajian/periode/queries";
 import { labelStatusPeriode, rentangPeriode } from "@/modules/penggajian/periode/rules";
 import { Notice } from "@/modules/penggajian/ui/notice";
@@ -20,17 +21,17 @@ const PESAN: Record<string, string> = { profil: "Profil pemetaan tersimpan dan d
 
 const LABEL_PEMISAH: Record<string, string> = { ";": "titik koma (;)", ",": "koma (,)", "\t": "tab" };
 
-function deskripsiProfil() {
-  const p = profil();
+function deskripsiProfil(p: ProfilPemetaan) {
   return `Pemisah ${LABEL_PEMISAH[p.pemisah]} · ${p.formatTanggal} · kolom ${p.kolomIdMesin}, ${p.kolomTanggal}, ${p.kolomJamMasuk}, ${p.kolomJamPulang}`;
 }
 
 async function Konten() {
   const sesi = await sesiPenggajian();
   if (sesi.peran !== "HR") return <TidakBerwenang pesan={TOLAK} />;
-  const hasil = [...semuaHasil()].reverse();
-  const terbuka = listPeriodeTerbaru().filter((p) => p.status === "TERBUKA");
-  const lain = listPeriodeTerbaru().filter((p) => p.status !== "TERBUKA");
+  const [hasil, periode, pemetaan, p] = await Promise.all([semuaHasil(), listPeriodeTerbaru(), semuaPemetaan(), profil()]);
+  hasil.reverse();
+  const terbuka = periode.filter((x) => x.status === "TERBUKA");
+  const lain = periode.filter((x) => x.status !== "TERBUKA");
   return (
     <div className={ui.stack}>
       <FormAksi
@@ -45,11 +46,11 @@ async function Konten() {
             wajib: true,
             pilihan: [...terbuka, ...lain].map((x) => ({ value: x.id, label: `${rentangPeriode(x)} (${labelStatusPeriode(x.status)})` })),
           },
-          { name: "berkas", label: "Berkas CSV", jenis: "file", wajib: true, terima: ".csv,text/csv", bantuan: `Profil pemetaan: ${deskripsiProfil()}.` },
+          { name: "berkas", label: "Berkas CSV", jenis: "file", wajib: true, terima: ".csv,text/csv", bantuan: `Profil pemetaan: ${deskripsiProfil(p)}.` },
         ]}
         judul="Berkas"
         kirimLabel="Impor"
-        petunjuk={`* Wajib diisi. Berkas yang sama dengan impor sebelumnya ditolak. Pemetaan ID mesin → NIK: ${semuaPemetaan().length} ID terpetakan; satu ID mesin untuk satu NIK.`}
+        petunjuk={`* Wajib diisi. Berkas yang sama dengan impor sebelumnya ditolak. Pemetaan ID mesin → NIK: ${pemetaan.length} ID terpetakan; satu ID mesin untuk satu NIK.`}
       />
       <section className={ui.card}>
         <h2 className={ui.cardTitle}>Riwayat impor</h2>
@@ -79,7 +80,7 @@ export function ImporScreen() {
   return (
     <>
       <PageHeader
-        back={{ href: "/penggajian/rekap", label: "Rekap presensi & lembur" }}
+        back={{ href: "/penggajian/presensi", label: "Presensi & lembur" }}
         description="Unggah berkas CSV ekspor mesin. Baris yang valid masuk sebagai presensi menunggu validasi Supervisor."
         item={ITEM}
         title="Impor presensi dari mesin absensi"
@@ -94,9 +95,9 @@ export function ImporScreen() {
 async function Pengaturan({ pesan }: { pesan?: string }) {
   const sesi = await sesiPenggajian();
   if (sesi.peran !== "HR") return <TidakBerwenang pesan={TOLAK} />;
-  const p = profil();
+  const [p, pemetaan] = await Promise.all([profil(), semuaPemetaan()]);
   const pemisah = p.pemisah === "\t" ? "tab" : p.pemisah;
-  const aktif = semuaKaryawan().filter((k) => k.status === "AKTIF");
+  const aktif = await listKaryawanAktifUntukCatat(sesi);
   return (
     <div className={ui.stack}>
       {pesan && PESAN[pesan] ? <Notice title={PESAN[pesan]} tone="success" /> : null}
@@ -130,9 +131,8 @@ async function Pengaturan({ pesan }: { pesan?: string }) {
           <caption className="sr-only">Pemetaan ID mesin</caption>
           <thead><tr><th scope="col">ID mesin</th><th scope="col">Karyawan</th><th scope="col">Dipetakan oleh</th></tr></thead>
           <tbody>
-            {semuaPemetaan().map((m) => {
-              const k = cariKaryawan(m.karyawanId);
-              return <tr key={m.idMesin}><td>{m.idMesin}</td><td>{k ? `${k.nama} · ${k.nik}` : "—"}</td><td>{m.oleh} · {formatWaktu(m.pada)}</td></tr>;
+            {pemetaan.map((m) => {
+              return <tr key={m.idMesin}><td>{m.idMesin}</td><td>{`${m.nama} · ${m.nik}`}</td><td>{m.oleh} · {formatWaktu(m.pada)}</td></tr>;
             })}
           </tbody>
         </table>
@@ -157,7 +157,7 @@ const JENIS: Record<string, string> = { TIDAK_TERPETAKAN: "Tidak terpetakan", BE
 async function Hasil({ id }: { id: string }) {
   const sesi = await sesiPenggajian();
   if (sesi.peran !== "HR") return <TidakBerwenang pesan={TOLAK} />;
-  const h = semuaHasil().find((x) => x.id === id);
+  const h = (await semuaHasil()).find((x) => x.id === id);
   if (!h) return <Keadaan judul="Hasil impor tidak ditemukan" pesan="Tautannya mungkin salah." />;
   const hitung = (j: string) => h.dilewati.filter((d) => d.jenis === j).length;
   return (
@@ -187,10 +187,9 @@ async function Hasil({ id }: { id: string }) {
 }
 
 export function HasilImporScreen({ id }: { id: string }) {
-  const h = semuaHasil().find((x) => x.id === id);
   return (
     <>
-      <PageHeader back={{ href: "/penggajian/impor", label: "Impor presensi dari mesin absensi" }} item={ITEM} title={`Hasil impor ${h ? formatTanggal(h.pada.slice(0, 10)) : ""}`} />
+      <PageHeader back={{ href: "/penggajian/impor", label: "Impor presensi dari mesin absensi" }} item={ITEM} title="Hasil impor" />
       <Suspense fallback={null}>
         <Hasil id={id} />
       </Suspense>
