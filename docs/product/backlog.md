@@ -57,7 +57,7 @@ Satu pemilik: tech lead. Urutan wajib.
 | `PG-001` | Pemasok, termin, toleransi match | PG-A master | 1 | `FND-003` | `done` |
 | `PG-002` | Permintaan pembelian | PG-B pengadaan | 2 | `C-013`, `C-011` | `done` |
 | `PG-003` | Approval berjenjang | PG-B pengadaan | 3 | `PG-002`, `FND-004` | `done` |
-| `PG-004` | Pemilihan pemasok & perbandingan harga | PG-B pengadaan | 4 | `PG-002`, `PG-001`, `PG-003` | `specified` |
+| `PG-004` | Pemilihan pemasok & perbandingan harga | PG-B pengadaan | 4 | `PG-002`, `PG-001`, `PG-003` | `done` |
 | `PG-005` | Purchase order | PG-B pengadaan | 5 | `PG-003`, `PG-004` | `specified` |
 | `PG-006` | Penerimaan barang | PG-C penerimaan | 6 | `PG-005`, `FND-005` | `specified` |
 | `PG-007` | QC bahan & retur ke pemasok | PG-C penerimaan | 7 | `PG-006`, `FND-005` | `specified` |
@@ -217,3 +217,4 @@ Terbaca per level. Semua item dalam satu baris boleh dikerjakan serentak. `DISC-
 | 2026-11-27 | `PG-002` → `done`: PR #40 merge (cherry-pick delta murni, stack C-011/C-013 dibuang); bukti AC-DB menyusul, tercatat di `docs/tech-debt/pg-002-bukti-db.md` |
 | 2026-11-27 | `PR-001`..`PR-007` → `done`: PR #39 merge borongan satu squash (46 file, layar + store lokal); bukti AC per item + rapihan UI menyusul, tercatat di `docs/tech-debt/pr-borongan-bukti.md` |
 | 2026-11-27 | `PG-003` → `done`: PR dibuka; review Purchasing menyimpan estimasi nilai, approve/tolak per jenjang lewat mesin `FND-004`, migrasi `0023`. Bukti AC-DB menyusul, tercatat di `docs/tech-debt/pg-003-bukti-db.md` |
+| 2026-11-27 | `PG-004` → `done`: ditumpuk di branch PG-003; tabel `penawaran_harga`, layar perbandingan harga, penetapan satu pemasok dengan alasan wajib bila bukan total terendah, migrasi `0024`. Bukti AC-DB menyusul, tercatat di `docs/tech-debt/pg-004-bukti-db.md` |
