@@ -16,6 +16,20 @@ const nextConfig: NextConfig = {
       },
     },
   },
+  async redirects() {
+    return [
+      {
+        source: "/siklus-produksi",
+        destination: "/produksi",
+        permanent: false,
+      },
+      {
+        source: "/siklus-produksi/:path*",
+        destination: "/produksi/:path*",
+        permanent: false,
+      },
+    ];
+  },
 };
 
 export default nextConfig;

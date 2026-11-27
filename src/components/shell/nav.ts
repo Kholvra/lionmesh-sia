@@ -28,7 +28,7 @@ export const NAV_PRIMARY: NavItem[] = [
   { label: "Dashboard", href: "/", icon: "dashboard", tersedia: true },
   { label: "Pendapatan", href: "/pendapatan", icon: "pendapatan", tersedia: false },
   { label: "Pengeluaran", href: "/pengeluaran", icon: "pengeluaran", tersedia: false },
-  { label: "Produksi", href: "/produksi", icon: "produksi", tersedia: false },
+  { label: "Produksi", href: "/produksi", icon: "produksi", tersedia: true },
   { label: "Penggajian", href: "/penggajian", icon: "penggajian", tersedia: false },
   { label: "Laporan", href: "/laporan", icon: "laporan", tersedia: true },
   {
