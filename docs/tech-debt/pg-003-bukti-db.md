@@ -3,7 +3,7 @@
 ## Kondisi saat ini
 
 PG-003 sudah diimplementasikan: estimasi nilai saat review, approve/tolak per
-jenjang, dan migrasi `0017` (`periksa_pr_dengan_nilai`). Mesin status, riwayat,
+jenjang, dan migrasi `0023` (`periksa_pr_dengan_nilai`). Mesin status, riwayat,
 dan pemisahan tugas tetap milik `FND-004`.
 
 Seluruh AC yang butuh database belum dijalankan karena mesin penulis tidak
@@ -19,7 +19,7 @@ test schema penolakan.
 3. Untuk AC-02 dan AC-08 pakai seed uji dua jenjang / tanpa aturan; jangan
    mengubah seed produksi.
 4. Ambil screenshot 1280px dan perbarui `05-evidence.md`.
-5. Konfirmasi nomor migrasi `0017` ke tech lead (`D-09`; `0016` milik GJ-001).
+5. Konfirmasi nomor migrasi `0023` ke tech lead (`D-09`; `0016` milik GJ-001).
 
 ## Dampak
 

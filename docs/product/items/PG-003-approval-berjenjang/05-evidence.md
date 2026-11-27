@@ -1,6 +1,6 @@
 # PG-003 — Bukti Verifikasi
 
-Status: **usulan `done` dengan utang bukti database**. Layar review/approval, estimasi nilai, dan migrasi `0017` selesai; seluruh AC yang butuh database belum dijalankan karena tidak ada Docker/Supabase lokal di mesin penulis. Pelacakan: `docs/tech-debt/pg-003-bukti-db.md`.
+Status: **usulan `done` dengan utang bukti database**. Layar review/approval, estimasi nilai, dan migrasi `0023` selesai; seluruh AC yang butuh database belum dijalankan karena tidak ada Docker/Supabase lokal di mesin penulis. Pelacakan: `docs/tech-debt/pg-003-bukti-db.md`.
 
 ## Lingkungan
 
@@ -15,7 +15,7 @@ Status: **usulan `done` dengan utang bukti database**. Layar review/approval, es
 
 | Bagian | Berkas |
 |---|---|
-| Migrasi | `supabase/migrations/0017_pg003_estimasi_nilai.sql` |
+| Migrasi | `supabase/migrations/0023_pg003_estimasi_nilai.sql` |
 | Core pengadaan | `src/core/pengadaan/{types,service,queries}.ts` |
 | Modul | `src/modules/pengeluaran/permintaan/{actions,schema,screen}.tsx` |
 | Komponen | `src/modules/pengeluaran/permintaan/components/permintaan-actions.tsx` |
@@ -60,7 +60,7 @@ Rancangan singkat:
 
 ## Penyimpangan
 
-- Nomor migrasi. Aturan repo meminta usulan DDL bernomor dari tech lead; `docs/tech-debt/gj-001-mock-store.md` menetapkan `0016` untuk GJ-001 dan "migrasi berikutnya memakai `0017` ke atas". Berkas ini memakai `0017`; mohon tech lead mengonfirmasi nomornya saat review. Tanpa migrasi ini review bernilai tidak bisa menyimpan estimasi sebelum snapshot jenjang dibuat, karena `dokumen.nominal` hanya bisa ditulis core.
+- Nomor migrasi. Aturan repo meminta usulan DDL bernomor dari tech lead; `docs/tech-debt/gj-001-mock-store.md` menetapkan `0016` untuk GJ-001 dan "migrasi berikutnya memakai `0017` ke atas". Berkas ini memakai `0023` (nomor bebas berikutnya setelah track GJ memakai `0017`-`0022` di PR-nya); mohon tech lead mengonfirmasi nomornya saat review. Tanpa migrasi ini review bernilai tidak bisa menyimpan estimasi sebelum snapshot jenjang dibuat, karena `dokumen.nominal` hanya bisa ditulis core.
 - Pesan pemisahan tugas memakai teks `FND-004`, bukan teks `01-requirement`; teks milik mesin approval agar satu pesan untuk semua dokumen.
 - `periksa_pr` (tanpa nilai) tetap ada di core untuk pemanggil lain; jalur PR sekarang memakai `periksa_pr_dengan_nilai`.
 
