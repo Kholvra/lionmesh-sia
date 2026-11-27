@@ -29,6 +29,7 @@ import type {
   HasilPermintaanPembelian,
   HasilPurchaseOrder,
   HasilQC,
+  PeriksaPRDenganNilaiInput,
   PeriksaPRInput,
   TetapkanPemasokPRInput,
 } from "./types";
@@ -106,6 +107,32 @@ export async function periksaPR(
     p_dokumen_id: input.permintaanId,
     p_versi: input.versi,
     p_aktor_id: input.actorId,
+    p_alasan: input.alasan ?? null,
+  });
+
+  if (error) return fail(pesanKesalahan(error, "Gagal memeriksa permintaan pembelian."));
+  const hasil = parseDokumen(data);
+  return hasil ? ok(hasil) : fail("Respons pemeriksaan permintaan tidak valid.");
+}
+
+export async function periksaPRDenganNilai(
+  supabase: SupabaseClient,
+  input: PeriksaPRDenganNilaiInput,
+): Promise<Result<HasilDokumenPengadaan>> {
+  if (
+    !isUuid(input.actorId) ||
+    !isUuid(input.permintaanId) ||
+    validasiVersi(input.versi) ||
+    !/^\d+(\.\d{1,2})?$/.test(input.nilai)
+  ) {
+    return fail("Data pemeriksaan permintaan tidak valid.");
+  }
+
+  const { data, error } = await supabase.rpc("periksa_pr_dengan_nilai", {
+    p_dokumen_id: input.permintaanId,
+    p_versi: input.versi,
+    p_aktor_id: input.actorId,
+    p_nominal: input.nilai,
     p_alasan: input.alasan ?? null,
   });
 

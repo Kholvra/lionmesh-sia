@@ -25,7 +25,7 @@ async function ambilDokumen(
   if (ids.length === 0) return new Map();
   const { data, error } = await client
     .from("dokumen")
-    .select("id,nomor,status,versi,pembuat_id,created_at,updated_at")
+    .select("id,nomor,status,versi,nominal::text,pembuat_id,created_at,updated_at")
     .in("id", ids);
   if (error) throw new Error(error.message);
   return new Map(((data ?? []) as unknown as Row[]).map((row) => [asString(row.id), row]));
@@ -55,6 +55,7 @@ function mapView(row: Row, dokumen: Row, pemohonNama: string): PermintaanPembeli
     nomor: asString(dokumen.nomor),
     status: asString(dokumen.status) as PermintaanPembelianView["status"],
     versi: asNumber(dokumen.versi),
+    nominal: dokumen.nominal === null ? null : asString(dokumen.nominal),
     pemohonId: asString(dokumen.pembuat_id),
     pemohonNama,
     gudangId: asString(row.gudang_id),
@@ -125,7 +126,7 @@ export async function getPermintaanPembelian(
   const row = data as unknown as Row;
   const { data: dok, error: dokError } = await client
     .from("dokumen")
-    .select("id,nomor,status,versi,pembuat_id,created_at,updated_at")
+    .select("id,nomor,status,versi,nominal::text,pembuat_id,created_at,updated_at")
     .eq("id", dokumenId)
     .single();
   if (dokError) return fail(dokError.message);

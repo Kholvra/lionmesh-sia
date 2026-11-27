@@ -108,6 +108,10 @@ export interface PeriksaPRInput {
   actorId: string;
 }
 
+export interface PeriksaPRDenganNilaiInput extends PeriksaPRInput {
+  nilai: string;
+}
+
 export interface TetapkanPemasokPRInput {
   permintaanId: string;
   versi: number;
@@ -187,6 +191,7 @@ export interface PermintaanPembelianView {
   nomor: string;
   status: StatusDokumen;
   versi: number;
+  nominal: string | null;
   pemohonId: string;
   pemohonNama: string;
   gudangId: string;
