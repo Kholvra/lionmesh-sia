@@ -10,7 +10,6 @@ import {
 import { TableActionLink } from "@/components/ui/table-action-link";
 import { useTableState } from "@/components/ui/use-table-state";
 import { bacaKoleksi } from "@/modules/produksi/store";
-import { ProduksiSubnav } from "../components/produksi-subnav";
 import type { HasilProduksiSpkItem } from "./types";
 
 export function HasilProduksiScreen() {
@@ -19,13 +18,7 @@ export function HasilProduksiScreen() {
 
   return (
     <div className="w-full text-[#172335] animate-fade-in">
-      <ProduksiSubnav />
-
       <PageHeader
-        breadcrumb={[
-          { href: "/produksi", label: "Siklus Produksi" },
-          "PR-005 Mencatat hasil produksi",
-        ]}
         description="Catat hasil dan pemakaian bahan aktual setelah produksi selesai. Hasil diteruskan ke QC."
         title="Hasil produksi"
         variant="cycle"

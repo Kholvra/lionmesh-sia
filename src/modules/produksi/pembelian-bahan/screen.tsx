@@ -11,7 +11,6 @@ import { bacaKoleksi, simpanKoleksi } from "@/modules/produksi/store";
 import type { BomItem } from "../bom-produk/types";
 import type { SpkItem } from "../perintah-produksi/types";
 import type { PurchaseRequestItem } from "./types";
-import { ProduksiSubnav } from "@/modules/produksi/components/produksi-subnav";
 
 const BULAN_LENGKAP_ID = [
   "Januari",
@@ -102,7 +101,6 @@ function AjukanPembelianBahanContent() {
   if (!targetSpk || !relatedBom || !bahanSummary) {
     return (
       <div className="w-full text-[#172335] animate-fade-in">
-        <ProduksiSubnav />
         <EmptyState
           judul="Perintah produksi atau versi BOM terkait tidak ditemukan."
           variant="inline"
@@ -181,17 +179,7 @@ function AjukanPembelianBahanContent() {
 
   return (
     <div className="w-full text-[#172335] animate-fade-in">
-      <ProduksiSubnav />
-
       <PageHeader
-        back={{
-          href: `/produksi/perintah-produksi/${targetSpk.nomorSpk.toLowerCase()}`,
-          label: targetSpk.nomorSpk,
-        }}
-        breadcrumb={[
-          { href: "/produksi", label: "Siklus Produksi" },
-          "PR-003 Mengajukan pembelian bahan",
-        ]}
         title="Ajukan pembelian bahan"
         variant="cycle"
       />

@@ -38,7 +38,6 @@ export async function GudangScreen({ gudangId, mode, profile }: GudangScreenProp
   return (
     <section aria-label="Master gudang" className={styles.page}>
       <PageHeader
-        breadcrumb={["Pengaturan", "Master data"]}
         description="Daftar gudang yang dipakai lintas siklus. Gudang nonaktif tidak bisa dipilih untuk dokumen baru, tetapi dokumen lama tetap terbaca."
         title="Gudang"
       />
@@ -106,9 +105,6 @@ export async function GudangScreen({ gudangId, mode, profile }: GudangScreenProp
                 <p className={styles.emptyState}>
                   Gudang yang dipilih tidak tersedia.
                 </p>
-                <Link className={submitButtonClassName({ className: styles.secondaryButton, size: "lg", variant: "secondary" })} href={PATH_MASTER_GUDANG}>
-                  Kembali ke daftar
-                </Link>
               </div>
             ) : canManage ? (
               <>

@@ -41,7 +41,6 @@ export async function SatuanScreen({ mode, profile, satuanId }: SatuanScreenProp
   return (
     <section aria-label="Master satuan" className={styles.page}>
       <PageHeader
-        breadcrumb={["Pengaturan", "Master data"]}
         description="Satuan dasar dan konversi antar satuan. Konversi hanya dicatat antara dua satuan aktif."
         title="Satuan"
       />
@@ -109,9 +108,6 @@ export async function SatuanScreen({ mode, profile, satuanId }: SatuanScreenProp
                 <p className={styles.emptyState}>
                   Satuan yang dipilih tidak tersedia.
                 </p>
-                <Link className={submitButtonClassName({ className: styles.secondaryButton, size: "lg", variant: "secondary" })} href={PATH_MASTER_SATUAN}>
-                  Kembali ke daftar
-                </Link>
               </div>
             ) : canManage ? (
               <>

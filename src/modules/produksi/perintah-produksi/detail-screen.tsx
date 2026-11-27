@@ -10,7 +10,6 @@ import { EmptyState, LoadingState } from "@/components/ui/states";
 import { hitungKebutuhanBahan } from "@/modules/produksi/kebutuhan-bahan";
 import { bacaKoleksi } from "@/modules/produksi/store";
 import type { BomItem } from "../bom-produk/types";
-import { ProduksiSubnav } from "../components/produksi-subnav";
 import type { SpkItem, SpkStatusType } from "./types";
 
 const BULAN_LENGKAP_ID = [
@@ -101,7 +100,6 @@ function DetailSpkContent({ initialNomorSpk }: { initialNomorSpk?: string }) {
   if (!currentSpk || !relatedBom || !kebutuhanBahan) {
     return (
       <div className="w-full text-[#172335] animate-fade-in">
-        <ProduksiSubnav />
         <EmptyState
           judul="Perintah produksi atau versi BOM terkait tidak ditemukan."
           variant="inline"
@@ -112,14 +110,7 @@ function DetailSpkContent({ initialNomorSpk }: { initialNomorSpk?: string }) {
 
   return (
     <div className="w-full text-[#172335] animate-fade-in">
-      <ProduksiSubnav />
-
       <PageHeader
-        back={{ href: "/produksi/perintah-produksi", label: "Perintah produksi" }}
-        breadcrumb={[
-          { href: "/produksi", label: "Siklus Produksi" },
-          "PR-002 Membuat perintah produksi",
-        ]}
         title={currentSpk.nomorSpk}
         variant="cycle"
       />

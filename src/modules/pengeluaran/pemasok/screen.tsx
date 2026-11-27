@@ -52,7 +52,6 @@ export async function PemasokScreen({
   return (
     <section aria-label="Master pemasok" className={styles.page}>
       <PageHeader
-        breadcrumb={["Siklus Pengeluaran / Pemasok"]}
         description="Kelola master pemasok, termin pembayaran, dan toleransi pencocokan tiga dokumen. Perubahan master hanya berlaku untuk dokumen baru."
         title="Pemasok"
       />
@@ -117,12 +116,6 @@ export async function PemasokScreen({
                 <Notice tone="danger">
                   Detail pemasok gagal dimuat: {data.terpilihError}
                 </Notice>
-                <Link
-                  className={styles.secondaryButton}
-                  href={PATH_PEMASOK}
-                >
-                  Kembali ke daftar
-                </Link>
               </div>
             ) : pemasokId ? (
               <div>
@@ -133,12 +126,6 @@ export async function PemasokScreen({
                   Pemasok yang dipilih tidak tersedia atau sudah tidak dapat
                   diakses oleh peran Anda.
                 </p>
-                <Link
-                  className={styles.secondaryButton}
-                  href={PATH_PEMASOK}
-                >
-                  Kembali ke daftar
-                </Link>
               </div>
             ) : canManage ? (
               <>

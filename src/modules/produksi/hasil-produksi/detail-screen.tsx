@@ -13,7 +13,6 @@ import {
   simpanHasilTercatat,
   simpanKoleksi,
 } from "@/modules/produksi/store";
-import { ProduksiSubnav } from "../components/produksi-subnav";
 import type { SpkItem } from "../perintah-produksi/types";
 import type { HasilProduksiSpkItem } from "./types";
 
@@ -132,7 +131,6 @@ function CatatHasilSpkContent({ initialNomorSpk }: { initialNomorSpk?: string })
   if (!currentSpk) {
     return (
       <div className="w-full text-[#172335] animate-fade-in">
-        <ProduksiSubnav />
         <EmptyState
           judul="SPK yang sedang diproses tidak ditemukan."
           variant="inline"
@@ -213,14 +211,7 @@ function CatatHasilSpkContent({ initialNomorSpk }: { initialNomorSpk?: string })
 
   return (
     <div className="w-full text-[#172335] animate-fade-in">
-      <ProduksiSubnav />
-
       <PageHeader
-        back={{ href: "/produksi/hasil-produksi", label: "Hasil produksi" }}
-        breadcrumb={[
-          { href: "/produksi", label: "Siklus Produksi" },
-          "PR-004 Mencatat hasil dan pemakaian bahan",
-        ]}
         title={`Catat hasil ${currentSpk.nomorSpk}`}
         variant="cycle"
       />

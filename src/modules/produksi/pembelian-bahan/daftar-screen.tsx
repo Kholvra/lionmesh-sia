@@ -14,7 +14,6 @@ import { SpkStepper } from "@/components/ui/spk-stepper";
 import { TableActionLink } from "@/components/ui/table-action-link";
 import { useTableState } from "@/components/ui/use-table-state";
 import { bacaKoleksi } from "@/modules/produksi/store";
-import { ProduksiSubnav } from "../components/produksi-subnav";
 import type { PrFilterTab, PurchaseRequestItem } from "./types";
 
 
@@ -48,26 +47,14 @@ function DaftarPermintaanBahanContent() {
   );
 
   const counts = useMemo(() => {
-    const diperiksaCount =
-      activeTab === "menunggu_pembelian"
-        ? 0
-        : prList.filter((p) => p.status === "DIPERIKSA_PURCHASING").length;
-
-    const menungguCount =
-      activeTab === "menunggu_pembelian"
-        ? menungguPembelianItems.length
-        : prList.filter((p) => p.status === "MENUNGGU_PEMBELIAN").length;
-
-    const dikeluarkanCount = prList.filter(
-      (p) => p.status === "DIKELUARKAN"
-    ).length;
-
     return {
-      diperiksa_purchasing: diperiksaCount,
-      menunggu_pembelian: menungguCount,
-      dikeluarkan: dikeluarkanCount,
+      diperiksa_purchasing: prList.filter(
+        (p) => p.status === "DIPERIKSA_PURCHASING",
+      ).length,
+      menunggu_pembelian: menungguPembelianItems.length,
+      dikeluarkan: prList.filter((p) => p.status === "DIKELUARKAN").length,
     };
-  }, [prList, activeTab, menungguPembelianItems.length]);
+  }, [prList, menungguPembelianItems.length]);
 
   const filteredList = useMemo(() => {
     if (activeTab === "diperiksa_purchasing") {
@@ -104,13 +91,7 @@ function DaftarPermintaanBahanContent() {
 
   return (
     <div className="w-full text-[#172335] animate-fade-in">
-      <ProduksiSubnav />
-
       <PageHeader
-        breadcrumb={[
-          { href: "/produksi", label: "Siklus Produksi" },
-          "PR-003 Mengajukan pembelian bahan",
-        ]}
         title="Permintaan bahan"
         variant="cycle"
       />

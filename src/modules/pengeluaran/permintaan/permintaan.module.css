@@ -8,10 +8,6 @@
   composes: ui-page-header ui-page-header-spaced from global;
 }
 
-.breadcrumb {
-  composes: ui-page-breadcrumb ui-page-breadcrumb-gap from global;
-}
-
 .title {
   composes: ui-page-title from global;
 }
@@ -46,17 +42,12 @@
 }
 
 .primaryButton,
-.secondaryButton,
 .dangerButton {
   composes: ui-button ui-button-color-transition ui-focus-ring from global;
 }
 
 .primaryButton {
   composes: ui-button-primary from global;
-}
-
-.secondaryButton {
-  composes: ui-button-secondary from global;
 }
 
 .dangerButton {
@@ -275,7 +266,6 @@
 
 @media (prefers-reduced-motion: reduce) {
   .primaryButton,
-  .secondaryButton,
   .dangerButton {
     transition-duration: var(--motion-none);
   }

@@ -9,7 +9,6 @@ import { Notice } from "@/components/ui/notice";
 import { PageHeader } from "@/components/ui/page-header";
 import { LoadingState } from "@/components/ui/states";
 import { bacaKoleksi, simpanKoleksi } from "@/modules/produksi/store";
-import { ProduksiSubnav } from "../components/produksi-subnav";
 import {
   BAHAN_BAKU_OPTIONS,
   PRODUK_MASTER_OPTIONS,
@@ -221,14 +220,7 @@ function VersiBomBaruContent() {
 
   return (
     <div className="w-full text-[#172335] animate-fade-in">
-      <ProduksiSubnav />
-
       <PageHeader
-        back={{ href: "/produksi/bom-produk", label: "BOM produk" }}
-        breadcrumb={[
-          { href: "/produksi", label: "Siklus Produksi" },
-          "PR-001 Mengelola BOM berversi",
-        ]}
         title={
           isCreateNewBomMode
             ? "Buat BOM produk baru"

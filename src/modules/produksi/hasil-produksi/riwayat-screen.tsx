@@ -8,7 +8,6 @@ import { SpkStepper } from "@/components/ui/spk-stepper";
 import { EmptyState, LoadingState } from "@/components/ui/states";
 import { useTableState } from "@/components/ui/use-table-state";
 import { bacaHasilTercatat } from "@/modules/produksi/store";
-import { ProduksiSubnav } from "../components/produksi-subnav";
 
 
 function RiwayatHasilSpkContent({ initialNomorSpk }: { initialNomorSpk?: string }) {
@@ -48,14 +47,7 @@ function RiwayatHasilSpkContent({ initialNomorSpk }: { initialNomorSpk?: string 
 
   return (
     <div className="w-full text-[#172335] animate-fade-in">
-      <ProduksiSubnav />
-
       <PageHeader
-        back={{ href: "/produksi/hasil-produksi", label: "Hasil produksi" }}
-        breadcrumb={[
-          { href: "/produksi", label: "Siklus Produksi" },
-          "PR-004 Mencatat hasil dan pemakaian bahan",
-        ]}
         title={summary?.nomorSpk ?? nomorSpkSlug.toUpperCase()}
         variant="cycle"
       />

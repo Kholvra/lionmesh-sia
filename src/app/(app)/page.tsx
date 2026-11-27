@@ -1,3 +1,4 @@
+import { connection } from "next/server";
 import { Suspense } from "react";
 
 import { MetricCard } from "@/components/ui/metric-card";
@@ -38,6 +39,7 @@ const LANGKAH_KETERKAITAN = [
 ] as const;
 
 export default async function DashboardPage() {
+  await connection();
   const { profile } = await requireSesi();
   const data = await getDataDashboard({
     id: profile.id,

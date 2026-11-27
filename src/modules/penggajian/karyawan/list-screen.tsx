@@ -9,20 +9,15 @@ import { listKaryawan } from "@/modules/penggajian/karyawan/queries";
 import { aksesSesi } from "@/modules/penggajian/karyawan/sesi";
 import { ui } from "@/modules/penggajian/ui/kelas";
 
-const ITEM = "GJ-001 Mengelola data karyawan";
 const JUDUL = "Data karyawan";
 const DESKRIPSI = "Kelola identitas, informasi penggajian, dan status hubungan kerja.";
-const BREADCRUMB = [
-  { label: "Siklus Penggajian", accent: true },
-  ITEM,
-] as const;
 
 async function DaftarKaryawan() {
   const akses = await aksesSesi();
   if (!akses.bolehMembaca) {
     return (
       <>
-        <PageHeader breadcrumb={BREADCRUMB} title={JUDUL} />
+        <PageHeader title={JUDUL} />
         <ErrorState
           judul="Anda tidak punya akses ke data karyawan"
           teks="Data karyawan hanya bisa dibuka oleh HR, Accounting, dan Finance. Hubungi HR bila Anda membutuhkannya."
@@ -44,7 +39,6 @@ async function DaftarKaryawan() {
           ) : null
         }
         description={DESKRIPSI}
-        breadcrumb={BREADCRUMB}
         title={JUDUL}
       />
       <section className={ui.card}>
@@ -70,7 +64,7 @@ export function KaryawanListScreen() {
     <Suspense
       fallback={
         <>
-          <PageHeader breadcrumb={BREADCRUMB} description={DESKRIPSI} title={JUDUL} />
+          <PageHeader description={DESKRIPSI} title={JUDUL} />
           <section aria-busy="true" className={ui.card}>
             <h2 className={ui.cardTitle}>Direktori karyawan</h2>
             <KaryawanTableLoading />

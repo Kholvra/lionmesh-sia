@@ -14,7 +14,6 @@ import { TableActionLink } from "@/components/ui/table-action-link";
 import { useTableState } from "@/components/ui/use-table-state";
 import { bacaKoleksi, simpanKoleksi } from "@/modules/produksi/store";
 import { useProduksiActor } from "@/modules/produksi/context/actor-context";
-import { ProduksiSubnav } from "../components/produksi-subnav";
 import type { HppSpkSummary, KartuJamKerjaItem } from "./types";
 
 type ActiveTab = "jam_kerja" | "kalkulasi_hpp";
@@ -92,13 +91,7 @@ export function KartuJamKerjaScreen() {
 
   return (
     <div className="mx-auto max-w-[1156px] text-[#172335] animate-fade-in">
-      <ProduksiSubnav />
-
       <PageHeader
-        breadcrumb={[
-          { href: "/produksi", label: "Siklus Produksi" },
-          "PR-006 Biaya produksi dan HPP",
-        ]}
         description="Pencatatan kartu jam kerja tenaga kerja langsung (TKL) per SPK dan perhitungan HPP produk selesai menggunakan rumus mengikat (Bahan + TKL + Overhead + Rework − Reject abnormal)."
         title="Biaya produksi & HPP"
         variant="cycle"

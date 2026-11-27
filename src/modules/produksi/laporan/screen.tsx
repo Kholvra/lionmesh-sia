@@ -13,7 +13,6 @@ import { TableActionLink } from "@/components/ui/table-action-link";
 import { useTableState } from "@/components/ui/use-table-state";
 import { useProduksiActor } from "@/modules/produksi/context/actor-context";
 import { tabLaporanProduksi } from "@/modules/produksi/auth/actor";
-import { ProduksiSubnav } from "../components/produksi-subnav";
 import type {
   LaporanProduksiRow,
   LaporanWipRow,
@@ -50,7 +49,6 @@ export function LaporanProduksiScreen() {
   if (effectiveActiveTab === null) {
     return (
       <div className="mx-auto max-w-[1156px] text-[#172335] animate-fade-in">
-        <ProduksiSubnav />
         <ErrorState
           judul="Akses ditolak"
           teks="Peran Anda tidak memiliki akses ke laporan produksi. Hubungi administrator bila akses ini dibutuhkan."
@@ -89,8 +87,6 @@ export function LaporanProduksiScreen() {
 
   return (
     <div className="mx-auto max-w-[1156px] text-[#172335] animate-fade-in">
-      <ProduksiSubnav />
-
       <PageHeader
         actions={
           <div className="flex items-center gap-2">
@@ -106,10 +102,6 @@ export function LaporanProduksiScreen() {
             </select>
           </div>
         }
-        breadcrumb={[
-          { href: "/produksi", label: "Siklus Produksi" },
-          "PR-007 Laporan produksi dan efisiensi",
-        ]}
         description="Ringkasan hasil pabrik, analisis yield dan efisiensi bahan standar BOM, posisi WIP, serta rekapitulasi persediaan."
         title="Laporan produksi & efisiensi"
         variant="cycle"

@@ -9,19 +9,12 @@ import { StatusBadge } from "@/components/ui/status-badge";
 import { formatRupiah } from "@/lib/format/money";
 import { addGajiPokok } from "@/modules/penggajian/karyawan/actions";
 import { GajiPokokForm } from "@/modules/penggajian/karyawan/components/gaji-pokok-form";
-import { PATH_KARYAWAN, pathKaryawanStatus, pathKaryawanUbah } from "@/modules/penggajian/karyawan/constants";
+import { pathKaryawanStatus, pathKaryawanUbah } from "@/modules/penggajian/karyawan/constants";
 import { formatTanggal, formatWaktu } from "@/modules/penggajian/karyawan/format";
 import { getKaryawan, type DetailKaryawan } from "@/modules/penggajian/karyawan/queries";
 import { aksesSesi } from "@/modules/penggajian/karyawan/sesi";
 import { KEADAAN_GAJI, STATUS_KARYAWAN } from "@/modules/penggajian/karyawan/status";
 import { ui } from "@/modules/penggajian/ui/kelas";
-
-const ITEM = "GJ-001 Mengelola data karyawan";
-const KEMBALI = { href: PATH_KARYAWAN, label: "Data karyawan" };
-const BREADCRUMB = [
-  { label: "Siklus Penggajian", accent: true },
-  ITEM,
-] as const;
 
 const PESAN = {
   dibuat: "Karyawan tersimpan.",
@@ -147,7 +140,7 @@ async function DetailKonten({ id, pesan }: { id: string; pesan?: string }) {
   if (!akses.bolehMembaca) {
     return (
       <>
-        <PageHeader back={KEMBALI} breadcrumb={BREADCRUMB} title="Detail karyawan" />
+        <PageHeader title="Detail karyawan" />
         <ErrorState
           judul="Anda tidak punya akses ke data karyawan"
           teks="Data karyawan hanya bisa dibuka oleh HR, Accounting, dan Finance. Hubungi HR bila Anda membutuhkannya."
@@ -160,10 +153,8 @@ async function DetailKonten({ id, pesan }: { id: string; pesan?: string }) {
   if (!karyawan) {
     return (
       <>
-        <PageHeader back={KEMBALI} breadcrumb={BREADCRUMB} title="Detail karyawan" />
+        <PageHeader title="Detail karyawan" />
         <EmptyState
-          actionHref={PATH_KARYAWAN}
-          actionLabel="Kembali ke data karyawan"
           judul="Karyawan tidak ditemukan"
           teks="Data mungkin sudah dipindahkan atau tautannya salah."
           variant="compact"
@@ -176,9 +167,7 @@ async function DetailKonten({ id, pesan }: { id: string; pesan?: string }) {
   return (
     <>
       <PageHeader
-        back={KEMBALI}
         description="Lihat identitas dan informasi payroll tanpa menghapus riwayat lama."
-        breadcrumb={BREADCRUMB}
         title={`Detail karyawan / ${karyawan.nama}`}
       />
       <div className={ui.stack}>
@@ -194,7 +183,6 @@ async function DetailKonten({ id, pesan }: { id: string; pesan?: string }) {
                   <Link className={ui.button} href={pathKaryawanStatus(id)}>Ubah status</Link>
                 </>
               ) : null}
-              <Link className={ui.button} href={KEMBALI.href}>← Kembali</Link>
             </div>
             <KartuGaji bolehTambah={bolehUbah} karyawan={karyawan} />
           </div>
@@ -209,7 +197,7 @@ async function DetailKonten({ id, pesan }: { id: string; pesan?: string }) {
 
 export function KaryawanDetailScreen({ id, pesan }: { id: string; pesan?: string }) {
   return (
-    <Suspense fallback={<PageHeader back={KEMBALI} breadcrumb={BREADCRUMB} description="Memuat data karyawan…" title="Detail karyawan" />}>
+    <Suspense fallback={<PageHeader description="Memuat data karyawan…" title="Detail karyawan" />}>
       <DetailKonten id={id} pesan={pesan} />
     </Suspense>
   );

@@ -8,7 +8,6 @@ import { TableActionLink } from "@/components/ui/table-action-link";
 import { useTableState } from "@/components/ui/use-table-state";
 import { bacaKoleksi } from "@/modules/produksi/store";
 import { useProduksiActor } from "../context/actor-context";
-import { ProduksiSubnav } from "../components/produksi-subnav";
 import type { BomItem } from "./types";
 
 export function BomProdukScreen() {
@@ -35,13 +34,7 @@ export function BomProdukScreen() {
 
   return (
     <div className="w-full text-[#172335] animate-fade-in">
-      <ProduksiSubnav />
-
       <PageHeader
-        breadcrumb={[
-          { href: "/produksi", label: "Siklus Produksi" },
-          "PR-001 Mengelola BOM berversi",
-        ]}
         description="Resep bahan per produk. Setiap perubahan dibuat sebagai versi baru; versi lama tetap tersimpan dan perintah produksi memakai versi yang dipilih saat dibuat."
         title="Data produksi"
         variant="cycle"

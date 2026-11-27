@@ -41,7 +41,6 @@ export async function PermintaanScreen({ mode, permintaanId, profile }: Props) {
   return (
     <section aria-label="Permintaan pembelian" className={styles.page}>
       <PageHeader
-        breadcrumb={["Siklus Pengeluaran / Permintaan Pembelian"]}
         description="Ajukan kebutuhan barang dari Gudang atau Produksi. Purchasing memeriksa antrean, lalu meneruskan permintaan untuk persetujuan."
         title="Permintaan pembelian"
       />
@@ -200,9 +199,6 @@ export async function PermintaanScreen({ mode, permintaanId, profile }: Props) {
                 <p className={styles.emptyState}>
                   Permintaan tidak tersedia atau bukan milik Anda.
                 </p>
-                <Link className={styles.secondaryButton} href={PATH_PERMINTAAN}>
-                  Kembali ke antrean
-                </Link>
               </div>
             ) : (
               <p className={styles.emptyState}>

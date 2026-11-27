@@ -10,7 +10,6 @@ import { EmptyState } from "@/components/ui/states";
 import { hitungKebutuhanBahan } from "@/modules/produksi/kebutuhan-bahan";
 import { bacaKoleksi, simpanKoleksi } from "@/modules/produksi/store";
 import type { BomItem } from "../bom-produk/types";
-import { ProduksiSubnav } from "../components/produksi-subnav";
 import { MESIN_OPTIONS, type SpkItem } from "./types";
 
 const BULAN_ID = [
@@ -188,13 +187,7 @@ export function TambahPerintahProduksiScreen() {
   if (!activeBom || !kebutuhanKalkulasi) {
     return (
       <div className="w-full text-[#172335] animate-fade-in">
-        <ProduksiSubnav />
         <PageHeader
-          back={{ href: "/produksi/perintah-produksi", label: "Perintah produksi" }}
-          breadcrumb={[
-            { href: "/produksi", label: "Siklus Produksi" },
-            "PR-002 Membuat perintah produksi",
-          ]}
           title="Tambah perintah produksi"
           variant="cycle"
         />
@@ -208,14 +201,7 @@ export function TambahPerintahProduksiScreen() {
 
   return (
     <div className="w-full text-[#172335] animate-fade-in">
-      <ProduksiSubnav />
-
       <PageHeader
-        back={{ href: "/produksi/perintah-produksi", label: "Perintah produksi" }}
-        breadcrumb={[
-          { href: "/produksi", label: "Siklus Produksi" },
-          "PR-002 Membuat perintah produksi",
-        ]}
         title="Tambah perintah produksi"
         variant="cycle"
       />

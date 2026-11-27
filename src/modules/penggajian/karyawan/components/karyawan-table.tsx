@@ -98,6 +98,15 @@ export function KaryawanTable({ rows, tampilIdentitas, tampilRekening }: Karyawa
     resetPageOnSort: false,
   });
 
+  const jumlahStatus = useMemo(
+    () => ({
+      AKTIF: rows.filter((row) => row.status === "AKTIF").length,
+      NONAKTIF: rows.filter((row) => row.status === "NONAKTIF").length,
+      SEMUA: rows.length,
+    }),
+    [rows],
+  );
+
   return (
     <>
       <div className={ui.toolbar}>
@@ -122,9 +131,9 @@ export function KaryawanTable({ rows, tampilIdentitas, tampilRekening }: Karyawa
             }}
             value={table.filterValue}
           >
-            <option value="AKTIF">Aktif</option>
-            <option value="NONAKTIF">Nonaktif</option>
-            <option value="SEMUA">Semua</option>
+            <option value="AKTIF">Aktif ({jumlahStatus.AKTIF})</option>
+            <option value="NONAKTIF">Nonaktif ({jumlahStatus.NONAKTIF})</option>
+            <option value="SEMUA">Semua ({jumlahStatus.SEMUA})</option>
           </select>
         </label>
       </div>

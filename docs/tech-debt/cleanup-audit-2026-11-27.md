@@ -185,21 +185,33 @@ DB lokal (policy pengadaan terbentuk). F1: suffix `,00` tampil di gaji
       bersih (nol pecahan) tanpa migrasi data.
 
 ## Fase 5 — Sidebar per siklus (TERAKHIR, setelah Fase 1–4)
+Bukti 2026-11-27 (branch `post-merge-consolidation`, 3 agen + review):
+`kontekstual-lipat` disetujui via preview (accordion satu-terbuka,
+tanpa chevron, lucide, anak-aktif tint+putih, kaskade loading);
+sidebar + nav + CSS ditulis ulang bersih; nav dalam-page dihapus;
+hub produksi → redirect BOM; counter tab dari data termuat;
+`typecheck`/`lint`/`arch:check` hijau, `test` 126/126, `build` hijau,
+verifikasi visual browser + accordion toggle OK. Susulan: `connection()`
+di dashboard (Date.now prerender, sekelas F2).
 
 Keputusan tercatat 2026-11-27: navigasi naik ke sidebar per siklus
 (mengikuti model per-role Figma/shell GJ lama); nav di dalam konten
 halaman dihapus. Detail desain dibahas lanjut sebelum fase ini jalan.
 Cakupan: semua siklus sekaligus, langsung ready.
 
-- [ ] N1. Kunci desain: AppShell global sebagai level 1 (pindah siklus)
+- [x] N1. Kunci desain: AppShell global sebagai level 1 (pindah siklus)
       + sidebar siklus level 2 di tiap area, atau sidebar siklus
       menggantikan AppShell per area. Putuskan varian per-role vs statis.
-- [ ] N2. Implement sidebar per siklus untuk semua siklus
+- [x] N2. Implement sidebar per siklus untuk semua siklus
       (pendapatan, pengeluaran, produksi, penggajian, laporan).
-- [ ] N3. Hapus nav dalam-page: `ProduksiSubnav` (14 layar), breadcrumb
+- [x] N3. Hapus nav dalam-page: `ProduksiSubnav` (14 layar), breadcrumb
       (master 4×, pengeluaran, GJ `page-header`, produksi), header-nav
       per layar (laporan `SectionHeader` 16×, GJ 15×) → pindah ke
       sidebar siklus.
+- [x] N4. Hapus hub produksi (`/produksi` → redirect layar pertama);
+      `/laporan` HIDUP sebagai indeks (bukan hub). (`D-69`)
+- [x] N5. Tab status di list punya counter (pengganti stepper).
+      (`D-69`)
 
 ## Non-tujuan (sengaja tidak dikerjakan)
 

@@ -44,7 +44,6 @@ export async function ProdukScreen({ mode, produkId, profile }: ProdukScreenProp
   return (
     <section aria-label="Master produk" className={styles.page}>
       <PageHeader
-        breadcrumb={["Pengaturan", "Master data"]}
         description="Satu daftar produk untuk semua siklus. Produk yang tidak dipakai lagi dinonaktifkan, bukan dihapus; dokumen lama tetap terbaca."
         title="Produk"
       />
@@ -130,9 +129,6 @@ export async function ProdukScreen({ mode, produkId, profile }: ProdukScreenProp
                   Produk yang dipilih tidak tersedia atau sudah tidak dapat
                   diakses oleh peran Anda.
                 </p>
-                <Link className={submitButtonClassName({ className: styles.secondaryButton, size: "lg", variant: "secondary" })} href={PATH_MASTER_PRODUK}>
-                  Kembali ke daftar
-                </Link>
               </div>
             ) : canManage ? (
               <>

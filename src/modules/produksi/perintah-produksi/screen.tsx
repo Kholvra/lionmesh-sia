@@ -13,7 +13,6 @@ import { TableActionLink } from "@/components/ui/table-action-link";
 import { useTableState } from "@/components/ui/use-table-state";
 import { bacaKoleksi } from "@/modules/produksi/store";
 import { useProduksiActor } from "../context/actor-context";
-import { ProduksiSubnav } from "../components/produksi-subnav";
 import type { SpkFilterTab, SpkItem } from "./types";
 
 
@@ -70,13 +69,7 @@ export function PerintahProduksiScreen() {
 
   return (
     <div className="w-full text-[#172335] animate-fade-in">
-      <ProduksiSubnav />
-
       <PageHeader
-        breadcrumb={[
-          { href: "/produksi", label: "Siklus Produksi" },
-          "PR-002 Membuat perintah produksi",
-        ]}
         description="Satu perintah produksi (SPK) untuk satu produk dan jadwal. Kebutuhan bahan dihitung dari data produksi."
         title="Perintah produksi"
         variant="cycle"

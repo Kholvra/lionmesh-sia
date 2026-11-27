@@ -8,10 +8,6 @@
   composes: ui-page-header ui-page-header-spaced from global;
 }
 
-.breadcrumb {
-  composes: ui-page-breadcrumb ui-page-breadcrumb-gap from global;
-}
-
 .title {
   composes: ui-page-title from global;
 }

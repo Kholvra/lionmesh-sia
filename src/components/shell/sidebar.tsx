@@ -1,102 +1,313 @@
 "use client";
 
+import { useId, useState, type CSSProperties } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import {
+  Bell,
+  CalendarClock,
+  Factory,
+  FileText,
+  LayoutDashboard,
+  Settings,
+  TrendingDown,
+  TrendingUp,
+  Wallet,
+  type LucideIcon,
+} from "lucide-react";
 
 import { SignOutButton } from "@/components/sign-out-button";
 import { cekIzin } from "@/lib/auth/permissions";
 import type { Peran } from "@/lib/auth/types";
 import {
+  bobotCocokRute,
   cocokRute,
-  NAV_PRIMARY,
+  NAV_CYCLES,
+  NAV_LEAVES,
   NAV_UTILITY,
+  type NavCycle,
   type NavIcon,
   type NavItem,
 } from "./nav";
 
 import styles from "./sidebar.module.css";
 
-const ICON_PATHS: Record<NavIcon, string> = {
-  dashboard:
-    "M4 13h6V4H4v9Zm0 7h6v-5H4v5Zm9 0h7v-9h-7v9Zm0-16v5h7V4h-7Z",
-  notifikasi:
-    "M12 4a5 5 0 0 0-5 5v3.5L5 17h14l-2-4.5V9a5 5 0 0 0-5-5Zm0 17a2.5 2.5 0 0 0 2.45-2h-4.9A2.5 2.5 0 0 0 12 21Z",
-  pendapatan: "M12 3v18M8 7h6a3 3 0 0 1 0 6H8m0 0h7",
-  pengeluaran:
-    "M3 7h18v10H3V7Zm14 5h2M3 10h18",
-  produksi:
-    "M4 20V9l5 3V9l5 3V4h6v16H4Z",
-  penggajian:
-    "M16 20v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M9 10a4 4 0 1 0 0-8 4 4 0 0 0 0 8Zm9-7a4 4 0 0 1 0 7.7",
-  laporan:
-    "M4 20V6m0 14h16M8 16V9m4 7v-4m4 4V7",
-  periode:
-    "M12 6v6l4 2M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z",
-  pengaturan:
-    "M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6Zm7.4-3a7.4 7.4 0 0 0-.1-1.2l2-1.5-2-3.4-2.3 1a7.4 7.4 0 0 0-2-1.2L14.6 3h-4l-.4 2.5a7.4 7.4 0 0 0-2 1.2l-2.3-1-2 3.4 2 1.5a7.4 7.4 0 0 0 0 2.4l-2 1.5 2 3.4 2.3-1a7.4 7.4 0 0 0 2 1.2l.4 2.5h4l.4-2.5a7.4 7.4 0 0 0 2-1.2l2.3 1 2-3.4-2-1.5c.1-.4.1-.8.1-1.2Z",
+export type NavStatus = "ready" | "loading" | "error" | "empty";
+
+type SidebarProps = {
+  nama: string;
+  peran: Peran | null;
+  status?: NavStatus;
+  onRetry?: () => void;
 };
 
-function Icon({ name }: { name: NavIcon }) {
+// Lucide sizes mirror spacing tokens: space-4 for children, space-5 for rows.
+const ICON_SIZE_SMALL = 16;
+const ICON_SIZE = 20;
+
+const ICONS: Record<NavIcon, LucideIcon> = {
+  dashboard: LayoutDashboard,
+  notifikasi: Bell,
+  pendapatan: TrendingUp,
+  pengeluaran: TrendingDown,
+  produksi: Factory,
+  penggajian: Wallet,
+  laporan: FileText,
+  periode: CalendarClock,
+  pengaturan: Settings,
+};
+
+const SKELETON_ROWS = 7;
+
+function NavIconView({ name, small = false }: { name: NavIcon; small?: boolean }) {
+  const IconComponent = ICONS[name];
   return (
-    <svg
+    <IconComponent
       aria-hidden="true"
       className={styles.icon}
-      fill="none"
-      stroke="currentColor"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      strokeWidth="1.75"
-      viewBox="0 0 24 24"
-    >
-      <path d={ICON_PATHS[name]} />
-    </svg>
+      size={small ? ICON_SIZE_SMALL : ICON_SIZE}
+    />
+  );
+}
+
+function Leaf({ item, aktif }: { item: NavItem; aktif: boolean }) {
+  return (
+    <li>
+      <Link
+        aria-current={aktif ? "page" : undefined}
+        className={aktif ? `${styles.row} ${styles.rowActive}` : styles.row}
+        href={item.href}
+      >
+        <NavIconView name={item.icon} />
+        <span className={styles.label}>{item.label}</span>
+      </Link>
+    </li>
+  );
+}
+
+function Child({ item, aktif }: { item: NavItem; aktif: boolean }) {
+  if (!item.tersedia) {
+    return (
+      <li>
+        <span
+          aria-disabled="true"
+          className={styles.childDisabled}
+          title={`${item.label} — segera hadir`}
+        >
+          <NavIconView name={item.icon} small />
+          <span className={styles.label}>{item.label}</span>
+        </span>
+      </li>
+    );
+  }
+
+  return (
+    <li>
+      <Link
+        aria-current={aktif ? "page" : undefined}
+        className={
+          aktif ? `${styles.childRow} ${styles.childActive}` : styles.childRow
+        }
+        href={item.href}
+      >
+        <NavIconView name={item.icon} small />
+        <span className={styles.label}>{item.label}</span>
+      </Link>
+    </li>
+  );
+}
+
+type CycleProps = {
+  cycle: NavCycle;
+  dibuka: boolean;
+  aktif: boolean;
+  aktifHref: string | undefined;
+  panelId: string;
+  onToggle: () => void;
+};
+
+function Cycle({ cycle, dibuka, aktif, aktifHref, panelId, onToggle }: CycleProps) {
+  const tampilBadge = !cycle.tersedia && !dibuka && !aktif;
+
+  return (
+    <li>
+      <button
+        aria-controls={panelId}
+        aria-expanded={dibuka}
+        className={aktif ? `${styles.row} ${styles.rowActive}` : styles.row}
+        onClick={onToggle}
+        type="button"
+      >
+        <NavIconView name={cycle.icon} />
+        <span className={styles.label}>{cycle.label}</span>
+        {tampilBadge ? <span className={styles.badge}>BELUM</span> : null}
+      </button>
+      <div
+        className={dibuka ? `${styles.panel} ${styles.panelOpen}` : styles.panel}
+        id={panelId}
+        inert={!dibuka}
+      >
+        <div className={styles.panelInner}>
+          <ul aria-label={`Halaman ${cycle.label}`} className={styles.children}>
+            {cycle.children.map((child) => (
+              <Child aktif={child.href === aktifHref} item={child} key={child.href} />
+            ))}
+          </ul>
+        </div>
+      </div>
+    </li>
+  );
+}
+
+function NavLoading() {
+  return (
+    <div aria-busy="true" className={styles.loading} role="status">
+      <p className={styles.loadingText}>Memuat navigasi…</p>
+      <ul aria-hidden="true" className={styles.skeletonList}>
+        {Array.from({ length: SKELETON_ROWS }, (_, indeks) => (
+          <li className={styles.skeletonItem} key={indeks}>
+            <span
+              className={styles.skeletonBar}
+              style={{ "--skeleton-index": indeks } as CSSProperties}
+            />
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
+function NavNotice({
+  kind,
+  onRetry,
+}: {
+  kind: "error" | "empty";
+  onRetry: () => void;
+}) {
+  const gagal = kind === "error";
+
+  return (
+    <div className={styles.notice} role={gagal ? "alert" : "status"}>
+      <p className={styles.noticeTitle}>
+        {gagal ? "Navigasi gagal dimuat." : "Belum ada navigasi tersedia."}
+      </p>
+      <p className={styles.noticeText}>
+        {gagal
+          ? "Periksa koneksi, lalu coba muat ulang navigasi."
+          : "Peran ini belum memiliki halaman yang dapat dibuka."}
+      </p>
+      <button className={styles.retry} onClick={onRetry} type="button">
+        Coba lagi
+      </button>
+    </div>
+  );
+}
+
+type NavTreeProps = {
+  cycles: readonly NavCycle[];
+  leaves: readonly NavItem[];
+  utility: readonly NavItem[];
+  aktifHref: string | undefined;
+  siklusAktif: string | undefined;
+  siklusAwal: string | undefined;
+  panelPrefix: string;
+};
+
+function NavTree({
+  cycles,
+  leaves,
+  utility,
+  aktifHref,
+  siklusAktif,
+  siklusAwal,
+  panelPrefix,
+}: NavTreeProps) {
+  const [dibuka, setDibuka] = useState<string | null>(siklusAwal ?? null);
+
+  return (
+    <>
+      <ul aria-label="Navigasi siklus" className={styles.group}>
+        {leaves.map((item) =>
+          item.href === "/" ? (
+            <Leaf aktif={item.href === aktifHref} item={item} key={item.href} />
+          ) : null,
+        )}
+        {cycles.map((cycle) => (
+          <Cycle
+            aktif={cycle.id === siklusAktif}
+            aktifHref={aktifHref}
+            cycle={cycle}
+            dibuka={cycle.id === dibuka}
+            key={cycle.id}
+            onToggle={() =>
+              setDibuka((sekarang) => (sekarang === cycle.id ? null : cycle.id))
+            }
+            panelId={`${panelPrefix}-${cycle.id}`}
+          />
+        ))}
+        {leaves.map((item) =>
+          item.href !== "/" ? (
+            <Leaf aktif={item.href === aktifHref} item={item} key={item.href} />
+          ) : null,
+        )}
+      </ul>
+
+      <ul aria-label="Navigasi pendukung" className={`${styles.group} ${styles.utility}`}>
+        {utility.map((item) => (
+          <Leaf aktif={item.href === aktifHref} item={item} key={item.href} />
+        ))}
+      </ul>
+    </>
   );
 }
 
 export function Sidebar({
   nama,
   peran,
-}: {
-  nama: string;
-  peran: Peran | null;
-}) {
+  status = "ready",
+  onRetry,
+}: SidebarProps) {
   const pathname = usePathname();
-  const primary = NAV_PRIMARY.filter((item) => !item.aksi || cekIzin(peran, item.aksi));
-  const utility = NAV_UTILITY.filter((item) => !item.aksi || cekIzin(peran, item.aksi));
-  // Keep the parent section active on child screens, matching the shell
-  // pattern: Laporan stays orange while /laporan/periode is open.
-  const activeHref = [...primary, ...utility].find(
-    (item) => item.tersedia && cocokRute(pathname, item.href),
-  )?.href;
+  const panelPrefix = useId();
+  const cycles = NAV_CYCLES.filter(
+    (cycle) => !cycle.aksi || cekIzin(peran, cycle.aksi),
+  ).map((cycle) => ({
+    ...cycle,
+    children: cycle.children.filter(
+      (child) => !child.aksi || cekIzin(peran, child.aksi),
+    ),
+  }));
+  const leaves = NAV_LEAVES.filter(
+    (item) => !item.aksi || cekIzin(peran, item.aksi),
+  );
+  const utility = NAV_UTILITY.filter(
+    (item) => !item.aksi || cekIzin(peran, item.aksi),
+  );
 
-  function renderItem(item: NavItem) {
-    const aktif = item.href === activeHref;
+  const items = [
+    ...cycles,
+    ...cycles.flatMap((cycle) => cycle.children),
+    ...leaves,
+    ...utility,
+  ];
+  const aktifHref = items
+    .map((item) => ({
+      href: item.href,
+      bobot: item.tersedia ? bobotCocokRute(pathname, item.href) : 0,
+    }))
+    .filter((kandidat) => kandidat.bobot > 0)
+    .sort((a, b) => b.bobot - a.bobot)[0]?.href;
+  const siklusAktif = cycles.find(
+    (cycle) =>
+      cycle.href === aktifHref ||
+      cycle.children.some((child) => child.href === aktifHref),
+  )?.id;
+  const siklusAwal = cycles.find((cycle) => cocokRute(pathname, cycle.href))?.id;
 
-    if (!item.tersedia) {
-      return (
-        <li key={item.href}>
-          <span className={styles.itemDisabled} title="Belum tersedia">
-            <Icon name={item.icon} />
-            <span className={styles.label}>{item.label}</span>
-            <span className={styles.soon}>belum</span>
-          </span>
-        </li>
-      );
-    }
-
-    return (
-      <li key={item.href}>
-        <Link
-          aria-current={aktif ? "page" : undefined}
-          className={aktif ? `${styles.item} ${styles.itemActive}` : styles.item}
-          href={item.href}
-        >
-          <Icon name={item.icon} />
-          <span className={styles.label}>{item.label}</span>
-        </Link>
-      </li>
-    );
-  }
+  const kosong =
+    cycles.length === 0 && leaves.length === 0 && utility.length === 0;
+  const tampilan = status === "ready" && kosong ? "empty" : status;
+  const cobaLagi = onRetry ?? (() => window.location.reload());
 
   return (
     <nav aria-label="Navigasi utama" className={styles.sidebar}>
@@ -105,11 +316,22 @@ export function Sidebar({
         <span className={styles.caption}>Sistem Informasi Akuntansi</span>
       </div>
 
-      <ul className={styles.group}>{primary.map(renderItem)}</ul>
-
-      <ul className={`${styles.group} ${styles.utility}`}>
-        {utility.map(renderItem)}
-      </ul>
+      {tampilan === "ready" ? (
+        <NavTree
+          aktifHref={aktifHref}
+          cycles={cycles}
+          key={siklusAwal ?? "tanpa-siklus"}
+          leaves={leaves}
+          panelPrefix={panelPrefix}
+          siklusAktif={siklusAktif}
+          siklusAwal={siklusAwal}
+          utility={utility}
+        />
+      ) : tampilan === "loading" ? (
+        <NavLoading />
+      ) : (
+        <NavNotice kind={tampilan === "error" ? "error" : "empty"} onRetry={cobaLagi} />
+      )}
 
       <div className={styles.footer}>
         <p className={styles.userName}>{nama}</p>

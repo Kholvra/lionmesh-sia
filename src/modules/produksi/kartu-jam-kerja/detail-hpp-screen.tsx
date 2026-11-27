@@ -11,7 +11,6 @@ import {
 import { EmptyState } from "@/components/ui/states";
 import { useTableState } from "@/components/ui/use-table-state";
 import { useProduksiActor } from "@/modules/produksi/context/actor-context";
-import { ProduksiSubnav } from "@/modules/produksi/components/produksi-subnav";
 import type { HppSpkSummary } from "./types";
 
 export function DetailHppScreen() {
@@ -132,7 +131,6 @@ export function DetailHppScreen() {
   if (!hppData) {
     return (
       <div className="mx-auto max-w-[1156px] text-[#172335] animate-fade-in">
-        <ProduksiSubnav />
         <EmptyState
           judul="Rincian HPP untuk perintah ini tidak tersedia."
           variant="inline"
@@ -143,16 +141,8 @@ export function DetailHppScreen() {
 
   return (
     <div className="mx-auto max-w-[1156px] text-[#172335] animate-fade-in">
-      <ProduksiSubnav />
-
       <PageHeader
         actions={hppAction}
-        back={{ href: "/produksi/kartu-jam-kerja", label: "Kembali ke daftar HPP" }}
-        breadcrumb={[
-          { href: "/produksi", label: "Siklus Produksi" },
-          "PR-006 Biaya produksi dan HPP",
-          hppData.nomorSpk,
-        ]}
         description={`${hppData.produkNama} · ${hppData.jumlahLulus} lembar lulus QC · Jadwal ${hppData.jadwalText}`}
         title={`Rincian HPP ${hppData.nomorSpk}`}
         variant="cycle"

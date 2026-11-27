@@ -41,7 +41,6 @@ export default async function TutupPeriodePage({ params }: PageProps) {
       <PeriodeShell
         deskripsi="Periksa prasyarat sebelum mengunci jurnal periode ini."
         judul={`Tutup periode ${periode.data.label}`}
-        kembali={{ href: "/laporan/periode", label: "Periode akuntansi" }}
         profil={profile}
       >
         <Notice nada="bahaya" variant="bordered">{hasil.message}</Notice>
@@ -53,10 +52,8 @@ export default async function TutupPeriodePage({ params }: PageProps) {
 
   return (
     <PeriodeShell
-      breadcrumb="Umum / C-010 Menutup periode"
       deskripsi="Periksa prasyarat sebelum mengunci jurnal periode ini. Setelah ditutup, periode tidak bisa dibuka kembali."
       judul={`Tutup periode ${data.periode.label}`}
-      kembali={{ href: "/laporan/periode", label: "Periode akuntansi" }}
       profil={profile}
     >
       <KartuPemeriksaanPeriode data={data} />

@@ -47,7 +47,6 @@ export async function MataUangScreen({
   return (
     <section aria-label="Master mata uang" className={styles.page}>
       <PageHeader
-        breadcrumb={["Pengaturan", "Master data"]}
         description="Mata uang dan kurs disimpan sebagai master. Dokumen dan jurnal baru tetap dalam IDR (D-38)."
         title="Mata uang dan kurs"
       />
@@ -118,9 +117,6 @@ export async function MataUangScreen({
                 <p className={styles.emptyState}>
                   Mata uang yang dipilih tidak tersedia.
                 </p>
-                <Link className={submitButtonClassName({ className: styles.secondaryButton, size: "lg", variant: "secondary" })} href={PATH_MASTER_MATA_UANG}>
-                  Kembali ke daftar
-                </Link>
               </div>
             ) : canManage ? (
               <>
