@@ -9,18 +9,16 @@
 | 3 | Status dan transisi eksplisit; jalur gagal juga | lolos | transisi mengikuti `D-46` dan `D-48`. Jenjang antara tidak menambah status (`[USULAN-AGEN]` Q-12). Jalur gagal (tolak tanpa alasan, nilai tanpa aturan, konkurensi, revisi) ada |
 | 4 | Validasi punya pesan yang bisa dibaca | lolos | tabel Validasi memuat pesan untuk setiap kondisi gagal. Teks ditandai `[USULAN]` dan ikut kunci koordinator |
 | 5 | Acceptance criteria bisa dibuktikan | lolos | AC-01 sampai AC-12 punya langkah uji. Uji jenjang tambahan memakai seed uji yang disebut eksplisit; AC-06 lewat service karena satu akun satu peran |
-| 6 | Semua `depends on` berstatus `done` | belum | `PG-002` dan `FND-004` masih `specified`, belum `done` |
+| 6 | Semua `depends on` berstatus `done` | lolos | `PG-002` (`done` 2026-11-27) dan `FND-004` (`done` 2026-11-23) |
 | 7 | Tidak ada pertanyaan pemblokir terbuka | lolos | 13 pertanyaan: 8 terjawab `D-xx`, 5 terjawab `[USULAN-AGEN]` (termasuk turunan Q-12 dan Q-13). Terbuka: 0 |
-| 8 | Gate fondasi terpenuhi | belum | `FND-001` `done`; `FND-002` sampai `FND-006` masih `specified`. `FND-007` juga belum (lihat Dependensi) |
+| 8 | Gate fondasi terpenuhi | lolos | `FND-001`–`FND-009` `done`; gate modul `D-54`/`D-67` terpenuhi |
 | 9 | Ukuran masuk akal untuk satu orang dalam satu track | lolos | usulan `M` (agen). Mesin N jenjang di `FND-004`; PG-003 hanya aturan dan layar |
 
 ## Verdict
 
-`Blocked`
+`Ready` (2026-11-27)
 
-Alasan (dependensi belum `done`): `PG-002` dan `FND-004` (`depends on` di `backlog.md`), beserta gate fondasi `FND-002` sampai `FND-006` yang menjadi prasyarat keduanya; serta `FND-007` karena antrean dan dialog memakai primitive UI.
-
-Siap menjadi Ready begitu dependensi done; tidak ada pemblokir lain.
+Dependensi `PG-002` dan `FND-004` sudah `done`, dan gate fondasi `FND-001`–`FND-009` sudah `done`. Tidak ada pemblokir lain. Bukti implementasi ada di `05-evidence.md`; bukti database menyusul di `docs/tech-debt/pg-003-bukti-db.md`.
 
 ## Pertanyaan terbuka (2026-11-22)
 
@@ -65,9 +63,8 @@ Total 13 (11 asli + 2 turunan). Terjawab `D-xx`: 8 (Q-01, Q-02, Q-03, Q-04, Q-05
 
 ## Readiness status
 
-- Status requirement: `specified`. Paket dibuat, belum `ready`.
-- Baris `backlog.md` `specified`.
-
+- Status requirement: `specified`.
+- Baris `backlog.md`: `done` (usulan, 2026-11-27). Bukti database masih terbuka.
 ## Handoff boundary
 
 - Parent epic / milestone: `EPIC-PG` / `M1`
