@@ -132,19 +132,28 @@ izin terverifikasi terpusat.
       1×; hapus fabrikasi demo + tombol demo.
 
 ## Fase 4 — Scripts, migrasi, hygiene
+Bukti 2026-11-27 (branch `post-merge-consolidation`, 2 agen paralel):
+`scripts/lib/` 7 modul + semua skrip migrasi; rahasia env-only +
+fail-fast; gap-detection (0016 allowlist) + CI seed-check diff-based
+vs base + template `scripts/templates/new-migration.sql`; S4 Hygiene
+selesai; `typecheck`/`lint`/`arch:check` hijau, `pnpm test` 124/124,
+`pnpm build` hijau, `db:seed:local` tanpa-env terverifikasi.
+Catatan: `db-seed-local` kembali literal (password lokal terdokumentasi
+di AGENTS.md); fnd-006-session pertahankan fixture `+07:00` (isIsoDate
+app menolak zona bernama); `../../../` sudah nol sejak K9.
 
-- [ ] S1. `scripts/lib/` bersama — loader env 1× (3 parser), guard
+- [x] S1. `scripts/lib/` bersama — loader env 1× (3 parser), guard
       host lokal 1× (12 file), konstanta DB URL 1× (8 file), login sesi
       1× (5 file), harness assert/lapor 1×, helper UI-verify 1×
       (C-009↔C-010), 1 loader TS (3 macam).
-- [ ] S2. Rahasia keluar dari skrip — password literal 5 file +
+- [x] S2. Rahasia keluar dari skrip — password literal 5 file +
       publishable key (`verify-pg001-nominal.mjs:12`) → env-only +
       fail-fast.
-- [ ] S3. Disiplin seed/migrasi — cek CI: `seed-version` vs isi seed;
+- [x] S3. Disiplin seed/migrasi — cek CI: `seed-version` vs isi seed;
       `check-migrations` + deteksi gap urutan; template trigger
       immutable + policy untuk migrasi baru (jangan tulis ulang
       yang sudah teraplikasi).
-- [ ] S4. Konsistensi kecil — metadata rute penggajian; `RouteErrorProps`
+- [x] S4. Konsistensi kecil — metadata rute penggajian; `RouteErrorProps`
       1 tipe; `refresh-button` macet → `useTransition`; typo "Master
       produk produk"; alias `@/` ganti `../../../`; nama produk 1
       varian; zona `Asia/Jakarta` bernama ganti `+7h` mentah.

@@ -13,7 +13,34 @@ const BULAN_SINGKAT = [
   "Des",
 ];
 
-const OFFSET_JAKARTA_MS = 7 * 60 * 60 * 1000;
+const ZONA_WAKTU = "Asia/Jakarta";
+
+function offsetZonaMs(zona: string): number {
+  const bagian = new Intl.DateTimeFormat("en-US", {
+    timeZone: zona,
+    timeZoneName: "longOffset",
+  }).formatToParts(new Date());
+  const nama = bagian.find((item) => item.type === "timeZoneName")?.value ?? "";
+  const cocok = /^GMT([+-])(\d{2}):(\d{2})$/.exec(nama);
+  if (!cocok) {
+    throw new Error(`Zona waktu ${zona} tidak dikenal.`);
+  }
+  const menit = Number(cocok[2]) * 60 + Number(cocok[3]);
+  return (cocok[1] === "-" ? -menit : menit) * 60_000;
+}
+
+const OFFSET_JAKARTA_MS = offsetZonaMs(ZONA_WAKTU);
+
+function formatOffset(ms: number): string {
+  const menit = Math.round(ms / 60_000);
+  const tanda = menit < 0 ? "-" : "+";
+  const nilai = Math.abs(menit);
+  return `${tanda}${String(Math.floor(nilai / 60)).padStart(2, "0")}:${String(nilai % 60).padStart(2, "0")}`;
+}
+
+export function isoWaktuJakarta(waktuLokal: string): string {
+  return `${waktuLokal}${formatOffset(OFFSET_JAKARTA_MS)}`;
+}
 
 interface BagianTanggal {
   hari: string;

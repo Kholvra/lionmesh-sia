@@ -1,12 +1,9 @@
 "use client";
 
 import { ErrorState } from "@/components/ui/states";
+import type { RouteErrorProps } from "@/lib/route-error-props";
 
-type NotifikasiErrorProps = {
-  reset: () => void;
-};
-
-export default function NotifikasiError({ reset }: NotifikasiErrorProps) {
+export default function NotifikasiError({ reset }: RouteErrorProps) {
   return (
     <ErrorState
       judul="Notifikasi gagal dimuat"

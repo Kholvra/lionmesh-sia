@@ -1,13 +1,16 @@
 import { randomBytes } from "node:crypto";
 import { createClient } from "@supabase/supabase-js";
 import pg from "pg";
+import { buatLaporan } from "./lib/harness.mjs";
+import { validasiLokal } from "./lib/local-host.mjs";
 
 const { FND003_TEST_URL: url, FND003_TEST_DB_URL: dbUrl, FND003_TEST_ANON_KEY: anon, FND003_TEST_SERVICE_KEY: service } = process.env;
 if (process.env.FND003_DISPOSABLE !== "1" || !url || !dbUrl || !anon || !service) throw new Error("Disposable local project URLs and keys are required.");
 for (const value of [url, dbUrl]) {
-  const target = new URL(value);
-  if (!["localhost", "127.0.0.1", "[::1]"].includes(target.hostname) || ["54321", "54322"].includes(target.port)) throw new Error("Use a dedicated local project on non-default ports.");
+  validasiLokal(value, "Use a dedicated local project on non-default ports.");
+  if (["54321", "54322"].includes(new URL(value).port)) throw new Error("Use a dedicated local project on non-default ports.");
 }
+
 const admin = createClient(url, service, { auth: { persistSession: false } });
 const pub = createClient(url, anon, { auth: { persistSession: false } });
 const db = new pg.Client({ connectionString: dbUrl });
@@ -15,8 +18,9 @@ await db.connect();
 const suffix = randomBytes(8).toString("hex");
 const password = randomBytes(20).toString("hex");
 const email = `auth-hook-${suffix}@lionmesh.test`;
-const checks = [];
-function check(name, condition) { checks.push(condition); console.log(`${condition ? "PASS" : "FAIL"} ${name}`); }
+const laporan = buatLaporan({ gaya: "polos" });
+const { status: check } = laporan;
+
 try {
   const created = await admin.auth.admin.createUser({ email, password, email_confirm: true });
   if (created.error) throw created.error;
@@ -52,4 +56,4 @@ try {
   const ban = await db.query("select banned_until::text as value from auth.users where id=$1", [id]);
   check("independent administrative ban preserved", ban.rows[0].value.startsWith("2030-01-01"));
 } finally { await db.end(); }
-if (checks.some((x) => !x)) process.exitCode = 1;
+if (laporan.jumlahGagal > 0) process.exitCode = 1;

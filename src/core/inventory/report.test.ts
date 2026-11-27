@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
+import { isoWaktuJakarta } from "../../lib/format/date.ts";
 
 import {
   hitungKartuPersediaan,
@@ -23,7 +24,7 @@ function mutasi(
   urutan += 1;
   return {
     id: overrides.id ?? `mutasi-${urutan}`,
-    tanggal: overrides.tanggal ?? "2026-11-02T09:00:00+07:00",
+    tanggal: overrides.tanggal ?? isoWaktuJakarta("2026-11-02T09:00:00"),
     tipe,
     qty,
     nilai,
@@ -36,8 +37,8 @@ function mutasi(
 
 test("kartu persediaan: saldo berjalan qty dan nilai mengikuti mutasi", () => {
   const rows = [
-    mutasi("MASUK", "5", "60", { tanggal: "2026-11-02T09:00:00+07:00" }),
-    mutasi("KELUAR", "-3", "30", { tanggal: "2026-11-03T09:00:00+07:00" }),
+    mutasi("MASUK", "5", "60", { tanggal: isoWaktuJakarta("2026-11-02T09:00:00") }),
+    mutasi("KELUAR", "-3", "30", { tanggal: isoWaktuJakarta("2026-11-03T09:00:00") }),
   ];
 
   const laporan = hitungKartuPersediaan(rows, { qty: "10", nilai: "100" });
@@ -64,15 +65,15 @@ test("penyesuaian negatif mengurangi qty dan nilai", () => {
 
 test("kartu persediaan mengurutkan mutasi menurut tanggal", () => {
   const rows = [
-    mutasi("KELUAR", "-1", "5", { tanggal: "2026-11-05T09:00:00+07:00" }),
-    mutasi("MASUK", "2", "10", { tanggal: "2026-11-01T09:00:00+07:00" }),
+    mutasi("KELUAR", "-1", "5", { tanggal: isoWaktuJakarta("2026-11-05T09:00:00") }),
+    mutasi("MASUK", "2", "10", { tanggal: isoWaktuJakarta("2026-11-01T09:00:00") }),
   ];
 
   const laporan = hitungKartuPersediaan(rows, { qty: "0", nilai: "0" });
 
   assert.deepEqual(
     laporan.baris.map((item) => item.tanggal),
-    ["2026-11-01T09:00:00+07:00", "2026-11-05T09:00:00+07:00"],
+    [isoWaktuJakarta("2026-11-01T09:00:00"), isoWaktuJakarta("2026-11-05T09:00:00")],
   );
   assert.deepEqual(
     laporan.baris.map((item) => item.saldoQty),

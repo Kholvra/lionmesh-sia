@@ -4,15 +4,12 @@
 // contract from docs/product/items/C-013-domain-pengadaan/02-acceptance-criteria.md.
 
 import { Client } from "pg";
+import { DB_URL } from "./lib/db-url.mjs";
+import { assertGagal, buatLaporan } from "./lib/harness.mjs";
+import { validasiLokal } from "./lib/local-host.mjs";
 
-const DB_URL =
-  process.env.SUPABASE_DB_URL ??
-  "postgresql://postgres:postgres@127.0.0.1:54322/postgres";
-const target = new URL(DB_URL);
+validasiLokal(DB_URL, "C-013 verification only permits a local database endpoint.");
 
-if (!["localhost", "127.0.0.1", "[::1]"].includes(target.hostname)) {
-  throw new Error("C-013 verification only permits a local database endpoint.");
-}
 
 const AKTOR = {
   gudang: "f0080000-0000-4000-8100-000000000003",
@@ -26,14 +23,14 @@ const AKTOR = {
 const TANGGAL_DOKUMEN = "2026-11-24";
 const TANGGAL_BUTUH = "2026-12-01";
 const JAM_MUTASI = [
-  "2026-11-24T10:00:00+07:00",
-  "2026-11-24T10:05:00+07:00",
-  "2026-11-24T10:10:00+07:00",
-  "2026-11-24T10:15:00+07:00",
-  "2026-11-24T10:20:00+07:00",
-  "2026-11-24T10:25:00+07:00",
-  "2026-11-24T10:30:00+07:00",
-  "2026-11-24T10:35:00+07:00",
+  "2026-11-24 10:00:00 Asia/Jakarta",
+  "2026-11-24 10:05:00 Asia/Jakarta",
+  "2026-11-24 10:10:00 Asia/Jakarta",
+  "2026-11-24 10:15:00 Asia/Jakarta",
+  "2026-11-24 10:20:00 Asia/Jakarta",
+  "2026-11-24 10:25:00 Asia/Jakarta",
+  "2026-11-24 10:30:00 Asia/Jakarta",
+  "2026-11-24 10:35:00 Asia/Jakarta",
 ];
 
 const client = new Client({ connectionString: DB_URL });
@@ -52,29 +49,15 @@ if (!fungsi[0].ada) {
 // on the same seeded database start from the same state (AC-10).
 await client.query("begin");
 
-const results = [];
-const snapshot = {};
+const laporan = buatLaporan({
+  gaya: "kurung",
+  sertakanDetailPass: false,
+  stderrSaatGagal: true,
+});
+const assert = assertGagal;
+const recordResult = (id, name, run) =>
+  laporan.record(id, name, run, { lempar: true });
 
-function assert(condition, message) {
-  if (!condition) throw new Error(`FAIL: ${message}`);
-}
-
-async function q(text, params = []) {
-  const { rows } = await client.query(text, params);
-  return rows;
-}
-
-async function recordResult(id, name, run) {
-  try {
-    const detail = await run();
-    results.push({ id, name, status: "PASS", detail });
-    console.log(`[PASS] ${id}: ${name}`);
-  } catch (error) {
-    results.push({ id, name, status: "FAIL", error: error.message });
-    console.error(`[FAIL] ${id}: ${name} — ${error.message}`);
-    throw error;
-  }
-}
 
 async function expectError(run, fragment) {
   // A failed statement aborts the whole transaction, so isolate each expected
@@ -880,8 +863,8 @@ const [jumlahBaris] = await q(`
 `);
 snapshot.jumlah_baris = jumlahBaris;
 
-const gagal = results.filter((row) => row.status === "FAIL");
-console.log(`\n=== ${results.length - gagal.length}/${results.length} AC PASS ===`);
+const gagal = laporan.hasil.filter((row) => row.status === "FAIL");
+console.log(`\n=== ${laporan.hasil.length - gagal.length}/${laporan.hasil.length} AC PASS ===`);
 console.log("SNAPSHOT " + JSON.stringify(snapshot));
 
 await client.query("rollback");

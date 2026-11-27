@@ -1,12 +1,9 @@
 "use client";
 
 import { ErrorState } from "@/components/ui/states";
+import type { RouteErrorProps } from "@/lib/route-error-props";
 
-type ErrorProps = {
-  reset: () => void;
-};
-
-export default function Error({ reset }: ErrorProps) {
+export default function Error({ reset }: RouteErrorProps) {
   return (
     <ErrorState
       judul="Master gagal dimuat"

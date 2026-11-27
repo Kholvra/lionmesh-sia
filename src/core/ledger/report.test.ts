@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
+import { isoWaktuJakarta } from "../../lib/format/date.ts";
 
 import {
   hitungBukuBesar,
@@ -79,8 +80,8 @@ function baris(
   return {
     barisId: `baris-${urutan}`,
     jurnalId: overrides.jurnalId ?? `jurnal-${urutan}`,
-    tanggal: overrides.tanggal ?? "2026-11-05T10:00:00+07:00",
-    dibuatPada: overrides.dibuatPada ?? "2026-11-05T10:00:00+07:00",
+    tanggal: overrides.tanggal ?? isoWaktuJakarta("2026-11-05T10:00:00"),
+    dibuatPada: overrides.dibuatPada ?? isoWaktuJakarta("2026-11-05T10:00:00"),
     sumberTipe: overrides.sumberTipe ?? "UJI",
     sumberNomor: overrides.sumberNomor ?? `UJI-${urutan}`,
     sumberPemicu: overrides.sumberPemicu ?? "UJI",
@@ -95,8 +96,8 @@ function baris(
 
 test("buku besar: saldo akhir = saldo awal + debit - kredit", () => {
   const rows = [
-    baris("kas", "50", "0", { tanggal: "2026-11-02T09:00:00+07:00" }),
-    baris("kas", "0", "30", { tanggal: "2026-11-03T09:00:00+07:00" }),
+    baris("kas", "50", "0", { tanggal: isoWaktuJakarta("2026-11-02T09:00:00") }),
+    baris("kas", "0", "30", { tanggal: isoWaktuJakarta("2026-11-03T09:00:00") }),
   ];
 
   const laporan = hitungBukuBesar(rows, AKUN.kas, "10000");
@@ -114,12 +115,12 @@ test("buku besar: saldo akhir = saldo awal + debit - kredit", () => {
 test("buku besar mengurutkan baris menurut tanggal lalu waktu dibuat", () => {
   const rows = [
     baris("kas", "0", "10", {
-      tanggal: "2026-11-03T09:00:00+07:00",
-      dibuatPada: "2026-11-03T09:00:01+07:00",
+      tanggal: isoWaktuJakarta("2026-11-03T09:00:00"),
+      dibuatPada: isoWaktuJakarta("2026-11-03T09:00:01"),
     }),
     baris("kas", "25", "0", {
-      tanggal: "2026-11-02T09:00:00+07:00",
-      dibuatPada: "2026-11-02T09:00:00+07:00",
+      tanggal: isoWaktuJakarta("2026-11-02T09:00:00"),
+      dibuatPada: isoWaktuJakarta("2026-11-02T09:00:00"),
     }),
   ];
 
@@ -127,7 +128,7 @@ test("buku besar mengurutkan baris menurut tanggal lalu waktu dibuat", () => {
 
   assert.deepEqual(
     laporan.baris.map((item) => item.tanggal),
-    ["2026-11-02T09:00:00+07:00", "2026-11-03T09:00:00+07:00"],
+    [isoWaktuJakarta("2026-11-02T09:00:00"), isoWaktuJakarta("2026-11-03T09:00:00")],
   );
   assert.deepEqual(
     laporan.baris.map((item) => item.saldoCents),

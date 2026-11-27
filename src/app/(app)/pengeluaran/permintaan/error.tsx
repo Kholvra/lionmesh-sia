@@ -1,10 +1,9 @@
 "use client";
 
 import { ErrorState } from "@/components/ui/states";
+import type { RouteErrorProps } from "@/lib/route-error-props";
 
-type Props = { reset: () => void };
-
-export default function PermintaanError({ reset }: Props) {
+export default function PermintaanError({ reset }: RouteErrorProps) {
   return (
     <ErrorState
       judul="Permintaan gagal dimuat"

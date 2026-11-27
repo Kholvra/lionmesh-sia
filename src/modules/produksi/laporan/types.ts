@@ -27,8 +27,8 @@ export interface LaporanWipRow {
 
 export interface RekapPersediaanRow {
   kategori: "Bahan Baku" | "Barang Dalam Proses (WIP)" | "Barang Jadi";
-  kodeBarang: string;
-  namaBarang: string;
+  produkKode: string;
+  produkNama: string;
   satuan: string;
   kuantitas: number;
   hargaRataRp: number;

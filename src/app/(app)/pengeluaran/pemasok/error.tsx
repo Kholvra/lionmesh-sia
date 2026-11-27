@@ -1,12 +1,9 @@
 "use client";
 
 import { ErrorState } from "@/components/ui/states";
+import type { RouteErrorProps } from "@/lib/route-error-props";
 
-type PemasokErrorProps = {
-  reset: () => void;
-};
-
-export default function PemasokError({ reset }: PemasokErrorProps) {
+export default function PemasokError({ reset }: RouteErrorProps) {
   return (
     <ErrorState
       judul="Data pemasok gagal dimuat"

@@ -5,32 +5,25 @@ import assert from "node:assert/strict";
 import { randomUUID } from "node:crypto";
 import { readFileSync } from "node:fs";
 import { Client } from "pg";
+import { buatLaporan } from "./lib/harness.mjs";
+import { validasiLokal } from "./lib/local-host.mjs";
 
 const DB_URL = process.env.SUPABASE_DB_URL;
 if (!DB_URL) {
   throw new Error("SUPABASE_DB_URL must point to an isolated fnd006_test_* database.");
 }
-
-const target = new URL(DB_URL);
-if (
-  !["localhost", "127.0.0.1", "[::1]"].includes(target.hostname) ||
-  !target.pathname.slice(1).startsWith("fnd006_test_")
-) {
+validasiLokal(DB_URL, "FND-006 verification requires an isolated local fnd006_test_* database.");
+if (!new URL(DB_URL).pathname.slice(1).startsWith("fnd006_test_")) {
   throw new Error("FND-006 verification requires an isolated local fnd006_test_* database.");
 }
+
 
 const client = new Client({ connectionString: DB_URL });
 await client.connect();
 
-const results = [];
-const actorAccounting = "f0060000-0000-4000-8100-000000000001";
-const actorGudang = "f0060000-0000-4000-8100-000000000002";
+const laporan = buatLaporan({ gaya: "kurung", sertakanDetailPass: false });
+const recordResult = (id, name, run) => laporan.record(id, name, run);
 
-async function recordResult(id, name, runFn) {
-  const detail = await runFn();
-  results.push({ id, name, status: "PASS", detail });
-  console.log(`[PASS] ${id}: ${name}`);
-}
 
 async function captureError(run) {
   try {
@@ -155,7 +148,7 @@ let jurnalUjiId;
 
 await recordResult("AC-01", "Jurnal balance tersimpan dan id dikembalikan", async () => {
   const hasil = await callPostJournal({
-    tanggal: "2026-11-20T10:00:00+07:00",
+    tanggal: "2026-11-20 10:00:00 Asia/Jakarta",
     sumberNomor: "UJI-AC-01",
     baris: [line("kas_bank", "100", "0"), line("penjualan", "0", "100")],
   });
@@ -187,7 +180,7 @@ await recordResult("AC-02", "Jurnal tidak balance ditolak tanpa baris tersimpan"
 
   const message = await captureError(() =>
     callPostJournal({
-      tanggal: "2026-11-20T11:00:00+07:00",
+      tanggal: "2026-11-20 11:00:00 Asia/Jakarta",
       sumberNomor: "UJI-AC-02",
       baris: [line("kas_bank", "100", "0"), line("penjualan", "0", "90")],
     }),
@@ -237,7 +230,7 @@ await recordResult("AC-03", "Akun tidak aktif ditolak dengan kode akun", async (
 
   const message = await captureError(() =>
     callPostJournal({
-      tanggal: "2026-11-20T12:00:00+07:00",
+      tanggal: "2026-11-20 12:00:00 Asia/Jakarta",
       sumberNomor: "UJI-AC-03",
       baris: [line("kas_bank", "10", "0"), line("penjualan", "0", "10")],
     }),
@@ -246,7 +239,7 @@ await recordResult("AC-03", "Akun tidak aktif ditolak dengan kode akun", async (
 
   const missingMessage = await captureError(() =>
     callPostJournal({
-      tanggal: "2026-11-20T12:01:00+07:00",
+      tanggal: "2026-11-20 12:01:00 Asia/Jakarta",
       sumberNomor: "UJI-AC-03B",
       baris: [
         line("kas_bank", "10", "0"),
@@ -279,7 +272,7 @@ await recordResult("AC-04", "Periode terkunci ditolak dengan nama periode", asyn
 
   const message = await captureError(() =>
     callPostJournal({
-      tanggal: "2099-01-15T10:00:00+07:00",
+      tanggal: "2099-01-15 10:00:00 Asia/Jakarta",
       sumberNomor: "UJI-AC-04",
       baris: [line("kas_bank", "10", "0"), line("penjualan", "0", "10")],
     }),
@@ -319,7 +312,7 @@ await recordResult("AC-06", "Sumber kosong atau tidak terdaftar ditolak", async 
 
   const tanpaSumber = await captureError(() =>
     callPostJournal({
-      tanggal: "2026-11-20T13:00:00+07:00",
+      tanggal: "2026-11-20 13:00:00 Asia/Jakarta",
       sumberTipe: null,
       sumberNomor: "UJI-AC-06",
       baris,
@@ -327,7 +320,7 @@ await recordResult("AC-06", "Sumber kosong atau tidak terdaftar ditolak", async 
   );
   const tidakTerdaftar = await captureError(() =>
     callPostJournal({
-      tanggal: "2026-11-20T13:01:00+07:00",
+      tanggal: "2026-11-20 13:01:00 Asia/Jakarta",
       sumberTipe: "TIDAK_TERDAFTAR",
       sumberNomor: "UJI-AC-06B",
       baris,
@@ -380,7 +373,7 @@ await recordResult("AC-07", "Tidak ada penulisan tabel jurnal dari luar core", a
   await client.query(
     `
       select public.post_journal(
-        '2026-11-20T14:00:00+07:00'::timestamptz,
+        '2026-11-20 14:00:00 Asia/Jakarta'::timestamptz,
         'UJI_FND_006', gen_random_uuid(), 'SERVICE-ROLE', 'UJI',
         $1::jsonb, 'IDR', $2::uuid
       )
@@ -406,7 +399,7 @@ await recordResult("AC-08", "Jurnal tanpa baris atau satu baris ditolak", async 
   for (const baris of cases) {
     const message = await captureError(() =>
       callPostJournal({
-        tanggal: "2026-11-20T15:00:00+07:00",
+        tanggal: "2026-11-20 15:00:00 Asia/Jakarta",
         sumberNomor: "UJI-AC-08",
         baris,
       }),
@@ -483,7 +476,7 @@ await recordResult("AC-10", "Header dan baris ditulis dalam satu transaksi", asy
 
   const message = await captureError(() =>
     callPostJournal({
-      tanggal: "2026-11-20T16:00:00+07:00",
+      tanggal: "2026-11-20 16:00:00 Asia/Jakarta",
       sumberNomor: "UJI-AC-10",
       baris: [line("kas_bank", "10", "0"), line("penjualan", "0", "10")],
     }),
@@ -528,7 +521,7 @@ let jurnalAsal;
 
 await recordResult("AC-11", "Jurnal pembalik membalik tanpa mengubah jurnal asal", async () => {
   const asal = await callPostJournal({
-    tanggal: "2026-11-21T09:00:00+07:00",
+    tanggal: "2026-11-21 09:00:00 Asia/Jakarta",
     sumberNomor: "UJI-AC-11",
     baris: [line("kas_bank", "250", "0"), line("penjualan", "0", "250")],
   });
@@ -537,7 +530,7 @@ await recordResult("AC-11", "Jurnal pembalik membalik tanpa mengubah jurnal asal
   const beforeOrphan = await countRows("jurnal");
   const orphanMessage = await captureError(() =>
     callPostJournal({
-      tanggal: "2026-11-22T08:30:00+07:00",
+      tanggal: "2026-11-22 08:30:00 Asia/Jakarta",
       sumberTipe: "PEMBALIKAN",
       sumberNomor: "BATAL-AC-11-YATIM",
       baris: [line("kas_bank", "250", "0"), line("penjualan", "0", "250")],
@@ -557,7 +550,7 @@ await recordResult("AC-11", "Jurnal pembalik membalik tanpa mengubah jurnal asal
 
   const balik = await callReverseJournal({
     jurnalId: jurnalAsal,
-    tanggal: "2026-11-22T09:00:00+07:00",
+    tanggal: "2026-11-22 09:00:00 Asia/Jakarta",
     sumberNomor: "BATAL-AC-11",
   });
 
@@ -587,7 +580,7 @@ await recordResult("AC-11", "Jurnal pembalik membalik tanpa mengubah jurnal asal
   const secondMessage = await captureError(() =>
     callReverseJournal({
       jurnalId: jurnalAsal,
-      tanggal: "2026-11-22T10:00:00+07:00",
+      tanggal: "2026-11-22 10:00:00 Asia/Jakarta",
       sumberNomor: "BATAL-AC-11-KEDUA",
     }),
   );
@@ -598,7 +591,7 @@ await recordResult("AC-11", "Jurnal pembalik membalik tanpa mengubah jurnal asal
 
 await recordResult("AC-12", "Koreksi periode tertutup dilakukan di periode berjalan", async () => {
   const asal = await callPostJournal({
-    tanggal: "2026-09-15T09:00:00+07:00",
+    tanggal: "2026-09-15 09:00:00 Asia/Jakarta",
     sumberNomor: "UJI-AC-12",
     baris: [line("kas_bank", "20", "0"), line("penjualan", "0", "20")],
   });
@@ -618,14 +611,14 @@ await recordResult("AC-12", "Koreksi periode tertutup dilakukan di periode berja
     `
       select count(*)::int as count
       from public.jurnal
-      where tanggal >= '2026-09-01T00:00:00+07:00'
-        and tanggal < '2026-10-01T00:00:00+07:00'
+      where tanggal >= '2026-09-01 00:00:00 Asia/Jakarta'
+        and tanggal < '2026-10-01 00:00:00 Asia/Jakarta'
     `,
   );
 
   const balik = await callReverseJournal({
     jurnalId: asal.jurnal_id,
-    tanggal: "2026-11-22T11:00:00+07:00",
+    tanggal: "2026-11-22 11:00:00 Asia/Jakarta",
     sumberNomor: "BATAL-AC-12",
   });
 
@@ -633,8 +626,8 @@ await recordResult("AC-12", "Koreksi periode tertutup dilakukan di periode berja
     `
       select count(*)::int as count
       from public.jurnal
-      where tanggal >= '2026-09-01T00:00:00+07:00'
-        and tanggal < '2026-10-01T00:00:00+07:00'
+      where tanggal >= '2026-09-01 00:00:00 Asia/Jakarta'
+        and tanggal < '2026-10-01 00:00:00 Asia/Jakarta'
     `,
   );
   assert.equal(after[0].count, before[0].count);
@@ -652,7 +645,7 @@ await recordResult("AC-13", "Akun tidak aktif tidak bisa dipakai di jurnal baru"
   await client.query("update public.akun set aktif = false where nomor = '110'");
   const message = await captureError(() =>
     callPostJournal({
-      tanggal: "2026-11-22T12:00:00+07:00",
+      tanggal: "2026-11-22 12:00:00 Asia/Jakarta",
       sumberNomor: "UJI-AC-13",
       baris: [line("piutang_usaha", "10", "0"), line("penjualan", "0", "10")],
     }),
@@ -666,7 +659,7 @@ await recordResult("AC-14", "Aktor yang tidak berhak atas pemicu ditolak", async
   const before = await countRows("jurnal");
   const message = await captureError(() =>
     callPostJournal({
-      tanggal: "2026-11-22T13:00:00+07:00",
+      tanggal: "2026-11-22 13:00:00 Asia/Jakarta",
       sumberNomor: "UJI-AC-14",
       actorId: actorGudang,
       baris: [line("kas_bank", "10", "0"), line("penjualan", "0", "10")],
@@ -681,7 +674,7 @@ await recordResult("AC-15", "Jurnal selain IDR ditolak", async () => {
   const before = await countRows("jurnal");
   const message = await captureError(() =>
     callPostJournal({
-      tanggal: "2026-11-22T14:00:00+07:00",
+      tanggal: "2026-11-22 14:00:00 Asia/Jakarta",
       sumberNomor: "UJI-AC-15",
       mataUang: "USD",
       baris: [line("kas_bank", "10", "0"), line("penjualan", "0", "10")],
@@ -722,7 +715,7 @@ await recordResult("AC-16", "COA dasar D-41 tepat 14 akun tanpa akun cadangan", 
 });
 
 console.log("\n=== Ringkasan FND-006 ===");
-for (const result of results) {
+for (const result of laporan.hasil) {
   console.log(`${result.id}: ${result.status} — ${result.detail}`);
 }
 

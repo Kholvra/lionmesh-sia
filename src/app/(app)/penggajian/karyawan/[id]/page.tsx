@@ -1,7 +1,13 @@
+import type { Metadata } from "next";
+
 import { firstParam } from "@/lib/first-param";
 import { KaryawanDetailScreen } from "@/modules/penggajian/karyawan/detail-screen";
 
 export const instant = false;
+
+export const metadata: Metadata = {
+  title: "Detail karyawan — Lionmesh SIA",
+};
 
 export default async function DetailKaryawanPage({
   params,

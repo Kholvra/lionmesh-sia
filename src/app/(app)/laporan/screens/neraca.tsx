@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 
 import { hitungNeraca, listBarisJurnal, parsePeriode } from "@/core/ledger";
 import type { Profile } from "@/lib/auth/types";
+import { isoWaktuJakarta } from "@/lib/format/date";
 import { formatRupiah } from "@/lib/format/money";
 import { createClient } from "@/lib/supabase/server";
 import { Notice } from "@/components/ui/notice";
@@ -56,7 +57,7 @@ export async function NeracaScreen({ profil, params }: Props) {
     );
   }
 
-  const mulaiTahun = `${periode.data.tahun}-01-01T00:00:00+07:00`;
+  const mulaiTahun = isoWaktuJakarta(`${periode.data.tahun}-01-01T00:00:00`);
   const [kumulatif, tahunBerjalan] = await Promise.all([
     listBarisJurnal(supabase, { selesai: periode.data.selesai }),
     listBarisJurnal(supabase, {

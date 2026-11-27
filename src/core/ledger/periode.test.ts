@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
+import { isoWaktuJakarta } from "../../lib/format/date.ts";
 
 import { parsePeriode, periodeSekarang } from "./periode.ts";
 
@@ -11,8 +12,8 @@ test("satu bulan kalender diterima dengan batas waktu Asia/Jakarta", () => {
   assert.equal(hasil.data.tahun, 2026);
   assert.equal(hasil.data.bulan, 11);
   assert.equal(hasil.data.label, "November 2026");
-  assert.equal(hasil.data.mulai, "2026-11-01T00:00:00+07:00");
-  assert.equal(hasil.data.selesai, "2026-12-01T00:00:00+07:00");
+  assert.equal(hasil.data.mulai, isoWaktuJakarta("2026-11-01T00:00:00"));
+  assert.equal(hasil.data.selesai, isoWaktuJakarta("2026-12-01T00:00:00"));
 });
 
 test("rentang lebih dari satu bulan ditolak dengan pesan satu bulan", () => {
@@ -52,5 +53,5 @@ test("Desember bergulir ke Januari tahun berikutnya", () => {
   const hasil = parsePeriode("2026-12");
   assert.equal(hasil.ok, true);
   if (!hasil.ok) return;
-  assert.equal(hasil.data.selesai, "2027-01-01T00:00:00+07:00");
+  assert.equal(hasil.data.selesai, isoWaktuJakarta("2027-01-01T00:00:00"));
 });

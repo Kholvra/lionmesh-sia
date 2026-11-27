@@ -382,10 +382,10 @@ export function LaporanProduksiScreen() {
                     </td>
                     <td className="px-[12px] py-3.5">
                       <p className="font-semibold text-[#172335]">
-                        {row.namaBarang}
+                        {row.produkNama}
                       </p>
                       <p className="text-[11px] text-[#526174]">
-                        {row.kodeBarang}
+                        {row.produkKode}
                       </p>
                     </td>
                     <td className="px-[12px] py-3.5 font-medium tabular-nums">

@@ -11,59 +11,52 @@
 
 import assert from "node:assert/strict";
 import { randomUUID } from "node:crypto";
-import { existsSync, readFileSync } from "node:fs";
 
-import { createServerClient } from "@supabase/ssr";
 import { Client } from "pg";
+import { DB_URL } from "./lib/db-url.mjs";
+import { ambilEnv, bacaEnvLocal, wajibEnv } from "./lib/env.mjs";
+import { buatLaporan } from "./lib/harness.mjs";
+import { validasiLokal } from "./lib/local-host.mjs";
+import { masukSesi } from "./lib/session-login.mjs";
+import { buatVerifikasiUi } from "./lib/ui-verify.mjs";
+
 
 const ACTOR_ACCOUNTING = "f0080000-0000-4000-8100-000000000007";
 const SUMBER_UJI = "UJI_C010";
 
-function bacaEnvLocal() {
-  const hasil = {};
-  if (!existsSync(".env.local")) return hasil;
-  for (const baris of readFileSync(".env.local", "utf8").split("\n")) {
-    const cocok = /^([A-Z0-9_]+)=(.*)$/.exec(baris.trim());
-    if (cocok) hasil[cocok[1]] = cocok[2];
-  }
-  return hasil;
-}
-
 const envLocal = bacaEnvLocal();
-const DATABASE_URL =
-  process.env.SUPABASE_DB_URL ??
-  "postgresql://postgres:postgres@127.0.0.1:54322/postgres";
-const SUPABASE_URL =
-  process.env.NEXT_PUBLIC_SUPABASE_URL ??
-  envLocal.NEXT_PUBLIC_SUPABASE_URL ??
-  "http://127.0.0.1:54321";
-const SUPABASE_KEY =
-  process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ??
-  envLocal.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
+const DATABASE_URL = DB_URL;
+const SUPABASE_URL = ambilEnv(
+  "NEXT_PUBLIC_SUPABASE_URL",
+  envLocal,
+  "http://127.0.0.1:54321",
+);
+const SUPABASE_KEY = wajibEnv(
+  ambilEnv("NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY", envLocal),
+  "NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY",
+  "NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY tidak ditemukan. Isi .env.local.",
+);
+const PASSWORD = wajibEnv(
+  ambilEnv("FND_TEST_PASSWORD", envLocal),
+  "FND_TEST_PASSWORD",
+  "Atur FND_TEST_PASSWORD untuk akun uji lokal sebelum verifikasi.",
+);
 const BASE_URL = process.env.C010_BASE_URL ?? "http://127.0.0.1:3000";
 
-if (!SUPABASE_KEY) {
-  throw new Error(
-    "NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY tidak ditemukan. Isi .env.local.",
-  );
-}
+validasiLokal(
+  DATABASE_URL,
+  "Verifikasi C-010 hanya boleh berjalan pada database lokal.",
+);
 
-const target = new URL(DATABASE_URL);
-if (!["localhost", "127.0.0.1", "[::1]"].includes(target.hostname)) {
-  throw new Error("Verifikasi C-010 hanya boleh berjalan pada database lokal.");
-}
+const { ambil, harusMemuat, uangTampil } = buatVerifikasiUi(BASE_URL);
+
 
 const client = new Client({ connectionString: DATABASE_URL });
 await client.connect();
 
-const results = [];
-let lulus = 0;
+const laporan = buatLaporan({ gaya: "kurung" });
+const { pass: catat } = laporan;
 
-function catat(id, nama, detail = "") {
-  lulus += 1;
-  results.push({ id, nama, detail });
-  console.log(`[PASS] ${id}: ${nama}${detail ? ` — ${detail}` : ""}`);
-}
 
 async function postJournal({
   tanggal,
@@ -246,68 +239,7 @@ async function statusDokumen(id) {
   return rows[0]?.status ?? null;
 }
 
-function teksHalaman(html) {
-  return html
-    .replace(/<script[\s\S]*?<\/script>/gi, " ")
-    .replace(/<style[\s\S]*?<\/style>/gi, " ")
-    .replace(/<!--[\s\S]*?-->/g, " ")
-    .replace(/<[^>]+>/g, " ")
-    .replace(/&nbsp;/g, " ")
-    .replace(/&amp;/g, "&")
-    .replace(/&quot;/g, '"')
-    .replace(/&#x27;/g, "'")
-    .replace(/\s+/g, " ")
-    .trim();
-}
 
-function uangTampil(teks) {
-  return [...teks.matchAll(/Rp [\d.]+,\d{2}/g)].map((item) => item[0]);
-}
-
-async function buatSesi(email, password) {
-  const jar = new Map();
-  const supabase = createServerClient(SUPABASE_URL, SUPABASE_KEY, {
-    cookies: {
-      getAll: () => [...jar].map(([name, value]) => ({ name, value })),
-      setAll: (items) =>
-        items.forEach(({ name, value }) => jar.set(name, value)),
-    },
-  });
-
-  let terakhir;
-  for (let percobaan = 0; percobaan < 15; percobaan += 1) {
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
-    if (!error) {
-      return [...jar]
-        .map(([name, value]) => `${name}=${value}`)
-        .join("; ");
-    }
-    terakhir = error;
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-  }
-  throw new Error(`Gagal masuk sebagai ${email}: ${terakhir?.message}`);
-}
-
-async function ambil(cookie, path) {
-  const res = await fetch(`${BASE_URL}${path}`, {
-    headers: { cookie },
-    redirect: "manual",
-  });
-  const html = await res.text();
-  return { status: res.status, teks: teksHalaman(html), html };
-}
-
-async function harusMemuat(cookie, path, potongan, label) {
-  const hasil = await ambil(cookie, path);
-  assert.equal(hasil.status, 200, `${label}: HTTP ${hasil.status}`);
-  for (const teks of potongan) {
-    assert.ok(
-      hasil.teks.includes(teks),
-      `${label}: tidak menemukan teks "${teks}"`,
-    );
-  }
-  return hasil;
-}
 
 async function siapkanFixture() {
   const { rows } = await client.query(
@@ -328,7 +260,7 @@ async function siapkanFixture() {
   );
 
   await postJournal({
-    tanggal: "2026-09-15T09:00:00+07:00",
+    tanggal: "2026-09-15 09:00:00 Asia/Jakarta",
     nomor: "UJI-C010-2026-09",
     baris: [
       { akun_peran: "piutang_usaha", debit: "1000000", kredit: "0" },
@@ -336,7 +268,7 @@ async function siapkanFixture() {
     ],
   });
   const oktHpp = await postJournal({
-    tanggal: "2026-10-15T09:00:00+07:00",
+    tanggal: "2026-10-15 09:00:00 Asia/Jakarta",
     nomor: "UJI-C010-2026-10",
     baris: [
       { akun_peran: "hpp", debit: "600000", kredit: "0" },
@@ -344,7 +276,7 @@ async function siapkanFixture() {
     ],
   });
   await postJournal({
-    tanggal: "2026-11-15T09:00:00+07:00",
+    tanggal: "2026-11-15 09:00:00 Asia/Jakarta",
     nomor: "UJI-C010-2026-11-A",
     baris: [
       { akun_peran: "beban_gaji_admin", debit: "200000", kredit: "0" },
@@ -352,7 +284,7 @@ async function siapkanFixture() {
     ],
   });
   await postJournal({
-    tanggal: "2026-11-16T09:00:00+07:00",
+    tanggal: "2026-11-16 09:00:00 Asia/Jakarta",
     nomor: "UJI-C010-2026-11-B",
     baris: [
       { akun_peran: "tenaga_kerja_langsung", debit: "400000", kredit: "0" },
@@ -360,7 +292,7 @@ async function siapkanFixture() {
     ],
   });
   await postJournal({
-    tanggal: "2026-12-15T09:00:00+07:00",
+    tanggal: "2026-12-15 09:00:00 Asia/Jakarta",
     nomor: "UJI-C010-2026-12-A",
     baris: [
       { akun_peran: "piutang_usaha", debit: "4000000", kredit: "0" },
@@ -368,7 +300,7 @@ async function siapkanFixture() {
     ],
   });
   await postJournal({
-    tanggal: "2026-12-16T09:00:00+07:00",
+    tanggal: "2026-12-16 09:00:00 Asia/Jakarta",
     nomor: "UJI-C010-2026-12-B",
     baris: [
       { akun_peran: "hpp", debit: "2400000", kredit: "0" },
@@ -376,7 +308,7 @@ async function siapkanFixture() {
     ],
   });
   await postJournal({
-    tanggal: "2026-12-17T09:00:00+07:00",
+    tanggal: "2026-12-17 09:00:00 Asia/Jakarta",
     nomor: "UJI-C010-2026-12-C",
     baris: [
       { akun_peran: "beban_gaji_admin", debit: "300000", kredit: "0" },
@@ -384,7 +316,7 @@ async function siapkanFixture() {
     ],
   });
   await postJournal({
-    tanggal: "2026-12-18T09:00:00+07:00",
+    tanggal: "2026-12-18 09:00:00 Asia/Jakarta",
     nomor: "UJI-C010-2026-12-D",
     baris: [
       { akun_peran: "overhead_pabrik", debit: "100000", kredit: "0" },
@@ -392,7 +324,7 @@ async function siapkanFixture() {
     ],
   });
   await postJournal({
-    tanggal: "2028-01-15T09:00:00+07:00",
+    tanggal: "2028-01-15 09:00:00 Asia/Jakarta",
     nomor: "UJI-C010-2028-01",
     baris: [
       { akun_peran: "piutang_usaha", debit: "100000", kredit: "0" },
@@ -413,10 +345,16 @@ async function siapkanFixture() {
 
 const { oktHpp, payrollId } = await siapkanFixture();
 
-const cookieAccounting = await buatSesi(
-  "accounting@lionmesh.test",
-  "lionmesh-dev-2026",
-);
+const cookieAccounting = (
+  await masukSesi({
+    url: SUPABASE_URL,
+    key: SUPABASE_KEY,
+    email: "accounting@lionmesh.test",
+    password: PASSWORD,
+    attempts: 15,
+  })
+).cookie;
+
 
 // September is a prerequisite for closing October; the first close also
 // materializes January–August.
@@ -454,7 +392,7 @@ const sebelumPost = await hitungBaris();
 await harusGagal(
   () =>
     postJournal({
-      tanggal: "2026-10-20T09:00:00+07:00",
+      tanggal: "2026-10-20 09:00:00 Asia/Jakarta",
       nomor: "UJI-C010-OKT-LOCKED",
       baris: [
         { akun_peran: "piutang_usaha", debit: "1000", kredit: "0" },
@@ -514,7 +452,7 @@ catat(
 const jurnalSebelumReversal = await hitungJurnalPeriode();
 await reverseJournal({
   jurnalId: oktHpp.jurnal_id,
-  tanggal: "2026-11-20T09:00:00+07:00",
+  tanggal: "2026-11-20 09:00:00 Asia/Jakarta",
   sumberId: oktHpp.sumberId,
   nomor: "UJI-C010-REV-01",
 });
@@ -552,7 +490,7 @@ assert.equal(await statusPeriode(2030, 2), "kunci");
 await harusGagal(
   () =>
     postJournal({
-      tanggal: "2030-01-10T09:00:00+07:00",
+      tanggal: "2030-01-10 09:00:00 Asia/Jakarta",
       nomor: "UJI-C010-2030-LOCKED",
       baris: [
         { akun_peran: "piutang_usaha", debit: "1000", kredit: "0" },
@@ -601,7 +539,7 @@ catat(
 );
 
 await postJournal({
-  tanggal: "2032-01-15T09:00:00+07:00",
+  tanggal: "2032-01-15 09:00:00 Asia/Jakarta",
   nomor: "UJI-C010-2032-01",
   baris: [
     { akun_peran: "piutang_usaha", debit: "1000", kredit: "0" },
@@ -635,7 +573,7 @@ const dokumenBalik = await insertDokumen({
   diposting: false,
 });
 await postJournal({
-  tanggal: "2034-01-15T09:00:00+07:00",
+  tanggal: "2034-01-15 09:00:00 Asia/Jakarta",
   nomor: "UJI-C010-2034-DOC",
   sumberId: dokumenBalik,
   baris: [
@@ -654,7 +592,7 @@ catat(
 );
 
 await postJournal({
-  tanggal: "2036-01-15T09:00:00+07:00",
+  tanggal: "2036-01-15 09:00:00 Asia/Jakarta",
   nomor: "UJI-C010-2036-01",
   baris: [
     { akun_peran: "piutang_usaha", debit: "100000", kredit: "0" },
@@ -670,7 +608,7 @@ const { rows: [jurnalUnbal] } = await client.query(
      tanggal, sumber_tipe, sumber_id, sumber_nomor, sumber_pemicu,
      created_by, updated_by
    ) values (
-     '2036-02-15T09:00:00+07:00', $1, $2, 'UJI-C010-UNBAL', $1, $3, $3
+     '2036-02-15 09:00:00 Asia/Jakarta', $1, $2, 'UJI-C010-UNBAL', $1, $3, $3
    ) returning id`,
   [SUMBER_UJI, randomUUID(), ACTOR_ACCOUNTING],
 );
@@ -753,7 +691,7 @@ const sebelumTutupPost = await hitungBaris();
 await harusGagal(
   () =>
     postJournal({
-      tanggal: "2026-12-20T09:00:00+07:00",
+      tanggal: "2026-12-20 09:00:00 Asia/Jakarta",
       nomor: "UJI-C010-CLOSED-YEAR",
       baris: [
         { akun_peran: "piutang_usaha", debit: "1000", kredit: "0" },
@@ -769,7 +707,7 @@ assert.equal(sesudahTutupPost.detail, sebelumTutupPost.detail);
 catat("AC-13", "posting ke tahun 2026 yang sudah ditutup ditolak");
 
 await postJournal({
-  tanggal: "2037-01-15T09:00:00+07:00",
+  tanggal: "2037-01-15 09:00:00 Asia/Jakarta",
   nomor: "UJI-C010-2037-01",
   baris: [
     { akun_peran: "piutang_usaha", debit: "100000", kredit: "0" },
@@ -817,10 +755,16 @@ catat(
   "2038 Januari",
 );
 
-const cookiePenjualan = await buatSesi(
-  "penjualan@lionmesh.test",
-  "lionmesh-dev-2026",
-);
+const cookiePenjualan = (
+  await masukSesi({
+    url: SUPABASE_URL,
+    key: SUPABASE_KEY,
+    email: "penjualan@lionmesh.test",
+    password: PASSWORD,
+    attempts: 15,
+  })
+).cookie;
+
 
 await harusMemuat(
   cookieAccounting,
@@ -885,7 +829,7 @@ catat("UI-05", "halaman konfirmasi aktif siap untuk screenshot 1280px");
 
 await client.end();
 
-console.log(`\n${lulus} pemeriksaan lulus.`);
+console.log(`\n${laporan.jumlahLulus} pemeriksaan lulus.`);
 console.log(
   "Screenshot target: /laporan/periode/2038-02/tutup (sesi Accounting).",
 );
