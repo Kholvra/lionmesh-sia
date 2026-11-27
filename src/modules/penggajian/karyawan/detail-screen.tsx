@@ -6,10 +6,11 @@ import { Notice } from "@/components/ui/notice";
 import { PageHeader } from "@/components/ui/page-header";
 import { EmptyState, ErrorState } from "@/components/ui/states";
 import { StatusBadge } from "@/components/ui/status-badge";
+import { formatRupiah } from "@/lib/format/money";
 import { addGajiPokok } from "@/modules/penggajian/karyawan/actions";
 import { GajiPokokForm } from "@/modules/penggajian/karyawan/components/gaji-pokok-form";
 import { PATH_KARYAWAN, pathKaryawanStatus, pathKaryawanUbah } from "@/modules/penggajian/karyawan/constants";
-import { formatRupiah, formatTanggal, formatWaktu } from "@/modules/penggajian/karyawan/format";
+import { formatTanggal, formatWaktu } from "@/modules/penggajian/karyawan/format";
 import { getKaryawan, type DetailKaryawan } from "@/modules/penggajian/karyawan/queries";
 import { aksesSesi } from "@/modules/penggajian/karyawan/sesi";
 import { KEADAAN_GAJI, STATUS_KARYAWAN } from "@/modules/penggajian/karyawan/status";
@@ -86,8 +87,8 @@ function KartuPajakRekening({ karyawan }: { karyawan: DetailKaryawan }) {
             {karyawan.rekening.namaPemilik}
           </Fakta>
         ) : null}
-        {berlaku ? <Fakta label="Gaji pokok berlaku">{formatRupiah(berlaku.nominal)} sejak {formatTanggal(berlaku.tanggalBerlaku)}</Fakta> : null}
-        {dijadwalkan.map((g) => <Fakta key={g.id} label="Gaji pokok dijadwalkan">{formatRupiah(g.nominal)} mulai {formatTanggal(g.tanggalBerlaku)}</Fakta>)}
+        {berlaku ? <Fakta label="Gaji pokok berlaku">{formatRupiah(BigInt(berlaku.nominal) * BigInt(100))} sejak {formatTanggal(berlaku.tanggalBerlaku)}</Fakta> : null}
+        {dijadwalkan.map((g) => <Fakta key={g.id} label="Gaji pokok dijadwalkan">{formatRupiah(BigInt(g.nominal) * BigInt(100))} mulai {formatTanggal(g.tanggalBerlaku)}</Fakta>)}
       </dl>
     </section>
   );
@@ -112,7 +113,7 @@ function KartuGaji({ karyawan, bolehTambah }: { karyawan: DetailKaryawan; bolehT
           {karyawan.gajiPokok.map((entri) => (
             <tr key={entri.id}>
               <td>{formatTanggal(entri.tanggalBerlaku)}</td>
-              <td className={`${ui.right} ${ui.numeric}`}>{formatRupiah(entri.nominal)}</td>
+              <td className={`${ui.right} ${ui.numeric}`}>{formatRupiah(BigInt(entri.nominal) * BigInt(100))}</td>
               <td><StatusBadge status={entri.keadaan} statuses={KEADAAN_GAJI} /></td>
               <td>{entri.oleh} · {formatWaktu(entri.pada)}</td>
             </tr>

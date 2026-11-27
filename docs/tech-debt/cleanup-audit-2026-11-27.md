@@ -158,6 +158,29 @@ app menolak zona bernama); `../../../` sudah nol sejak K9.
       produk produk"; alias `@/` ganti `../../../`; nama produk 1
       varian; zona `Asia/Jakarta` bernama ganti `+7h` mentah.
 
+## Fase 4.5 — Sisa deferred (sebelum Fase 5)
+
+Keputusan 2026-11-27: rupiah bulat (pecahan sen DITOLAK, bukan
+dibulatkan); RLS opsi (b) — Purchasing/Manajemen lihat semua dokumen
+TIPE PENGADAAN saja; PR #43 merge independen duluan (seed-version
+sudah dibump `0005`→`0006` via commit `3bb8f96`), branch ini rebase
+sesudahnya (konflik `karyawan/actions.ts` kecil, ekspektasi).
+Coret (tidak dikerjakan): module actions pesan-kustom, rewrite
+round-trip riwayat, keIsoString/SELECT_MUTASI (tidak ada di source).
+K10: 5 rekomendasi skema ditulis tech-lead-agent untuk review user.
+Bukti 2026-11-27 (branch `post-merge-consolidation`, 3 agen paralel):
+F1–F3 hijau — `typecheck`/`lint`/`arch:check`/`check-migrations`,
+`pnpm test` 124/124; `0017`+`0018` dry-run apply + rollback bersih di
+DB lokal (policy pengadaan terbentuk). F1: suffix `,00` tampil di gaji
+(dulu Intl tanpa desimal) — disengaja ikut aturan rupiah-bulat.
+
+- [x] F1. `formatRupiah` GJ → kanonik cents + konversi call site.
+- [x] F2. `Date.now()` AppLayout → `connection()` / client.
+- [x] F3. RLS `0018`: filter `jenis_dokumen` + peran (opsi b).
+- [ ] F4. Tolak pecahan sen (aturan rupiah-bulat) — DITAHAN, tunggu
+      keputusan presisi: tolak SEMUA sen (termasuk `,50`) vs tolak
+      >2 desimal saja (status quo).
+
 ## Fase 5 — Sidebar per siklus (TERAKHIR, setelah Fase 1–4)
 
 Keputusan tercatat 2026-11-27: navigasi naik ke sidebar per siklus

@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { connection } from "next/server";
 
 import { Sidebar } from "@/components/shell/sidebar";
 import { requireSesi } from "@/lib/auth/server";
@@ -9,6 +10,8 @@ import styles from "./layout.module.css";
 export const instant = false;
 
 export default async function AppLayout({ children }: { children: ReactNode }) {
+  // The session read uses the clock, so it must run at request time.
+  await connection();
   const { profile } = await requireSesi();
 
   return (
