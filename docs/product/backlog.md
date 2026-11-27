@@ -48,7 +48,7 @@ Satu pemilik: tech lead. Urutan wajib.
 | `PD-006` | Penerimaan pembayaran | PD-C keuangan | 6 | `PD-005`, `FND-006` | `done` |
 | `PD-007` | Retur penjualan | PD-C keuangan | 6 | `PD-005`, `FND-005` | `done` |
 | `PD-008` | Jurnal penjualan & HPP | PD-D pelaporan | 7 | `PD-004`…`PD-007`, `FND-006` | `done` |
-| `PD-009` | Laporan penjualan, piutang, aging | PD-D pelaporan | 7 | `PD-005`…`PD-007`, `C-009` | `specified` |
+| `PD-009` | Laporan penjualan, piutang, aging | PD-D pelaporan | 7 | `PD-005`…`PD-007`, `C-009` | `done` |
 
 ## Siklus Pengeluaran — 6 track
 
