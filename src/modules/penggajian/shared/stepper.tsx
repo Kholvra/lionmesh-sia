@@ -29,6 +29,6 @@ export const ALUR_REKAP: readonly LangkahAlur[] = [
 ];
 
 /** Terbuka → step 1, Rekap → step 2, Tervalidasi → step 4 (payroll is next). */
-export function langkahRekap(status: "TERBUKA" | "REKAP" | "TERVALIDASI"): number {
+export function langkahRekap(status: string): number {
   return status === "TERBUKA" ? 0 : status === "REKAP" ? 1 : 3;
 }

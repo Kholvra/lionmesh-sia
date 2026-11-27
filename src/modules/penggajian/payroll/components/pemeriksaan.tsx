@@ -1,7 +1,7 @@
 import { StatusBadge } from "@/components/ui";
 import type { StatusOption } from "@/components/ui";
 import { formatRupiah } from "@/modules/penggajian/karyawan/format";
-import { rentangPeriode } from "@/modules/penggajian/periode/rules";
+import { rentangPeriode, sudahTervalidasi } from "@/modules/penggajian/periode/rules";
 import type { PeriodeGaji } from "@/modules/penggajian/periode/types";
 import type { DraftView } from "@/modules/penggajian/payroll/queries";
 import { labelDraft } from "@/modules/penggajian/payroll/status";
@@ -19,7 +19,7 @@ const HASIL: readonly StatusOption[] = [
 export function DaftarPemeriksaan({ draft, periode, profileId }: { draft: DraftView; periode: PeriodeGaji; profileId: string }) {
   const r = draft.ringkasan;
   const baris: [string, string, boolean][] = [
-    ["Data kerja", periode.status === "TERVALIDASI" ? "Presensi dan lembur tervalidasi" : `Periode berstatus ${periode.status}`, periode.status === "TERVALIDASI"],
+    ["Data kerja", sudahTervalidasi(periode.status) ? "Presensi dan lembur tervalidasi" : `Periode berstatus ${periode.status}`, sudahTervalidasi(periode.status)],
     ["Total bruto", formatRupiah(r.totalBruto), true],
     ["Total potongan", formatRupiah(r.totalPotongan), true],
     ["Total neto", `${formatRupiah(r.totalNeto)} (bruto − potongan)`, r.totalBruto - r.totalPotongan === r.totalNeto],

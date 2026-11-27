@@ -5,7 +5,7 @@ import { StatusBadge } from "@/components/ui";
 import type { StatusOption } from "@/components/ui";
 import { sesiPenggajian } from "@/modules/penggajian/akun/akun";
 import { formatTanggal } from "@/modules/penggajian/karyawan/format";
-import { labelStatusPeriode, rentangPeriode } from "@/modules/penggajian/periode/rules";
+import { labelStatusPeriode, rentangPeriode, sudahTervalidasi } from "@/modules/penggajian/periode/rules";
 import { getPeriodeDipilih } from "@/modules/penggajian/presensi/queries";
 import { LABEL_KEHADIRAN, STATUS_ENTRI } from "@/modules/penggajian/presensi/status";
 import { returnRekap } from "@/modules/penggajian/rekap/actions";
@@ -67,7 +67,7 @@ async function DetailKonten({ karyawanId, periodeId }: { karyawanId: string; per
   const data = periode ? await getRekapKaryawan(sesi, periode, karyawanId) : null;
   if (!periode || !data) return <>{judul}<Keadaan judul="Rekap karyawan tidak ditemukan" pesan="Karyawan mungkin di luar departemen Anda atau tidak aktif pada periode ini." /></>;
   const { karyawan: k, departemen } = data;
-  const tervalidasi = periode.status === "TERVALIDASI" || Boolean(departemen.validasi);
+  const tervalidasi = sudahTervalidasi(periode.status) || Boolean(departemen.validasi);
   const statusPresensi = tervalidasi ? chip("Tervalidasi", "success") : periode.status === "REKAP" ? chip("Menunggu validasi", "warning") : chip("Belum direkap", "neutral");
   const kembali = `/penggajian/rekap?periode=${periode.id}`;
   return (

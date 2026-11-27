@@ -5,10 +5,12 @@ import { StatusBadge } from "@/components/ui";
 import { sesiPenggajian } from "@/modules/penggajian/akun/akun";
 import type { SesiPenggajian } from "@/modules/penggajian/akun/akun";
 import { formatRupiah, formatWaktu } from "@/modules/penggajian/karyawan/format";
-import { rentangPeriode } from "@/modules/penggajian/periode/rules";
+import { rentangPeriode, sudahTervalidasi } from "@/modules/penggajian/periode/rules";
 import type { PeriodeGaji } from "@/modules/penggajian/periode/types";
 import { calculatePayroll } from "@/modules/penggajian/payroll/actions";
 import { aksesPayroll } from "@/modules/penggajian/payroll/akses";
+import { DaftarPemeriksaan, RingkasanDireksi } from "@/modules/penggajian/payroll/components/pemeriksaan";
+import { PanelPersetujuan } from "@/modules/penggajian/payroll/components/panel-persetujuan";
 import { getDraft } from "@/modules/penggajian/payroll/queries";
 import type { DraftView } from "@/modules/penggajian/payroll/queries";
 import { labelDraft, STATUS_DRAFT } from "@/modules/penggajian/payroll/status";
@@ -115,7 +117,7 @@ function DasarPerhitungan({ draft }: { draft: DraftView }) {
 
 function TombolHitung({ periode, draft }: { periode: PeriodeGaji; draft: DraftView | null }) {
   const terbuka = !draft || draft.status === "DRAFT_TERHITUNG" || draft.status === "REVISI";
-  if (periode.status === "TERVALIDASI" && !terbuka) return null;
+  if (!terbuka) return null;
   return (
     <FormAksi
       aksi={calculatePayroll}
@@ -127,6 +129,8 @@ function TombolHitung({ periode, draft }: { periode: PeriodeGaji; draft: DraftVi
 }
 
 function judulPeran(sesi: SesiPenggajian): { judul: string; deskripsi: string; item?: string } {
+  if (sesi.peran === "Accounting") return { item: "GJ-005 Memeriksa payroll", judul: "Pemeriksaan payroll", deskripsi: "Periksa komponen, total, dan alokasi sebelum meneruskan ke Direksi." };
+  if (sesi.peran === "Direksi") return { item: "GJ-005 Menyetujui payroll", judul: "Persetujuan pembayaran payroll", deskripsi: "Payroll sudah diverifikasi Accounting. Keputusan ini mengotorisasi pembayaran, bukan bukti transfer." };
   if (sesi.peran === "Finance") return { judul: "Draft payroll", deskripsi: "Gaji bersih per karyawan untuk transfer." };
   return { judul: "Draf perhitungan gaji", deskripsi: "Dihitung dari gaji pokok, presensi dan lembur tervalidasi, serta tabel tarif berversi." };
 }
@@ -149,9 +153,9 @@ async function Konten({ periodeId, pesan }: { periodeId?: string; pesan?: string
           <PilihPeriode action="/penggajian/payroll" dipilih={periode.id} periode={await listPeriode()} />
           <StatusBadge status={draft?.status ?? "BELUM"} statuses={STATUS_DRAFT} />
         </div>
-        {akses.hitung ? <Stepper aktif={periode.status === "TERVALIDASI" ? 3 : periode.status === "REKAP" ? 1 : 0} langkah={ALUR_REKAP} /> : null}
+        {akses.hitung ? <Stepper aktif={sudahTervalidasi(periode.status) ? 3 : periode.status === "REKAP" ? 1 : 0} langkah={ALUR_REKAP} /> : null}
         {pesan && PESAN[pesan] ? <Notice title={PESAN[pesan]} tone="success" /> : null}
-        {periode.status !== "TERVALIDASI" ? <Notice title={`Periode ${periode.nama} belum Tervalidasi. Payroll hanya dihitung setelah validasi Supervisor.`} tone="warning" /> : null}
+        {!sudahTervalidasi(periode.status) ? <Notice title={`Periode ${periode.nama} belum Tervalidasi. Payroll hanya dihitung setelah validasi Supervisor.`} tone="warning" /> : null}
         {draft?.pengembalian ? (
           <Notice title={`Draft dikembalikan ${draft.pengembalian.oleh} · ${formatWaktu(draft.pengembalian.pada)}`} tone="danger"><p>Alasan: {draft.pengembalian.alasan}</p></Notice>
         ) : null}
@@ -160,16 +164,20 @@ async function Konten({ periodeId, pesan }: { periodeId?: string; pesan?: string
             ? <KartuAngka isi={[["Karyawan", String(r.jumlahKaryawan)], ["Neto payroll", formatRupiah(r.totalNeto)], ["Periode", rentangPeriode(periode)]]} />
             : <KartuAngka isi={[["Bruto", formatRupiah(r.totalBruto)], ["Potongan", formatRupiah(r.totalPotongan)], ["Neto dibayarkan", formatRupiah(r.totalNeto)]]} />
         ) : (
-          <Keadaan judul="Belum ada draft payroll" pesan={periode.status === "TERVALIDASI" ? "HR menghitung draft dari presensi tervalidasi dan tabel tarif berversi." : "Draft dihitung setelah periode Tervalidasi."} />
+          <Keadaan judul="Belum ada draft payroll" pesan={sudahTervalidasi(periode.status) ? "HR menghitung draft dari presensi tervalidasi dan tabel tarif berversi." : "Draft dihitung setelah periode Tervalidasi."} />
         )}
         {draft && draft.ditandai.length > 0 && akses.rincian ? (
           <Notice title="Karyawan berikut tidak diberi angka" tone="warning">
             {draft.ditandai.map((d) => <p key={d.karyawanId}>{d.nama} (NIK {d.nik}): {d.alasan}</p>)}
           </Notice>
         ) : null}
+        {draft && sesi.peran === "Accounting" ? <DaftarPemeriksaan draft={draft} periode={periode} profileId={sesi.profileId} /> : null}
+        {draft && sesi.peran === "Direksi" ? <RingkasanDireksi draft={draft} periode={periode} /> : null}
+        {draft && sesi.peran === "Direksi" && draft.status === "DIPERIKSA" ? <Notice title="Menunggu persetujuan Direksi. Finance belum boleh membayar." tone="warning" /> : null}
         {draft && akses.rincian ? <TabelKomponen draft={draft} periodeId={periode.id} /> : null}
         {draft && !akses.rincian && draft.neto ? <TabelNeto draft={draft} /> : null}
         {draft && akses.rincian ? <DasarPerhitungan draft={draft} /> : null}
+        {draft ? <PanelPersetujuan draft={draft} peran={sesi.peran} /> : null}
         {akses.hitung ? (
           <div className={ui.cardHeader}>
             <Notice title="Prorata dan koreksi manual" tone="info">

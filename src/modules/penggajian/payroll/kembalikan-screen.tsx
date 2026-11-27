@@ -1,7 +1,6 @@
 import { Suspense } from "react";
 
 import { sesiPenggajian } from "@/modules/penggajian/akun/akun";
-import { cariPeriode } from "@/modules/penggajian/periode/store";
 import { returnPayroll } from "@/modules/penggajian/payroll/persetujuan-actions";
 import { PageHeader } from "@/modules/penggajian/ui/page-header";
 import { FormAksi } from "@/modules/penggajian/shared/form-aksi";
@@ -17,7 +16,7 @@ async function Konten({ periodeId }: { periodeId: string }) {
       aksi={returnPayroll}
       batalHref={`/penggajian/payroll?periode=${periodeId}`}
       isian={[{ name: "alasan", label: "Alasan pengembalian", wajib: true, lebar: true }]}
-      judul={`Payroll ${cariPeriode(periodeId)?.nama ?? periodeId}`}
+      judul="Kembalikan draft payroll"
       kirimLabel="Kembalikan ke HR"
       tersembunyi={{ periodeId }}
     />
