@@ -1,0 +1,8 @@
+/* Extra classes for the QC screen. Layout, buttons, and forms come from the
+   shared Pengeluaran stylesheet; tables come from the receipt stylesheet. */
+
+.section {
+  margin-top: var(--space-5);
+  padding-top: var(--space-4);
+  border-top: var(--border-width-default) solid var(--border-subtle);
+}
