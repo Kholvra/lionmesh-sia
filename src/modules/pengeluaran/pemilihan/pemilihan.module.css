@@ -1,0 +1,79 @@
+/* Extra classes for the supplier comparison screen. Layout, buttons, forms, and
+   the table-frame come from the shared Pengeluaran module stylesheet. */
+
+.tableWrap {
+  margin-top: var(--space-3);
+  overflow-x: auto;
+  border: var(--border-width-default) solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--font-size-body-sm);
+  line-height: var(--line-height-body-sm);
+}
+
+.caption {
+  padding: var(--space-3) var(--space-4);
+  border-bottom: var(--border-width-default) solid var(--border-subtle);
+  color: var(--text-muted);
+  font-size: var(--font-size-label);
+  line-height: var(--line-height-label);
+  text-align: left;
+}
+
+.table th,
+.table td {
+  padding: var(--space-3) var(--space-4);
+  border-bottom: var(--border-width-default) solid var(--border-subtle);
+  text-align: left;
+  vertical-align: top;
+}
+
+.table thead th {
+  background: var(--bg-subtle);
+  color: var(--text-secondary);
+  font-size: var(--font-size-label);
+  font-weight: 600;
+  line-height: var(--line-height-label);
+  white-space: nowrap;
+}
+
+.table tfoot th,
+.table tfoot td {
+  border-bottom: 0;
+  background: var(--bg-subtle);
+  font-weight: 600;
+}
+
+.table tbody tr:last-child th,
+.table tbody tr:last-child td {
+  border-bottom: var(--border-width-default) solid var(--border-subtle);
+}
+
+.qty {
+  display: block;
+  color: var(--text-muted);
+  font-size: var(--font-size-label);
+  font-weight: 400;
+  font-variant-numeric: tabular-nums;
+}
+
+.termurahCell {
+  background: var(--status-success-bg);
+  color: var(--status-success-text);
+  font-variant-numeric: tabular-nums;
+}
+
+.mark {
+  display: block;
+  font-size: var(--font-size-label);
+  font-weight: 600;
+  text-transform: lowercase;
+}
+
+.nominal {
+  font-variant-numeric: tabular-nums;
+}
