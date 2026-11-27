@@ -29,6 +29,7 @@ import type {
   HasilPermintaanPembelian,
   HasilPurchaseOrder,
   HasilQC,
+  BatalkanPenerimaanInput,
   BatalkanPoInput,
   CatatKonfirmasiPoInput,
   PeriksaPRDenganNilaiInput,
@@ -37,6 +38,7 @@ import type {
   TerbitkanPoInput,
   TetapkanPemasokDenganAlasanInput,
   TetapkanPemasokPRInput,
+  TutupExceptionInput,
 } from "./types";
 
 function pesanKesalahan(
@@ -485,4 +487,48 @@ export async function catatKonfirmasiPo(
 
   if (error) return fail(pesanKesalahan(error, "Gagal mencatat konfirmasi pemasok."));
   return ok({ dokumenId: input.dokumenId });
+}
+
+export async function batalkanPenerimaan(
+  supabase: SupabaseClient,
+  input: BatalkanPenerimaanInput,
+): Promise<Result<HasilDokumenPengadaan>> {
+  if (!isUuid(input.actorId) || !isUuid(input.dokumenId) || validasiVersi(input.versi)) {
+    return fail("Data pembatalan penerimaan tidak valid.");
+  }
+  if (input.alasan.trim().length === 0) {
+    return fail("Alasan pembatalan wajib diisi");
+  }
+
+  const { data, error } = await supabase.rpc("batalkan_penerimaan", {
+    p_dokumen_id: input.dokumenId,
+    p_versi: input.versi,
+    p_alasan: input.alasan.trim(),
+    p_aktor_id: input.actorId,
+  });
+
+  if (error) return fail(pesanKesalahan(error, "Gagal membatalkan penerimaan."));
+  const hasil = parseDokumen(data);
+  return hasil ? ok(hasil) : fail("Respons pembatalan penerimaan tidak valid.");
+}
+
+export async function tutupExceptionPengadaan(
+  supabase: SupabaseClient,
+  input: TutupExceptionInput,
+): Promise<Result<{ exceptionId: string }>> {
+  if (!isUuid(input.actorId) || !isUuid(input.exceptionId)) {
+    return fail("Data penutupan exception tidak valid.");
+  }
+  if (input.alasan.trim().length === 0) {
+    return fail("Alasan penutupan wajib diisi");
+  }
+
+  const { error } = await supabase.rpc("tutup_exception_selisih", {
+    p_exception_id: input.exceptionId,
+    p_alasan: input.alasan.trim(),
+    p_aktor_id: input.actorId,
+  });
+
+  if (error) return fail(pesanKesalahan(error, "Gagal menutup exception."));
+  return ok({ exceptionId: input.exceptionId });
 }

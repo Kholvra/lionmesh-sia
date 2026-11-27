@@ -3,10 +3,14 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { listRiwayatStatus, type RiwayatStatus } from "@/core/dokumen";
 import { fail, ok, type Result } from "@/lib/result";
 import type {
+  ExceptionPengadaanView,
   PemilihanPemasokView,
+  PenerimaanDetail,
+  PenerimaanView,
   PermintaanPembelian,
   PermintaanPembelianItem,
   PermintaanPembelianView,
+  PoSiapTerima,
   PurchaseOrderDetail,
   PurchaseOrderView,
   RiwayatHarga,
@@ -418,6 +422,299 @@ async function ambilPemasokNama(
   if (ids.length === 0) return new Map();
   const { data, error } = await client
     .from("pemasok")
+    .select("id,nama")
+    .in("id", [...new Set(ids)]);
+  if (error) throw new Error(error.message);
+  return new Map(
+    ((data ?? []) as unknown as Row[]).map((row) => [
+      asString(row.id),
+      asString(row.nama),
+    ]),
+  );
+}
+
+export async function listPenerimaan(
+  client: SupabaseClient,
+): Promise<Result<PenerimaanView[]>> {
+  const { data, error } = await client
+    .from("penerimaan")
+    .select("dokumen_id,po_id,gudang_id,jenis,tanggal")
+    .order("tanggal", { ascending: false });
+  if (error) return fail(error.message);
+
+  const rows = (data ?? []) as unknown as Row[];
+  if (rows.length === 0) return ok([]);
+
+  try {
+    const docs = await ambilDokumen(
+      client,
+      rows.map((row) => asString(row.dokumen_id)),
+    );
+    const poDocs = await ambilDokumen(
+      client,
+      rows.map((row) => asString(row.po_id)),
+    );
+    const gudang = await ambilGudangNama(
+      client,
+      rows.map((row) => asString(row.gudang_id)),
+    );
+
+    return ok(
+      rows
+        .map((row) => {
+          const doc = docs.get(asString(row.dokumen_id));
+          if (!doc) return null;
+          return mapPenerimaan(
+            row,
+            doc,
+            poDocs.get(asString(row.po_id)) ?? null,
+            gudang.get(asString(row.gudang_id)) ?? "Gudang",
+          );
+        })
+        .filter((view): view is PenerimaanView => view !== null),
+    );
+  } catch (error) {
+    return fail(error instanceof Error ? error.message : "Gagal membaca penerimaan.");
+  }
+}
+
+export async function getPenerimaan(
+  client: SupabaseClient,
+  dokumenId: string,
+): Promise<Result<PenerimaanDetail | null>> {
+  const { data, error } = await client
+    .from("penerimaan")
+    .select("dokumen_id,po_id,gudang_id,jenis,tanggal")
+    .eq("dokumen_id", dokumenId)
+    .maybeSingle();
+  if (error) return fail(error.message);
+  if (!data) return ok(null);
+
+  const row = data as unknown as Row;
+  const poId = asString(row.po_id);
+  const docs = await ambilDokumen(client, [dokumenId, poId]);
+  const doc = docs.get(dokumenId);
+  const poDoc = docs.get(poId) ?? null;
+  if (!doc) return fail("Dokumen penerimaan tidak ditemukan.");
+
+  const gudang = await ambilGudangNama(client, [asString(row.gudang_id)]);
+
+  const { data: items, error: itemError } = await client
+    .from("penerimaan_item")
+    .select("id,po_item_id,qty_diterima::text,qty_lulus::text")
+    .eq("penerimaan_id", dokumenId);
+  if (itemError) return fail(itemError.message);
+
+  const itemRows = (items ?? []) as unknown as Row[];
+  const poItemIds = itemRows.map((item) => asString(item.po_item_id));
+  const { data: poItems, error: poItemError } = poItemIds.length
+    ? await client
+        .from("po_item")
+        .select("id,produk_id,qty::text")
+        .in("id", poItemIds)
+    : { data: [], error: null };
+  if (poItemError) return fail(poItemError.message);
+
+  const poItemById = new Map(
+    ((poItems ?? []) as unknown as Row[]).map((item) => [asString(item.id), item]),
+  );
+
+  const riwayat = await listRiwayatStatus(client, dokumenId);
+  if (!riwayat.ok) return riwayat;
+
+  const punyaQc =
+    doc.status === "QC_LULUS" ||
+    doc.status === "QC_GAGAL" ||
+    itemRows.some((item) => item.qty_lulus !== null);
+
+  return ok({
+    header: mapPenerimaan(
+      row,
+      doc,
+      poDoc,
+      gudang.get(asString(row.gudang_id)) ?? "Gudang",
+    ),
+    items: itemRows.map((item) => {
+      const poItem = poItemById.get(asString(item.po_item_id));
+      return {
+        id: asString(item.id),
+        poItemId: asString(item.po_item_id),
+        produkId: poItem ? asString(poItem.produk_id) : "",
+        qtyDiterima: asString(item.qty_diterima),
+        qtyLulus: item.qty_lulus === null ? null : asString(item.qty_lulus),
+        qtyPo: poItem ? asString(poItem.qty) : "0",
+      };
+    }),
+    riwayat: riwayat.data,
+    bisaDibatalkan: !punyaQc && doc.status === "DITERIMA",
+  });
+}
+
+/** Purchase orders still open for receipt, with the remaining qty per line. */
+export async function listPoSiapTerima(
+  client: SupabaseClient,
+): Promise<Result<PoSiapTerima[]>> {
+  const daftar = await listPurchaseOrder(client);
+  if (!daftar.ok) return daftar;
+
+  const terbuka = daftar.data.filter(
+    (po) => po.status === "DITERBITKAN" || po.status === "DITERIMA_SEBAGIAN",
+  );
+  if (terbuka.length === 0) return ok([]);
+
+  const poIds = terbuka.map((po) => po.dokumenId);
+  const { data: items, error: itemError } = await client
+    .from("po_item")
+    .select("id,po_id,produk_id,qty::text,urutan")
+    .in("po_id", poIds)
+    .order("urutan", { ascending: true });
+  if (itemError) return fail(itemError.message);
+
+  const { data: penerimaan, error: terimaError } = await client
+    .from("penerimaan")
+    .select("dokumen_id,po_id")
+    .in("po_id", poIds);
+  if (terimaError) return fail(terimaError.message);
+
+  const terimaRows = (penerimaan ?? []) as unknown as Row[];
+  const terimaDocs = await ambilDokumen(
+    client,
+    terimaRows.map((row) => asString(row.dokumen_id)),
+  );
+  const aktif = terimaRows
+    .filter((row) => {
+      const doc = terimaDocs.get(asString(row.dokumen_id));
+      return doc !== undefined && asString(doc.status) !== "DIBATALKAN";
+    })
+    .map((row) => asString(row.dokumen_id));
+
+  const { data: terimaItem, error: terimaItemError } = aktif.length
+    ? await client
+        .from("penerimaan_item")
+        .select("penerimaan_id,po_item_id,qty_diterima::text")
+        .in("penerimaan_id", aktif)
+    : { data: [], error: null };
+  if (terimaItemError) return fail(terimaItemError.message);
+
+  const sudah = new Map<string, number>();
+  for (const row of (terimaItem ?? []) as unknown as Row[]) {
+    const key = asString(row.po_item_id);
+    sudah.set(key, (sudah.get(key) ?? 0) + asNumber(row.qty_diterima));
+  }
+
+  const itemRows = (items ?? []) as unknown as Row[];
+  return ok(
+    terbuka.map((po) => ({
+      header: po,
+      items: itemRows
+        .filter((item) => asString(item.po_id) === po.dokumenId)
+        .map((item) => {
+          const qtyPo = asNumber(item.qty);
+          const sisa = qtyPo - (sudah.get(asString(item.id)) ?? 0);
+          return {
+            poItemId: asString(item.id),
+            produkId: asString(item.produk_id),
+            qtyPo: asString(item.qty),
+            sisa: sisa > 0 ? sisa.toString() : "0",
+          };
+        })
+        .filter((item) => Number(item.sisa) > 0),
+    })),
+  );
+}
+
+export async function listExceptionPengadaan(
+  client: SupabaseClient,
+  options: { status?: string } = {},
+): Promise<Result<ExceptionPengadaanView[]>> {
+  let query = client
+    .from("pengadaan_exception")
+    .select(
+      "id,tipe,po_id,po_item_id,qty_po::text,qty_diterima::text,selisih::text,alasan,status,created_at",
+    )
+    .order("created_at", { ascending: false })
+    .limit(100);
+  if (options.status) query = query.eq("status", options.status);
+
+  const { data, error } = await query;
+  if (error) return fail(error.message);
+
+  const rows = (data ?? []) as unknown as Row[];
+  if (rows.length === 0) return ok([]);
+
+  try {
+    const poDocs = await ambilDokumen(
+      client,
+      rows.map((row) => asString(row.po_id)),
+    );
+    const itemIds = rows
+      .map((row) => row.po_item_id)
+      .filter((value): value is string => typeof value === "string");
+    const { data: poItems, error: poItemError } = itemIds.length
+      ? await client.from("po_item").select("id,produk_id").in("id", itemIds)
+      : { data: [], error: null };
+    if (poItemError) return fail(poItemError.message);
+    const produkByItem = new Map(
+      ((poItems ?? []) as unknown as Row[]).map((item) => [
+        asString(item.id),
+        asString(item.produk_id),
+      ]),
+    );
+
+    return ok(
+      rows.map((row) => {
+        const doc = poDocs.get(asString(row.po_id));
+        return {
+          id: asString(row.id),
+          tipe: asString(row.tipe),
+          poId: asString(row.po_id),
+          poNomor: doc ? asString(doc.nomor) : null,
+          produkId:
+            row.po_item_id === null
+              ? null
+              : (produkByItem.get(asString(row.po_item_id)) ?? null),
+          qtyPo: asString(row.qty_po),
+          qtyDiterima: asString(row.qty_diterima),
+          selisih: asString(row.selisih),
+          alasan: row.alasan === null ? null : asString(row.alasan),
+          status: asString(row.status),
+          createdAt: asString(row.created_at),
+        };
+      }),
+    );
+  } catch (error) {
+    return fail(error instanceof Error ? error.message : "Gagal membaca exception.");
+  }
+}
+
+function mapPenerimaan(
+  row: Row,
+  dokumen: Row,
+  poDoc: Row | null,
+  gudangNama: string,
+): PenerimaanView {
+  return {
+    dokumenId: asString(row.dokumen_id),
+    nomor: asString(dokumen.nomor),
+    status: asString(dokumen.status) as PenerimaanView["status"],
+    versi: asNumber(dokumen.versi),
+    jenis: asString(row.jenis) as PenerimaanView["jenis"],
+    tanggal: asString(row.tanggal),
+    poId: asString(row.po_id),
+    poNomor: poDoc ? asString(poDoc.nomor) : null,
+    gudangId: asString(row.gudang_id),
+    gudangNama,
+    createdAt: asString(dokumen.created_at),
+  };
+}
+
+async function ambilGudangNama(
+  client: SupabaseClient,
+  ids: string[],
+): Promise<Map<string, string>> {
+  if (ids.length === 0) return new Map();
+  const { data, error } = await client
+    .from("gudang")
     .select("id,nama")
     .in("id", [...new Set(ids)]);
   if (error) throw new Error(error.message);
