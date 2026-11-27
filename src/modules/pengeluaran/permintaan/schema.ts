@@ -15,6 +15,42 @@ const barisSchema = z.object({
   qty: QTY,
 });
 
+const VERSI = z
+  .string()
+  .regex(/^\d+$/, "Data permintaan tidak valid")
+  .transform((value) => Number(value))
+  .refine((value) => Number.isSafeInteger(value), "Data permintaan tidak valid");
+
+/**
+ * Purchasing may leave the estimate blank (Q-07): a blank field is read as
+ * zero, not as "no value", so the single seed ladder still applies.
+ */
+const ESTIMASI = z
+  .string()
+  .transform((value) => value.trim().replace(",", "."))
+  .transform((value) => (value.length === 0 ? "0" : value))
+  .refine((value) => /^\d+(\.\d{1,2})?$/.test(value), {
+    message: "Estimasi nilai harus angka positif dengan maksimal 2 desimal",
+  });
+
+const keputusanApprovalSchema = z.object({
+  dokumenId: UUID,
+  versi: VERSI,
+});
+
+const penolakanSchema = keputusanApprovalSchema.extend({
+  alasan: z.string().trim().min(1, "Alasan penolakan wajib diisi"),
+});
+
+export interface KeputusanApprovalInput {
+  dokumenId: string;
+  versi: number;
+}
+
+export interface PenolakanInput extends KeputusanApprovalInput {
+  alasan: string;
+}
+
 export interface PermintaanFormInput {
   gudangId: string;
   woId: string | null;
@@ -89,4 +125,53 @@ export function parsePermintaanForm(formData: FormData): {
     },
     fieldErrors,
   };
+}
+
+export function parseEstimasiNilai(formData: FormData): {
+  nilai: string | null;
+  message: string | null;
+} {
+  const parsed = ESTIMASI.safeParse(text(formData, "nilai"));
+  if (!parsed.success) {
+    return {
+      nilai: null,
+      message: parsed.error.issues[0]?.message ?? "Estimasi nilai tidak valid",
+    };
+  }
+  return { nilai: parsed.data, message: null };
+}
+
+export function parseKeputusanApproval(formData: FormData): {
+  input: KeputusanApprovalInput | null;
+  message: string | null;
+} {
+  const parsed = keputusanApprovalSchema.safeParse({
+    dokumenId: text(formData, "id"),
+    versi: text(formData, "versi"),
+  });
+  if (!parsed.success) {
+    return {
+      input: null,
+      message: parsed.error.issues[0]?.message ?? "Data permintaan tidak valid",
+    };
+  }
+  return { input: parsed.data, message: null };
+}
+
+export function parsePenolakan(formData: FormData): {
+  input: PenolakanInput | null;
+  message: string | null;
+} {
+  const parsed = penolakanSchema.safeParse({
+    dokumenId: text(formData, "id"),
+    versi: text(formData, "versi"),
+    alasan: text(formData, "alasan"),
+  });
+  if (!parsed.success) {
+    return {
+      input: null,
+      message: parsed.error.issues[0]?.message ?? "Data penolakan tidak valid",
+    };
+  }
+  return { input: parsed.data, message: null };
 }

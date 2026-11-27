@@ -3,6 +3,7 @@ import Link from "next/link";
 import { StatusBadge } from "@/components/ui";
 import type { Profile } from "@/lib/auth/types";
 import { cekIzin } from "@/lib/auth/permissions";
+import { formatRupiah } from "@/lib/format/number";
 import { PermintaanActions } from "./components/permintaan-actions";
 import { PermintaanForm } from "./components/permintaan-form";
 import { PermintaanTable } from "./components/permintaan-table";
@@ -26,6 +27,7 @@ type Props = {
 export async function PermintaanScreen({ mode, permintaanId, profile }: Props) {
   const canAjukan = cekIzin(profile.peran, "ajukan_pr");
   const canPeriksa = cekIzin(profile.peran, "periksa_pr");
+  const canSetujui = cekIzin(profile.peran, "setujui_pr");
   const data = await getPermintaanPageData(profile.peran, permintaanId);
   const terpilih = data.terpilih;
 
@@ -133,6 +135,14 @@ export async function PermintaanScreen({ mode, permintaanId, profile }: Props) {
                     </dd>
                   </div>
                   <div className={styles.detailItem}>
+                    <dt className={styles.detailLabel}>Estimasi nilai</dt>
+                    <dd className={styles.detailValue}>
+                      {terpilih.header.nominal === null
+                        ? "Belum diisi"
+                        : formatRupiah(terpilih.header.nominal)}
+                    </dd>
+                  </div>
+                  <div className={styles.detailItem}>
                     <dt className={styles.detailLabel}>Keterangan</dt>
                     <dd className={styles.detailValue}>
                       {terpilih.header.keterangan ?? "—"}
@@ -157,6 +167,7 @@ export async function PermintaanScreen({ mode, permintaanId, profile }: Props) {
                   actorId={profile.id}
                   canAjukan={canAjukan}
                   canPeriksa={canPeriksa}
+                  canSetujui={canSetujui}
                   permintaan={terpilih.header}
                 />
 
@@ -175,6 +186,7 @@ export async function PermintaanScreen({ mode, permintaanId, profile }: Props) {
                           <span className={styles.historyAction}>
                             {labelAksi(item.aksi)} · {item.status_asal ?? "—"} →{" "}
                             {item.status_tujuan}
+                            {item.level !== null ? ` · jenjang ${item.level}` : ""}
                           </span>
                           <span className={styles.historyMeta}>
                             {formatTanggal(item.created_at)}
