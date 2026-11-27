@@ -1,4 +1,4 @@
-import type { Dokumen, StatusDokumen } from "@/core/dokumen";
+import type { Dokumen, RiwayatStatus, StatusDokumen } from "@/core/dokumen";
 
 import type { BarisPenerimaan, BarisPO, BarisPermintaan, BarisQC, JenisPenerimaan } from "./rules";
 
@@ -200,4 +200,49 @@ export interface PermintaanPembelianView {
   tanggalButuh: string;
   createdAt: string;
   updatedAt: string;
+}
+
+export interface PenawaranHarga {
+  id: string;
+  permintaanId: string;
+  itemId: string;
+  pemasokId: string;
+  harga: string;
+  tanggal: string;
+  createdAt: string;
+}
+
+export interface SimpanPenawaranHargaInput {
+  permintaanId: string;
+  itemId: string;
+  pemasokId: string;
+  harga: string;
+  tanggal: string;
+  actorId: string;
+}
+
+export interface TetapkanPemasokDenganAlasanInput {
+  permintaanId: string;
+  versi: number;
+  pemasokId: string;
+  alasan?: string;
+  actorId: string;
+}
+
+export interface PemilihanPemasokView {
+  header: PermintaanPembelianView;
+  items: PermintaanPembelianItem[];
+  penawaran: PenawaranHarga[];
+  pemasokTerpilihId: string | null;
+  alasanPemilihan: string | null;
+  riwayat: RiwayatStatus[];
+}
+
+export interface RiwayatHarga {
+  id: string;
+  produkId: string;
+  pemasokId: string;
+  pemasokNama: string;
+  harga: string;
+  tanggal: string;
 }

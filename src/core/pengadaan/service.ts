@@ -31,6 +31,8 @@ import type {
   HasilQC,
   PeriksaPRDenganNilaiInput,
   PeriksaPRInput,
+  SimpanPenawaranHargaInput,
+  TetapkanPemasokDenganAlasanInput,
   TetapkanPemasokPRInput,
 } from "./types";
 
@@ -343,4 +345,64 @@ export async function batalkanPO(
   if (error) return fail(pesanKesalahan(error, "Gagal membatalkan purchase order."));
   const hasil = parseDokumen(data);
   return hasil ? ok(hasil) : fail("Respons pembatalan purchase order tidak valid.");
+}
+
+export async function simpanPenawaranHarga(
+  supabase: SupabaseClient,
+  input: SimpanPenawaranHargaInput,
+): Promise<Result<{ id: string; permintaanId: string }>> {
+  if (
+    !isUuid(input.actorId) ||
+    !isUuid(input.permintaanId) ||
+    !isUuid(input.itemId) ||
+    !isUuid(input.pemasokId) ||
+    !/^\d+(\.\d{1,2})?$/.test(input.harga) ||
+    !/^\d{4}-\d{2}-\d{2}$/.test(input.tanggal)
+  ) {
+    return fail("Data harga pembanding tidak valid.");
+  }
+
+  const { data, error } = await supabase.rpc("simpan_penawaran_harga", {
+    p_dokumen_id: input.permintaanId,
+    p_item_id: input.itemId,
+    p_pemasok_id: input.pemasokId,
+    p_harga: input.harga,
+    p_tanggal: input.tanggal,
+    p_aktor_id: input.actorId,
+  });
+
+  if (error) return fail(pesanKesalahan(error, "Gagal menyimpan harga pembanding."));
+
+  const row = (data ?? {}) as Record<string, unknown>;
+  const id = typeof row.id === "string" ? row.id : "";
+  const permintaanId = typeof row.dokumen_id === "string" ? row.dokumen_id : "";
+  return id && permintaanId
+    ? ok({ id, permintaanId })
+    : fail("Respons penyimpanan harga tidak valid.");
+}
+
+export async function tetapkanPemasokDenganAlasan(
+  supabase: SupabaseClient,
+  input: TetapkanPemasokDenganAlasanInput,
+): Promise<Result<HasilDokumenPengadaan>> {
+  if (
+    !isUuid(input.actorId) ||
+    !isUuid(input.permintaanId) ||
+    !isUuid(input.pemasokId) ||
+    validasiVersi(input.versi)
+  ) {
+    return fail("Data penetapan pemasok tidak valid.");
+  }
+
+  const { data, error } = await supabase.rpc("tetapkan_pemasok_pr_dengan_alasan", {
+    p_dokumen_id: input.permintaanId,
+    p_versi: input.versi,
+    p_pemasok_id: input.pemasokId,
+    p_alasan: input.alasan ?? null,
+    p_aktor_id: input.actorId,
+  });
+
+  if (error) return fail(pesanKesalahan(error, "Gagal menetapkan pemasok."));
+  const hasil = parseDokumen(data);
+  return hasil ? ok(hasil) : fail("Respons penetapan pemasok tidak valid.");
 }
