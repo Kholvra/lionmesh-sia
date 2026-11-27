@@ -6,6 +6,8 @@ import { redirect } from "next/navigation";
 import { assertIzin } from "@/lib/auth";
 import type { Profile } from "@/lib/auth";
 import type { Result } from "@/lib/result";
+import { createClient } from "@/lib/supabase/server";
+import { getDaftarAktif, muatKaryawan, nikTerpakai } from "@/modules/penggajian/karyawan/queries";
 import {
   parseNominal,
   ringkasError,
@@ -15,16 +17,7 @@ import {
   validateNonaktif,
   type FieldErrors,
 } from "@/modules/penggajian/karyawan/rules";
-import {
-  cariKaryawan,
-  daftarAktif,
-  nonaktifkanKaryawan,
-  semuaKaryawan,
-  simpanKaryawanBaru,
-  tambahGajiPokok,
-  ubahDataKaryawan,
-} from "@/modules/penggajian/karyawan/store";
-import type { DataKaryawanInput, TipeKaryawan } from "@/modules/penggajian/karyawan/types";
+import type { DataKaryawanInput } from "@/modules/penggajian/karyawan/types";
 
 export type AksiState =
   | (Result<{ id: string }> & { fieldErrors?: FieldErrors })
@@ -62,8 +55,23 @@ async function aktorHr(): Promise<Result<Profile>> {
   return assertIzin("kelola_data_karyawan");
 }
 
-function namaAktor(profile: Profile) {
-  return profile.display_name ?? profile.peran ?? "Pengguna";
+/** The database rejects writes outside HR as well (gj001_assert_hr); its message reaches the form. */
+function gagalDb(error: { message: string }): AksiState {
+  return { ok: false, message: error.message };
+}
+
+function dataKeRpc(data: DataKaryawanInput) {
+  return {
+    p_nama: data.nama,
+    p_departemen_id: data.departemenId,
+    p_jabatan_id: data.jabatanId,
+    p_ptkp_kode: data.ptkpKode,
+    p_tipe: data.tipe,
+    p_tanggal_masuk: data.tanggalMasuk,
+    p_rekening_nama_bank: data.rekening.namaBank,
+    p_rekening_nomor: data.rekening.nomor,
+    p_rekening_nama_pemilik: data.rekening.namaPemilik,
+  };
 }
 
 export async function createKaryawan(_prev: AksiState, formData: FormData): Promise<AksiState> {
@@ -77,18 +85,20 @@ export async function createKaryawan(_prev: AksiState, formData: FormData): Prom
     gajiPokok: teks(formData, "gajiPokok"),
     tanggalBerlaku: teks(formData, "tanggalBerlaku"),
   };
-  const nikTerpakai = semuaKaryawan().map((karyawan) => karyawan.nik);
-  const errors = validateKaryawanBaru(input, daftarAktif(), nikTerpakai);
+  const supabase = await createClient();
+  const [daftar, terpakai] = await Promise.all([getDaftarAktif(supabase), nikTerpakai(supabase)]);
+  const errors = validateKaryawanBaru(input, daftar, terpakai);
   if (Object.keys(errors).length > 0) return gagal(errors);
 
-  const karyawan = simpanKaryawanBaru(
-    { ...data, nik: input.nik, tipe: data.tipe as TipeKaryawan },
-    { nominal: parseNominal(input.gajiPokok) ?? 0, tanggalBerlaku: input.tanggalBerlaku },
-    namaAktor(aktor.data),
-    new Date().toISOString(),
-  );
+  const { data: id, error } = await supabase.rpc("create_karyawan", {
+    ...dataKeRpc(data),
+    p_nik: input.nik,
+    p_gaji_pokok: parseNominal(input.gajiPokok),
+    p_tanggal_berlaku: input.tanggalBerlaku,
+  });
+  if (error) return gagalDb(error);
   revalidatePath(BASE_PATH);
-  redirect(`${BASE_PATH}/${karyawan.id}?pesan=dibuat`);
+  redirect(`${BASE_PATH}/${id}?pesan=dibuat`);
 }
 
 export async function updateKaryawan(
@@ -99,14 +109,16 @@ export async function updateKaryawan(
   const aktor = await aktorHr();
   if (!aktor.ok) return aktor;
 
-  const karyawan = cariKaryawan(id);
+  const supabase = await createClient();
+  const karyawan = await muatKaryawan(id, supabase);
   if (!karyawan) return { ok: false, message: "Karyawan tidak ditemukan." };
 
   const data = bacaDataKaryawan(formData);
-  const errors = validateDataKaryawan(data, daftarAktif());
+  const errors = validateDataKaryawan(data, await getDaftarAktif(supabase));
   if (Object.keys(errors).length > 0) return gagal(errors);
 
-  ubahDataKaryawan(karyawan, { ...data, tipe: data.tipe as TipeKaryawan }, namaAktor(aktor.data), new Date().toISOString());
+  const { error } = await supabase.rpc("update_karyawan", { p_id: id, ...dataKeRpc(data) });
+  if (error) return gagalDb(error);
   revalidatePath(BASE_PATH);
   redirect(`${BASE_PATH}/${id}?pesan=diubah`);
 }
@@ -119,19 +131,20 @@ export async function addGajiPokok(
   const aktor = await aktorHr();
   if (!aktor.ok) return aktor;
 
-  const karyawan = cariKaryawan(id);
+  const supabase = await createClient();
+  const karyawan = await muatKaryawan(id, supabase);
   if (!karyawan) return { ok: false, message: "Karyawan tidak ditemukan." };
 
   const input = { nominal: teks(formData, "nominal"), tanggalBerlaku: teks(formData, "tanggalBerlaku") };
   const errors = validateGajiPokok(input, karyawan.gajiPokok);
   if (Object.keys(errors).length > 0) return gagal(errors);
 
-  tambahGajiPokok(karyawan, {
-    nominal: parseNominal(input.nominal) ?? 0,
-    tanggalBerlaku: input.tanggalBerlaku,
-    oleh: namaAktor(aktor.data),
-    pada: new Date().toISOString(),
+  const { error } = await supabase.rpc("tambah_gaji_pokok", {
+    p_karyawan_id: id,
+    p_nominal: parseNominal(input.nominal),
+    p_tanggal_berlaku: input.tanggalBerlaku,
   });
+  if (error) return gagalDb(error);
   revalidatePath(BASE_PATH);
   redirect(`${BASE_PATH}/${id}?pesan=gaji`);
 }
@@ -144,7 +157,8 @@ export async function deactivateKaryawan(
   const aktor = await aktorHr();
   if (!aktor.ok) return aktor;
 
-  const karyawan = cariKaryawan(id);
+  const supabase = await createClient();
+  const karyawan = await muatKaryawan(id, supabase);
   if (!karyawan) return { ok: false, message: "Karyawan tidak ditemukan." };
   if (karyawan.status === "NONAKTIF") {
     return { ok: false, message: "Karyawan ini sudah nonaktif." };
@@ -154,7 +168,8 @@ export async function deactivateKaryawan(
   const errors = validateNonaktif(tanggalKeluar);
   if (Object.keys(errors).length > 0) return gagal(errors);
 
-  nonaktifkanKaryawan(karyawan, tanggalKeluar, namaAktor(aktor.data), new Date().toISOString());
+  const { error } = await supabase.rpc("nonaktifkan_karyawan", { p_id: id, p_tanggal_keluar: tanggalKeluar });
+  if (error) return gagalDb(error);
   revalidatePath(BASE_PATH);
   redirect(`${BASE_PATH}/${id}?pesan=nonaktif`);
 }
