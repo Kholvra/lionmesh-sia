@@ -1,5 +1,6 @@
 "use server";
 
+import type { SupabaseClient } from "@supabase/supabase-js";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 
@@ -62,6 +63,30 @@ export async function requireSesi(): Promise<{
     redirect("/login");
   }
   return sessionData;
+}
+
+/** Nama tampil sejumlah profil untuk keperluan audit lintas modul. */
+export async function listNamaProfil(
+  client: SupabaseClient,
+  ids: readonly string[],
+): Promise<Result<Map<string, string | null>>> {
+  const unik = [...new Set(ids.filter((id) => id.length > 0))];
+  if (unik.length === 0) return ok(new Map());
+
+  const { data, error } = await client
+    .from("profiles")
+    .select("id, display_name")
+    .in("id", unik);
+  if (error) return fail(error.message);
+
+  return ok(
+    new Map(
+      ((data ?? []) as { id: string; display_name: string | null }[]).map((row) => [
+        row.id,
+        row.display_name,
+      ]),
+    ),
+  );
 }
 
 /**

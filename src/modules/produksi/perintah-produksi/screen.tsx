@@ -1,8 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
-import { EmptyState } from "@/components/ui/states";
+import { useEffect, useMemo, useState } from "react";
+import { EmptyState, ErrorState, LoadingState } from "@/components/ui/states";
 import { PageHeader } from "@/components/ui/page-header";
 import { SegmentedTabs } from "@/components/ui/segmented-tabs";
 import {
@@ -11,31 +11,44 @@ import {
 } from "@/components/ui/status-badge";
 import { TableActionLink } from "@/components/ui/table-action-link";
 import { useTableState } from "@/components/ui/use-table-state";
-import { bacaKoleksi } from "@/modules/produksi/store";
+import { muatSpkList } from "@/modules/produksi/queries";
 import { useProduksiActor } from "../context/actor-context";
 import type { SpkFilterTab, SpkItem } from "./types";
 
 
 export function PerintahProduksiScreen() {
-  const [spkList] = useState<SpkItem[]>(() => bacaKoleksi("spk"));
+  const [spkList, setSpkList] = useState<SpkItem[] | null>(null);
+  const [error, setError] = useState<string | null>(null);
   const { can, activeRole } = useProduksiActor();
   const canCreate = can("create_spk");
 
+  useEffect(() => {
+    let aktif = true;
+    muatSpkList().then((hasil) => {
+      if (!aktif) return;
+      if (hasil.ok) setSpkList(hasil.data);
+      else setError(hasil.message);
+    });
+    return () => {
+      aktif = false;
+    };
+  }, []);
+
   const counts = useMemo(() => {
     return {
-      semua: spkList.length,
-      direncanakan: spkList.filter((s) => s.filterCategory === "direncanakan").length,
-      menunggu_bahan: spkList.filter((s) => s.filterCategory === "menunggu_bahan").length,
-      diproses: spkList.filter((s) => s.filterCategory === "diproses").length,
-      hasil_dicatat: spkList.filter((s) => s.filterCategory === "hasil_dicatat").length,
+      semua: spkList?.length ?? 0,
+      direncanakan: spkList?.filter((s) => s.filterCategory === "direncanakan").length ?? 0,
+      menunggu_bahan: spkList?.filter((s) => s.filterCategory === "menunggu_bahan").length ?? 0,
+      diproses: spkList?.filter((s) => s.filterCategory === "diproses").length ?? 0,
+      hasil_dicatat: spkList?.filter((s) => s.filterCategory === "hasil_dicatat").length ?? 0,
     };
   }, [spkList]);
 
-  const table = useTableState(spkList, {
-    getFilterValue: (item) => item.filterCategory,
+  const table = useTableState(spkList ?? [], {
+    getFilterValue: (item: SpkItem) => item.filterCategory,
     initialFilterValue: "semua",
     matchAllFilterValue: "semua",
-    pageSize: spkList.length || 1,
+    pageSize: spkList?.length || 1,
   });
 
   const tabs: { key: SpkFilterTab; label: string }[] = [
@@ -67,6 +80,24 @@ export function PerintahProduksiScreen() {
     },
   ];
 
+
+  if (error) {
+    return (
+      <div className="w-full text-[#172335] animate-fade-in">
+        <PageHeader title="Perintah produksi" variant="cycle" />
+        <ErrorState judul="Data perintah produksi tidak dapat dimuat." teks={error} variant="compact" />
+      </div>
+    );
+  }
+
+  if (!spkList) {
+    return (
+      <div className="w-full text-[#172335] animate-fade-in">
+        <PageHeader title="Perintah produksi" variant="cycle" />
+        <LoadingState judul="Memuat perintah produksi..." variant="inline" />
+      </div>
+    );
+  }
   return (
     <div className="w-full text-[#172335] animate-fade-in">
       <PageHeader

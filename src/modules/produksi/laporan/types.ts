@@ -36,3 +36,9 @@ export interface RekapPersediaanRow {
   gudang: string;
 }
 
+export interface LaporanData {
+  periodeOptions: { value: string; label: string }[];
+  produksi: LaporanProduksiRow[];
+  wip: LaporanWipRow[];
+  persediaan: RekapPersediaanRow[];
+}

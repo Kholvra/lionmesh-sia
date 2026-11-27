@@ -92,9 +92,9 @@ subpath + server-only; registry COA tunggal; `typecheck`/`lint`/
 `arch:check` hijau, `pnpm test` 124/124, `pnpm build` hijau.
 Catatan: `keIsoString`/`SELECT_MUTASI` nol kemunculan di source (audit
 basi); module actions pesan-kustom sengaja tidak disatukan.
-[blocked] K10 kaki-Supabase: tabel produksi belum ada, butuh keputusan
-skema (DDL). Dikerjakan: store typed tunggal, formula 1×, demo dihapus,
-izin terverifikasi terpusat.
+[SELESAI 28 Nov — blokir skema dibuka via D-70] K10 kaki-Supabase:
+tabel produksi + RLS + RPC + core + actions + swap store selesai
+penuh (lihat item K10). Sisa satu keputusan: akun COA rugi abnormal.
 
 - [x] K1. Paging: angkat `dashboard/pagination.ts:3` (`readAllPages`) untuk
       `ledger/report-queries` + `inventory/report-queries` (3 loop kembar).
@@ -126,10 +126,13 @@ izin terverifikasi terpusat.
       metadata 14×/3 format + `PageProps` 3×); `PATH_*` konstan
       (GJ 11× literal); `PESAN` map typed GJ; hapus barrel mati
       produksi `types.ts`; nama impor relatif vs `@/` disatukan.
-- [ ] K10. Produksi persistence (besar, terpisah dari UI): sessionStorage
-      16 baca/7 tulis → action server + Supabase + zod; matriks izin →
-      lib; seed SPK/stok → core/master; formula `hitungKebutuhanBahan`
-      1×; hapus fabrikasi demo + tombol demo.
+- [x] K10. Produksi persistence PENUH (D-70): skema 0020 (12 tabel) +
+      0021 (WO + RLS) + 16 RPC atomik; core `produksi/` + actions + zod;
+      sessionStorage NOL; demo dihapus. Bukti 28 Nov: gate hijau
+      (typecheck/lint/arch/test 162/build), reset+seed hijau, E2E BOM v1
+      via UI (simpan + baca-balik OK). Terbuka: akun COA
+      `kerugian_produksi_abnormal` (usul 702, tunggu Accounting) —
+      posting rugi abnormal fail-closed sampai diputuskan.
 
 ## Fase 4 — Scripts, migrasi, hygiene
 Bukti 2026-11-27 (branch `post-merge-consolidation`, 2 agen paralel):

@@ -1,6 +1,7 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useParams } from "next/navigation";
+import { useEffect, useMemo, useState, useTransition } from "react";
 import { MetricCardGrid } from "@/components/ui/metric-card";
 import { Notice } from "@/components/ui/notice";
 import { PageHeader } from "@/components/ui/page-header";
@@ -8,21 +9,59 @@ import {
   STATUS_POSTING_HPP,
   StatusBadge,
 } from "@/components/ui/status-badge";
-import { EmptyState } from "@/components/ui/states";
+import { EmptyState, ErrorState, LoadingState } from "@/components/ui/states";
 import { useTableState } from "@/components/ui/use-table-state";
 import { useProduksiActor } from "@/modules/produksi/context/actor-context";
+import { bebankanOverheadKeSpk, postingHppFinal } from "@/modules/produksi/actions";
+import { muatHppDetail } from "@/modules/produksi/queries-lanjutan";
 import type { HppSpkSummary } from "./types";
 
 export function DetailHppScreen() {
+  const params = useParams<{ nomorSpk: string }>();
+  const nomorSpk = params?.nomorSpk ?? "";
   const [hppData, setHppData] = useState<HppSpkSummary | null>(null);
-
+  const [error, setError] = useState<string | null>(null);
+  const [dimuat, setDimuat] = useState(false);
+  const [pending, startTransition] = useTransition();
   const { can, activeRole } = useProduksiActor();
   const canPostHpp = can("post_final_hpp");
-
   const [notification, setNotification] = useState<{
     type: "success" | "error";
     message: string;
   } | null>(null);
+
+  const [dlhInput, setDlhInput] = useState("");
+
+  const bebankanOverhead = () => {
+    if (!hppData || !dlhInput) return;
+    const formData = new FormData();
+    formData.set("wo_id", hppData.woId);
+    formData.set("dlh", dlhInput);
+    formData.set("tanggal", new Date().toISOString());
+    startTransition(async () => {
+      const hasil = await bebankanOverheadKeSpk(formData);
+      if (!hasil.ok) {
+        setNotification({ type: "error", message: hasil.message });
+        return;
+      }
+      const diperbarui = await muatHppDetail(nomorSpk);
+      if (diperbarui.ok && diperbarui.data) setHppData(diperbarui.data);
+      setNotification({ type: "success", message: `Overhead ${dlhInput} DLH dibebankan ke WIP ${hppData.nomorSpk}.` });
+    });
+  };
+  useEffect(() => {
+    if (!nomorSpk) return;
+    let aktif = true;
+    muatHppDetail(nomorSpk).then((hasil) => {
+      if (!aktif) return;
+      if (!hasil.ok) setError(hasil.message);
+      else setHppData(hasil.data);
+      setDimuat(true);
+    });
+    return () => {
+      aktif = false;
+    };
+  }, [nomorSpk]);
 
   const handlePostingFinalHpp = () => {
     if (!hppData) return;
@@ -34,19 +73,20 @@ export function DetailHppScreen() {
       return;
     }
 
-    setHppData((prev) =>
-      prev
-        ? {
-            ...prev,
-            statusPostingHpp: "FINAL_DIPOSTING",
-            tanggalPosting: new Date().toLocaleString("id-ID"),
-          }
-        : prev,
-    );
-
-    setNotification({
-      type: "success",
-      message: `Jurnal HPP Final untuk ${hppData.nomorSpk} sebesar Rp ${hppData.totalHppRp.toLocaleString("id-ID")} berhasil diposting ke Buku Besar. Akun Barang Dalam Proses (WIP) telah ditutup ke Persediaan Barang Jadi.`,
+    const formData = new FormData();
+    formData.set("wo_id", hppData.woId);
+    startTransition(async () => {
+      const hasil = await postingHppFinal(formData);
+      if (!hasil.ok) {
+        setNotification({ type: "error", message: hasil.message });
+        return;
+      }
+      const diperbarui = await muatHppDetail(nomorSpk);
+      if (diperbarui.ok && diperbarui.data) setHppData(diperbarui.data);
+      setNotification({
+        type: "success",
+        message: `Jurnal HPP Final untuk ${hppData.nomorSpk} sebesar Rp ${hppData.totalHppRp.toLocaleString("id-ID")} berhasil diposting ke Buku Besar. Akun Barang Dalam Proses (WIP) telah ditutup ke Persediaan Barang Jadi.`,
+      });
     });
   };
   const hppAction = !hppData ? null : hppData.statusPostingHpp === "FINAL_DIPOSTING" ? (
@@ -64,6 +104,7 @@ export function DetailHppScreen() {
       <button
         type="button"
         onClick={handlePostingFinalHpp}
+        disabled={pending}
         className="inline-flex items-center justify-center rounded-[8px] bg-[#E88A06] px-4 py-2 text-[13px] font-semibold text-white shadow-2xs transition-all duration-150 ease-out hover:bg-[#D17B05] active:scale-[0.98]"
       >
         Posting Jurnal HPP Final
@@ -128,6 +169,22 @@ export function DetailHppScreen() {
     pageSize: jurnalRows.length || 1,
   });
 
+  if (error) {
+    return (
+      <div className="mx-auto max-w-[1156px] text-[#172335] animate-fade-in">
+        <ErrorState judul="Rincian HPP tidak dapat dimuat." teks={error} variant="compact" />
+      </div>
+    );
+  }
+
+  if (!dimuat) {
+    return (
+      <div className="mx-auto max-w-[1156px] text-[#172335] animate-fade-in">
+        <LoadingState judul="Memuat rincian HPP..." variant="inline" />
+      </div>
+    );
+  }
+
   if (!hppData) {
     return (
       <div className="mx-auto max-w-[1156px] text-[#172335] animate-fade-in">
@@ -141,6 +198,17 @@ export function DetailHppScreen() {
 
   return (
     <div className="mx-auto max-w-[1156px] text-[#172335] animate-fade-in">
+
+      {canPostHpp && (
+        <section className="shadow-card mt-4 rounded-[10px] border border-transparent bg-white p-[20px]">
+          <h2 className="text-[15px] font-semibold text-[#172335]">Bebankan overhead ke WIP</h2>
+          <p className="mt-1 text-xs text-[#526174]">Tarif: Rp {hppData.tarifOverheadPerDlh.toLocaleString("id-ID")} / DLH</p>
+          <div className="mt-3 flex flex-wrap items-center gap-3">
+            <input type="number" min="0" step="0.0001" value={dlhInput} onChange={(e) => setDlhInput(e.target.value)} placeholder="Jumlah DLH" className="w-[180px] rounded-[8px] border border-[#E5E7EB] px-3 py-2 text-[13px]" />
+            <button type="button" disabled={pending} onClick={bebankanOverhead} className="rounded-[8px] bg-[#E88A06] px-4 py-2 text-[13px] font-semibold text-white">Bebankan overhead</button>
+          </div>
+        </section>
+      )}
       <PageHeader
         actions={hppAction}
         description={`${hppData.produkNama} · ${hppData.jumlahLulus} lembar lulus QC · Jadwal ${hppData.jadwalText}`}

@@ -1,20 +1,53 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { PageHeader } from "@/components/ui/page-header";
-import { EmptyState } from "@/components/ui/states";
+import { EmptyState, ErrorState, LoadingState } from "@/components/ui/states";
 import {
   STATUS_HASIL_PRODUKSI,
   StatusBadge,
 } from "@/components/ui/status-badge";
 import { TableActionLink } from "@/components/ui/table-action-link";
 import { useTableState } from "@/components/ui/use-table-state";
-import { bacaKoleksi } from "@/modules/produksi/store";
+import { muatHasilList } from "@/modules/produksi/queries";
 import type { HasilProduksiSpkItem } from "./types";
+import { useProduksiActor } from "@/modules/produksi/context/actor-context";
 
 export function HasilProduksiScreen() {
-  const [items] = useState<HasilProduksiSpkItem[]>(() => bacaKoleksi("hasilProduksi"));
-  const table = useTableState(items, { pageSize: items.length || 1 });
+  const { can } = useProduksiActor();
+  const [items, setItems] = useState<HasilProduksiSpkItem[] | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const table = useTableState(items ?? [], { pageSize: items?.length || 1 });
+
+  useEffect(() => {
+    let aktif = true;
+    muatHasilList().then((hasil) => {
+      if (!aktif) return;
+      if (hasil.ok) setItems(hasil.data);
+      else setError(hasil.message);
+    });
+    return () => {
+      aktif = false;
+    };
+  }, []);
+
+  if (error) {
+    return (
+      <div className="w-full text-[#172335] animate-fade-in">
+        <PageHeader title="Hasil produksi" variant="cycle" />
+        <ErrorState judul="Data hasil produksi tidak dapat dimuat." teks={error} variant="compact" />
+      </div>
+    );
+  }
+
+  if (!items) {
+    return (
+      <div className="w-full text-[#172335] animate-fade-in">
+        <PageHeader title="Hasil produksi" variant="cycle" />
+        <LoadingState judul="Memuat hasil produksi..." variant="inline" />
+      </div>
+    );
+  }
 
   return (
     <div className="w-full text-[#172335] animate-fade-in">
@@ -79,7 +112,17 @@ export function HasilProduksiScreen() {
                     <TableActionLink
                       href={`/produksi/hasil-produksi/${item.nomorSpk.toLowerCase()}`}
                     >
-                      {item.status === "REWORK" ? "Lihat rework" : "Catat hasil"}
+                      {item.statusInti === "HASIL_DICATAT"
+                        ? can("inspect_qc")
+                          ? "Periksa QC"
+                          : "Lihat hasil"
+                        : item.statusInti === "QC_PASSED"
+                          ? can("receive_finish_goods")
+                            ? "Terima barang jadi"
+                            : "Lihat hasil"
+                          : item.status === "REWORK"
+                            ? "Lihat rework"
+                            : "Catat hasil"}
                     </TableActionLink>
                   </td>
                 </tr>

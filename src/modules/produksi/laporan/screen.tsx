@@ -1,10 +1,10 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { MetricCardGrid } from "@/components/ui/metric-card";
 import { PageHeader } from "@/components/ui/page-header";
 import { SegmentedTabs } from "@/components/ui/segmented-tabs";
-import { EmptyState, ErrorState } from "@/components/ui/states";
+import { EmptyState, ErrorState, LoadingState } from "@/components/ui/states";
 import {
   STATUS_KATEGORI_PERSEDIAAAN,
   StatusBadge,
@@ -13,16 +13,15 @@ import { TableActionLink } from "@/components/ui/table-action-link";
 import { useTableState } from "@/components/ui/use-table-state";
 import { useProduksiActor } from "@/modules/produksi/context/actor-context";
 import { tabLaporanProduksi } from "@/modules/produksi/auth/actor";
-import type {
-  LaporanProduksiRow,
-  LaporanWipRow,
-  RekapPersediaanRow,
-} from "./types";
+import { muatLaporan } from "@/modules/produksi/queries-pembelian-laporan";
+import type { LaporanData } from "./types";
 
 type LaporanTab = "produksi" | "wip" | "persediaan";
 
 export function LaporanProduksiScreen() {
-  const [periode, setPeriode] = useState("November 2026");
+  const [periode, setPeriode] = useState("semua");
+  const [laporan, setLaporan] = useState<LaporanData | null>(null);
+  const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<LaporanTab>("produksi");
   const { can, activeRole } = useProduksiActor();
 
@@ -35,9 +34,9 @@ export function LaporanProduksiScreen() {
     [activeRole, activeTab],
   );
 
-  const [dataProduksi] = useState<LaporanProduksiRow[]>([]);
-  const [dataWip] = useState<LaporanWipRow[]>([]);
-  const [dataPersediaan] = useState<RekapPersediaanRow[]>([]);
+  const dataProduksi = laporan?.produksi ?? [];
+  const dataWip = laporan?.wip ?? [];
+  const dataPersediaan = laporan?.persediaan ?? [];
   const tabelProduksi = useTableState(dataProduksi, {
     pageSize: dataProduksi.length || 1,
   });
@@ -45,6 +44,35 @@ export function LaporanProduksiScreen() {
   const tabelPersediaan = useTableState(dataPersediaan, {
     pageSize: dataPersediaan.length || 1,
   });
+
+  useEffect(() => {
+    let aktif = true;
+    muatLaporan(periode, activeTab).then((hasil) => {
+      if (!aktif) return;
+      if (hasil.ok) setLaporan(hasil.data);
+      else setError(hasil.message);
+    });
+    return () => {
+      aktif = false;
+    };
+  }, [periode, activeTab]);
+
+
+  if (error) {
+    return (
+      <div className="mx-auto max-w-[1156px] text-[#172335] animate-fade-in">
+        <ErrorState judul="Laporan tidak dapat dimuat." teks={error} variant="compact" />
+      </div>
+    );
+  }
+
+  if (!laporan) {
+    return (
+      <div className="mx-auto max-w-[1156px] text-[#172335] animate-fade-in">
+        <LoadingState judul="Memuat laporan..." variant="inline" />
+      </div>
+    );
+  }
 
   if (effectiveActiveTab === null) {
     return (
@@ -96,9 +124,14 @@ export function LaporanProduksiScreen() {
               onChange={(e) => setPeriode(e.target.value)}
               className="rounded-[8px] border border-[#E5E7EB] bg-white px-3 py-1.5 text-[13px] font-semibold text-[#172335] shadow-2xs outline-none focus:border-[#E88A06]"
             >
-              <option value="November 2026">November 2026</option>
-              <option value="Oktober 2026">Oktober 2026</option>
-              <option value="September 2026">September 2026</option>
+              {(laporan.periodeOptions.length > 0
+                ? laporan.periodeOptions
+                : [{ value: "semua", label: "Semua periode" }]
+              ).map((opsi) => (
+                <option key={opsi.value} value={opsi.value}>
+                  {opsi.label}
+                </option>
+              ))}
             </select>
           </div>
         }

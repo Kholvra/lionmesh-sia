@@ -3,17 +3,14 @@
 
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Suspense, useMemo, useRef, useState } from "react";
+import { Suspense, useEffect, useMemo, useRef, useState, useTransition } from "react";
 import { CustomSelect } from "@/components/ui/custom-select";
 import { Notice } from "@/components/ui/notice";
 import { PageHeader } from "@/components/ui/page-header";
-import { LoadingState } from "@/components/ui/states";
-import { bacaKoleksi, simpanKoleksi } from "@/modules/produksi/store";
-import {
-  BAHAN_BAKU_OPTIONS,
-  PRODUK_MASTER_OPTIONS,
-  type BomItem,
-} from "./types";
+import { ErrorState, LoadingState } from "@/components/ui/states";
+import { simpanBomVersi } from "@/modules/produksi/actions";
+import { muatBomForm } from "@/modules/produksi/queries";
+import type { BomFormData } from "./types";
 
 const BULAN_ID = [
   "Jan",
@@ -69,60 +66,79 @@ function VersiBomBaruContent() {
   const searchParams = useSearchParams();
   const kodeParam = searchParams.get("kode");
   const isCreateNewBomMode = searchParams.get("mode") === "new" || !kodeParam;
-
   const dateInputRef = useRef<HTMLInputElement>(null);
+  const [data, setData] = useState<BomFormData | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [serverError, setServerError] = useState<string | null>(null);
+  const [pending, startTransition] = useTransition();
 
-  const [bomList] = useState<BomItem[]>(() => bacaKoleksi("bom"));
-
-  const existingBom = useMemo(() => {
-    if (!kodeParam) return null;
-    return (
-      bomList.find(
-        (item) => item.produkKode.toLowerCase() === kodeParam.toLowerCase(),
-      ) ?? null
-    );
-  }, [bomList, kodeParam]);
-
-  // Form states
-  const [selectedProdukLabel, setSelectedProdukLabel] = useState<string>(
-    existingBom
-      ? `${existingBom.produkNama} · ${existingBom.produkKode}`
-      : "Wiremesh M5 · WM-M5"
-  );
-  const [berlakuMulaiISO, setBerlakuMulaiISO] = useState<string>("2026-12-01");
-  const [toleransiScrap, setToleransiScrap] = useState<string>(
-    existingBom?.toleransiScrap ?? "1,5%"
-  );
-  const [toleransiReject, setToleransiReject] = useState<string>(
-    existingBom?.toleransiReject ?? "1%"
-  );
-  const [jumlahPerLembar, setJumlahPerLembar] = useState<string>(
-    existingBom
-      ? `${existingBom.jumlahPerLembarKg.toLocaleString("id-ID", {
-          minimumFractionDigits: 1,
-        })} kg`
-      : "25,0 kg"
-  );
-  const [komponenLabel, setKomponenLabel] = useState<string>(
-    existingBom
-      ? `${existingBom.komponenNama} · ${existingBom.komponenKode}`
-      : "Wire rod 5 mm · BB-WR05"
-  );
+  const [selectedProdukLabel, setSelectedProdukLabel] = useState("");
+  const [berlakuMulaiISO, setBerlakuMulaiISO] = useState("");
+  const [toleransiScrap, setToleransiScrap] = useState("");
+  const [toleransiReject, setToleransiReject] = useState("");
+  const [jumlahPerLembar, setJumlahPerLembar] = useState("");
+  const [komponenLabel, setKomponenLabel] = useState("");
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
 
+  useEffect(() => {
+    let aktif = true;
+    muatBomForm().then((hasil) => {
+      if (!aktif) return;
+      if (!hasil.ok) {
+        setError(hasil.message);
+        return;
+      }
+      setData(hasil.data);
+      const yangAda = kodeParam
+        ? hasil.data.bomList.find(
+            (item) => item.produkKode.toLowerCase() === kodeParam.toLowerCase(),
+          ) ?? null
+        : null;
+      setSelectedProdukLabel(
+        yangAda
+          ? `${yangAda.produkNama} · ${yangAda.produkKode}`
+          : hasil.data.produkOptions[0]
+            ? `${hasil.data.produkOptions[0].nama} · ${hasil.data.produkOptions[0].kode}`
+            : "",
+      );
+      setToleransiScrap(yangAda?.toleransiScrap ?? "");
+      setToleransiReject(yangAda?.toleransiReject ?? "");
+      setJumlahPerLembar(
+        yangAda
+          ? `${yangAda.jumlahPerLembarKg.toLocaleString("id-ID", { minimumFractionDigits: 1 })} kg`
+          : "",
+      );
+      setKomponenLabel(
+        yangAda
+          ? `${yangAda.komponenNama} · ${yangAda.komponenKode}`
+          : hasil.data.bahanOptions[0]
+            ? `${hasil.data.bahanOptions[0].nama} · ${hasil.data.bahanOptions[0].kode}`
+            : "",
+      );
+    });
+    return () => {
+      aktif = false;
+    };
+  }, [kodeParam]);
+
+  const bomList = data?.bomList ?? [];
+  const existingBom = useMemo(
+    () =>
+      bomList.find(
+        (item) => item.produkKode.toLowerCase() === (kodeParam ?? "").toLowerCase(),
+      ) ?? null,
+    [bomList, kodeParam],
+  );
+
   const nextVersionNumber = existingBom ? existingBom.versiNumber + 1 : 1;
-  const currentProdukName = existingBom
-    ? existingBom.produkNama
-    : selectedProdukLabel.split(" · ")[0] || "Produk Baru";
-  const currentProdukKode = existingBom
-    ? existingBom.produkKode
-    : selectedProdukLabel.split(" · ")[1] || "WM-NEW";
+  const currentProdukName = existingBom?.produkNama ?? selectedProdukLabel.split(" · ")[0] ?? "";
+  const currentProdukKode = existingBom?.produkKode ?? selectedProdukLabel.split(" · ")[1] ?? "";
 
   const statusKeterangan = useMemo(() => {
     if (!berlakuMulaiISO) {
       return "Pilih tanggal berlaku mulai untuk menentukan status versi.";
     }
-    const todayISO = "2026-11-23";
+    const todayISO = new Date().toISOString().slice(0, 10);
     if (existingBom) {
       if (berlakuMulaiISO > todayISO) {
         const batasLama = getHariSebelumIndo(berlakuMulaiISO);
@@ -184,39 +200,64 @@ function VersiBomBaruContent() {
     }
 
     setFieldErrors({});
+    setServerError(null);
 
-    const [kompNama = "Wire rod 6 mm", kompKode = "BB-WR06"] = komponenLabel.split(" · ");
-    const formattedScrap = `${scrapVal.toLocaleString("id-ID")}%`;
-    const formattedReject = `${rejectVal.toLocaleString("id-ID")}%`;
+    const produkId =
+      existingBom?.produkId ??
+      data?.produkOptions.find(
+        (item) => `${item.nama} · ${item.kode}` === selectedProdukLabel,
+      )?.id;
+    const komponen = data?.bahanOptions.find(
+      (item) => `${item.nama} · ${item.kode}` === komponenLabel,
+    );
+    if (!produkId || !komponen) {
+      setServerError("Produk atau komponen tidak ditemukan pada data master.");
+      return;
+    }
 
-    const updatedItem: BomItem = {
-      id: `bom-${currentProdukKode.toLowerCase()}-v${nextVersionNumber}`,
-      produkNama: currentProdukName,
-      produkKode: currentProdukKode,
-      versiNumber: nextVersionNumber,
-      berlakuDari: formatTanggalIndo(berlakuMulaiISO),
-      berlakuDariISO: berlakuMulaiISO,
-      toleransiScrap: formattedScrap,
-      toleransiReject: formattedReject,
-      jumlahPerLembarKg: qtyKgVal,
-      komponenKode: kompKode,
-      komponenNama: kompNama,
-      status: berlakuMulaiISO > "2026-11-23" ? "TERJADWAL" : "BERLAKU",
-    };
+    const formData = new FormData();
+    formData.set("produk_id", produkId);
+    formData.set("berlaku_dari", berlakuMulaiISO);
+    formData.set("toleransi_scrap", String(scrapVal));
+    formData.set("toleransi_reject", String(rejectVal));
+    formData.set("komponen_produk_id", komponen.id);
+    formData.set("satuan_id", komponen.satuanId || existingBom?.satuanId || "");
+    formData.set("qty_per_unit", String(qtyKgVal));
+    formData.set("urutan", "1");
 
-    const nextList = existingBom
-      ? bomList.map((item) =>
-          item.produkKode === existingBom.produkKode ? updatedItem : item
-        )
-      : [...bomList, updatedItem];
-
-    simpanKoleksi("bom", nextList);
-
-    router.push("/produksi/bom-produk");
+    startTransition(async () => {
+      const hasil = await simpanBomVersi(formData);
+      if (!hasil.ok) {
+        setServerError(hasil.message);
+        return;
+      }
+      router.push("/produksi/bom-produk");
+    });
   };
 
-  const activeErrorMessages = Object.values(fieldErrors).filter(Boolean) as string[];
+  const activeErrorMessages = [
+    ...Object.values(fieldErrors).filter(Boolean),
+    ...(serverError ? [serverError] : []),
+  ] as string[];
   const hasErrors = activeErrorMessages.length > 0;
+
+  if (error) {
+    return (
+      <div className="w-full text-[#172335] animate-fade-in">
+        <PageHeader title="Versi BOM baru" variant="cycle" />
+        <ErrorState judul="Data master tidak dapat dimuat." teks={error} variant="compact" />
+      </div>
+    );
+  }
+
+  if (!data) {
+    return (
+      <div className="w-full text-[#172335] animate-fade-in">
+        <PageHeader title="Versi BOM baru" variant="cycle" />
+        <LoadingState judul="Memuat..." variant="inline" />
+      </div>
+    );
+  }
 
   return (
     <div className="w-full text-[#172335] animate-fade-in">
@@ -263,7 +304,7 @@ function VersiBomBaruContent() {
               <CustomSelect
                 value={selectedProdukLabel}
                 onChange={(val) => setSelectedProdukLabel(val)}
-                options={PRODUK_MASTER_OPTIONS.map((p) => `${p.nama} · ${p.kode}`)}
+                options={data.produkOptions.map((p) => `${p.nama} · ${p.kode}`)}
                 placeholder="Pilih produk..."
               />
             )}
@@ -409,7 +450,7 @@ function VersiBomBaruContent() {
                   setFieldErrors((prev) => ({ ...prev, komponen: undefined }));
                 }
               }}
-              options={BAHAN_BAKU_OPTIONS.map((b) => b.label)}
+              options={data.bahanOptions.map((b) => `${b.nama} · ${b.kode}`)}
               placeholder="Pilih komponen bahan..."
             />
           </div>
@@ -429,6 +470,7 @@ function VersiBomBaruContent() {
         <div className="mt-4 flex flex-wrap items-center gap-3">
           <button
             type="submit"
+            disabled={pending}
             className="rounded-[8px] bg-[#E88A06] px-4 py-2 text-[13px] font-semibold text-white shadow-2xs transition-all duration-150 ease-out hover:bg-[#D17B05] active:scale-[0.98]"
           >
             Simpan versi

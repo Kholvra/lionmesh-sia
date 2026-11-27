@@ -1,54 +1,65 @@
 "use client";
 
-import { useParams } from "next/navigation";
-import { Suspense, useMemo } from "react";
+import { Suspense, useEffect, useMemo, useState } from "react";
 import { Notice } from "@/components/ui/notice";
 import { PageHeader } from "@/components/ui/page-header";
 import { SpkStepper } from "@/components/ui/spk-stepper";
-import { EmptyState, LoadingState } from "@/components/ui/states";
+import { EmptyState, ErrorState, LoadingState } from "@/components/ui/states";
 import { useTableState } from "@/components/ui/use-table-state";
-import { bacaHasilTercatat } from "@/modules/produksi/store";
+import { muatRiwayatHasil } from "@/modules/produksi/queries";
+import type { RiwayatHasilData } from "./types";
 
 
 function RiwayatHasilSpkContent({ initialNomorSpk }: { initialNomorSpk?: string }) {
-  const params = useParams<{ nomorSpk: string }>();
+  const [data, setData] = useState<RiwayatHasilData | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [dimuat, setDimuat] = useState(false);
 
-  const nomorSpkSlug = useMemo(() => {
-    return (initialNomorSpk ?? params?.nomorSpk ?? "spk-2611-013").toLowerCase();
-  }, [initialNomorSpk, params?.nomorSpk]);
-
-  const summary = useMemo(() => {
-    const saved = bacaHasilTercatat(nomorSpkSlug);
-    if (!saved) return null;
-    return {
-      ...saved,
-      selesaiPada: saved.selesaiPada
-        .replace("November 2026 · ", "Nov ")
-        .replace("November 2026 ", "Nov "),
+  useEffect(() => {
+    if (!initialNomorSpk) return;
+    let aktif = true;
+    muatRiwayatHasil(initialNomorSpk).then((hasil) => {
+      if (!aktif) return;
+      if (!hasil.ok) setError(hasil.message);
+      else setData(hasil.data);
+      setDimuat(true);
+    });
+    return () => {
+      aktif = false;
     };
-  }, [nomorSpkSlug]);
+  }, [initialNomorSpk]);
+
+  const summary = data;
 
   const riwayatRows = useMemo(
-    () =>
-      summary
-        ? [
-            {
-              waktu: summary.selesaiPada,
-              kejadian: `Hasil ${summary.jumlahJadi} lembar dicatat`,
-              oleh: "Produksi",
-            },
-          ]
-        : [],
+    () => summary?.kejadian ?? [],
     [summary],
   );
   const tabel = useTableState(riwayatRows, {
     pageSize: riwayatRows.length || 1,
   });
 
+
+  if (error) {
+    return (
+      <div className="w-full text-[#172335] animate-fade-in">
+        <ErrorState judul="Riwayat tidak dapat dimuat." teks={error} variant="compact" />
+      </div>
+    );
+  }
+
+  if (!dimuat) {
+    return (
+      <div className="w-full text-[#172335] animate-fade-in">
+        <LoadingState judul="Memuat riwayat..." variant="inline" />
+      </div>
+    );
+  }
+
   return (
     <div className="w-full text-[#172335] animate-fade-in">
       <PageHeader
-        title={summary?.nomorSpk ?? nomorSpkSlug.toUpperCase()}
+        title={summary?.nomorSpk ?? initialNomorSpk?.toUpperCase() ?? "Riwayat hasil"}
         variant="cycle"
       />
 

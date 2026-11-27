@@ -50,6 +50,33 @@ test("laporan produksi PR-007: Gudang hanya melihat persediaan", () => {
   assert.equal(cekIzin("QC", "lihat_perintah_produksi"), true);
 });
 
+test("kartu jam kerja K10: baca untuk Produksi, Accounting, Manajemen", () => {
+  assert.deepEqual([...MATRIKS_IZIN.lihat_kartu_jam_kerja], [
+    "Produksi",
+    "Accounting",
+    "Manajemen",
+  ]);
+  for (const peran of ["Produksi", "Accounting", "Manajemen"] as const) {
+    assert.equal(cekIzin(peran, "lihat_kartu_jam_kerja"), true, peran);
+  }
+  // Gudang hanya BOM/SPK + persediaan, bukan KJK/hasil/WIP.
+  for (const peran of [
+    "Gudang",
+    "QC",
+    "Purchasing",
+    "Penjualan",
+    "Pengiriman",
+    "Finance",
+    "HR",
+    "Supervisor Lapangan",
+    "Direksi",
+    "Karyawan",
+  ] as const) {
+    assert.equal(cekIzin(peran, "lihat_kartu_jam_kerja"), false, peran);
+  }
+  assert.equal(cekIzin(null, "lihat_kartu_jam_kerja"), false);
+});
+
 test("permintaan pembelian: Gudang/Produksi hanya pengajuan sendiri", () => {
   for (const peran of ["Gudang", "Produksi", "Purchasing", "Manajemen"] as const) {
     assert.equal(cekIzin(peran, "lihat_permintaan_pembelian"), true, peran);

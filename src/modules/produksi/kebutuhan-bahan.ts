@@ -1,12 +1,11 @@
 import type { BomItem } from "@/modules/produksi/bom-produk/types";
-import { STOK_BAHAN_TERSEDIA_TON } from "@/modules/produksi/perintah-produksi/types";
 
 export interface KebutuhanBahan {
   perLembarKg: number;
   persenScrap: number;
   totalKg: number;
   totalTon: number;
-  stokTersediaTon: number;
+  stokTersediaTon: number | null;
   kekuranganTon: number;
   isKurang: boolean;
   perLembarText: string;
@@ -23,41 +22,54 @@ function formatTon(value: number): string {
   })} ton`;
 }
 
-/** Single source for the material requirement used by SPK and PR screens. */
+/**
+ * Material requirement for one WO. Stock is supplied by the caller from the
+ * inventory read model; no default or exemplar stock exists here.
+ */
 export function hitungKebutuhanBahan(
   jumlahLembar: number,
   bom: Pick<
     BomItem,
     "jumlahPerLembarKg" | "toleransiScrap" | "komponenKode"
   >,
-): KebutuhanBahan {
-  const persenScrap = Number.parseFloat(
+  stokTersediaTon: number | null,
+): KebutuhanBahan | null {
+  const persenScrap = Number(
     bom.toleransiScrap.replace("%", "").replace(",", ".").trim(),
   );
-  const scrapValid = Number.isFinite(persenScrap) ? persenScrap : 0;
-  const totalKg = jumlahLembar * bom.jumlahPerLembarKg * (1 + scrapValid / 100);
+  if (
+    !Number.isFinite(jumlahLembar) ||
+    jumlahLembar <= 0 ||
+    !Number.isFinite(bom.jumlahPerLembarKg) ||
+    bom.jumlahPerLembarKg <= 0 ||
+    !Number.isFinite(persenScrap) ||
+    persenScrap < 0 ||
+    persenScrap >= 100 ||
+    (stokTersediaTon !== null &&
+      (!Number.isFinite(stokTersediaTon) || stokTersediaTon < 0))
+  ) {
+    return null;
+  }
+
+  const totalKg = jumlahLembar * bom.jumlahPerLembarKg * (1 + persenScrap / 100);
   const totalTon = totalKg / 1000;
-  const stokTersediaTon = STOK_BAHAN_TERSEDIA_TON[bom.komponenKode] ?? 3.2;
-  const kebutuhanTon = Number(totalTon.toFixed(1));
-  const tersediaTon = Number(stokTersediaTon.toFixed(1));
-  const kekuranganTon = Number(
-    Math.max(0.1, kebutuhanTon - tersediaTon).toFixed(1),
-  );
+  const stok = stokTersediaTon;
+  const kekuranganTon = Math.max(0, totalTon - (stok ?? 0));
 
   return {
     perLembarKg: bom.jumlahPerLembarKg,
-    persenScrap: scrapValid,
+    persenScrap,
     totalKg,
     totalTon,
-    stokTersediaTon,
+    stokTersediaTon: stok,
     kekuranganTon,
-    isKurang: totalTon > stokTersediaTon,
+    isKurang: stok === null || totalTon > stok,
     perLembarText: `${bom.jumlahPerLembarKg.toLocaleString("id-ID", {
       minimumFractionDigits: 1,
     })} kg + scrap ${bom.toleransiScrap}`,
     totalTonText: formatTon(totalTon),
-    tersediaTonText: formatTon(stokTersediaTon),
-    kebutuhanText: formatTon(kebutuhanTon),
-    kekuranganText: formatTon(kekuranganTon),
+    tersediaTonText: stok === null ? "Stok belum tercatat" : formatTon(stok),
+    kebutuhanText: formatTon(Number(totalTon.toFixed(1))),
+    kekuranganText: formatTon(Number(kekuranganTon.toFixed(1))),
   };
 }

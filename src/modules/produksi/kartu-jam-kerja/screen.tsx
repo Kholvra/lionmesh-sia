@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState, useTransition } from "react";
 import { Notice } from "@/components/ui/notice";
 import { PageHeader } from "@/components/ui/page-header";
 import { SegmentedTabs } from "@/components/ui/segmented-tabs";
@@ -9,12 +9,13 @@ import {
   STATUS_POSTING_HPP,
   StatusBadge,
 } from "@/components/ui/status-badge";
-import { EmptyState } from "@/components/ui/states";
+import { EmptyState, ErrorState, LoadingState } from "@/components/ui/states";
 import { TableActionLink } from "@/components/ui/table-action-link";
 import { useTableState } from "@/components/ui/use-table-state";
-import { bacaKoleksi, simpanKoleksi } from "@/modules/produksi/store";
 import { useProduksiActor } from "@/modules/produksi/context/actor-context";
-import type { HppSpkSummary, KartuJamKerjaItem } from "./types";
+import { bebankanTklKeSpk, catatJamKerja } from "@/modules/produksi/actions";
+import { muatKartuData } from "@/modules/produksi/queries-lanjutan";
+import type { KartuData } from "./types";
 
 type ActiveTab = "jam_kerja" | "kalkulasi_hpp";
 
@@ -22,10 +23,24 @@ export function KartuJamKerjaScreen() {
   const [activeTab, setActiveTab] = useState<ActiveTab>("jam_kerja");
   const { can, activeRole } = useProduksiActor();
   const canRecordKjk = can("record_kartu_jam_kerja");
-  const [kjkList, setKjkList] = useState<KartuJamKerjaItem[]>(() =>
-    bacaKoleksi("kartuJamKerja"),
-  );
-  const [hppList] = useState<HppSpkSummary[]>([]);
+  const [data, setData] = useState<KartuData | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [pending, startTransition] = useTransition();
+
+  useEffect(() => {
+    let aktif = true;
+    muatKartuData().then((hasil) => {
+      if (!aktif) return;
+      if (hasil.ok) setData(hasil.data);
+      else setError(hasil.message);
+    });
+    return () => {
+      aktif = false;
+    };
+  }, []);
+
+  const kjkList = data?.kjk ?? [];
+  const hppList = data?.hpp ?? [];
   const tabelKjk = useTableState(kjkList, {
     pageSize: kjkList.length || 1,
   });
@@ -33,24 +48,45 @@ export function KartuJamKerjaScreen() {
     pageSize: hppList.length || 1,
   });
 
-  // Form modal tambah jam kerja
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [formSpk, setFormSpk] = useState("SPK-2611-013");
-  const [formKaryawan, setFormKaryawan] = useState("Budi Santoso");
-  const [formNik, setFormNik] = useState("K-042");
-  const [formTanggal, setFormTanggal] = useState("2026-11-28");
-  const [formJamReguler, setFormJamReguler] = useState("7");
-  const [formJamLembur, setFormJamLembur] = useState("0");
-  const [formKegiatan, setFormKegiatan] = useState("Operator Mesin Las 1");
+  const [formSpk, setFormSpk] = useState("");
+  const [formKaryawan, setFormKaryawan] = useState("");
+  const [formTanggal, setFormTanggal] = useState("");
+  const [formJamReguler, setFormJamReguler] = useState("");
+  const [formJamLembur, setFormJamLembur] = useState("");
+  const [formTarif, setFormTarif] = useState("");
+  const [formKegiatan, setFormKegiatan] = useState("");
   const [formError, setFormError] = useState<string | null>(null);
 
-  const totalJamKeseluruhan = kjkList.reduce((acc, c) => acc + c.totalJam, 0);
-  const totalTklKeseluruhan = kjkList.reduce((acc, c) => acc + c.totalTkl, 0);
+  const [selectedKartuIds, setSelectedKartuIds] = useState<string[]>([]);
+  const [biayaNotifikasi, setBiayaNotifikasi] = useState<string | null>(null);
+  const bisaBebankan = can("post_final_hpp");
+
+  const bebankanTkl = () => {
+    if (selectedKartuIds.length === 0) {
+      setBiayaNotifikasi("Pilih minimal satu kartu jam kerja.");
+      return;
+    }
+    const woId = kjkList.find((item) => item.id === selectedKartuIds[0])?.woId;
+    if (!woId) return;
+    const formData = new FormData();
+    formData.set("wo_id", woId);
+    selectedKartuIds.forEach((id) => formData.append("kartu_ids", id));
+    formData.set("tanggal", new Date().toISOString());
+    startTransition(async () => {
+      const hasil = await bebankanTklKeSpk(formData);
+      setBiayaNotifikasi(
+        hasil.ok ? `TKL ${selectedKartuIds.length} kartu dibebankan ke WIP.` : hasil.message,
+      );
+      if (hasil.ok) setSelectedKartuIds([]);
+    });
+  };
 
   const handleSimpanKjk = (e: React.FormEvent) => {
     e.preventDefault();
     const reg = parseFloat(formJamReguler);
-    const lem = parseFloat(formJamLembur);
+    const lem = formJamLembur.trim() === "" ? 0 : parseFloat(formJamLembur);
+    const tarif = parseFloat(formTarif);
 
     if (Number.isNaN(reg) || reg < 0 || Number.isNaN(lem) || lem < 0) {
       setFormError("Jam kerja reguler dan lembur harus berupa angka positif.");
@@ -60,34 +96,82 @@ export function KartuJamKerjaScreen() {
       setFormError("Total jam kerja harus lebih dari 0 jam.");
       return;
     }
+    if (Number.isNaN(tarif) || tarif < 0) {
+      setFormError("Tarif per jam wajib diisi dengan angka yang valid.");
+      return;
+    }
 
-    const totalJam = reg + lem;
-    const tarif = 35000;
-    const totalTkl = totalJam * tarif;
+    const formData = new FormData();
+    formData.set("wo_id", formSpk);
+    formData.set("karyawan_id", formKaryawan);
+    formData.set("tanggal", formTanggal);
+    formData.set("jam_kerja", String(reg + lem));
+    formData.set("tarif_per_jam", String(tarif));
+    formData.set("keterangan", formKegiatan);
 
-    const newItem: KartuJamKerjaItem = {
-      id: `kjk-${Date.now()}`,
-      nomorSpk: formSpk,
-      namaKaryawan: formKaryawan,
-      nik: formNik,
-      tanggal: "28 Nov 2026",
-      tanggalISO: formTanggal,
-      jamReguler: reg,
-      jamLembur: lem,
-      totalJam,
-      tarifPerJam: tarif,
-      totalTkl,
-      kegiatan: formKegiatan,
-      status: "TERCATAT",
-    };
-
-    const nextList = [newItem, ...kjkList];
-    setKjkList(nextList);
-    simpanKoleksi("kartuJamKerja", nextList);
-
-    setIsModalOpen(false);
-    setFormError(null);
+    startTransition(async () => {
+      const hasil = await catatJamKerja(formData);
+      if (!hasil.ok) {
+        setFormError(hasil.message);
+        return;
+      }
+      setIsModalOpen(false);
+      setFormError(null);
+      setData((sebelumnya) =>
+        sebelumnya
+          ? {
+              ...sebelumnya,
+              kjk: [
+                {
+                  id: hasil.data.kartuId,
+                  woId: formSpk,
+                  karyawanId: formKaryawan,
+                  nomorSpk:
+                    sebelumnya.spkOptions.find((item) => item.woId === formSpk)
+                      ?.nomorSpk ?? "—",
+                  namaKaryawan:
+                    sebelumnya.karyawanOptions.find((item) => item.id === formKaryawan)
+                      ?.nama ?? "—",
+                  nik:
+                    sebelumnya.karyawanOptions.find((item) => item.id === formKaryawan)
+                      ?.nik ?? "—",
+                  tanggal: formTanggal,
+                  tanggalISO: formTanggal,
+                  jamReguler: reg,
+                  jamLembur: lem,
+                  totalJam: reg + lem,
+                  tarifPerJam: tarif,
+                  totalTkl: (reg + lem) * tarif,
+                  kegiatan: formKegiatan || "—",
+                  status: "TERCATAT",
+                },
+                ...sebelumnya.kjk,
+              ],
+            }
+          : sebelumnya,
+      );
+    });
   };
+
+
+  const totalJamKeseluruhan = kjkList.reduce((acc, c) => acc + c.totalJam, 0);
+  const totalTklKeseluruhan = kjkList.reduce((acc, c) => acc + c.totalTkl, 0);
+
+  if (error) {
+    return (
+      <div className="mx-auto max-w-[1156px] text-[#172335] animate-fade-in">
+        <ErrorState judul="Data biaya produksi tidak dapat dimuat." teks={error} variant="compact" />
+      </div>
+    );
+  }
+
+  if (!data) {
+    return (
+      <div className="mx-auto max-w-[1156px] text-[#172335] animate-fade-in">
+        <LoadingState judul="Memuat kartu jam kerja..." variant="inline" />
+      </div>
+    );
+  }
 
   return (
     <div className="mx-auto max-w-[1156px] text-[#172335] animate-fade-in">
@@ -99,7 +183,11 @@ export function KartuJamKerjaScreen() {
 
       <Notice
         className="mt-5"
-        title="Tarif Overhead Predeterminasi Periode Nov 2026: Rp 45.000 / DLH"
+        title={
+          data.tarifOverheadPerDlh === null
+            ? "Tarif overhead belum ditetapkan"
+            : `Tarif Overhead Predeterminasi: Rp ${data.tarifOverheadPerDlh.toLocaleString("id-ID")} / DLH`
+        }
         tone="warning"
         variant="card"
       >
@@ -109,6 +197,32 @@ export function KartuJamKerjaScreen() {
           Accounting saat SPK selesai.
         </p>
       </Notice>
+
+      {biayaNotifikasi && <Notice className="mt-3" tone="info" variant="card">{biayaNotifikasi}</Notice>}
+      {bisaBebankan && activeTab === "jam_kerja" && kjkList.length > 0 && (
+        <section className="shadow-card mt-4 rounded-[10px] border border-transparent bg-white p-[20px]">
+          <h2 className="text-[15px] font-semibold text-[#172335]">Bebankan TKL ke WIP</h2>
+          <div className="mt-3 flex flex-wrap gap-3">
+            {kjkList.map((item) => (
+              <label key={item.id} className="flex items-center gap-1.5 text-[12px]">
+                <input
+                  type="checkbox"
+                  checked={selectedKartuIds.includes(item.id)}
+                  onChange={(e) =>
+                    setSelectedKartuIds((sebelumnya) =>
+                      e.target.checked
+                        ? [...sebelumnya, item.id]
+                        : sebelumnya.filter((id) => id !== item.id),
+                    )
+                  }
+                />
+                {item.nomorSpk} · {item.namaKaryawan}
+              </label>
+            ))}
+          </div>
+          <button type="button" disabled={pending} onClick={bebankanTkl} className="mt-4 rounded-[8px] bg-[#E88A06] px-4 py-2 text-[13px] font-semibold text-white">Bebankan TKL terpilih</button>
+        </section>
+      )}
 
       {/* Action Bar & Tab Switcher */}
       <div className="mt-5 flex flex-wrap items-center justify-between gap-3">
@@ -356,15 +470,12 @@ export function KartuJamKerjaScreen() {
                   onChange={(e) => setFormSpk(e.target.value)}
                   className="mt-1 w-full rounded-[8px] border border-[#E5E7EB] bg-white px-3 py-2 text-[13px] outline-none focus:border-[#E88A06]"
                 >
-                  <option value="SPK-2611-013">
-                    SPK-2611-013 (Wiremesh M6)
-                  </option>
-                  <option value="SPK-2611-012">
-                    SPK-2611-012 (Wiremesh M8)
-                  </option>
-                  <option value="SPK-2611-011">
-                    SPK-2611-011 (Wiremesh M6)
-                  </option>
+                  <option value="">Pilih perintah produksi...</option>
+                  {data.spkOptions.map((item) => (
+                    <option key={item.woId} value={item.woId}>
+                      {item.nomorSpk} ({item.produkNama})
+                    </option>
+                  ))}
                 </select>
               </div>
 
@@ -373,12 +484,18 @@ export function KartuJamKerjaScreen() {
                   <label className="block text-xs font-medium text-[#172335]">
                     Nama Karyawan
                   </label>
-                  <input
-                    type="text"
+                  <select
                     value={formKaryawan}
                     onChange={(e) => setFormKaryawan(e.target.value)}
-                    className="mt-1 w-full rounded-[8px] border border-[#E5E7EB] px-3 py-1.5 text-[13px] outline-none focus:border-[#E88A06]"
-                  />
+                    className="mt-1 w-full rounded-[8px] border border-[#E5E7EB] bg-white px-3 py-1.5 text-[13px] outline-none focus:border-[#E88A06]"
+                  >
+                    <option value="">Pilih karyawan...</option>
+                    {data.karyawanOptions.map((item) => (
+                      <option key={item.id} value={item.id}>
+                        {item.nama}
+                      </option>
+                    ))}
+                  </select>
                 </div>
                 <div>
                   <label className="block text-xs font-medium text-[#172335]">
@@ -386,9 +503,12 @@ export function KartuJamKerjaScreen() {
                   </label>
                   <input
                     type="text"
-                    value={formNik}
-                    onChange={(e) => setFormNik(e.target.value)}
-                    className="mt-1 w-full rounded-[8px] border border-[#E5E7EB] px-3 py-1.5 text-[13px] outline-none focus:border-[#E88A06]"
+                    readOnly
+                    value={
+                      data.karyawanOptions.find((item) => item.id === formKaryawan)
+                        ?.nik ?? "—"
+                    }
+                    className="mt-1 w-full rounded-[8px] border border-[#E5E7EB] bg-[#F1F3F6] px-3 py-1.5 text-[13px] outline-none"
                   />
                 </div>
               </div>
@@ -433,6 +553,20 @@ export function KartuJamKerjaScreen() {
 
               <div>
                 <label className="block text-xs font-medium text-[#172335]">
+                  Tarif per jam *
+                </label>
+                <input
+                  type="number"
+                  min="0"
+                  step="1"
+                  value={formTarif}
+                  onChange={(e) => setFormTarif(e.target.value)}
+                  className="mt-1 w-full rounded-[8px] border border-[#E5E7EB] px-3 py-1.5 text-[13px] outline-none focus:border-[#E88A06]"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-medium text-[#172335]">
                   Kegiatan / Mesin
                 </label>
                 <input
@@ -457,6 +591,7 @@ export function KartuJamKerjaScreen() {
                 </button>
                 <button
                   type="submit"
+                  disabled={pending}
                   className="rounded-[8px] bg-[#E88A06] px-4 py-1.5 text-[13px] font-semibold text-white transition-all duration-150 hover:bg-[#D17B05] active:scale-[0.98]"
                 >
                   Simpan Catatan

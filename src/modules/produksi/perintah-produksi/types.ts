@@ -1,3 +1,5 @@
+import type { BomItem } from "@/modules/produksi/bom-produk/types";
+
 export type SpkFilterTab =
   | "semua"
   | "direncanakan"
@@ -12,14 +14,34 @@ export type SpkStatusType =
   | "MENUNGGU_BAHAN"
   | "DIPROSES";
 
+export type StatusSpkInti =
+  | "DIRENCANAKAN"
+  | "CEK_BAHAN"
+  | "BAHAN_CUKUP"
+  | "BAHAN_KURANG"
+  | "MENUNGGU_PEMBELIAN"
+  | "BAHAN_SIAP"
+  | "BERJALAN"
+  | "HASIL_DICATAT"
+  | "QC_PASSED"
+  | "REWORK"
+  | "REJECTED"
+  | "SELESAI"
+  | "DIBATALKAN";
+
 export interface SpkItem {
   id: string;
+  woId: string;
   nomorSpk: string;
   sumberInfo: string;
   produkNama: string;
   produkKode: string;
+  produkId: string;
+  bomVersiId: string;
+  gudangId: string;
   versiBom: string;
-  mesin?: string;
+  versiDokumen: number;
+  statusInti: StatusSpkInti;
   jumlahLembar: number;
   jadwalText: string;
   tanggalMulaiISO: string;
@@ -34,11 +56,13 @@ export const MESIN_OPTIONS: string[] = [
   "Mesin las 3",
 ];
 
-// Stok bahan baku tersedia di Gudang (dalam ton)
-export const STOK_BAHAN_TERSEDIA_TON: Record<string, number> = {
-  "BB-WR05": 4.5,
-  "BB-WR06": 3.2,
-  "BB-WR08": 5.8,
-  "BB-WR10": 6.4,
-};
+export interface SpkDetailData {
+  spk: SpkItem | null;
+  bom: BomItem | null;
+  stokTon: number | null;
+}
 
+export interface SpkFormData {
+  bomList: BomItem[];
+  gudangOptions: { id: string; nama: string }[];
+}

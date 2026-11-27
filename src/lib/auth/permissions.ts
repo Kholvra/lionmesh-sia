@@ -106,6 +106,9 @@ export const MATRIKS_IZIN = {
   ubah_batal_perintah_produksi: ["Produksi"],
   lihat_bom: ["Produksi", "Gudang", "Purchasing", "Manajemen", "Accounting"],
   catat_kartu_jam_kerja: ["Produksi"],
+  // K10 (D-70): KJK dibaca untuk dasar TKL/HPP oleh Produksi dan Accounting;
+  // Manajemen memantau biaya. Gudang tidak diberi akses baca KJK.
+  lihat_kartu_jam_kerja: ["Produksi", "Accounting", "Manajemen"],
   tetapkan_tarif_overhead: ["Accounting"],
   lihat_hpp_perintah_produksi: ["Produksi", "Accounting", "Manajemen"],
   transfer_antar_gudang: ["Gudang"],

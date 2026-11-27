@@ -1,11 +1,11 @@
 "use client";
 
 import { useSearchParams } from "next/navigation";
-import { Suspense, useMemo, useState } from "react";
+import { Suspense, useEffect, useMemo, useState } from "react";
 import { Notice } from "@/components/ui/notice";
 import { PageHeader } from "@/components/ui/page-header";
 import { SegmentedTabs } from "@/components/ui/segmented-tabs";
-import { EmptyState, LoadingState } from "@/components/ui/states";
+import { EmptyState, ErrorState, LoadingState } from "@/components/ui/states";
 import {
   STATUS_PERMINTAAN_BAHAN,
   StatusBadge,
@@ -13,7 +13,7 @@ import {
 import { SpkStepper } from "@/components/ui/spk-stepper";
 import { TableActionLink } from "@/components/ui/table-action-link";
 import { useTableState } from "@/components/ui/use-table-state";
-import { bacaKoleksi } from "@/modules/produksi/store";
+import { muatPrList } from "@/modules/produksi/queries-pembelian-laporan";
 import type { PrFilterTab, PurchaseRequestItem } from "./types";
 
 
@@ -22,7 +22,20 @@ function DaftarPermintaanBahanContent() {
   const submittedNomor = searchParams.get("submitted");
   const tabParam = searchParams.get("tab") as PrFilterTab | null;
 
-  const [prList] = useState<PurchaseRequestItem[]>(() => bacaKoleksi("pr"));
+  const [prList, setPrList] = useState<PurchaseRequestItem[] | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let aktif = true;
+    muatPrList().then((hasil) => {
+      if (!aktif) return;
+      if (hasil.ok) setPrList(hasil.data);
+      else setError(hasil.message);
+    });
+    return () => {
+      aktif = false;
+    };
+  }, []);
   const [activeTab, setActiveTab] = useState<PrFilterTab>(
     tabParam &&
       ["diperiksa_purchasing", "menunggu_pembelian", "dikeluarkan"].includes(
@@ -35,35 +48,35 @@ function DaftarPermintaanBahanContent() {
   const justSubmittedItem = useMemo(() => {
     if (!submittedNomor || activeTab !== "diperiksa_purchasing") return null;
     return (
-      prList.find(
+      prList?.find(
         (item) => item.nomorPr.toLowerCase() === submittedNomor.toLowerCase(),
       ) ?? null
     );
   }, [prList, submittedNomor, activeTab]);
 
   const menungguPembelianItems = useMemo(
-    () => prList.filter((p) => p.status === "MENUNGGU_PEMBELIAN"),
+    () => (prList ?? []).filter((p) => p.status === "MENUNGGU_PEMBELIAN"),
     [prList],
   );
 
   const counts = useMemo(() => {
     return {
-      diperiksa_purchasing: prList.filter(
+      diperiksa_purchasing: (prList ?? []).filter(
         (p) => p.status === "DIPERIKSA_PURCHASING",
       ).length,
       menunggu_pembelian: menungguPembelianItems.length,
-      dikeluarkan: prList.filter((p) => p.status === "DIKELUARKAN").length,
+      dikeluarkan: (prList ?? []).filter((p) => p.status === "DIKELUARKAN").length,
     };
   }, [prList, menungguPembelianItems.length]);
 
   const filteredList = useMemo(() => {
     if (activeTab === "diperiksa_purchasing") {
-      return prList.filter((item) => item.status === "DIPERIKSA_PURCHASING");
+      return (prList ?? []).filter((item) => item.status === "DIPERIKSA_PURCHASING");
     }
     if (activeTab === "menunggu_pembelian") {
       return menungguPembelianItems;
     }
-    return prList.filter((item) => item.status === "DIKELUARKAN");
+    return (prList ?? []).filter((item) => item.status === "DIKELUARKAN");
   }, [prList, activeTab, menungguPembelianItems]);
   const tabel = useTableState(filteredList, {
     pageSize: filteredList.length || 1,
@@ -89,6 +102,22 @@ function DaftarPermintaanBahanContent() {
     },
   ];
 
+
+  if (error) {
+    return (
+      <div className="w-full text-[#172335] animate-fade-in">
+        <ErrorState judul="Daftar permintaan tidak dapat dimuat." teks={error} variant="compact" />
+      </div>
+    );
+  }
+
+  if (!prList) {
+    return (
+      <div className="w-full text-[#172335] animate-fade-in">
+        <LoadingState judul="Memuat daftar permintaan..." variant="inline" />
+      </div>
+    );
+  }
   return (
     <div className="w-full text-[#172335] animate-fade-in">
       <PageHeader

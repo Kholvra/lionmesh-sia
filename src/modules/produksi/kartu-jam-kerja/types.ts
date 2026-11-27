@@ -1,5 +1,7 @@
 export interface KartuJamKerjaItem {
   id: string;
+  woId: string;
+  karyawanId: string;
   nomorSpk: string;
   namaKaryawan: string;
   nik: string;
@@ -22,6 +24,7 @@ export interface KomponenBiayaDetail {
 }
 
 export interface HppSpkSummary {
+  woId: string;
   nomorSpk: string;
   produkNama: string;
   produkKode: string;
@@ -29,7 +32,6 @@ export interface HppSpkSummary {
   targetLembar: number;
   jadwalText: string;
   statusWo: "DIRENCANAKAN" | "DIPROSES" | "HASIL_DICATAT" | "SELESAI";
-  // Komponen HPP rumus mengikat:
   biayaBahanRp: number;
   biayaTklRp: number;
   biayaOverheadRp: number;
@@ -37,7 +39,6 @@ export interface HppSpkSummary {
   rejectAbnormalRp: number;
   totalHppRp: number;
   hppPerUnitRp: number;
-  // Detail dokumen sumber
   sumberBahanDoc: string;
   sumberTklDoc: string;
   sumberOverheadDoc: string;
@@ -47,3 +48,10 @@ export interface HppSpkSummary {
   tanggalPosting?: string;
 }
 
+export interface KartuData {
+  kjk: KartuJamKerjaItem[];
+  hpp: HppSpkSummary[];
+  spkOptions: { woId: string; nomorSpk: string; produkNama: string }[];
+  karyawanOptions: { id: string; nama: string; nik: string }[];
+  tarifOverheadPerDlh: number | null;
+}

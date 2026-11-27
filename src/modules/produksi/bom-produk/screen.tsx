@@ -1,27 +1,40 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
-import { EmptyState } from "@/components/ui/states";
+import { useEffect, useState } from "react";
+import { EmptyState, ErrorState, LoadingState } from "@/components/ui/states";
 import { PageHeader } from "@/components/ui/page-header";
 import { TableActionLink } from "@/components/ui/table-action-link";
 import { useTableState } from "@/components/ui/use-table-state";
-import { bacaKoleksi } from "@/modules/produksi/store";
+import { muatBomProduk } from "@/modules/produksi/queries";
 import { useProduksiActor } from "../context/actor-context";
 import type { BomItem } from "./types";
 
 export function BomProdukScreen() {
-  const [bomList] = useState<BomItem[]>(() => bacaKoleksi("bom"));
+  const [bomList, setBomList] = useState<BomItem[] | null>(null);
+  const [error, setError] = useState<string | null>(null);
   const { can, activeRole } = useProduksiActor();
   const canEdit = can("create_bom_version");
 
-  const table = useTableState(bomList, {
-    getFilterValues: (item) => [
+  useEffect(() => {
+    let aktif = true;
+    muatBomProduk().then((hasil) => {
+      if (!aktif) return;
+      if (hasil.ok) setBomList(hasil.data);
+      else setError(hasil.message);
+    });
+    return () => {
+      aktif = false;
+    };
+  }, []);
+
+  const table = useTableState(bomList ?? [], {
+    getFilterValues: (item: BomItem) => [
       item.produkNama,
       item.produkKode,
       item.komponenNama,
     ],
-    pageSize: bomList.length || 1,
+    pageSize: bomList?.length || 1,
   });
 
   const formatKomponenPerLembar = (item: BomItem) => {
@@ -32,6 +45,24 @@ export function BomProdukScreen() {
     return `${formattedKg} kg ${item.komponenNama.toLowerCase()}`;
   };
 
+
+  if (error) {
+    return (
+      <div className="w-full text-[#172335] animate-fade-in">
+        <PageHeader title="Data produksi" variant="cycle" />
+        <ErrorState judul="Data BOM tidak dapat dimuat." teks={error} variant="compact" />
+      </div>
+    );
+  }
+
+  if (!bomList) {
+    return (
+      <div className="w-full text-[#172335] animate-fade-in">
+        <PageHeader title="Data produksi" variant="cycle" />
+        <LoadingState judul="Memuat BOM..." variant="inline" />
+      </div>
+    );
+  }
   return (
     <div className="w-full text-[#172335] animate-fade-in">
       <PageHeader

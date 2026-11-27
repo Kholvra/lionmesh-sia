@@ -2,15 +2,15 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, useTransition } from "react";
 import { CustomSelect } from "@/components/ui/custom-select";
 import { Notice } from "@/components/ui/notice";
 import { PageHeader } from "@/components/ui/page-header";
-import { EmptyState } from "@/components/ui/states";
+import { EmptyState, ErrorState, LoadingState } from "@/components/ui/states";
+import { buatSpk } from "@/modules/produksi/actions";
 import { hitungKebutuhanBahan } from "@/modules/produksi/kebutuhan-bahan";
-import { bacaKoleksi, simpanKoleksi } from "@/modules/produksi/store";
-import type { BomItem } from "../bom-produk/types";
-import { MESIN_OPTIONS, type SpkItem } from "./types";
+import { muatSpkForm, muatStokBahan } from "@/modules/produksi/queries";
+import type { SpkFormData } from "./types";
 
 const BULAN_ID = [
   "Jan",
@@ -47,8 +47,7 @@ function formatJadwalRange(mulaiISO: string, selesaiISO: string): string {
 interface FormErrors {
   produk?: string;
   jumlah?: string;
-  versiBom?: string;
-  mesin?: string;
+  gudang?: string;
   mulai?: string;
   selesai?: string;
 }
@@ -57,49 +56,72 @@ export function TambahPerintahProduksiScreen() {
   const router = useRouter();
   const mulaiRef = useRef<HTMLInputElement>(null);
   const selesaiRef = useRef<HTMLInputElement>(null);
+  const [data, setData] = useState<SpkFormData | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [serverError, setServerError] = useState<string | null>(null);
+  const [stokTon, setStokTon] = useState<number | null>(null);
+  const [pending, startTransition] = useTransition();
 
-  const [bomList] = useState<BomItem[]>(() => bacaKoleksi("bom"));
-  const [spkList] = useState<SpkItem[]>(() => bacaKoleksi("spk"));
-
-  // Hanya produk yang memiliki versi BOM berlaku
-  const produkOptions = useMemo(
-    () => bomList.map((b) => `${b.produkNama} · ${b.produkKode}`),
-    [bomList]
-  );
-
-  // Default awal sesuai desain Figma PRD-02b (Wiremesh M6 · WM-M6, 120 lembar)
-  const [selectedProdukLabel, setSelectedProdukLabel] = useState<string>(
-    "Wiremesh M6 · WM-M6"
-  );
-  const [jumlahInput, setJumlahInput] = useState<string>("120 lembar");
-  const [selectedMesin, setSelectedMesin] = useState<string>("Mesin las 1");
-  const [mulaiISO, setMulaiISO] = useState<string>("2026-11-27");
-  const [selesaiISO, setSelesaiISO] = useState<string>("2026-11-28");
+  const [selectedProdukLabel, setSelectedProdukLabel] = useState("");
+  const [jumlahInput, setJumlahInput] = useState("");
+  const [selectedGudang, setSelectedGudang] = useState("");
+  const [mulaiISO, setMulaiISO] = useState("");
+  const [selesaiISO, setSelesaiISO] = useState("");
   const [fieldErrors, setFieldErrors] = useState<FormErrors>({});
 
+  useEffect(() => {
+    let aktif = true;
+    muatSpkForm().then((hasil) => {
+      if (!aktif) return;
+      if (!hasil.ok) {
+        setError(hasil.message);
+        return;
+      }
+      setData(hasil.data);
+      setSelectedProdukLabel(
+        hasil.data.bomList[0]
+          ? `${hasil.data.bomList[0].produkNama} · ${hasil.data.bomList[0].produkKode}`
+          : "",
+      );
+      setSelectedGudang(hasil.data.gudangOptions[0]?.id ?? "");
+    });
+    return () => {
+      aktif = false;
+    };
+  }, []);
+
+  const produkOptions = useMemo(
+    () => (data?.bomList ?? []).map((b) => `${b.produkNama} · ${b.produkKode}`),
+    [data],
+  );
   const activeBom = useMemo(
     () =>
-      bomList.find(
-        (b) => b.produkKode === (selectedProdukLabel.split(" · ")[1] || "WM-M6"),
-      ) ??
-      bomList[0] ??
-      null,
-    [bomList, selectedProdukLabel],
+      (data?.bomList ?? []).find(
+        (b) => `${b.produkNama} · ${b.produkKode}` === selectedProdukLabel,
+      ) ?? null,
+    [data, selectedProdukLabel],
   );
 
-  const versiBomLabel = useMemo(() => {
-    if (!activeBom) return "Tidak ada versi BOM berlaku";
-    return `v${activeBom.versiNumber} · berlaku sejak ${activeBom.berlakuDari}`;
-  }, [activeBom]);
+  useEffect(() => {
+    if (!activeBom || !selectedGudang) return;
+    let aktif = true;
+    muatStokBahan(activeBom.komponenProdukId, selectedGudang).then((hasil) => {
+      if (!aktif) return;
+      setStokTon(hasil.ok ? hasil.data : null);
+    });
+    return () => {
+      aktif = false;
+    };
+  }, [activeBom, selectedGudang]);
 
-  const [customVersiBom, setCustomVersiBom] = useState<string | null>(null);
-  const selectedVersiBom = customVersiBom ?? versiBomLabel;
-
+  const versiBomLabel = activeBom
+    ? `v${activeBom.versiNumber} · berlaku sejak ${activeBom.berlakuDari}`
+    : "Tidak ada versi BOM berlaku";
   const kebutuhanKalkulasi = useMemo(() => {
     const qty = parseLembar(jumlahInput);
     const validQty = Number.isFinite(qty) && qty > 0 ? qty : 0;
-    return activeBom ? hitungKebutuhanBahan(validQty, activeBom) : null;
-  }, [jumlahInput, activeBom]);
+    return activeBom ? hitungKebutuhanBahan(validQty, activeBom, stokTon) : null;
+  }, [jumlahInput, activeBom, stokTon]);
 
   const openPickerSafe = (input: HTMLInputElement | null) => {
     if (!input) return;
@@ -127,12 +149,8 @@ export function TambahPerintahProduksiScreen() {
       nextErrors.jumlah = "Jumlah produksi harus lebih dari 0 lembar.";
     }
 
-    if (!selectedVersiBom) {
-      nextErrors.versiBom = "Versi BOM wajib dipilih.";
-    }
-
-    if (!selectedMesin) {
-      nextErrors.mesin = "Mesin produksi wajib dipilih.";
+    if (!selectedGudang) {
+      nextErrors.gudang = "Gudang wajib dipilih.";
     }
 
     if (!mulaiISO) {
@@ -145,44 +163,56 @@ export function TambahPerintahProduksiScreen() {
       nextErrors.selesai = "Tanggal selesai tidak boleh sebelum tanggal mulai SPK.";
     }
 
-    if (Object.keys(nextErrors).length > 0) {
+    if (Object.keys(nextErrors).length > 0 || !activeBom) {
       setFieldErrors(nextErrors);
       return;
     }
 
     setFieldErrors({});
+    setServerError(null);
+    const formData = new FormData();
+    formData.set("produk_id", activeBom.produkId);
+    formData.set("bom_versi_id", activeBom.id);
+    formData.set("gudang_id", selectedGudang);
+    formData.set("tanggal_perintah", mulaiISO);
+    formData.set("tgl_target_selesai", selesaiISO);
+    formData.set("target_qty", String(qty));
 
-    const nextSeq =
-      spkList.reduce((max, item) => {
-        const match = /^SPK-2611-(\d{3})$/.exec(item.nomorSpk);
-        return match ? Math.max(max, Number(match[1])) : max;
-      }, 12) + 1;
-    const nomorSpkBaru = `SPK-2611-${String(nextSeq).padStart(3, "0")}`;
-
-    const newSpk: SpkItem = {
-      id: nomorSpkBaru.toLowerCase(),
-      nomorSpk: nomorSpkBaru,
-      sumberInfo: "dari SO-2611-015",
-      produkNama: activeBom.produkNama,
-      produkKode: activeBom.produkKode,
-      versiBom: `v${activeBom.versiNumber}`,
-      mesin: selectedMesin,
-      jumlahLembar: qty,
-      jadwalText: formatJadwalRange(mulaiISO, selesaiISO),
-      tanggalMulaiISO: mulaiISO,
-      tanggalSelesaiISO: selesaiISO,
-      status: "DIRENCANAKAN",
-      filterCategory: "direncanakan",
-    };
-
-    const updatedSpkList = [newSpk, ...spkList];
-    simpanKoleksi("spk", updatedSpkList);
-
-    router.push(`/produksi/perintah-produksi/${nomorSpkBaru.toLowerCase()}?saved=1`);
+    startTransition(async () => {
+      const hasil = await buatSpk(formData);
+      if (!hasil.ok) {
+        setServerError(hasil.message);
+        return;
+      }
+      router.push(
+        `/produksi/perintah-produksi/${hasil.data.dokumen.nomor.toLowerCase()}?saved=1`,
+      );
+    });
   };
 
-  const errorMessages = Object.values(fieldErrors).filter(Boolean) as string[];
+  const errorMessages = [
+    ...Object.values(fieldErrors).filter(Boolean),
+    ...(serverError ? [serverError] : []),
+  ] as string[];
   const hasErrors = errorMessages.length > 0;
+
+  if (error) {
+    return (
+      <div className="w-full text-[#172335] animate-fade-in">
+        <PageHeader title="Tambah perintah produksi" variant="cycle" />
+        <ErrorState judul="Data BOM tidak dapat dimuat." teks={error} variant="compact" />
+      </div>
+    );
+  }
+
+  if (!data) {
+    return (
+      <div className="w-full text-[#172335] animate-fade-in">
+        <PageHeader title="Tambah perintah produksi" variant="cycle" />
+        <LoadingState judul="Memuat formulir..." variant="inline" />
+      </div>
+    );
+  }
 
   if (!activeBom || !kebutuhanKalkulasi) {
     return (
@@ -280,29 +310,34 @@ export function TambahPerintahProduksiScreen() {
                 Versi BOM *
               </label>
               <CustomSelect
-                value={selectedVersiBom}
-                onChange={(val) => setCustomVersiBom(val)}
+                value={versiBomLabel}
+                onChange={() => undefined}
                 options={[versiBomLabel]}
-                placeholder="Pilih versi BOM..."
               />
             </div>
 
-            {/* Baris 2 Kanan: Mesin * */}
+            {/* Baris 2 Kanan: Gudang * */}
             <div>
               <label className="block text-xs font-medium text-[#172335]">
-                Mesin *
+                Gudang *
               </label>
               <CustomSelect
-                value={selectedMesin}
-                onChange={(val) => {
-                  setSelectedMesin(val);
-                  if (fieldErrors.mesin) {
-                    setFieldErrors((prev) => ({ ...prev, mesin: undefined }));
+                value={data.gudangOptions.find((item) => item.id === selectedGudang)?.nama ?? ""}
+                onChange={(nama) => {
+                  const gudang = data.gudangOptions.find((item) => item.nama === nama);
+                  if (gudang) setSelectedGudang(gudang.id);
+                  if (fieldErrors.gudang) {
+                    setFieldErrors((prev) => ({ ...prev, gudang: undefined }));
                   }
                 }}
-                options={MESIN_OPTIONS}
-                placeholder="Pilih mesin..."
+                options={data.gudangOptions.map((item) => item.nama)}
+                placeholder="Pilih gudang..."
               />
+              {fieldErrors.gudang && (
+                <p className="mt-0.5 text-[11px] font-medium text-[#DC2626]">
+                  {fieldErrors.gudang}
+                </p>
+              )}
             </div>
 
             {/* Baris 3 Kiri: Mulai * */}
@@ -405,6 +440,7 @@ export function TambahPerintahProduksiScreen() {
         <div className="mt-3 flex flex-wrap items-center gap-3">
           <button
             type="submit"
+            disabled={pending}
             className="rounded-[8px] bg-[#E88A06] px-4 py-2 text-[13px] font-semibold text-white shadow-2xs transition-all duration-150 ease-out hover:bg-[#D17B05] active:scale-[0.98]"
           >
             Simpan

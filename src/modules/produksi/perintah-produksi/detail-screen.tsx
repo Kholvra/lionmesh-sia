@@ -1,16 +1,17 @@
 "use client";
 
 import Link from "next/link";
-import { useParams, useSearchParams } from "next/navigation";
-import { Suspense, useMemo, useState } from "react";
+import { useSearchParams } from "next/navigation";
+import { Suspense, useEffect, useMemo, useState, useTransition } from "react";
 import { Notice } from "@/components/ui/notice";
 import { PageHeader } from "@/components/ui/page-header";
 import { SpkStepper } from "@/components/ui/spk-stepper";
-import { EmptyState, LoadingState } from "@/components/ui/states";
+import { EmptyState, ErrorState, LoadingState } from "@/components/ui/states";
+import { keluarkanBahanUntukSpk, ubahStatusSpk } from "@/modules/produksi/actions";
+import { useProduksiActor } from "@/modules/produksi/context/actor-context";
 import { hitungKebutuhanBahan } from "@/modules/produksi/kebutuhan-bahan";
-import { bacaKoleksi } from "@/modules/produksi/store";
-import type { BomItem } from "../bom-produk/types";
-import type { SpkItem, SpkStatusType } from "./types";
+import { muatSpkDetail } from "@/modules/produksi/queries";
+import type { SpkDetailData, SpkStatusType, StatusSpkInti } from "./types";
 
 const BULAN_LENGKAP_ID = [
   "Januari",
@@ -57,32 +58,74 @@ function getActiveStepFromStatus(status: SpkStatusType): number {
 }
 
 function DetailSpkContent({ initialNomorSpk }: { initialNomorSpk?: string }) {
-  const params = useParams<{ nomorSpk: string }>();
   const searchParams = useSearchParams();
   const isJustSaved = searchParams.get("saved") === "1";
+  const [data, setData] = useState<SpkDetailData | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
-  const [spkList] = useState<SpkItem[]>(() => bacaKoleksi("spk"));
-  const [bomList] = useState<BomItem[]>(() => bacaKoleksi("bom"));
+  const { can } = useProduksiActor();
+  const [notifikasi, setNotifikasi] = useState<string | null>(null);
+  const [qtyIssue, setQtyIssue] = useState("");
+  const [pending, startTransition] = useTransition();
 
-  const currentSpk = useMemo<SpkItem | null>(() => {
-    const slug = (initialNomorSpk ?? params?.nomorSpk ?? "spk-2611-013").toLowerCase();
-    return (
-      spkList.find((item) => item.nomorSpk.toLowerCase() === slug) ?? null
-    );
-  }, [initialNomorSpk, params?.nomorSpk, spkList]);
+  const transisi: Partial<Record<StatusSpkInti, { tujuan: StatusSpkInti; aksi: string; label: string }>> = {
+    DIRENCANAKAN: { tujuan: "CEK_BAHAN", aksi: "CEK_BAHAN", label: "Ajukan cek bahan" },
+    CEK_BAHAN: { tujuan: "BAHAN_CUKUP", aksi: "CEK_BAHAN", label: "Tandai bahan cukup" },
+    BAHAN_CUKUP: { tujuan: "BERJALAN", aksi: "MULAI", label: "Mulai produksi" },
+    BAHAN_SIAP: { tujuan: "BERJALAN", aksi: "MULAI", label: "Mulai produksi" },
+  };
 
-  const relatedBom = useMemo<BomItem | null>(
-    () =>
-      bomList.find((b) => b.produkKode === currentSpk?.produkKode) ?? null,
-    [bomList, currentSpk?.produkKode],
-  );
+  const kirimStatus = () => {
+    if (!currentSpk || !statusLanjutan) return;
+    const formData = new FormData();
+    formData.set("wo_id", currentSpk.woId);
+    formData.set("versi", String(currentSpk.versiDokumen));
+    formData.set("status_tujuan", statusLanjutan.tujuan);
+    formData.set("aksi", statusLanjutan.aksi);
+    startTransition(async () => {
+      const hasil = await ubahStatusSpk(formData);
+      setNotifikasi(hasil.ok ? `Status diperbarui menjadi ${statusLanjutan.tujuan}.` : hasil.message);
+    });
+  };
+
+  const kirimIssue = () => {
+    if (!currentSpk || !relatedBom || !qtyIssue) return;
+    const formData = new FormData();
+    formData.set("wo_id", currentSpk.woId);
+    formData.set("produk_id", relatedBom.komponenProdukId);
+    formData.set("satuan_id", relatedBom.satuanId);
+    formData.set("gudang_id", currentSpk.gudangId);
+    formData.set("qty_keluar", qtyIssue);
+    formData.set("tanggal", new Date().toISOString());
+    startTransition(async () => {
+      const hasil = await keluarkanBahanUntukSpk(formData);
+      setNotifikasi(hasil.ok ? "Pengeluaran bahan tercatat." : hasil.message);
+    });
+  };
+
+  useEffect(() => {
+    if (!initialNomorSpk) return;
+    let aktif = true;
+    muatSpkDetail(initialNomorSpk).then((hasil) => {
+      if (!aktif) return;
+      if (hasil.ok) setData(hasil.data);
+      else setError(hasil.message);
+    });
+    return () => {
+      aktif = false;
+    };
+  }, [initialNomorSpk]);
+
+  const currentSpk = data?.spk ?? null;
+  const statusLanjutan = transisi[currentSpk?.statusInti as StatusSpkInti];
+  const relatedBom = data?.bom ?? null;
 
   const kebutuhanBahan = useMemo(
     () =>
       currentSpk && relatedBom
-        ? hitungKebutuhanBahan(currentSpk.jumlahLembar, relatedBom)
+        ? hitungKebutuhanBahan(currentSpk.jumlahLembar, relatedBom, data?.stokTon ?? null)
         : null,
-    [currentSpk, relatedBom],
+    [currentSpk, relatedBom, data?.stokTon],
   );
 
   const activeStep = currentSpk ? getActiveStepFromStatus(currentSpk.status) : 1;
@@ -97,6 +140,22 @@ function DetailSpkContent({ initialNomorSpk }: { initialNomorSpk?: string }) {
     ? `${currentSpk.versiBom} · ${currentSpk.sumberInfo}`
     : "";
 
+  if (error) {
+    return (
+      <div className="w-full text-[#172335] animate-fade-in">
+        <ErrorState judul="Data SPK tidak dapat dimuat." teks={error} variant="compact" />
+      </div>
+    );
+  }
+
+  if (!data) {
+    return (
+      <div className="w-full text-[#172335] animate-fade-in">
+        <LoadingState judul="Memuat data SPK..." variant="inline" />
+      </div>
+    );
+  }
+
   if (!currentSpk || !relatedBom || !kebutuhanBahan) {
     return (
       <div className="w-full text-[#172335] animate-fade-in">
@@ -110,6 +169,7 @@ function DetailSpkContent({ initialNomorSpk }: { initialNomorSpk?: string }) {
 
   return (
     <div className="w-full text-[#172335] animate-fade-in">
+      {notifikasi && <Notice className="mt-3" tone="info" variant="card">{notifikasi}</Notice>}
       <PageHeader
         title={currentSpk.nomorSpk}
         variant="cycle"
@@ -152,7 +212,7 @@ function DetailSpkContent({ initialNomorSpk }: { initialNomorSpk?: string }) {
           <div>
             <p className="text-[11px] font-medium text-[#526174]">Jadwal</p>
             <p className="mt-1 text-[13px] font-medium text-[#172335]">
-              {jadwalLengkap} · {currentSpk.mesin ?? "Mesin las 1"}
+              {jadwalLengkap} · Mesin ditentukan saat pelaksanaan
             </p>
           </div>
 
@@ -209,6 +269,18 @@ function DetailSpkContent({ initialNomorSpk }: { initialNomorSpk?: string }) {
         >
           Lihat status bahan
         </Link>
+      </div>
+
+      <div className="mt-4 flex flex-wrap items-center gap-3">
+        {statusLanjutan && can("check_stok_bahan") && (
+          <button type="button" disabled={pending} onClick={kirimStatus} className="rounded-[8px] border border-[#E5E7EB] bg-white px-4 py-2 text-[13px] font-semibold text-[#172335]">{statusLanjutan.label}</button>
+        )}
+        {can("issue_bahan_gudang") && (
+          <>
+            <input type="number" min="0" step="0.0001" value={qtyIssue} onChange={(e) => setQtyIssue(e.target.value)} placeholder="Qty keluar (ton)" className="w-[180px] rounded-[8px] border border-[#E5E7EB] px-3 py-2 text-[13px]" />
+            <button type="button" disabled={pending} onClick={kirimIssue} className="rounded-[8px] bg-[#E88A06] px-4 py-2 text-[13px] font-semibold text-white">Keluarkan bahan</button>
+          </>
+        )}
       </div>
     </div>
   );
