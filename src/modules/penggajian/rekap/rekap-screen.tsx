@@ -11,7 +11,7 @@ import type { PeriodeGaji } from "@/modules/penggajian/periode/types";
 import { PilihPeriode } from "@/modules/penggajian/presensi/components/pilih-periode";
 import { getPeriodeDipilih, listPeriode } from "@/modules/penggajian/presensi/queries";
 import { saveRekap, validateRekap } from "@/modules/penggajian/rekap/actions";
-import { aksesRekap, getRekap, rekapPeriode } from "@/modules/penggajian/rekap/queries";
+import { aksesRekap, getRekap } from "@/modules/penggajian/rekap/queries";
 import type { RekapDepartemen, RekapKaryawan } from "@/modules/penggajian/rekap/queries";
 import { Notice } from "@/modules/penggajian/ui/notice";
 import { PageHeader } from "@/modules/penggajian/ui/page-header";
@@ -62,8 +62,7 @@ function Tabel({ kepala, baris, caption }: { kepala: readonly string[]; baris: r
   );
 }
 
-function KontenHr({ periode, pesan }: { periode: PeriodeGaji; pesan?: string }) {
-  const departemen = rekapPeriode(periode);
+function KontenHr({ departemen, periode, pesan }: { departemen: RekapDepartemen[]; periode: PeriodeGaji; pesan?: string }) {
   const semua = departemen.flatMap((d) => d.karyawan.map((k) => ({ k, d })));
   const kosong = semua.filter(({ k }) => k.tanpaEntri || k.belumLengkap.length > 0);
   const kembali = periode.status === "TERBUKA" ? periode.pengembalian : null;
@@ -73,7 +72,7 @@ function KontenHr({ periode, pesan }: { periode: PeriodeGaji; pesan?: string }) 
       <Stepper aktif={langkahRekap(periode.status)} langkah={ALUR_REKAP} />
       {pesan && PESAN[pesan] ? <Notice title={PESAN[pesan]} tone="success" /> : null}
       {kembali ? (
-        <Notice title={`${kembali.oleh} mengembalikan rekap ${departemen.find((d) => d.id === kembali.departemenId)?.nama ?? ""}: ${kembali.alasan}`} tone="warning" />
+        <Notice title={`${kembali.oleh} mengembalikan rekap ${kembali.departemen}: ${kembali.alasan}`} tone="warning" />
       ) : null}
       {periode.status === "REKAP" ? (
         <Notice title={tervalidasi.length > 0 ? `${tervalidasi.map((d) => d.nama).join(" dan ")} tervalidasi. Departemen lain masih menunggu validasi Supervisor.` : "Rekap tersimpan. Menunggu validasi Supervisor setiap departemen."} tone="warning" />
@@ -114,7 +113,7 @@ function KontenHr({ periode, pesan }: { periode: PeriodeGaji; pesan?: string }) 
           <h2 className={ui.cardTitle}>Alasan pengembalian</h2>
           <Tabel
             baris={[[
-              departemen.find((d) => d.id === kembali.departemenId)?.nama ?? "—",
+              kembali.departemen || "—",
               `${kembali.oleh}, ${formatWaktu(kembali.pada)}`,
               kembali.alasan,
               <Link href={`/penggajian/lembur?periode=${periode.id}`} key="t">Perbaiki data →</Link>,
@@ -211,25 +210,25 @@ function BagianSupervisor({ dep, periode }: { dep: RekapDepartemen; periode: Per
 
 async function KontenRekap({ periodeId, pesan }: { periodeId?: string; pesan?: string }) {
   const sesi = await sesiPenggajian();
-  const akses = aksesRekap(sesi);
+  const akses = await aksesRekap(sesi);
   if (!akses.bolehMembaca) {
     return <><PageHeader item={ITEM_HR} title="Rekap presensi & lembur" /><TidakBerwenang pesan="Rekap dibuka HR untuk seluruh karyawan dan Supervisor Lapangan untuk departemennya." /></>;
   }
-  const periode = getPeriodeDipilih(periodeId);
+  const periode = await getPeriodeDipilih(periodeId);
   const header = akses.hr ? (
     <PageHeader description="HR memeriksa kelengkapan lalu menyimpan rekap. Periode ditutup (Rekap) dan menunggu validasi Supervisor tiap departemen." item={ITEM_HR} title="Rekap presensi & lembur" />
   ) : (
     <PageHeader description={periode ? `Periode ${rentangPeriode(periode)}` : undefined} item={ITEM_SPV} title="Validasi rekap presensi & lembur" />
   );
   if (!periode) return <>{header}<Keadaan judul="Belum ada periode penggajian" pesan="Periode dibuat HR sebelum rekap bisa disusun." /></>;
-  const departemen = getRekap(sesi, periode);
+  const departemen = await getRekap(sesi, periode);
   return (
     <>
       {header}
       <div className={ui.stack}>
-        <PilihPeriode action="/penggajian/rekap" dipilih={periode.id} periode={listPeriode()} />
+        <PilihPeriode action="/penggajian/rekap" dipilih={periode.id} periode={await listPeriode()} />
         {akses.hr ? (
-          <KontenHr pesan={pesan} periode={periode} />
+          <KontenHr departemen={departemen} pesan={pesan} periode={periode} />
         ) : (
           <>
             <Stepper aktif={langkahRekap(periode.status)} langkah={ALUR_REKAP} />

@@ -19,7 +19,7 @@ async function Konten({ id }: { id: string }) {
   const sesi = await sesiPenggajian();
   const judul = <PageHeader item={ITEM} title="Perbaiki lembur" />;
   if (sesi.peran !== "HR") return <>{judul}<TidakBerwenang pesan="Hanya HR yang memperbaiki lembur atas nama karyawan." /></>;
-  const lembur = getLembur(sesi, id);
+  const lembur = await getLembur(sesi, id);
   if (!lembur) return <>{judul}<Keadaan judul="Pengajuan lembur tidak ditemukan" pesan="Tautannya mungkin salah." /></>;
   const jam = lembur.menit % 60 === 0 ? String(lembur.menit / 60) : `${Math.floor(lembur.menit / 60)}:${String(lembur.menit % 60).padStart(2, "0")}`;
   return (

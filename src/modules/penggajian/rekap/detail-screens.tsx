@@ -60,11 +60,11 @@ function TabelPerTanggal({ k }: { k: RekapKaryawan }) {
 
 async function DetailKonten({ karyawanId, periodeId }: { karyawanId: string; periodeId?: string }) {
   const sesi = await sesiPenggajian();
-  const akses = aksesRekap(sesi);
+  const akses = await aksesRekap(sesi);
   const judul = <PageHeader item={ITEM} title="Detail rekap" />;
   if (!akses.bolehMembaca) return <>{judul}<TidakBerwenang pesan={TOLAK} /></>;
-  const periode = getPeriodeDipilih(periodeId);
-  const data = periode ? getRekapKaryawan(sesi, periode, karyawanId) : null;
+  const periode = await getPeriodeDipilih(periodeId);
+  const data = periode ? await getRekapKaryawan(sesi, periode, karyawanId) : null;
   if (!periode || !data) return <>{judul}<Keadaan judul="Rekap karyawan tidak ditemukan" pesan="Karyawan mungkin di luar departemen Anda atau tidak aktif pada periode ini." /></>;
   const { karyawan: k, departemen } = data;
   const tervalidasi = periode.status === "TERVALIDASI" || Boolean(departemen.validasi);
@@ -125,9 +125,9 @@ export function RekapKaryawanScreen({ karyawanId, periodeId }: { karyawanId: str
 
 async function KembalikanKonten({ departemenId, periodeId }: { departemenId?: string; periodeId?: string }) {
   const sesi = await sesiPenggajian();
-  const akses = aksesRekap(sesi);
-  const periode = getPeriodeDipilih(periodeId);
-  const departemen = periode ? getRekap(sesi, periode).find((dep) => dep.id === departemenId) : undefined;
+  const akses = await aksesRekap(sesi);
+  const periode = await getPeriodeDipilih(periodeId);
+  const departemen = periode ? (await getRekap(sesi, periode)).find((dep) => dep.id === departemenId) : undefined;
   if (akses.hr || !departemen || !periode) return <TidakBerwenang pesan="Hanya Supervisor Lapangan yang mengembalikan rekap departemennya." />;
   return (
     <>

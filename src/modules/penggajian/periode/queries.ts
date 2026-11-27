@@ -1,7 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 
 import { createClient } from "@/lib/supabase/server";
-import type { OtorisasiKoreksi, PeriodeGaji, StatusPeriode } from "@/modules/penggajian/periode/types";
+import type { OtorisasiKoreksi, PeriodeGaji, StatusPeriode, ValidasiDepartemen } from "@/modules/penggajian/periode/types";
 import type { RiwayatStatus } from "@/modules/penggajian/shared/riwayat";
 
 /*
@@ -17,6 +17,16 @@ type BarisPeriode = {
   tanggal_mulai: string;
   tanggal_selesai: string;
   status: StatusPeriode;
+  putaran_rekap: number;
+};
+
+type BarisValidasi = {
+  periode_gaji_id: string;
+  departemen_id: string;
+  putaran_rekap: number;
+  created_by: string;
+  created_by_nama: string;
+  created_at: string;
 };
 
 type BarisRiwayat = { id: string; dokumen_id: string; dari: string | null; ke: string; oleh: string; pada: string; alasan: string | null };
@@ -56,10 +66,10 @@ export async function riwayatDokumen(client: SupabaseClient, dokumenIds: string[
 /** All periods, oldest first. */
 export async function semuaPeriode(client?: SupabaseClient): Promise<PeriodeGaji[]> {
   const supabase = client ?? (await createClient());
-  const [p, o] = await Promise.all([
+  const [p, o, v] = await Promise.all([
     supabase
       .from("periode_gaji_status")
-      .select("id, dokumen_id, nama, tanggal_mulai, tanggal_selesai, status")
+      .select("id, dokumen_id, nama, tanggal_mulai, tanggal_selesai, status, putaran_rekap")
       .order("tanggal_mulai")
       .returns<BarisPeriode[]>(),
     supabase
@@ -67,20 +77,41 @@ export async function semuaPeriode(client?: SupabaseClient): Promise<PeriodeGaji
       .select("id, periode_gaji_id, alasan, created_by_nama, created_at, dipakai_at")
       .order("created_at")
       .returns<BarisOtorisasi[]>(),
+    supabase
+      .from("validasi_departemen_aman")
+      .select("periode_gaji_id, departemen_id, putaran_rekap, created_by, created_by_nama, created_at")
+      .returns<BarisValidasi[]>(),
   ]);
-  if (p.error || o.error) gagalBaca(p.error ?? o.error);
+  if (p.error || o.error || v.error) gagalBaca(p.error ?? o.error ?? v.error);
   const riwayat = await riwayatDokumen(supabase, p.data.map((row) => row.dokumen_id));
-  return p.data.map((row) => ({
+  return p.data.map((row) => {
+    const riwayatPeriode = riwayat.get(row.dokumen_id) ?? [];
+    // Only while the latest status change is a Supervisor return.
+    const terakhir = [...riwayatPeriode].reverse().find((r) => r.dari !== r.ke);
+    const kembali = terakhir?.dari === "REKAP" && terakhir.ke === "TERBUKA" && terakhir.alasan?.startsWith("Dikembalikan") ? terakhir : undefined;
+    return {
     id: row.id,
     nama: row.nama,
     mulai: row.tanggal_mulai,
     selesai: row.tanggal_selesai,
     status: row.status,
-    riwayat: riwayat.get(row.dokumen_id) ?? [],
+    riwayat: riwayatPeriode,
+    validasi: v.data
+      .filter((x) => x.periode_gaji_id === row.id && x.putaran_rekap === row.putaran_rekap)
+      .map((x): ValidasiDepartemen => ({ departemenId: x.departemen_id, oleh: x.created_by_nama, profileId: x.created_by, pada: x.created_at })),
+    pengembalian: kembali
+      ? {
+          departemen: /^Dikembalikan ([^:]*):/.exec(kembali.alasan ?? "")?.[1] ?? "",
+          alasan: kembali.alasan?.replace(/^Dikembalikan [^:]*: /, "") ?? "",
+          oleh: kembali.oleh,
+          pada: kembali.pada,
+        }
+      : null,
     otorisasi: o.data
       .filter((x) => x.periode_gaji_id === row.id)
       .map((x): OtorisasiKoreksi => ({ id: x.id, alasan: x.alasan, oleh: x.created_by_nama, pada: x.created_at, dipakaiPada: x.dipakai_at })),
-  }));
+    };
+  });
 }
 
 export async function listPeriodeTerbaru(client?: SupabaseClient): Promise<PeriodeGaji[]> {

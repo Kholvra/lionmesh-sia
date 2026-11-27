@@ -30,8 +30,8 @@ function peristiwa(r: RiwayatStatus): Peristiwa {
 async function Konten({ periodeId }: { periodeId?: string }) {
   const sesi = await sesiPenggajian();
   const judul = <PageHeader item="GJ-003 Memvalidasi presensi dan lembur" title="Riwayat rekap" />;
-  if (!aksesRekap(sesi).bolehMembaca) return <>{judul}<TidakBerwenang pesan="Riwayat rekap dibuka HR dan Supervisor Lapangan." /></>;
-  const periode = getPeriodeDipilih(periodeId);
+  if (!(await aksesRekap(sesi)).bolehMembaca) return <>{judul}<TidakBerwenang pesan="Riwayat rekap dibuka HR dan Supervisor Lapangan." /></>;
+  const periode = await getPeriodeDipilih(periodeId);
   if (!periode) return <>{judul}<Keadaan judul="Belum ada riwayat rekap" pesan="Riwayat terisi setelah HR menyimpan rekap pertama periode ini." /></>;
   return (
     <>
