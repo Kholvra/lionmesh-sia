@@ -30,14 +30,18 @@ import type {
   HasilPurchaseOrder,
   HasilQC,
   AjukanReturInput,
+  BatalkanInvoiceInput,
   BatalkanPenerimaanInput,
   BatalkanPoInput,
   BatalkanReturInput,
+  CatatInvoiceInput,
   CatatKonfirmasiPoInput,
+  CocokkanUlangInvoiceInput,
   LokasiPemisahanInput,
   PeriksaPRDenganNilaiInput,
   PeriksaPRInput,
   PutuskanReturInput,
+  SahkanInvoiceInput,
   SimpanPenawaranHargaInput,
   TerbitkanPoInput,
   TetapkanPemasokDenganAlasanInput,
@@ -633,4 +637,125 @@ export async function batalkanReturPemasok(
   if (error) return fail(pesanKesalahan(error, "Gagal membatalkan retur pemasok."));
   const hasil = parseDokumen(data);
   return hasil ? ok(hasil) : fail("Respons pembatalan retur tidak valid.");
+}
+
+export async function catatInvoicePemasok(
+  supabase: SupabaseClient,
+  input: CatatInvoiceInput,
+): Promise<Result<HasilDokumenPengadaan & { statusInvoice: string }>> {
+  if (
+    !isUuid(input.actorId) ||
+    !isUuid(input.penerimaanId) ||
+    input.nomorInvoice.trim().length === 0 ||
+    !isIsoDate(input.tanggal) ||
+    !Number.isInteger(input.terminHari) ||
+    input.terminHari < 0 ||
+    !/^\d+(\.\d{1,2})?$/.test(input.ppnNilai) ||
+    input.baris.length === 0 ||
+    input.baris.some(
+      (row) =>
+        !isUuid(row.penerimaanItemId) ||
+        !/^\d+(\.\d{1,4})?$/.test(row.qty) ||
+        !/^\d+(\.\d{1,4})?$/.test(row.hargaSatuanDpp),
+    )
+  ) {
+    return fail("Data invoice pemasok tidak valid.");
+  }
+
+  const { data, error } = await supabase.rpc("catat_invoice_pemasok", {
+    p_penerimaan_id: input.penerimaanId,
+    p_nomor_invoice: input.nomorInvoice.trim(),
+    p_tanggal: input.tanggal,
+    p_termin_hari: input.terminHari,
+    p_nomor_faktur_pajak: input.nomorFakturPajak?.trim() ?? null,
+    p_ppn_nilai: input.ppnNilai,
+    p_baris: input.baris.map((row) => ({
+      penerimaan_item_id: row.penerimaanItemId,
+      qty: row.qty,
+      harga_satuan_dpp: row.hargaSatuanDpp,
+    })),
+    p_aktor_id: input.actorId,
+  });
+
+  if (error) return fail(pesanKesalahan(error, "Gagal mencatat invoice pemasok."));
+  const hasil = parseDokumen(data);
+  if (!hasil || !isRecord(data) || typeof data.status !== "string") {
+    return fail("Respons invoice pemasok tidak valid.");
+  }
+  return ok({ ...hasil, statusInvoice: data.status });
+}
+
+export async function cocokkanUlangInvoice(
+  supabase: SupabaseClient,
+  input: CocokkanUlangInvoiceInput,
+): Promise<Result<{ statusInvoice: string }>> {
+  if (
+    !isUuid(input.actorId) ||
+    !isUuid(input.dokumenId) ||
+    validasiVersi(input.versi) ||
+    !/^\d+(\.\d{1,2})?$/.test(input.ppnNilai) ||
+    input.baris.length === 0
+  ) {
+    return fail("Data koreksi invoice tidak valid.");
+  }
+
+  const { data, error } = await supabase.rpc("cocokkan_ulang_invoice", {
+    p_dokumen_id: input.dokumenId,
+    p_versi: input.versi,
+    p_ppn_nilai: input.ppnNilai,
+    p_baris: input.baris.map((row) => ({
+      penerimaan_item_id: row.penerimaanItemId,
+      qty: row.qty,
+      harga_satuan_dpp: row.hargaSatuanDpp,
+    })),
+    p_aktor_id: input.actorId,
+  });
+
+  if (error) return fail(pesanKesalahan(error, "Gagal mencocokkan ulang invoice."));
+  if (!isRecord(data) || typeof data.status !== "string") {
+    return fail("Respons koreksi invoice tidak valid.");
+  }
+  return ok({ statusInvoice: data.status });
+}
+
+export async function sahkanInvoicePemasok(
+  supabase: SupabaseClient,
+  input: SahkanInvoiceInput,
+): Promise<Result<HasilDokumenPengadaan>> {
+  if (!isUuid(input.actorId) || !isUuid(input.dokumenId) || validasiVersi(input.versi)) {
+    return fail("Data pengesahan invoice tidak valid.");
+  }
+
+  const { data, error } = await supabase.rpc("sahkan_invoice_pemasok", {
+    p_dokumen_id: input.dokumenId,
+    p_versi: input.versi,
+    p_aktor_id: input.actorId,
+  });
+
+  if (error) return fail(pesanKesalahan(error, "Gagal mengesahkan invoice pemasok."));
+  const hasil = parseDokumen(data);
+  return hasil ? ok(hasil) : fail("Respons pengesahan invoice tidak valid.");
+}
+
+export async function batalkanInvoicePemasok(
+  supabase: SupabaseClient,
+  input: BatalkanInvoiceInput,
+): Promise<Result<HasilDokumenPengadaan>> {
+  if (!isUuid(input.actorId) || !isUuid(input.dokumenId) || validasiVersi(input.versi)) {
+    return fail("Data pembatalan invoice tidak valid.");
+  }
+  if (input.alasan.trim().length === 0) {
+    return fail("Alasan pembatalan wajib diisi");
+  }
+
+  const { data, error } = await supabase.rpc("batalkan_invoice_pemasok", {
+    p_dokumen_id: input.dokumenId,
+    p_versi: input.versi,
+    p_alasan: input.alasan.trim(),
+    p_aktor_id: input.actorId,
+  });
+
+  if (error) return fail(pesanKesalahan(error, "Gagal membatalkan invoice pemasok."));
+  const hasil = parseDokumen(data);
+  return hasil ? ok(hasil) : fail("Respons pembatalan invoice tidak valid.");
 }

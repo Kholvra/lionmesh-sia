@@ -442,3 +442,87 @@ export interface LokasiPemisahanInput {
   lokasi: string;
   actorId: string;
 }
+
+export interface InvoicePemasokItem {
+  id: string;
+  penerimaanItemId: string;
+  produkId: string;
+  qty: string;
+  hargaSatuanDpp: string;
+  qtyLulus: string;
+  hargaPo: string;
+}
+
+export interface InvoicePemasokView {
+  dokumenId: string;
+  nomor: string;
+  status: StatusDokumen;
+  versi: number;
+  nomorInvoice: string;
+  tanggal: string;
+  terminHari: number;
+  jatuhTempo: string;
+  nomorFakturPajak: string | null;
+  dppTotal: string;
+  ppnNilai: string;
+  total: string;
+  catatan: string | null;
+  penerimaanId: string;
+  penerimaanNomor: string | null;
+  pemasokNama: string;
+  createdAt: string;
+}
+
+export interface InvoicePemasokDetail {
+  header: InvoicePemasokView;
+  items: InvoicePemasokItem[];
+  riwayat: RiwayatStatus[];
+}
+
+export interface BarisInvoice {
+  penerimaanItemId: string;
+  qty: string;
+  hargaSatuanDpp: string;
+}
+
+export interface CatatInvoiceInput {
+  penerimaanId: string;
+  nomorInvoice: string;
+  tanggal: string;
+  terminHari: number;
+  nomorFakturPajak?: string;
+  ppnNilai: string;
+  baris: readonly BarisInvoice[];
+  actorId: string;
+}
+
+export interface CocokkanUlangInvoiceInput {
+  dokumenId: string;
+  versi: number;
+  ppnNilai: string;
+  baris: readonly BarisInvoice[];
+  actorId: string;
+}
+
+export interface SahkanInvoiceInput {
+  dokumenId: string;
+  versi: number;
+  actorId: string;
+}
+
+export interface BatalkanInvoiceInput {
+  dokumenId: string;
+  versi: number;
+  alasan: string;
+  actorId: string;
+}
+
+export interface PenerimaanSiapInvoice {
+  header: PenerimaanView;
+  items: {
+    penerimaanItemId: string;
+    produkId: string;
+    qtyLulus: string;
+    hargaPo: string;
+  }[];
+}
