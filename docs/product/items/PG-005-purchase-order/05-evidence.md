@@ -70,7 +70,7 @@ Rancangan singkat:
 - **Tarif PPN belum ada.** `konfigurasi_pajak` dibuat tanpa baris, sesuai `D-51`(a) yang melarang menulis angka tarif dari ingatan. Akibatnya penerbitan PO ditolak dengan pesan "Tarif PPN untuk tanggal ini belum tersedia" sampai tech lead mengisi data. Layar menampilkan peringatan yang sama.
 - **Format nomor.** AC-01 mencontohkan `PO/{tahun}/{bulan}/{urut}`; core mencetak `{TIPE}/...` (`D-50`), dan `buat_po` memanggil tipe `PURCHASE_ORDER`, jadi nomornya `PURCHASE_ORDER/2026/11/0001`. Mengubah prefiks berarti mengubah migrasi `0014` yang sudah diterapkan, jadi tidak dilakukan.
 - **Qty baris.** Requirement hanya menyebut qty harus > 0; layar memakai qty permintaan sebagai nilai awal dan mengizinkannya diubah selama masih > 0. Harga satuan tidak bisa diubah dan harus sama dengan harga pembanding.
-- **Migrasi `0025`.** Nomor bebas berikutnya setelah `0017` (PG-003), `0018` (PG-004), dan `0016` yang dicadangkan GJ-001. Mohon dikonfirmasi saat review (`D-09`).
+- **Migrasi `0025`.** Nomor bebas berikutnya setelah track GJ memakai `0017`-`0022` di PR-nya; `0023` dan `0024` dipakai PG-003/PG-004. Mohon dikonfirmasi saat review (`D-09`).
 - **Seed baru.** `supabase/seeds/0013_pg005_jenis_po.sql` mendaftarkan jenis dokumen `PURCHASE_ORDER`; tanpa ini `buat_dokumen` menolak dengan "Jenis dokumen PURCHASE_ORDER tidak terdaftar".
 
 ## Yang belum / risiko
