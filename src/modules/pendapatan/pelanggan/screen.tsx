@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 import type { Profile } from "@/lib/auth/types";
 import { cekIzin } from "@/lib/auth/permissions";
 import { PelangganDetail } from "./components/pelanggan-detail";
@@ -56,6 +58,12 @@ export async function PelangganScreen({
             Kelola master pelanggan, ketentuan termin pembayaran, dan pagu
             batas kredit. Perubahan master hanya berlaku untuk transaksi baru.
           </p>
+        </div>
+
+        <div className={styles.headerActions}>
+          <Link className={styles.secondaryButton} href="/pendapatan/pesanan">
+            Pesanan Penjualan →
+          </Link>
         </div>
       </header>
 
