@@ -299,3 +299,78 @@ export async function lepasAlokasiPesanan(
   if (error) return fail(error.message);
   return ok({ dilepasCount: (data ?? []).length });
 }
+
+/**
+ * PD-004 (AC-03): Melepas alokasi aktif untuk satu item pesanan sebesar qty yang dikirim.
+ * Jika suatu baris alokasi lebih besar dari sisa yang harus dilepas, baris itu dipecah:
+ * sebesar qtyLepas dilepas dan sisanya tetap 'teralokasi'.
+ */
+export async function lepasAlokasiItemSebagian(
+  supabase: SupabaseClient,
+  pesananItemId: string,
+  gudangId: string,
+  qtyLepas: number,
+  actorId: string,
+): Promise<Result<{ dilepasQty: number }>> {
+  if (qtyLepas <= 0) return ok({ dilepasQty: 0 });
+
+  const { data: rows, error } = await supabase
+    .from("alokasi_stok")
+    .select("id, pesanan_id, produk_id, qty::text")
+    .eq("pesanan_item_id", pesananItemId)
+    .eq("gudang_id", gudangId)
+    .eq("status", "teralokasi")
+    .order("created_at", { ascending: true });
+
+  if (error) return fail(error.message);
+
+  let sisaLepas = qtyLepas;
+  let totalDilepas = 0;
+
+  for (const row of rows ?? []) {
+    if (sisaLepas <= 0) break;
+    const rowQty = Number(row.qty ?? 0);
+
+    if (rowQty <= sisaLepas + 0.0001) {
+      await supabase
+        .from("alokasi_stok")
+        .update({
+          status: "dilepas",
+          updated_by: actorId,
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", row.id);
+      sisaLepas = Math.round((sisaLepas - rowQty + Number.EPSILON) * 10000) / 10000;
+      totalDilepas += rowQty;
+    } else {
+      const sisaTeralokasi =
+        Math.round((rowQty - sisaLepas + Number.EPSILON) * 10000) / 10000;
+
+      // Update baris existing menjadi sisaTeralokasi, dan catat baris dilepas sebesar sisaLepas
+      await supabase
+        .from("alokasi_stok")
+        .update({
+          qty: sisaTeralokasi,
+          updated_by: actorId,
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", row.id);
+
+      await supabase.from("alokasi_stok").insert({
+        pesanan_id: row.pesanan_id,
+        pesanan_item_id: pesananItemId,
+        produk_id: row.produk_id,
+        gudang_id: gudangId,
+        qty: sisaLepas,
+        status: "dilepas",
+        created_by: actorId,
+        updated_by: actorId,
+      });
+
+      totalDilepas += sisaLepas;
+      sisaLepas = 0;
+    }
+  }
+
+  return ok({ dilepasQty: totalDilepas });
+}

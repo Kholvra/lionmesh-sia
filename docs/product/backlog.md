@@ -43,7 +43,7 @@ Satu pemilik: tech lead. Urutan wajib.
 | `PD-001` | Pelanggan, termin, batas kredit | PD-A master | 1 | `FND-003` | `done` |
 | `PD-002` | Pesanan penjualan + cek kredit | PD-B transaksi | 2 | `PD-001`, `FND-004` | `done` |
 | `PD-003` | Cek & reservasi stok | PD-B transaksi | 3 | `FND-005`, `C-011`, `PD-002` | `done` |
-| `PD-004` | Pengiriman + surat jalan | PD-B transaksi | 4 | `PD-002`, `PD-003` | `specified` |
+| `PD-004` | Pengiriman + surat jalan | PD-B transaksi | 4 | `PD-002`, `PD-003` | `done` |
 | `PD-005` | Faktur penjualan & piutang | PD-C keuangan | 5 | `PD-004`, `FND-006` | `specified` |
 | `PD-006` | Penerimaan pembayaran | PD-C keuangan | 6 | `PD-005`, `FND-006` | `specified` |
 | `PD-007` | Retur penjualan | PD-C keuangan | 6 | `PD-005`, `FND-005` | `specified` |
