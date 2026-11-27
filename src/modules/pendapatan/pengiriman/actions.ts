@@ -14,6 +14,7 @@ import {
   lepasAlokasiItemSebagian,
   listAlokasiPesanan,
 } from "@/core/inventory";
+import { postJournal } from "@/core/ledger";
 import { requireIzin } from "@/lib/auth/server";
 import { fail, ok, type Result } from "@/lib/result";
 import { createAdminClient } from "@/lib/supabase/admin";
@@ -214,7 +215,7 @@ export async function kirimPengirimanAction(
     return fail("Pengiriman belum memiliki rincian barang.");
   }
 
-  // AC-11: Pastikan saldo fisik di setiap gudang cukup sebelum mutasi apa pun
+  // AC-11 (PD-004) & AC-10 (PD-008): Pastikan saldo fisik & harga_rata tersedia sebelum mutasi
   for (const item of items) {
     const saldoRes = await getSaldoStok(
       supabase,
@@ -225,6 +226,10 @@ export async function kirimPengirimanAction(
     const saldoQty = saldoRes.data ? Number(saldoRes.data.qty) : 0;
     if (saldoQty < Number(item.qty)) {
       return fail("Saldo fisik tidak cukup untuk pengiriman ini.");
+    }
+    const hargaRata = saldoRes.data ? Number(saldoRes.data.harga_rata) : 0;
+    if (hargaRata <= 0) {
+      return fail("Harga rata belum tersedia untuk produk ini.");
     }
   }
 
@@ -245,7 +250,8 @@ export async function kirimPengirimanAction(
     return fail("Dokumen sudah diproses. Muat ulang halaman.");
   }
 
-  // AC-03 & AC-12: Catat mutasi keluar via core/inventory & lepas alokasi
+  // AC-03 & AC-12 (PD-004): Catat mutasi keluar via core/inventory & lepas alokasi
+  let totalHpp = 0;
   for (const item of items) {
     const mutasiRes = await catatMutasi(supabase, {
       produkId: String(item.produk_id),
@@ -262,6 +268,8 @@ export async function kirimPengirimanAction(
       return fail(mutasiRes.message);
     }
 
+    totalHpp = Math.round((totalHpp + Number(mutasiRes.data.nilai) + Number.EPSILON) * 100) / 100;
+
     await lepasAlokasiItemSebagian(
       supabase,
       String(item.pesanan_item_id),
@@ -269,6 +277,43 @@ export async function kirimPengirimanAction(
       Number(item.qty),
       profile.id,
     );
+  }
+
+  // AC-01 (PD-008): Posting jurnal HPP pengiriman (Dr hpp, Cr persediaan_barang_jadi)
+  if (totalHpp > 0) {
+    const journalRes = await postJournal(supabase, {
+      tanggal: String(pengiriman.tanggal_pengiriman),
+      sumberTipe: "PENGIRIMAN",
+      sumberId: id,
+      sumberNomor: String(pengiriman.nomor),
+      sumberPemicu: "KIRIM_PENGIRIMAN",
+      baris: [
+        {
+          akunPeran: "hpp",
+          debit: totalHpp.toFixed(2),
+          kredit: "0.00",
+        },
+        {
+          akunPeran: "persediaan_barang_jadi",
+          debit: "0.00",
+          kredit: totalHpp.toFixed(2),
+        },
+      ],
+      actorId: profile.id,
+    });
+
+    if (!journalRes.ok) {
+      return fail(journalRes.message);
+    }
+
+    await supabase
+      .from("pengiriman")
+      .update({
+        jurnal_hpp_id: journalRes.data.jurnalId,
+        updated_by: profile.id,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", id);
   }
 
   if (pengiriman.dokumen_id) {
