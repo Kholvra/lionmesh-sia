@@ -9,8 +9,6 @@ import { rentangPeriode } from "@/modules/penggajian/periode/rules";
 import type { PeriodeGaji } from "@/modules/penggajian/periode/types";
 import { calculatePayroll } from "@/modules/penggajian/payroll/actions";
 import { aksesPayroll } from "@/modules/penggajian/payroll/akses";
-import { DaftarPemeriksaan, RingkasanDireksi } from "@/modules/penggajian/payroll/components/pemeriksaan";
-import { PanelPersetujuan } from "@/modules/penggajian/payroll/components/panel-persetujuan";
 import { getDraft } from "@/modules/penggajian/payroll/queries";
 import type { DraftView } from "@/modules/penggajian/payroll/queries";
 import { labelDraft, STATUS_DRAFT } from "@/modules/penggajian/payroll/status";
@@ -129,8 +127,6 @@ function TombolHitung({ periode, draft }: { periode: PeriodeGaji; draft: DraftVi
 }
 
 function judulPeran(sesi: SesiPenggajian): { judul: string; deskripsi: string; item?: string } {
-  if (sesi.peran === "Accounting") return { item: "GJ-005 Memeriksa payroll", judul: "Pemeriksaan payroll", deskripsi: "Periksa komponen, total, dan alokasi sebelum meneruskan ke Direksi." };
-  if (sesi.peran === "Direksi") return { item: "GJ-005 Menyetujui payroll", judul: "Persetujuan pembayaran payroll", deskripsi: "Payroll sudah diverifikasi Accounting. Keputusan ini mengotorisasi pembayaran, bukan bukti transfer." };
   if (sesi.peran === "Finance") return { judul: "Draft payroll", deskripsi: "Gaji bersih per karyawan untuk transfer." };
   return { judul: "Draf perhitungan gaji", deskripsi: "Dihitung dari gaji pokok, presensi dan lembur tervalidasi, serta tabel tarif berversi." };
 }
@@ -141,16 +137,16 @@ async function Konten({ periodeId, pesan }: { periodeId?: string; pesan?: string
   const { judul, deskripsi, item = ITEM } = judulPeran(sesi);
   const header = <PageHeader actions={akses.rincian ? <Link className={ui.button} href="/penggajian/payroll/tarif">Tabel tarif</Link> : undefined} description={deskripsi} item={item} title={judul} />;
   if (!akses.ringkasan) return <>{header}<TidakBerwenang pesan="Draft payroll dibuka HR, Accounting, Finance (gaji bersih), dan Direksi (ringkasan)." /></>;
-  const periode = getPeriodeDipilih(periodeId);
+  const periode = await getPeriodeDipilih(periodeId);
   if (!periode) return <>{header}<Keadaan judul="Belum ada periode penggajian" pesan="Periode dibuat HR lebih dulu." /></>;
-  const draft = getDraft(sesi, periode.id);
+  const draft = await getDraft(sesi, periode.id);
   const r = draft?.ringkasan;
   return (
     <>
       {header}
       <div className={ui.stack}>
         <div className={ui.cardHeader}>
-          <PilihPeriode action="/penggajian/payroll" dipilih={periode.id} periode={listPeriode()} />
+          <PilihPeriode action="/penggajian/payroll" dipilih={periode.id} periode={await listPeriode()} />
           <StatusBadge status={draft?.status ?? "BELUM"} statuses={STATUS_DRAFT} />
         </div>
         {akses.hitung ? <Stepper aktif={periode.status === "TERVALIDASI" ? 3 : periode.status === "REKAP" ? 1 : 0} langkah={ALUR_REKAP} /> : null}
@@ -171,13 +167,9 @@ async function Konten({ periodeId, pesan }: { periodeId?: string; pesan?: string
             {draft.ditandai.map((d) => <p key={d.karyawanId}>{d.nama} (NIK {d.nik}): {d.alasan}</p>)}
           </Notice>
         ) : null}
-        {draft && sesi.peran === "Accounting" ? <DaftarPemeriksaan draft={draft} periode={periode} profileId={sesi.profileId} /> : null}
-        {draft && sesi.peran === "Direksi" ? <RingkasanDireksi draft={draft} periode={periode} /> : null}
-        {draft && sesi.peran === "Direksi" && draft.status === "DIPERIKSA" ? <Notice title="Menunggu persetujuan Direksi. Finance belum boleh membayar." tone="warning" /> : null}
         {draft && akses.rincian ? <TabelKomponen draft={draft} periodeId={periode.id} /> : null}
         {draft && !akses.rincian && draft.neto ? <TabelNeto draft={draft} /> : null}
         {draft && akses.rincian ? <DasarPerhitungan draft={draft} /> : null}
-        {draft ? <PanelPersetujuan draft={draft} peran={sesi.peran} /> : null}
         {akses.hitung ? (
           <div className={ui.cardHeader}>
             <Notice title="Prorata dan koreksi manual" tone="info">

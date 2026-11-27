@@ -4,51 +4,45 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
 import { assertIzin } from "@/lib/auth";
-import { sesiDariProfil } from "@/modules/penggajian/akun/akun";
+import { createClient } from "@/lib/supabase/server";
 import type { AksiState } from "@/modules/penggajian/karyawan/actions";
 import { parseNominal } from "@/modules/penggajian/karyawan/rules";
-import { cariPeriode } from "@/modules/penggajian/periode/store";
 import { dataHitung } from "@/modules/penggajian/payroll/data";
-import { hitungPayroll, rangkum } from "@/modules/penggajian/payroll/hitung";
-import { terkunci } from "@/modules/penggajian/payroll/status";
-import { cariDraft, simpanDraft } from "@/modules/penggajian/payroll/store";
+import { hitungPayroll } from "@/modules/penggajian/payroll/hitung";
 import { tabelTarif } from "@/modules/penggajian/payroll/tarif";
-import type { DraftPayroll } from "@/modules/penggajian/payroll/types";
-import { catatRiwayat } from "@/modules/penggajian/shared/riwayat";
+import { semuaPeriode } from "@/modules/penggajian/periode/queries";
 import { teks } from "@/modules/penggajian/shared/form";
 
 const BASE = "/penggajian/payroll";
 
+/** HR calculates on the server from validated rows; simpan_draft_payroll stores it in one transaction. */
 export async function calculatePayroll(_state: AksiState, formData: FormData): Promise<AksiState> {
   const hasil = await assertIzin("hitung_payroll");
   if (!hasil.ok) return hasil;
-  const nama = sesiDariProfil(hasil.data).nama;
-  const periode = cariPeriode(teks(formData, "periodeId"));
+  const periode = (await semuaPeriode()).find((p) => p.id === teks(formData, "periodeId"));
   if (!periode) return { ok: false, message: "Periode tidak ditemukan." };
-  if (periode.status !== "TERVALIDASI") {
+  if (periode.status === "TERBUKA" || periode.status === "REKAP") {
     return { ok: false, message: `Payroll ${periode.nama} belum bisa dihitung: validasi supervisor belum dilakukan.` };
   }
-  const lama = cariDraft(periode.id);
-  if (lama && (lama.status === "DIPERIKSA" || terkunci(lama.status))) {
-    return { ok: false, message: terkunci(lama.status) ? "Draft sudah disetujui dan dikunci." : "Draft sedang diperiksa Accounting; tunggu dikembalikan sebelum menghitung ulang." };
-  }
-  const hitung = hitungPayroll(periode, dataHitung(periode), tabelTarif());
+  const hitung = hitungPayroll(periode, await dataHitung(periode), tabelTarif());
   if (!hitung.ok) return hitung;
-  const pada = new Date().toISOString();
-  const draft: DraftPayroll = {
-    periodeId: periode.id,
-    status: "DRAFT_TERHITUNG",
-    dihitungOleh: nama,
-    dihitungOlehProfileId: hasil.data.id,
-    dihitungPada: pada,
-    versiTarif: hitung.data.versiTarif,
-    baris: hitung.data.baris,
-    ditandai: hitung.data.ditandai,
-    riwayat: lama ? [...lama.riwayat] : [],
-    pengembalian: null,
-  };
-  catatRiwayat(draft.riwayat, { dari: lama?.status ?? null, ke: "DRAFT_TERHITUNG", oleh: nama, pada, alasan: lama ? "Dihitung ulang" : "Dihitung" });
-  simpanDraft(draft);
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("simpan_draft_payroll", {
+    p_periode_gaji_id: periode.id,
+    p_versi_tarif: hitung.data.versiTarif,
+    p_ditandai: hitung.data.ditandai,
+    p_baris: hitung.data.baris.map((b) => ({
+      karyawan_id: b.karyawanId,
+      nama: b.nama,
+      nik: b.nik,
+      departemen: b.departemen,
+      perlu_penyesuaian_tahunan: b.perluPenyesuaianTahunan,
+      komponen: b.komponen.map((k) => ({
+        kode: k.kode, label: k.label, jenis: k.jenis, nilai: k.nilai, nilai_mentah: k.nilaiMentah, dasar: k.dasar, versi_tarif: k.versiTarif,
+      })),
+    })),
+  });
+  if (error) return { ok: false, message: error.message };
   revalidatePath(BASE);
   redirect(`${BASE}?periode=${periode.id}&pesan=dihitung`);
 }
@@ -57,31 +51,22 @@ export async function calculatePayroll(_state: AksiState, formData: FormData): P
 export async function overrideKomponen(periodeId: string, karyawanId: string, _state: AksiState, formData: FormData): Promise<AksiState> {
   const hasil = await assertIzin("hitung_payroll");
   if (!hasil.ok) return hasil;
-  const draft = cariDraft(periodeId);
-  if (!draft || (draft.status !== "DRAFT_TERHITUNG" && draft.status !== "REVISI")) {
-    return { ok: false, message: "Koreksi hanya untuk draft yang belum diperiksa atau dikunci." };
-  }
-  const index = draft.baris.findIndex((b) => b.karyawanId === karyawanId);
-  const baris = draft.baris[index];
   const kode = teks(formData, "kode");
-  const komponen = baris?.komponen.find((k) => k.kode === kode);
   const alasan = teks(formData, "alasan");
   const nilaiTeks = teks(formData, "nilai");
   const nilai = nilaiTeks === "0" ? 0 : parseNominal(nilaiTeks);
   const errors: Record<string, string> = {};
-  if (!komponen) errors.kode = "Pilih komponen.";
+  if (!kode) errors.kode = "Pilih komponen.";
   if (nilai === null) errors.nilai = "Isi nilai dalam rupiah, tanpa desimal.";
   if (!alasan) errors.alasan = "Alasan koreksi wajib diisi.";
-  if (Object.keys(errors).length > 0 || !komponen || nilai === null) {
+  if (Object.keys(errors).length > 0 || nilai === null) {
     return { ok: false, message: "Koreksi belum bisa disimpan. Periksa isian yang ditandai.", fieldErrors: errors };
   }
-  const nama = sesiDariProfil(hasil.data).nama;
-  const pada = new Date().toISOString();
-  komponen.koreksi = { nilaiSemula: komponen.koreksi?.nilaiSemula ?? komponen.nilai, alasan, oleh: nama, pada };
-  komponen.nilai = nilai;
-  komponen.nilaiMentah = nilai;
-  draft.baris[index] = rangkum(baris);
-  catatRiwayat(draft.riwayat, { dari: draft.status, ke: draft.status, oleh: nama, pada, alasan: `Koreksi ${komponen.label} ${baris.nama}: ${alasan}` });
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("koreksi_komponen_gaji", {
+    p_periode_gaji_id: periodeId, p_karyawan_id: karyawanId, p_kode: kode, p_nilai: nilai, p_alasan: alasan,
+  });
+  if (error) return { ok: false, message: error.message };
   revalidatePath(BASE);
   redirect(`${BASE}/${periodeId}/${karyawanId}?pesan=dikoreksi`);
 }

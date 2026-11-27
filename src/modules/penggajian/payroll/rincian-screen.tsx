@@ -3,8 +3,7 @@ import { Suspense } from "react";
 import { sesiPenggajian } from "@/modules/penggajian/akun/akun";
 import { formatRupiah, formatWaktu } from "@/modules/penggajian/karyawan/format";
 import { overrideKomponen } from "@/modules/penggajian/payroll/actions";
-import { cariDraft } from "@/modules/penggajian/payroll/store";
-import { getBarisGaji } from "@/modules/penggajian/payroll/queries";
+import { getDraft } from "@/modules/penggajian/payroll/queries";
 import type { Komponen } from "@/modules/penggajian/payroll/types";
 import { Notice } from "@/modules/penggajian/ui/notice";
 import { PageHeader } from "@/modules/penggajian/ui/page-header";
@@ -28,9 +27,9 @@ function Baris({ k }: { k: Komponen }) {
 
 async function Konten({ periodeId, karyawanId, pesan }: { periodeId: string; karyawanId: string; pesan?: string }) {
   const sesi = await sesiPenggajian();
-  const baris = getBarisGaji(sesi, periodeId, karyawanId);
+  const draft = await getDraft(sesi, periodeId);
+  const baris = draft?.baris?.find((b) => b.karyawanId === karyawanId);
   if (!baris) return <Keadaan judul="Rincian tidak tersedia" pesan="Rincian per karyawan hanya untuk HR dan Accounting, dan hanya bila draft sudah dihitung." peringatan />;
-  const draft = cariDraft(periodeId);
   const bisaKoreksi = sesi.peran === "HR" && (draft?.status === "DRAFT_TERHITUNG" || draft?.status === "REVISI");
   return (
     <div className={ui.stack}>

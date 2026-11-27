@@ -160,4 +160,10 @@ export const ui = {
 
   // Stacked cell content (chip above a note) that keeps chips at their own width.
   selTumpuk: "grid justify-items-start gap-[var(--space-1)]",
+
+  // Added by GJ-004.
+  kartuAngka: "grid grid-flow-col auto-cols-fr gap-[var(--space-4)]",
+  tabelLebar: "overflow-x-auto",
+  barisTotal: "[&>td]:bg-[var(--bg-subtle)] [&>td]:font-semibold",
+
 } as const;
