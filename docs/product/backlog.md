@@ -60,7 +60,7 @@ Satu pemilik: tech lead. Urutan wajib.
 | `PG-004` | Pemilihan pemasok & perbandingan harga | PG-B pengadaan | 4 | `PG-002`, `PG-001`, `PG-003` | `done` |
 | `PG-005` | Purchase order | PG-B pengadaan | 5 | `PG-003`, `PG-004` | `done` |
 | `PG-006` | Penerimaan barang | PG-C penerimaan | 6 | `PG-005`, `FND-005` | `done` |
-| `PG-007` | QC bahan & retur ke pemasok | PG-C penerimaan | 7 | `PG-006`, `FND-005` | `specified` |
+| `PG-007` | QC bahan & retur ke pemasok | PG-C penerimaan | 7 | `PG-006`, `FND-005` | `done` |
 | `PG-008` | Three-way match & utang usaha | PG-D utang | 8 | `PG-007`, `FND-006` | `specified` |
 | `PG-009` | Pembayaran utang | PG-D utang | 9 | `PG-008`, `FND-006` | `specified` |
 | `PG-010` | Rekonsiliasi bank | PG-E bank | 1 | `FND-006` | `ready` |
@@ -220,3 +220,4 @@ Terbaca per level. Semua item dalam satu baris boleh dikerjakan serentak. `DISC-
 | 2026-11-27 | `PG-004` → `done`: ditumpuk di branch PG-003; tabel `penawaran_harga`, layar perbandingan harga, penetapan satu pemasok dengan alasan wajib bila bukan total terendah, migrasi `0024`. Bukti AC-DB menyusul, tercatat di `docs/tech-debt/pg-004-bukti-db.md` |
 | 2026-11-27 | `PG-005` → `done`: ditumpuk di branch PG-004; `konfigurasi_pajak` berversi, `terbitkan_po` (harga wajib dari pembanding PG-004), pembatalan PO + permintaan, catatan konfirmasi, migrasi `0025` (jenis dokumen `PURCHASE_ORDER` sudah terdaftar di `0014`). Penerbitan PO tertahan sampai tarif PPN diisi; bukti AC-DB di `docs/tech-debt/pg-005-bukti-db.md` |
 | 2026-11-27 | `PG-006` → `done`: ditumpuk di branch PG-005; layar penerimaan dengan sisa qty PO, pembatalan sebelum QC, penutupan exception oleh Purchasing, migrasi `0026` (tepi `DITERIMA → DIBATALKAN`). Dua keputusan state machine ditandai untuk tech lead; bukti AC-DB di `docs/tech-debt/pg-006-bukti-db.md` |
+| 2026-11-27 | `PG-007` → `done`: ditumpuk di branch PG-006; layar QC dan retur pemasok, lokasi pemisahan barang gagal, dokumen `RETUR_PEMASOK` dengan persetujuan Accounting, migrasi `0027`. QC memakai `catat_qc_penerimaan` C-013 sehingga stok + jurnal tetap satu transaksi; bukti AC-DB di `docs/tech-debt/pg-007-bukti-db.md` |
