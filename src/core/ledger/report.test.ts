@@ -13,7 +13,7 @@ import {
   totalJurnalPersediaanCents,
   type BarisLaporan,
 } from "./report.ts";
-import { isMoney, moneyToCents } from "./money.ts";
+import { isMoney, moneyToCents, roundToWholeRupiah } from "./money.ts";
 
 type AkunKunci =
   | "kas"
@@ -326,21 +326,36 @@ test("isPeranPersediaan mengenali tiga peran akun persediaan", () => {
   assert.equal(isPeranPersediaan("hpp"), false);
 });
 
-test("uang menolak kosong, negatif, dan presisi lebih", () => {
+test("uang menolak pecahan sen, kosong, negatif, dan presisi lebih", () => {
   assert.equal(isMoney(""), false);
   assert.equal(isMoney("0"), true);
   assert.equal(isMoney("0.00"), true);
+  assert.equal(isMoney("1"), true);
+  assert.equal(isMoney("1.00"), true);
+  assert.equal(isMoney("0.50"), false);
+  assert.equal(isMoney("0.01"), false);
   assert.equal(isMoney("-0.01"), false);
   assert.equal(isMoney("1.001"), false);
   assert.equal(moneyToCents("0"), BigInt(0));
-  assert.equal(moneyToCents("0.01"), BigInt(1));
+  assert.equal(moneyToCents("1"), BigInt(100));
+  assert.equal(moneyToCents("1.00"), BigInt(100));
   assert.throws(() => moneyToCents(""), /uang/i);
   assert.throws(() => moneyToCents("-0.01"), /uang/i);
+  assert.throws(() => moneyToCents("0.50"), /bulat/i);
+  assert.throws(() => moneyToCents("0.01"), /bulat/i);
   assert.throws(() => moneyToCents("1.001"), /uang/i);
 });
 
+test("pembulatan setengah rupiah ke atas di batas penyimpanan", () => {
+  assert.equal(roundToWholeRupiah(BigInt(49)), BigInt(0));
+  assert.equal(roundToWholeRupiah(BigInt(50)), BigInt(100));
+  assert.equal(roundToWholeRupiah(BigInt(149)), BigInt(100));
+  assert.equal(roundToWholeRupiah(BigInt(150)), BigInt(200));
+  assert.equal(roundToWholeRupiah(BigInt(-50)), BigInt(-100));
+});
+
 test("saldo neto memakai konvensi debit dikurangi kredit", () => {
-  assert.equal(saldoNetoCents([baris("kas", "0.01", "0")]), "1");
-  assert.equal(saldoNetoCents([baris("kas", "0", "0.01")]), "-1");
-  assert.throws(() => saldoNetoCents([baris("kas", "0.001", "0")]), /uang/i);
+  assert.equal(saldoNetoCents([baris("kas", "1", "0")]), "100");
+  assert.equal(saldoNetoCents([baris("kas", "0", "1")]), "-100");
+  assert.throws(() => saldoNetoCents([baris("kas", "0.01", "0")]), /bulat/i);
 });

@@ -1,4 +1,4 @@
-import { parseDecimal, type DecimalOptions } from "../ledger/money.ts";
+import { moneyToCents, parseDecimal, roundToWholeRupiah, type DecimalOptions } from "../ledger/money.ts";
 import type { ValuationStrategy } from "./types";
 
 const PILIHAN_QTY: DecimalOptions = {
@@ -6,12 +6,6 @@ const PILIHAN_QTY: DecimalOptions = {
   allowNegative: false,
   rejectExcessPrecision: true,
   maxWholeDigits: 14,
-};
-const PILIHAN_NILAI: DecimalOptions = {
-  scale: 2,
-  allowNegative: false,
-  rejectExcessPrecision: true,
-  maxWholeDigits: 16,
 };
 
 function units(value: string, options: DecimalOptions): bigint {
@@ -35,12 +29,12 @@ function divideRounded(numerator: bigint, denominator: bigint): bigint {
 export class MovingAverageValuation implements ValuationStrategy {
   calculateIncoming(currentQty: string, currentNilai: string, currentHargaRata: string, incomingQty: string, incomingHarga: string) {
     const qty = units(currentQty, PILIHAN_QTY);
-    const nilai = units(currentNilai, PILIHAN_NILAI);
+    const nilai = moneyToCents(currentNilai);
     const oldPrice = units(currentHargaRata, PILIHAN_QTY);
     const incoming = units(incomingQty, PILIHAN_QTY);
     const price = units(incomingHarga, PILIHAN_QTY);
     if (incoming === BigInt(0)) throw new Error("Qty masuk harus lebih dari nol.");
-    const nilaiMasuk = divideRounded(incoming * (price || oldPrice), BigInt(1000000));
+    const nilaiMasuk = roundToWholeRupiah(divideRounded(incoming * (price || oldPrice), BigInt(1000000)));
     const qtyBaru = qty + incoming;
     const nilaiBaru = nilai + nilaiMasuk;
     const hargaRataBaru = divideRounded(nilaiBaru * BigInt(1000000), qtyBaru);
@@ -49,12 +43,12 @@ export class MovingAverageValuation implements ValuationStrategy {
 
   calculateOutgoing(currentQty: string, currentNilai: string, currentHargaRata: string, outgoingQty: string) {
     const qty = units(currentQty, PILIHAN_QTY);
-    const nilai = units(currentNilai, PILIHAN_NILAI);
+    const nilai = moneyToCents(currentNilai);
     const price = units(currentHargaRata, PILIHAN_QTY);
     const outgoing = units(outgoingQty, PILIHAN_QTY);
     if (outgoing === BigInt(0)) throw new Error("Qty keluar harus lebih dari nol.");
     if (outgoing > qty) throw new Error(`Qty keluar ${outgoingQty} melebihi stok tersedia ${currentQty}.`);
-    const nilaiKeluar = outgoing === qty ? nilai : divideRounded(outgoing * price, BigInt(1000000));
+    const nilaiKeluar = outgoing === qty ? nilai : roundToWholeRupiah(divideRounded(outgoing * price, BigInt(1000000)));
     return { qtyBaru: decimal(qty - outgoing, 4), nilaiBaru: decimal(nilai - nilaiKeluar, 2), hargaRataBaru: decimal(price, 4), nilaiKeluar: decimal(nilaiKeluar, 2) };
   }
 }

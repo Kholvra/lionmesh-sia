@@ -1,5 +1,7 @@
 import { parseDecimal, type DecimalOptions } from "../ledger/money.ts";
 
+// Quantity and harga rates keep four-decimal precision; money fields use
+// isMoney/moneyToCents from the ledger, which require whole rupiah.
 // PostgreSQL numeric(18,4) values cross the JavaScript boundary as decimal strings.
 const PILIHAN_DESIMAL: DecimalOptions = {
   scale: 4,

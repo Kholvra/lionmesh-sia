@@ -11,7 +11,7 @@ export function statusPemasok(aktif: boolean): "aktif" | "nonaktif" {
 
 const POLA_RUPIAH = /^-?\d+(?:\.\d+)?$/;
 
-/** Converts validated decimal IDR to integer cents for the canonical formatter. */
+/** Converts whole-rupiah IDR to integer cents for the canonical formatter. */
 export function rupiahKeCents(value: string | number): bigint {
   const teks = typeof value === "number" ? String(value) : value;
   if (!POLA_RUPIAH.test(teks)) {
@@ -19,11 +19,10 @@ export function rupiahKeCents(value: string | number): bigint {
   }
   const negatif = teks.startsWith("-");
   const [bulatRaw, desimalRaw = ""] = (negatif ? teks.slice(1) : teks).split(".");
-  if (desimalRaw.length > 2) {
-    throw new Error(`Nilai rupiah maksimal 2 angka desimal: ${teks}`);
+  if (/[1-9]/.test(desimalRaw)) {
+    throw new Error(`Nominal harus bulat tanpa sen: ${teks}`);
   }
-  const nilai =
-    BigInt(bulatRaw) * BigInt(100) + BigInt(desimalRaw.padEnd(2, "0"));
+  const nilai = BigInt(bulatRaw) * BigInt(100);
   return negatif ? -nilai : nilai;
 }
 

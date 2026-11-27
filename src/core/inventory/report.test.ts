@@ -92,7 +92,8 @@ test("saldo kartu menjumlahkan mutasi menjadi nilai mentah", () => {
 
 test("nilai rupiah mentah dikonversi ke sen untuk tampilan", () => {
   assert.equal(uangMentahKeCents("1000000"), "100000000");
-  assert.equal(uangMentahKeCents("1083333.33"), "108333333");
+  assert.equal(uangMentahKeCents("1083333.00"), "108333300");
+  assert.throws(() => uangMentahKeCents("1083333.33"), /bulat/i);
 });
 
 test("kartu persediaan tanpa mutasi menampilkan saldo awal", () => {
@@ -136,10 +137,11 @@ test("desimal inventory menolak kosong, negatif saat dilarang, dan presisi lebih
   assert.equal(isDecimal("0.0000", true), true);
 });
 
-test("uang mentah menolak kosong dan presisi lebih dari dua angka", () => {
+test("uang mentah menolak pecahan sen, kosong, dan presisi lebih", () => {
   assert.equal(uangMentahKeCents("0"), "0");
-  assert.throws(() => uangMentahKeCents(""), /desimal/i);
-  assert.throws(() => uangMentahKeCents("1.001"), /desimal/i);
+  assert.throws(() => uangMentahKeCents(""), /uang/i);
+  assert.throws(() => uangMentahKeCents("0.50"), /bulat/i);
+  assert.throws(() => uangMentahKeCents("1.001"), /uang/i);
 });
 
 test("qty nol tetap memakai tanda nilai negatif", () => {
@@ -153,14 +155,29 @@ test("qty nol tetap memakai tanda nilai negatif", () => {
   assert.equal(hitungTotalNilaiMutasiCents([baris]), "-500");
 });
 
-test("valuasi membulatkan setengah sen ke atas", () => {
-  const hasil = defaultValuationStrategy.calculateIncoming(
-    "0", "0", "0", "0.0001", "650",
+test("valuasi membulatkan nilai ke rupiah penuh, bukan ke sen", () => {
+  const masuk = defaultValuationStrategy.calculateIncoming(
+    "0", "0", "0", "0.0001", "5000",
   );
 
-  assert.equal(hasil.nilaiMasuk, "0.07");
+  assert.equal(masuk.nilaiMasuk, "1.00");
+  assert.equal(masuk.nilaiBaru, "1.00");
+  assert.equal(masuk.hargaRataBaru, "10000.0000");
+
+  const keluar = defaultValuationStrategy.calculateOutgoing(
+    "1", "5000", "5000", "0.0001",
+  );
+
+  assert.equal(keluar.nilaiKeluar, "1.00");
+  assert.equal(keluar.nilaiBaru, "4999.00");
+  assert.equal(keluar.hargaRataBaru, "5000.0000");
+
   assert.throws(
     () => defaultValuationStrategy.calculateIncoming("0", "0", "0", "0.00001", "1"),
     /desimal/i,
+  );
+  assert.throws(
+    () => defaultValuationStrategy.calculateIncoming("0", "0.50", "0", "1", "10"),
+    /bulat/i,
   );
 });

@@ -69,7 +69,7 @@ function validateBaris(baris: readonly { akunPeran: string; debit: string; kredi
       return { message: "Data jurnal tidak valid." } as const;
     }
     if (!isMoney(item.debit) || !isMoney(item.kredit)) {
-      return { message: "Nilai jurnal tidak valid." } as const;
+      return { message: "Nilai jurnal tidak valid: nominal harus bulat tanpa sen." } as const;
     }
 
     const debit = moneyToCents(item.debit);

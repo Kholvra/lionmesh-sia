@@ -10,6 +10,46 @@ export interface DecimalOptions {
 }
 
 /**
+ * Money is whole rupiah: scale 0 means no sen is accepted. A fraction made
+ * only of zeros (",00") is padding and stays valid. The cents representation
+ * is kept for persistence and reports by multiplying the parsed rupiah by 100.
+ */
+const MONEY_OPTIONS: DecimalOptions = {
+  scale: 0,
+  allowNegative: false,
+  rejectExcessPrecision: false,
+  maxWholeDigits: 16,
+};
+const MONEY_OPTIONS_SIGNED: DecimalOptions = { ...MONEY_OPTIONS, allowNegative: true };
+
+export function isMoney(value: unknown): value is string {
+  return parseDecimal(value, MONEY_OPTIONS) !== null;
+}
+
+/**
+ * Parses transactional money into cents. Sign is rejected by default; reports
+ * may opt in for stored balances that are legitimately negative.
+ */
+export function moneyToCents(value: string, allowNegative = false): bigint {
+  const rupiah = parseDecimal(
+    value,
+    allowNegative ? MONEY_OPTIONS_SIGNED : MONEY_OPTIONS,
+  );
+  if (rupiah === null) {
+    throw new Error(`Nominal uang tidak valid: ${value}. Nominal harus bulat tanpa sen.`);
+  }
+  return rupiah * BigInt(100);
+}
+
+/** Half-up rounding at the persist/post boundary: cents → whole rupiah. */
+export function roundToWholeRupiah(cents: bigint): bigint {
+  const negatif = cents < BigInt(0);
+  const absolut = negatif ? -cents : cents;
+  const bulat = ((absolut + BigInt(50)) / BigInt(100)) * BigInt(100);
+  return negatif ? -bulat : bulat;
+}
+
+/**
  * One parse/validate/convert primitive. Extra fractional digits are never
  * truncated: with rejectExcessPrecision they are rejected, otherwise they are
  * accepted only when they are padding zeros.
@@ -34,23 +74,6 @@ export function parseDecimal(value: unknown, options: DecimalOptions): bigint | 
   return sign ? -units : units;
 }
 
-const MONEY_OPTIONS: DecimalOptions = {
-  scale: 2,
-  allowNegative: false,
-  rejectExcessPrecision: true,
-  maxWholeDigits: 16,
-};
-
-export function isMoney(value: unknown): value is string {
-  return parseDecimal(value, MONEY_OPTIONS) !== null;
-}
-
-export function moneyToCents(value: string): bigint {
-  const cents = parseDecimal(value, MONEY_OPTIONS);
-  if (cents === null) throw new Error(`Nilai uang tidak valid: ${value}`);
-  return cents;
-}
-
 export type SignConvention =
   | "debit-minus-credit"
   | "quantity-sign"
@@ -73,6 +96,7 @@ export function sumSigned(
   return total;
 }
 
+/** Compact cents for validation messages; canonical UI display is formatRupiah. */
 export function formatCents(value: bigint): string {
   const sign = value < BigInt(0) ? "-" : "";
   const absolute = value < BigInt(0) ? -value : value;

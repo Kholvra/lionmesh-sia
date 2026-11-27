@@ -1,4 +1,4 @@
-import { parseDecimal, sumSigned, type DecimalOptions } from "../ledger/money.ts";
+import { moneyToCents, parseDecimal, sumSigned, type DecimalOptions } from "../ledger/money.ts";
 
 export interface MutasiKartu {
   id: string;
@@ -41,17 +41,11 @@ export interface LaporanKartuPersediaan {
 }
 
 const SKALA_QTY = 4;
+// Money stays in cents internally; input is validated as whole rupiah by moneyToCents.
 const SKALA_UANG = 2;
 
 const PILIHAN_QTY: DecimalOptions = {
   scale: SKALA_QTY,
-  allowNegative: true,
-  rejectExcessPrecision: true,
-  allowLeadingZeros: true,
-  trim: true,
-};
-const PILIHAN_UANG: DecimalOptions = {
-  scale: SKALA_UANG,
   allowNegative: true,
   rejectExcessPrecision: true,
   allowLeadingZeros: true,
@@ -62,8 +56,8 @@ function pangkat(scale: number): bigint {
   return BigInt(10) ** BigInt(scale);
 }
 
-function parseDesimal(value: string, skala: number): bigint {
-  const hasil = parseDecimal(value, skala === SKALA_QTY ? PILIHAN_QTY : PILIHAN_UANG);
+function parseQty(value: string): bigint {
+  const hasil = parseDecimal(value, PILIHAN_QTY);
   if (hasil === null) throw new Error(`Nilai desimal tidak valid: ${value}`);
   return hasil;
 }
@@ -99,8 +93,8 @@ export function hitungSaldoKartu(
   let nilai = BigInt(0);
 
   for (const item of mutasi) {
-    const qtyItem = parseDesimal(item.qty, SKALA_QTY);
-    const nilaiItem = parseDesimal(item.nilai, SKALA_UANG);
+    const qtyItem = parseQty(item.qty);
+    const nilaiItem = moneyToCents(item.nilai, true);
     qty += qtyItem;
     nilai = sumSigned([[qtyItem, nilaiItem]], "quantity-sign", nilai);
   }
@@ -112,7 +106,7 @@ export function hitungSaldoKartu(
 }
 
 export function uangMentahKeCents(value: string): string {
-  return parseDesimal(value, SKALA_UANG).toString();
+  return moneyToCents(value).toString();
 }
 
 function waktu(value: string): number {
@@ -124,8 +118,8 @@ export function hitungKartuPersediaan(
   mutasi: readonly MutasiKartu[],
   saldoAwal: SaldoAwalKartu,
 ): LaporanKartuPersediaan {
-  let saldoQty = parseDesimal(saldoAwal.qty, SKALA_QTY);
-  let saldoNilai = parseDesimal(saldoAwal.nilai, SKALA_UANG);
+  let saldoQty = parseQty(saldoAwal.qty);
+  let saldoNilai = moneyToCents(saldoAwal.nilai, true);
   let totalMasuk = BigInt(0);
   let totalKeluar = BigInt(0);
 
@@ -136,8 +130,8 @@ export function hitungKartuPersediaan(
   });
 
   const baris = terurut.map((item) => {
-    const qty = parseDesimal(item.qty, SKALA_QTY);
-    const nilai = parseDesimal(item.nilai, SKALA_UANG);
+    const qty = parseQty(item.qty);
+    const nilai = moneyToCents(item.nilai, true);
     const masuk = qty > BigInt(0);
     const nilaiBertanda = sumSigned([[qty, nilai]], "quantity-sign");
 
@@ -189,8 +183,8 @@ export function hitungTotalNilaiMutasiCents(
   const pasangan: [bigint, bigint][] = [];
   for (const item of mutasi) {
     pasangan.push([
-      parseDesimal(item.qty, SKALA_QTY),
-      parseDesimal(item.nilai, SKALA_UANG),
+      parseQty(item.qty),
+      moneyToCents(item.nilai, true),
     ]);
   }
   return sumSigned(pasangan, "quantity-sign").toString();

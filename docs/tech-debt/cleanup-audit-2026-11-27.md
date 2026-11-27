@@ -178,9 +178,11 @@ DB lokal (policy pengadaan terbentuk). F1: suffix `,00` tampil di gaji
 - [x] F1. `formatRupiah` GJ → kanonik cents + konversi call site.
 - [x] F2. `Date.now()` AppLayout → `connection()` / client.
 - [x] F3. RLS `0018`: filter `jenis_dokumen` + peran (opsi b).
-- [ ] F4. Tolak pecahan sen (aturan rupiah-bulat) — DITAHAN, tunggu
-      keputusan presisi: tolak SEMUA sen (termasuk `,50`) vs tolak
-      >2 desimal saja (status quo).
+- [x] F4. Tolak pecahan sen (aturan rupiah-bulat) — berlaku: tolak
+      SEMUA sen termasuk `,50`; half-up saat persist (JS + RPC 0019);
+      qty/rate tetap; display `,00`. Bukti: `pnpm test` 126/126,
+      `build` hijau, `0019` dry-run + rollback bersih, audit data lama
+      bersih (nol pecahan) tanpa migrasi data.
 
 ## Fase 5 — Sidebar per siklus (TERAKHIR, setelah Fase 1–4)
 

@@ -6,7 +6,7 @@ import { formatRupiah } from "./money.ts";
 test("rupiah dari sen memakai pemisah ribuan Indonesia", () => {
   assert.equal(formatRupiah("0"), "Rp 0,00");
   assert.equal(formatRupiah("150000"), "Rp 1.500,00");
-  assert.equal(formatRupiah(BigInt("1234567890")), "Rp 12.345.678,90");
+  assert.equal(formatRupiah(BigInt("1234567800")), "Rp 12.345.678,00");
 });
 
 test("rupiah negatif menaruh tanda sebelum mata uang", () => {
@@ -21,12 +21,14 @@ test("rupiah besar tidak kehilangan presisi", () => {
 });
 
 test("rupiah menolak sen pecahan dan nilai kosong", () => {
-  for (const nilai of ["1500.5", "1500.567", ""]) {
+  for (const nilai of ["1500.5", "1500.567", "", "150050"]) {
     assert.throws(() => formatRupiah(nilai));
   }
 });
 
-test("rupiah menampilkan nilai rupiah yang sudah dikonversi ke sen", () => {
-  assert.equal(formatRupiah("150050"), "Rp 1.500,50");
-  assert.equal(formatRupiah("-150050"), "-Rp 1.500,50");
+test("tampilan rupiah selalu memakai ,00", () => {
+  assert.equal(formatRupiah("15000000"), "Rp 150.000,00");
+  assert.equal(formatRupiah("-15000000"), "-Rp 150.000,00");
+  assert.throws(() => formatRupiah("150050"), /bulat/i);
+  assert.throws(() => formatRupiah("-150050"), /bulat/i);
 });
