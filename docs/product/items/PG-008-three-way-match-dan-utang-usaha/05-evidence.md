@@ -34,7 +34,7 @@ Rancangan singkat:
 
 ## Akun COA placeholder (butuh keputusan tech lead)
 
-Seed FND-006 tidak memuat `ppn_masukan` dan `selisih_harga_pembelian`. Atas persetujuan pemilik track, seed `0013` menambahkan:
+Seed FND-006 tidak memuat `ppn_masukan` dan `selisih_harga_pembelian`. Atas persetujuan pemilik track, seed `0014` menambahkan:
 
 | Peran | Nomor | Nama |
 |---|---|---|
