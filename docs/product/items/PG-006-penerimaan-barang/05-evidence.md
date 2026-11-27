@@ -68,7 +68,7 @@ Rancangan singkat:
 - **Exception pada penerimaan sebagian.** R-02 menyatakan penerimaan `SEBAGIAN` yang qty-nya lebih kecil tidak membuat exception, tetapi `catat_penerimaan` milik `C-013` mencatat `SELISIH_QTY` untuk setiap kekurangan, termasuk `SEBAGIAN`. Layar mengikuti perilaku C-013 dan menampilkan exception tersebut agar tidak tersembunyi. Memperbaikinya berarti mengganti RPC C-013; diusulkan ke tech lead, bukan dikerjakan diam-diam.
 - **PO yang sudah `DITERIMA` tidak bisa dibuka kembali.** R-08 menyatakan sisa qty PO kembali setelah pembatalan. State machine `D-46` tidak punya transisi mundur dari `DITERIMA`, jadi `batalkan_penerimaan` menolak pembatalan yang akan meninggalkan PO tertutup dengan sisa qty, dan memberi pesan agar koreksi lewat QC/penerimaan baru. Pembatalan penerimaan parsial (PO `DITERIMA_SEBAGIAN`) berjalan penuh.
 - **Tepi transisi baru.** Migrasi `0026` menambah `DITERIMA → DIBATALKAN` ke `transisi_dokumen_sah`. Ini menyentuh state machine terkunci (`D-46`, `D-48`) dan perlu konfirmasi tech lead.
-- **Migrasi `0026`.** Nomor bebas berikutnya setelah `0019`. Mohon dikonfirmasi (`D-09`).
+- **Migrasi `0026`.** Nomor bebas berikutnya setelah `0025` (PG-005) dan track GJ `0017`-`0022`. Mohon dikonfirmasi (`D-09`).
 
 ## Yang belum / risiko
 
