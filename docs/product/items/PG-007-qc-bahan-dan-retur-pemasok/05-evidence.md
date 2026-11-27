@@ -69,7 +69,7 @@ Rancangan singkat:
 
 ## Penyimpangan
 
-- **Migrasi `0027`.** Nomor bebas berikutnya setelah `0020`; mohon dikonfirmasi (`D-09`).
+- **Migrasi `0027`.** Nomor bebas berikutnya setelah `0026` (PG-006); mohon dikonfirmasi (`D-09`).
 - **Tepi transisi baru.** Migrasi menambah `DIAJUKAN → DISETUJUI/DITOLAK/DIBATALKAN` untuk dokumen retur; ini menyentuh tabel state machine terkunci (`D-46`, `D-48`).
 - **Izin lokasi pemisahan** memakai `catat_pengeluaran_retur` (Gudang) karena matriks belum punya kunci khusus pemisahan barang gagal. Usulan kunci baru dicatat di `03-readiness-review.md` sebagai usulan, bukan diubah sendiri.
 - **Pengeluaran fisik retur** (R-09: Gudang melaksanakan) belum punya status atau langkah tersendiri; AC tidak mengujinya. Retur berhenti di keputusan Accounting.
