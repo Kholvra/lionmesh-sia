@@ -4,11 +4,11 @@ import { Suspense } from "react";
 import { StatusBadge } from "@/components/ui";
 import { sesiPenggajian } from "@/modules/penggajian/akun/akun";
 import { formatRupiah, formatWaktu } from "@/modules/penggajian/karyawan/format";
-import { cariPembayaran } from "@/modules/penggajian/pembayaran/store";
+import { statusTransfer } from "@/modules/penggajian/pembayaran/queries";
 import { STATUS_TRANSFER } from "@/modules/penggajian/pembayaran/status";
-import { cariDraft } from "@/modules/penggajian/payroll/store";
+import { getDraft } from "@/modules/penggajian/payroll/queries";
 import { rentangPeriode } from "@/modules/penggajian/periode/rules";
-import { cariPeriode } from "@/modules/penggajian/periode/store";
+import { semuaPeriode } from "@/modules/penggajian/periode/queries";
 import { AbsenTombol } from "@/modules/penggajian/presensi/components/absen-tombol";
 import { PilihPeriode } from "@/modules/penggajian/presensi/components/pilih-periode";
 import { getPeriodeDipilih, listPeriode } from "@/modules/penggajian/presensi/queries";
@@ -21,8 +21,7 @@ import { Keadaan, TidakBerwenang } from "@/modules/penggajian/shared/states";
 import { TabelData } from "@/modules/penggajian/shared/tabel-data";
 import { printSlip, replaceSlip } from "@/modules/penggajian/slip/actions";
 import { CetakOtomatis } from "@/modules/penggajian/slip/components/cetak-otomatis";
-import styles from "@/modules/penggajian/slip/slip.module.css";
-import { referensiSementara, slipKaryawan } from "@/modules/penggajian/slip/store";
+import { referensiSementara, slipKaryawan } from "@/modules/penggajian/slip/queries";
 
 const ITEM = "GJ-006 Membayar gaji dan menerbitkan slip";
 const TOLAK = "Slip gaji hanya dibuka dan dicetak HR. Karyawan menerima slip cetak.";
@@ -30,13 +29,12 @@ const TOLAK = "Slip gaji hanya dibuka dan dicetak HR. Karyawan menerima slip cet
 async function Daftar({ periodeId }: { periodeId?: string }) {
   const sesi = await sesiPenggajian();
   if (sesi.peran !== "HR") return <TidakBerwenang pesan={TOLAK} />;
-  const periode = getPeriodeDipilih(periodeId);
-  const draft = periode ? cariDraft(periode.id) : undefined;
-  if (!periode || !draft) return <Keadaan judul="Belum ada payroll untuk periode ini" pesan="Slip terbit setelah payroll disetujui dan gaji dibayar." />;
-  const bayar = cariPembayaran(periode.id);
-  const baris = draft.baris.map((b) => {
-    const status = bayar?.transfer.find((t) => t.karyawanId === b.karyawanId)?.status ?? "BELUM";
-    const slip = slipKaryawan(periode.id, b.karyawanId);
+  const periode = await getPeriodeDipilih(periodeId);
+  const draft = periode ? await getDraft(sesi, periode.id) : null;
+  if (!periode || !draft?.baris) return <Keadaan judul="Belum ada payroll untuk periode ini" pesan="Slip terbit setelah payroll disetujui dan gaji dibayar." />;
+  const baris = await Promise.all(draft.baris.map(async (b) => {
+    const status = (await statusTransfer(periode.id, b.karyawanId)) ?? "BELUM";
+    const slip = await slipKaryawan(periode.id, b.karyawanId);
     return {
       key: b.karyawanId,
       nilaiUrut: { karyawan: b.nama },
@@ -47,10 +45,10 @@ async function Daftar({ periodeId }: { periodeId?: string }) {
         aksi: status === "DIBAYAR" ? <Link className={ui.buttonSmall} href={`/penggajian/slip/${periode.id}/${b.karyawanId}`}>Lihat slip</Link> : "Menunggu pembayaran",
       },
     };
-  });
+  }));
   return (
     <div className={ui.stack}>
-      <PilihPeriode action="/penggajian/slip" dipilih={periode.id} periode={listPeriode()} />
+      <PilihPeriode action="/penggajian/slip" dipilih={periode.id} periode={await listPeriode()} />
       <section className={ui.card}>
         <h2 className={ui.cardTitle}>Slip {periode.nama}</h2>
         <TabelData
@@ -80,11 +78,11 @@ const PESAN: Record<string, string> = { dicetak: "Cetak slip tercatat.", penggan
 async function Detail({ periodeId, karyawanId, pesan }: { periodeId: string; karyawanId: string; pesan?: string }) {
   const sesi = await sesiPenggajian();
   if (sesi.peran !== "HR") return <TidakBerwenang pesan={TOLAK} />;
-  const periode = cariPeriode(periodeId);
-  const baris = cariDraft(periodeId)?.baris.find((b) => b.karyawanId === karyawanId);
+  const periode = (await semuaPeriode()).find((p) => p.id === periodeId);
+  const baris = (await getDraft(sesi, periodeId))?.baris?.find((b) => b.karyawanId === karyawanId);
   if (!baris || !periode) return <Keadaan judul="Slip tidak ditemukan" pesan="Tautannya mungkin salah." />;
-  const dibayar = cariPembayaran(periodeId)?.transfer.find((t) => t.karyawanId === karyawanId)?.status === "DIBAYAR";
-  const semua = slipKaryawan(periodeId, karyawanId);
+  const dibayar = (await statusTransfer(periodeId, karyawanId)) === "DIBAYAR";
+  const semua = await slipKaryawan(periodeId, karyawanId);
   const slip = semua.at(-1);
   const nilai = (kode: string) => baris.komponen.find((k) => k.kode === kode)?.nilai ?? 0;
   const potongan = baris.komponen.filter((k) => k.jenis === "kurang" && k.nilai > 0);
@@ -105,7 +103,7 @@ async function Detail({ periodeId, karyawanId, pesan }: { periodeId: string; kar
         title={dibayar ? "Pembayaran telah dikonfirmasi. Slip siap diterbitkan." : "Slip belum bisa dicetak: pembayaran karyawan ini belum tercatat Dibayar."}
         tone={dibayar ? "success" : "danger"}
       />
-      <section className={`${ui.card} ${styles.slip}`}>
+      <section className={`${ui.card} print:[body:has(&)_*]:invisible print:visible! print:[&_*]:visible! print:absolute print:top-0 print:left-0 print:w-full print:shadow-none!`}>
         <div className={ui.cardHeader}>
           <h2 className={ui.cardTitle}>Slip / {baris.nama} / {baris.nik}</h2>
           <span className={ui.cardHint}>{slip ? `${slip.jenis === "PENGGANTI" ? "Slip pengganti" : "Slip"} · ${referensiSementara(slip)}` : "Belum terbit"}</span>
@@ -160,8 +158,8 @@ export function SlipDetailScreen({ periodeId, karyawanId, pesan }: { periodeId: 
 async function Pengganti({ periodeId, karyawanId }: { periodeId: string; karyawanId: string }) {
   const sesi = await sesiPenggajian();
   if (sesi.peran !== "HR") return <TidakBerwenang pesan={TOLAK} />;
-  const baris = cariDraft(periodeId)?.baris.find((b) => b.karyawanId === karyawanId);
-  const slip = slipKaryawan(periodeId, karyawanId).at(-1);
+  const baris = (await getDraft(sesi, periodeId))?.baris?.find((b) => b.karyawanId === karyawanId);
+  const slip = (await slipKaryawan(periodeId, karyawanId)).at(-1);
   if (!baris || !slip) return <Keadaan judul="Belum ada slip yang terbit" pesan="Slip pengganti dibuat setelah slip pertama dicetak." />;
   const terakhir = slip.cetakan.at(-1);
   return (
@@ -171,7 +169,7 @@ async function Pengganti({ periodeId, karyawanId }: { periodeId: string; karyawa
         <KartuBaca
           bidang={[
             ["Karyawan", `${baris.nama} · ${baris.nik}`],
-            ["Periode", cariPeriode(periodeId)?.nama ?? periodeId],
+            ["Periode", (await semuaPeriode()).find((p) => p.id === periodeId)?.nama ?? periodeId],
             ["Slip sebelumnya", `${referensiSementara(slip)}${terakhir ? ` · dicetak ${formatWaktu(terakhir.pada)}` : " · belum dicetak"}`],
           ]}
           judul="Slip"

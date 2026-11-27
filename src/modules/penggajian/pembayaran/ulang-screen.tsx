@@ -18,7 +18,7 @@ const TINDAKAN: Record<string, string> = { DIBAYAR: "Jangan transfer ulang", GAG
 
 async function Konten({ periodeId, karyawanId }: { periodeId: string; karyawanId: string }) {
   const sesi = await sesiPenggajian();
-  const view = getPembayaran(sesi, periodeId);
+  const view = await getPembayaran(sesi, periodeId);
   const baris = view?.baris.find((b) => b.karyawanId === karyawanId);
   const judul = <PageHeader item={ITEM} title="Periksa transfer gagal" />;
   if (sesi.peran !== "Finance") return <>{judul}<TidakBerwenang pesan="Transfer ulang dicatat Finance." /></>;

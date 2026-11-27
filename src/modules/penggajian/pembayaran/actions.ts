@@ -4,49 +4,22 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
 import { assertIzin } from "@/lib/auth";
-import { sesiDariProfil } from "@/modules/penggajian/akun/akun";
+import { createClient } from "@/lib/supabase/server";
 import type { AksiState } from "@/modules/penggajian/karyawan/actions";
-import { cariKaryawan } from "@/modules/penggajian/karyawan/store";
-import { cekBukti, masalahRekening } from "@/modules/penggajian/pembayaran/rules";
-import { pembayaranUntuk } from "@/modules/penggajian/pembayaran/store";
-import type { PembayaranPeriode } from "@/modules/penggajian/pembayaran/types";
-import { cariDraft } from "@/modules/penggajian/payroll/store";
-import type { DraftPayroll } from "@/modules/penggajian/payroll/types";
-import { catatRiwayat } from "@/modules/penggajian/shared/riwayat";
+import { cekBukti } from "@/modules/penggajian/pembayaran/rules";
+import { getPembayaran } from "@/modules/penggajian/pembayaran/queries";
+import { sesiDariProfil } from "@/modules/penggajian/akun/akun";
 import { teks } from "@/modules/penggajian/shared/form";
 
+/*
+ * Finance records transfers. The proof goes to the private bucket
+ * bukti-transfer-gaji first; kirim_batch_gaji / ulang_transfer_gaji then
+ * check role, approval, separation of duties, accounts, and duplicates
+ * (migration 0021) and move the period status.
+ */
+
 const BASE = "/penggajian/pembayaran";
-
-type Siap = { draft: DraftPayroll; bayar: PembayaranPeriode; nama: string };
-
-/** Finance only, approved draft only, and never the person who calculated it (D-42). */
-async function siapkan(periodeId: string): Promise<{ ok: true; data: Siap } | { ok: false; message: string }> {
-  const hasil = await assertIzin("bayar_gaji");
-  if (!hasil.ok) return { ok: false, message: "Hanya Finance yang mencatat pembayaran gaji." };
-  const draft = cariDraft(periodeId);
-  if (draft && (draft.status === "DIBAYAR" || draft.status === "DIPOSTING")) {
-    return { ok: false, message: "Semua karyawan periode ini sudah dibayar; pembayaran kedua ditolak." };
-  }
-  if (!draft || !["DISETUJUI", "GAGAL_TRANSFER"].includes(draft.status)) {
-    return { ok: false, message: "Pembayaran ditolak: payroll periode ini belum disetujui Direksi." };
-  }
-  if (draft.dihitungOlehProfileId === hasil.data.id) {
-    return { ok: false, message: "Ditolak karena pemisahan tugas: penghitung draft tidak boleh mencatat pembayarannya." };
-  }
-  return { ok: true, data: { draft, bayar: pembayaranUntuk(periodeId), nama: sesiDariProfil(hasil.data).nama } };
-}
-
-/** Period status follows the employees (T-02): any failure → GAGAL_TRANSFER, all paid → DIBAYAR. */
-function perbaruiStatus(draft: DraftPayroll, bayar: PembayaranPeriode, oleh: string, pada: string) {
-  const status = (id: string) => bayar.transfer.find((t) => t.karyawanId === id)?.status;
-  const ke = draft.baris.some((b) => status(b.karyawanId) === "GAGAL_TRANSFER")
-    ? "GAGAL_TRANSFER"
-    : draft.baris.every((b) => status(b.karyawanId) === "DIBAYAR") ? "DIBAYAR" : "DISETUJUI";
-  if (ke !== draft.status) {
-    catatRiwayat(draft.riwayat, { dari: draft.status, ke, oleh, pada });
-    draft.status = ke;
-  }
-}
+const BUCKET = "bukti-transfer-gaji";
 
 function selesai(periodeId: string, pesan: string): never {
   revalidatePath(BASE);
@@ -55,71 +28,75 @@ function selesai(periodeId: string, pesan: string): never {
   redirect(`${BASE}?periode=${periodeId}&pesan=${pesan}`);
 }
 
+async function unggah(periodeId: string, file: File): Promise<{ ok: true; path: string } | { ok: false; message: string }> {
+  const supabase = await createClient();
+  const ekstensi = file.type === "application/pdf" ? "pdf" : file.type === "image/png" ? "png" : "jpg";
+  const path = `${periodeId}/${crypto.randomUUID()}.${ekstensi}`;
+  const { error } = await supabase.storage.from(BUCKET).upload(path, file, { contentType: file.type });
+  return error ? { ok: false, message: `Bukti transfer gagal disimpan: ${error.message}` } : { ok: true, path };
+}
+
 export async function sendBatch(_state: AksiState, formData: FormData): Promise<AksiState> {
+  const hasil = await assertIzin("bayar_gaji");
+  if (!hasil.ok) return { ok: false, message: "Hanya Finance yang mencatat pembayaran gaji." };
   const periodeId = teks(formData, "periodeId");
-  const siap = await siapkan(periodeId);
-  if (!siap.ok) return siap;
-  const { draft, bayar, nama } = siap.data;
   const bukti = cekBukti(formData.get("bukti"));
   if (!bukti.ok) return { ok: false, message: bukti.pesan, fieldErrors: { bukti: bukti.pesan } };
+  const view = await getPembayaran(sesiDariProfil(hasil.data), periodeId);
   // Paid or failed employees never enter a new batch (INV-02); bad accounts wait for HR.
-  const masuk = draft.baris.filter(
-    (b) => !bayar.transfer.some((t) => t.karyawanId === b.karyawanId) && !masalahRekening(cariKaryawan(b.karyawanId)?.rekening),
-  );
+  const masuk = (view?.baris ?? []).filter((b) => b.status === "BELUM");
   if (masuk.length === 0) return { ok: false, message: "Tidak ada karyawan yang bisa masuk batch: semua sudah dibayar, gagal, atau rekeningnya bermasalah." };
   const errors: Record<string, string> = {};
   for (const b of masuk) {
-    const hasil = teks(formData, `hasil_${b.karyawanId}`);
-    if (hasil !== "DIBAYAR" && hasil !== "GAGAL_TRANSFER") errors[`hasil_${b.karyawanId}`] = `Pilih hasil transfer ${b.nama}.`;
+    const h = teks(formData, `hasil_${b.karyawanId}`);
+    if (h !== "DIBAYAR" && h !== "GAGAL_TRANSFER") errors[`hasil_${b.karyawanId}`] = `Pilih hasil transfer ${b.nama}.`;
   }
   if (Object.keys(errors).length > 0) return { ok: false, message: "Lengkapi hasil transfer setiap karyawan.", fieldErrors: errors };
-  const pada = new Date().toISOString();
-  const batchId = crypto.randomUUID();
-  bayar.batch.push({ id: batchId, bukti: bukti.bukti, oleh: nama, pada, jumlahKaryawan: masuk.length, ulang: false });
-  for (const b of masuk) {
-    const status = teks(formData, `hasil_${b.karyawanId}`) as "DIBAYAR" | "GAGAL_TRANSFER";
-    const percobaan = { batchId, status, referensi: teks(formData, `ref_${b.karyawanId}`), oleh: nama, pada };
-    bayar.transfer.push({ karyawanId: b.karyawanId, nominal: b.neto, status, percobaan: [percobaan] });
-  }
-  perbaruiStatus(draft, bayar, nama, pada);
+  const file = formData.get("bukti") as File;
+  const simpan = await unggah(periodeId, file);
+  if (!simpan.ok) return simpan;
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("kirim_batch_gaji", {
+    p_periode_gaji_id: periodeId,
+    p_bukti_path: simpan.path,
+    p_bukti_nama: bukti.bukti.nama,
+    p_bukti_tipe: bukti.bukti.tipe,
+    p_bukti_ukuran: bukti.bukti.ukuran,
+    p_hasil: masuk.map((b) => ({ karyawan_id: b.karyawanId, status: teks(formData, `hasil_${b.karyawanId}`), referensi: teks(formData, `ref_${b.karyawanId}`) })),
+  });
+  if (error) return { ok: false, message: error.message };
   selesai(periodeId, "batch");
 }
 
 export async function retryTransfer(periodeId: string, karyawanId: string, _state: AksiState, formData: FormData): Promise<AksiState> {
-  const siap = await siapkan(periodeId);
-  if (!siap.ok) return siap;
-  const { draft, bayar, nama } = siap.data;
-  const transfer = bayar.transfer.find((t) => t.karyawanId === karyawanId);
-  if (!transfer) return { ok: false, message: "Karyawan ini belum masuk batch." };
-  if (transfer.status === "DIBAYAR") return { ok: false, message: "Karyawan ini sudah dibayar; pembayaran kedua ditolak." };
+  const hasil = await assertIzin("bayar_gaji");
+  if (!hasil.ok) return { ok: false, message: "Hanya Finance yang mencatat pembayaran gaji." };
   const alasan = teks(formData, "alasan");
-  const hasil = teks(formData, "hasil");
+  const status = teks(formData, "hasil");
   const bukti = cekBukti(formData.get("bukti"));
   const errors: Record<string, string> = {};
   if (!alasan) errors.alasan = "Alasan percobaan ulang wajib diisi.";
-  if (hasil !== "DIBAYAR" && hasil !== "GAGAL_TRANSFER") errors.hasil = "Pilih hasil transfer.";
+  if (status !== "DIBAYAR" && status !== "GAGAL_TRANSFER") errors.hasil = "Pilih hasil transfer.";
   if (!bukti.ok) errors.bukti = bukti.pesan;
   if (Object.keys(errors).length > 0 || !bukti.ok) return { ok: false, message: "Percobaan ulang belum bisa disimpan. Periksa isian yang ditandai.", fieldErrors: errors };
-  const pada = new Date().toISOString();
-  const batchId = crypto.randomUUID();
-  bayar.batch.push({ id: batchId, bukti: bukti.bukti, oleh: nama, pada, jumlahKaryawan: 1, ulang: true });
-  transfer.status = hasil as "DIBAYAR" | "GAGAL_TRANSFER";
-  transfer.percobaan.push({ batchId, status: transfer.status, referensi: teks(formData, "referensi"), alasan, oleh: nama, pada });
-  perbaruiStatus(draft, bayar, nama, pada);
+  const simpan = await unggah(periodeId, formData.get("bukti") as File);
+  if (!simpan.ok) return simpan;
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("ulang_transfer_gaji", {
+    p_periode_gaji_id: periodeId, p_karyawan_id: karyawanId, p_status: status, p_referensi: teks(formData, "referensi"),
+    p_alasan: alasan, p_bukti_path: simpan.path, p_bukti_nama: bukti.bukti.nama, p_bukti_tipe: bukti.bukti.tipe, p_bukti_ukuran: bukti.bukti.ukuran,
+  });
+  if (error) return { ok: false, message: error.message };
   selesai(periodeId, "ulang");
 }
 
 /** Not enough funds: nothing is processed and the draft stays approved. */
 export async function recordDanaKurang(_state: AksiState, formData: FormData): Promise<AksiState> {
+  const hasil = await assertIzin("bayar_gaji");
+  if (!hasil.ok) return { ok: false, message: "Hanya Finance yang mencatat pembayaran gaji." };
   const periodeId = teks(formData, "periodeId");
-  const siap = await siapkan(periodeId);
-  if (!siap.ok) return siap;
-  const catatan = teks(formData, "catatan") || "Dana tidak cukup";
-  const pada = new Date().toISOString();
-  siap.data.bayar.catatanDana.push({ oleh: siap.data.nama, pada, catatan });
-  catatRiwayat(siap.data.draft.riwayat, {
-    dari: siap.data.draft.status, ke: siap.data.draft.status, oleh: siap.data.nama, pada,
-    alasan: `Batch tidak diproses: ${catatan}. Notifikasi ke Manajemen menunggu C-012.`,
-  });
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("catat_dana_kurang", { p_periode_gaji_id: periodeId, p_catatan: teks(formData, "catatan") });
+  if (error) return { ok: false, message: error.message };
   selesai(periodeId, "dana");
 }

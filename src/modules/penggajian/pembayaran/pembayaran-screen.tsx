@@ -70,9 +70,9 @@ async function Konten({ periodeId, pesan }: { periodeId?: string; pesan?: string
   const sesi = await sesiPenggajian();
   const akses = aksesPembayaran(sesi);
   if (!akses.membaca) return <TidakBerwenang pesan="Pembayaran gaji dibuka Finance, Accounting, HR, dan Direksi (ringkasan)." />;
-  const periode = getPeriodeDipilih(periodeId);
+  const periode = await getPeriodeDipilih(periodeId);
   if (!periode) return <Keadaan judul="Belum ada periode penggajian" pesan="Periode dibuat HR lebih dulu." />;
-  const view = getPembayaran(sesi, periode.id);
+  const view = await getPembayaran(sesi, periode.id);
   if (!view) return null;
   const masalah = view.baris.filter((b) => b.masalahRekening && b.status === "DITUNDA");
   const total = view.baris.reduce((t, b) => t + (b.nominal ?? 0), 0);
@@ -85,7 +85,7 @@ async function Konten({ periodeId, pesan }: { periodeId?: string; pesan?: string
     <div className={ui.stack}>
       {pesan && PESAN[pesan] ? <Notice title={PESAN[pesan]} tone={pesan === "dana" ? "warning" : "success"} /> : null}
       <div className={ui.cardHeader}>
-        <PilihPeriode action="/penggajian/pembayaran" dipilih={periode.id} periode={listPeriode()} />
+        <PilihPeriode action="/penggajian/pembayaran" dipilih={periode.id} periode={await listPeriode()} />
         <StatusBadge status={view.statusDraft ?? "BELUM"} statuses={STATUS_DRAFT} />
       </div>
       {!view.statusDraft ? <Keadaan judul="Belum ada payroll untuk periode ini" pesan="Pembayaran dibuka setelah payroll disetujui Direksi." /> : null}
