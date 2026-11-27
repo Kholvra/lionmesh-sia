@@ -74,13 +74,13 @@ Satu pemilik: tech lead. Urutan wajib.
 
 | ID | Fitur | Track | Level | Depends on | Status |
 |---|---|---|---|---|---|
-| `PR-001` | BOM berversi & toleransi (master produk di `C-011`) | PR-A master | 2 | `C-011`, `FND-002` | `specified` |
-| `PR-002` | Perintah produksi | PR-B eksekusi | 3 | `PR-001`, `FND-004` | `specified` |
-| `PR-003` | Kebutuhan & permintaan bahan | PR-B eksekusi | 4 | `PR-002`, `C-013` | `specified` |
-| `PR-004` | Pemakaian bahan & WIP | PR-B eksekusi | 5 | `PR-003`, `FND-005` | `specified` |
-| `PR-005` | Hasil produksi & QC (rework/reject) | PR-C mutu | 6 | `PR-002`, `PR-004`, `FND-005` | `specified` |
-| `PR-006` | Biaya produksi & HPP | PR-D biaya | 7 | `PR-004`, `PR-005`, `FND-006` | `specified` |
-| `PR-007` | Laporan produksi & efisiensi | PR-D biaya | 8 | `PR-006` | `specified` |
+| `PR-001` | BOM berversi & toleransi (master produk di `C-011`) | PR-A master | 2 | `C-011`, `FND-002` | `done` |
+| `PR-002` | Perintah produksi | PR-B eksekusi | 3 | `PR-001`, `FND-004` | `done` |
+| `PR-003` | Kebutuhan & permintaan bahan | PR-B eksekusi | 4 | `PR-002`, `C-013` | `done` |
+| `PR-004` | Pemakaian bahan & WIP | PR-B eksekusi | 5 | `PR-003`, `FND-005` | `done` |
+| `PR-005` | Hasil produksi & QC (rework/reject) | PR-C mutu | 6 | `PR-002`, `PR-004`, `FND-005` | `done` |
+| `PR-006` | Biaya produksi & HPP | PR-D biaya | 7 | `PR-004`, `PR-005`, `FND-006` | `done` |
+| `PR-007` | Laporan produksi & efisiensi | PR-D biaya | 8 | `PR-006` | `done` |
 
 `PR-003` bergantung pada `C-013` (domain pengadaan di core), bukan pada seluruh siklus Pengeluaran. Jadi Produksi tidak ikut menunggu `PG-005`.
 
@@ -215,3 +215,4 @@ Terbaca per level. Semua item dalam satu baris boleh dikerjakan serentak. `DISC-
 | 2026-11-26 | Teks gate diselaraskan ke `FND-001`–`FND-009` (`D-67`); `EPIC-FND` → `done` |
 | 2026-11-27 | `GJ-001` → `done`: PR #38 merge dengan mock store; migrasi `0016` dicadangkan, swap Supabase + bukti ulang DB tercatat di `docs/tech-debt/gj-001-mock-store.md` |
 | 2026-11-27 | `PG-002` → `done`: PR #40 merge (cherry-pick delta murni, stack C-011/C-013 dibuang); bukti AC-DB menyusul, tercatat di `docs/tech-debt/pg-002-bukti-db.md` |
+| 2026-11-27 | `PR-001`..`PR-007` → `done`: PR #39 merge borongan satu squash (46 file, layar + store lokal); bukti AC per item + rapihan UI menyusul, tercatat di `docs/tech-debt/pr-borongan-bukti.md` |
