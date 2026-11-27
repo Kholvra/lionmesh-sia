@@ -3,15 +3,13 @@ import type { ReactNode } from "react";
 import {
   hitungKartuPersediaan,
   hitungSaldoKartu,
-  hitungTotalNilaiMutasiCents,
   listGudangRingkas,
   listMutasiKartu,
-  listMutasiPeriode,
   listProdukRingkas,
-  rekonsiliasiPersediaan,
   uangMentahKeCents,
 } from "@/core/inventory";
-import { listBarisJurnal, parsePeriode, totalJurnalPersediaanCents } from "@/core/ledger";
+import { muatRekonsiliasiPersediaan } from "@/core/inventory/rekonsiliasi";
+import { parsePeriode } from "@/core/ledger";
 import type { Profile } from "@/lib/auth/types";
 import { formatTanggal } from "@/lib/format/date";
 import { formatRupiah } from "@/lib/format/money";
@@ -127,34 +125,18 @@ export async function KartuPersediaanScreen({ profil, params }: Props) {
   const saldoAwal = hitungSaldoKartu(mutasiSebelum.data);
   const laporan = hitungKartuPersediaan(mutasiPeriode.data, saldoAwal);
 
-  const [semuaMutasi, semuaBarisJurnal] = await Promise.all([
-    listMutasiPeriode(supabase, {
-      mulai: periode.data.mulai,
-      selesai: periode.data.selesai,
-    }),
-    listBarisJurnal(supabase, {
-      mulai: periode.data.mulai,
-      selesai: periode.data.selesai,
-    }),
-  ]);
+  const rekonsiliasiData = await muatRekonsiliasiPersediaan(supabase, {
+    mulai: periode.data.mulai,
+    selesai: periode.data.selesai,
+  });
 
-  if (!semuaMutasi.ok) {
+  if (!rekonsiliasiData.ok) {
     return bingkai(
-      <ErrorState judul="Laporan gagal dimuat" teks={semuaMutasi.message} variant="inline" />,
+      <ErrorState judul="Laporan gagal dimuat" teks={rekonsiliasiData.message} variant="inline" />,
       periode.data.kunci,
     );
   }
-  if (!semuaBarisJurnal.ok) {
-    return bingkai(
-      <ErrorState judul="Laporan gagal dimuat" teks={semuaBarisJurnal.message} variant="inline" />,
-      periode.data.kunci,
-    );
-  }
-
-  const rekonsiliasi = rekonsiliasiPersediaan(
-    hitungTotalNilaiMutasiCents(semuaMutasi.data),
-    totalJurnalPersediaanCents(semuaBarisJurnal.data),
-  );
+  const rekonsiliasi = rekonsiliasiData.data;
 
   const rows: ReportRow[] = laporan.baris.map((item) => ({
     key: item.id,

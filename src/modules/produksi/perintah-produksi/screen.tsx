@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import { EmptyState } from "@/components/ui/states";
-import { Notice } from "@/components/ui/notice";
 import { PageHeader } from "@/components/ui/page-header";
 import { SegmentedTabs } from "@/components/ui/segmented-tabs";
 import {
@@ -12,34 +11,14 @@ import {
 } from "@/components/ui/status-badge";
 import { TableActionLink } from "@/components/ui/table-action-link";
 import { useTableState } from "@/components/ui/use-table-state";
+import { bacaKoleksi } from "@/modules/produksi/store";
 import { useProduksiActor } from "../context/actor-context";
 import { ProduksiSubnav } from "../components/produksi-subnav";
-import {
-  INITIAL_SPK_LIST,
-  SpkFilterTab,
-  SpkItem,
-} from "./types";
-
-const SPK_STORAGE_KEY = "lionmesh_spk_list_v1";
+import type { SpkFilterTab, SpkItem } from "./types";
 
 
 export function PerintahProduksiScreen() {
-  const [spkList] = useState<SpkItem[]>(() => {
-    if (typeof window !== "undefined") {
-      try {
-        const saved = sessionStorage.getItem(SPK_STORAGE_KEY);
-        if (saved) {
-          const parsed = JSON.parse(saved) as SpkItem[];
-          if (Array.isArray(parsed) && parsed.length > 0) {
-            return parsed;
-          }
-        }
-      } catch {
-        // Abaikan
-      }
-    }
-    return INITIAL_SPK_LIST;
-  });
+  const [spkList] = useState<SpkItem[]>(() => bacaKoleksi("spk"));
   const { can, activeRole } = useProduksiActor();
   const canCreate = can("create_spk");
 
@@ -49,10 +28,7 @@ export function PerintahProduksiScreen() {
       direncanakan: spkList.filter((s) => s.filterCategory === "direncanakan").length,
       menunggu_bahan: spkList.filter((s) => s.filterCategory === "menunggu_bahan").length,
       diproses: spkList.filter((s) => s.filterCategory === "diproses").length,
-      hasil_dicatat:
-        spkList.length === INITIAL_SPK_LIST.length
-          ? 1
-          : spkList.filter((s) => s.filterCategory === "hasil_dicatat").length,
+      hasil_dicatat: spkList.filter((s) => s.filterCategory === "hasil_dicatat").length,
     };
   }, [spkList]);
 
@@ -106,11 +82,6 @@ export function PerintahProduksiScreen() {
         variant="cycle"
       />
 
-      <Notice className="mt-5" tone="warning" title="Permintaan dari Gudang: Wiremesh M6 kurang 120 lembar" variant="card">
-        <p className="mt-0.5 text-[12px] text-[#B45309]">
-          Untuk SO-2611-015 PT Graha Konstruksi, dikirim 28 Nov.
-        </p>
-      </Notice>
 
       {/* Primary Action Button */}
       <div className="mt-5 flex items-center gap-3">

@@ -8,6 +8,7 @@ import { EmptyState, ErrorState } from "@/components/ui/states";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { addGajiPokok } from "@/modules/penggajian/karyawan/actions";
 import { GajiPokokForm } from "@/modules/penggajian/karyawan/components/gaji-pokok-form";
+import { PATH_KARYAWAN, pathKaryawanStatus, pathKaryawanUbah } from "@/modules/penggajian/karyawan/constants";
 import { formatRupiah, formatTanggal, formatWaktu } from "@/modules/penggajian/karyawan/format";
 import { getKaryawan, type DetailKaryawan } from "@/modules/penggajian/karyawan/queries";
 import { aksesSesi } from "@/modules/penggajian/karyawan/sesi";
@@ -15,18 +16,24 @@ import { KEADAAN_GAJI, STATUS_KARYAWAN } from "@/modules/penggajian/karyawan/sta
 import { ui } from "@/modules/penggajian/ui/kelas";
 
 const ITEM = "GJ-001 Mengelola data karyawan";
-const KEMBALI = { href: "/penggajian/karyawan", label: "Data karyawan" };
+const KEMBALI = { href: PATH_KARYAWAN, label: "Data karyawan" };
 const BREADCRUMB = [
   { label: "Siklus Penggajian", accent: true },
   ITEM,
 ] as const;
 
-const PESAN: Record<string, string> = {
+const PESAN = {
   dibuat: "Karyawan tersimpan.",
   diubah: "Perubahan data karyawan tersimpan.",
   gaji: "Gaji pokok baru tersimpan. Entri lama tetap ada di riwayat.",
   nonaktif: "Karyawan dinonaktifkan. Data dan riwayatnya tetap tersimpan.",
-};
+} as const satisfies Record<string, string>;
+
+type PesanKaryawan = keyof typeof PESAN;
+
+function pesanDikenal(pesan: string | undefined): pesan is PesanKaryawan {
+  return typeof pesan === "string" && Object.hasOwn(PESAN, pesan);
+}
 
 function Fakta({ label, children }: { label: string; children: ReactNode }) {
   return (
@@ -154,7 +161,7 @@ async function DetailKonten({ id, pesan }: { id: string; pesan?: string }) {
       <>
         <PageHeader back={KEMBALI} breadcrumb={BREADCRUMB} title="Detail karyawan" />
         <EmptyState
-          actionHref="/penggajian/karyawan"
+          actionHref={PATH_KARYAWAN}
           actionLabel="Kembali ke data karyawan"
           judul="Karyawan tidak ditemukan"
           teks="Data mungkin sudah dipindahkan atau tautannya salah."
@@ -174,7 +181,7 @@ async function DetailKonten({ id, pesan }: { id: string; pesan?: string }) {
         title={`Detail karyawan / ${karyawan.nama}`}
       />
       <div className={ui.stack}>
-        {pesan && PESAN[pesan] ? <Notice title={PESAN[pesan]} tone="success" /> : null}
+        {pesanDikenal(pesan) ? <Notice title={PESAN[pesan]} tone="success" /> : null}
         <div className={ui.grid}>
           <div className={`${ui.span8} ${ui.stack}`}>
             <KartuIdentitas karyawan={karyawan} />
@@ -182,8 +189,8 @@ async function DetailKonten({ id, pesan }: { id: string; pesan?: string }) {
             <div className={ui.formActions}>
               {bolehUbah ? (
                 <>
-                  <Link className={ui.buttonPrimary} href={`/penggajian/karyawan/${id}/ubah`}>Edit data</Link>
-                  <Link className={ui.button} href={`/penggajian/karyawan/${id}/status`}>Ubah status</Link>
+                  <Link className={ui.buttonPrimary} href={pathKaryawanUbah(id)}>Edit data</Link>
+                  <Link className={ui.button} href={pathKaryawanStatus(id)}>Ubah status</Link>
                 </>
               ) : null}
               <Link className={ui.button} href={KEMBALI.href}>← Kembali</Link>

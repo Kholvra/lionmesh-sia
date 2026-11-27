@@ -9,18 +9,13 @@ import {
   STATUS_POSTING_HPP,
   StatusBadge,
 } from "@/components/ui/status-badge";
+import { EmptyState } from "@/components/ui/states";
 import { TableActionLink } from "@/components/ui/table-action-link";
 import { useTableState } from "@/components/ui/use-table-state";
+import { bacaKoleksi, simpanKoleksi } from "@/modules/produksi/store";
 import { useProduksiActor } from "@/modules/produksi/context/actor-context";
 import { ProduksiSubnav } from "../components/produksi-subnav";
-import {
-  HppSpkSummary,
-  INITIAL_HPP_LIST,
-  INITIAL_KARTU_JAM_KERJA,
-  KartuJamKerjaItem,
-} from "./types";
-
-const KJK_STORAGE_KEY = "lionmesh_kjk_list_v1";
+import type { HppSpkSummary, KartuJamKerjaItem } from "./types";
 
 type ActiveTab = "jam_kerja" | "kalkulasi_hpp";
 
@@ -28,22 +23,10 @@ export function KartuJamKerjaScreen() {
   const [activeTab, setActiveTab] = useState<ActiveTab>("jam_kerja");
   const { can, activeRole } = useProduksiActor();
   const canRecordKjk = can("record_kartu_jam_kerja");
-  const [kjkList, setKjkList] = useState<KartuJamKerjaItem[]>(() => {
-    if (typeof window !== "undefined") {
-      try {
-        const saved = sessionStorage.getItem(KJK_STORAGE_KEY);
-        if (saved) {
-          const parsed = JSON.parse(saved) as KartuJamKerjaItem[];
-          if (Array.isArray(parsed) && parsed.length > 0) return parsed;
-        }
-      } catch {
-        // Fallback default
-      }
-    }
-    return INITIAL_KARTU_JAM_KERJA;
-  });
-
-  const [hppList] = useState<HppSpkSummary[]>(INITIAL_HPP_LIST);
+  const [kjkList, setKjkList] = useState<KartuJamKerjaItem[]>(() =>
+    bacaKoleksi("kartuJamKerja"),
+  );
+  const [hppList] = useState<HppSpkSummary[]>([]);
   const tabelKjk = useTableState(kjkList, {
     pageSize: kjkList.length || 1,
   });
@@ -101,11 +84,7 @@ export function KartuJamKerjaScreen() {
 
     const nextList = [newItem, ...kjkList];
     setKjkList(nextList);
-    try {
-      sessionStorage.setItem(KJK_STORAGE_KEY, JSON.stringify(nextList));
-    } catch {
-      // Abaikan
-    }
+    simpanKoleksi("kartuJamKerja", nextList);
 
     setIsModalOpen(false);
     setFormError(null);
@@ -249,6 +228,18 @@ export function KartuJamKerjaScreen() {
                     </td>
                   </tr>
                 ))}
+                {tabelKjk.isEmpty && (
+                  <tr>
+                    <td colSpan={9}>
+                      <div className="py-8 text-center">
+                        <EmptyState
+                          judul="Belum ada kartu jam kerja yang dicatat."
+                          variant="inline"
+                        />
+                      </div>
+                    </td>
+                  </tr>
+                )}
               </tbody>
             </table>
           </div>
@@ -329,6 +320,18 @@ export function KartuJamKerjaScreen() {
                     </td>
                   </tr>
                 ))}
+                {tabelHpp.isEmpty && (
+                  <tr>
+                    <td colSpan={10}>
+                      <div className="py-8 text-center">
+                        <EmptyState
+                          judul="Belum ada perhitungan HPP yang tersedia."
+                          variant="inline"
+                        />
+                      </div>
+                    </td>
+                  </tr>
+                )}
               </tbody>
             </table>
           </div>

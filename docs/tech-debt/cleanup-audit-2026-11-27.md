@@ -84,34 +84,45 @@ scope, build produksi hijau); (3) NIK berhuruf akan beda hasil cari
       `confirm-dialog` satu guard; `status-badge` tanpa side-effect render.
 
 ## Fase 3 — Duplikasi core & module
+Bukti 2026-11-27 (branch `post-merge-consolidation`, 5 wave-A + 6 wave-B
+agen paralel): helper bersama di `lib` (parseRpcResult, ambilTeks,
+pesanKesalahan, withAdminAction; createAdminClient + isRecord dipakai
+ulang); semua query core migrasi; 3 file gemuk dipecah; barrel server
+subpath + server-only; registry COA tunggal; `typecheck`/`lint`/
+`arch:check` hijau, `pnpm test` 124/124, `pnpm build` hijau.
+Catatan: `keIsoString`/`SELECT_MUTASI` nol kemunculan di source (audit
+basi); module actions pesan-kustom sengaja tidak disatukan.
+[blocked] K10 kaki-Supabase: tabel produksi belum ada, butuh keputusan
+skema (DDL). Dikerjakan: store typed tunggal, formula 1×, demo dihapus,
+izin terverifikasi terpusat.
 
-- [ ] K1. Paging: angkat `dashboard/pagination.ts:3` (`readAllPages`) untuk
+- [x] K1. Paging: angkat `dashboard/pagination.ts:3` (`readAllPages`) untuk
       `ledger/report-queries` + `inventory/report-queries` (3 loop kembar).
-- [ ] K2. Koersi + pesan gagal: satu `ambilTeks`/koersi
+- [x] K2. Koersi + pesan gagal: satu `ambilTeks`/koersi
       (`ledger/report-queries:20`, `inventory/report-queries:30`,
       `tutup-buku-queries:18`, +4 di notifikasi/dashboard) dan satu
       `pesanKesalahan` (master, pemasok, pengadaan).
-- [ ] K3. Parser RPC + wrapper sesi: satu `parseRpcResult` skema-driven
+- [x] K3. Parser RPC + wrapper sesi: satu `parseRpcResult` skema-driven
       (ledger, tutup-buku, dokumen) dan satu `withAdminAction`
       (7 wrapper ledger/inventory); `createAdminClient` untuk
       `dokumen/server.ts:25-37`; `isRecord` dari lib di dokumen.
-- [ ] K4. Transisi dokumen 8× → map `AKSI→rpc` + 1 wrapper generik
+- [x] K4. Transisi dokumen 8× → map `AKSI→rpc` + 1 wrapper generik
       (`dokumen/service.ts:61-216`); `keIsoString` 4×; konstanta
       `SELECT_MUTASI`; `susunAlasanTutup` (tutup-buku 2×).
-- [ ] K5. Validasi respons tak diperiksa — `inventory/service.ts`
+- [x] K5. Validasi respons tak diperiksa — `inventory/service.ts`
       dereference `data` mentah; `dokumen/queries` + `service:23-25`
       cast `as`; skema zod + `safeParse` → `fail`.
-- [ ] K6. Pecah file gemuk — `ledger/report.ts` 506 (types→`types.ts`,
+- [x] K6. Pecah file gemuk — `ledger/report.ts` 506 (types→`types.ts`,
       klasifikasi→`rules.ts`), `tutup-buku-queries.ts` 356 (baca vs
       orkestrasi), `notifikasi/service.ts` (worker → `worker.ts`).
-- [ ] K7. Barrel campur pure+server (ledger/inventory/dokumen `index.ts`)
+- [x] K7. Barrel campur pure+server (ledger/inventory/dokumen `index.ts`)
       → subpath `*/server` + `import "server-only"`; satukan 3 jalur
       privilege (assertIzin vs getSesiUser+cekIzin vs tanpa cek).
-- [ ] K8. Satukan registry peran COA persediaan (ledger vs inventory);
+- [x] K8. Satukan registry peran COA persediaan (ledger vs inventory);
       dashboard baca `riwayat_status` langsung → `listPersediaan…` /
       API dokumen; pindah orkestrasi rekonsiliasi kartu keluar dari
       layar app (`kartu-persediaan.tsx:133-158`).
-- [ ] K9. Modul: `firstParam` query unwrap (pengeluaran+GJ+produksi
+- [x] K9. Modul: `firstParam` query unwrap (pengeluaran+GJ+produksi
       metadata 14×/3 format + `PageProps` 3×); `PATH_*` konstan
       (GJ 11× literal); `PESAN` map typed GJ; hapus barrel mati
       produksi `types.ts`; nama impor relatif vs `@/` disatukan.

@@ -42,35 +42,3 @@ export const STOK_BAHAN_TERSEDIA_TON: Record<string, number> = {
   "BB-WR10": 6.4,
 };
 
-export const INITIAL_SPK_LIST: SpkItem[] = [
-  {
-    id: "spk-2611-012",
-    nomorSpk: "SPK-2611-012",
-    sumberInfo: "dari stok minimum",
-    produkNama: "Wiremesh M8",
-    produkKode: "WM-M8",
-    versiBom: "v3",
-    mesin: "Mesin las 2",
-    jumlahLembar: 400,
-    jadwalText: "20–21 Nov",
-    tanggalMulaiISO: "2026-11-20",
-    tanggalSelesaiISO: "2026-11-21",
-    status: "MENUNGGU_QC",
-    filterCategory: "hasil_dicatat",
-  },
-  {
-    id: "spk-2611-011",
-    nomorSpk: "SPK-2611-011",
-    sumberInfo: "dari SO-2611-010",
-    produkNama: "Wiremesh M6",
-    produkKode: "WM-M6",
-    versiBom: "v2",
-    mesin: "Mesin las 1",
-    jumlahLembar: 250,
-    jadwalText: "18–19 Nov",
-    tanggalMulaiISO: "2026-11-18",
-    tanggalSelesaiISO: "2026-11-19",
-    status: "BARANG_JADI",
-    filterCategory: "hasil_dicatat",
-  },
-];

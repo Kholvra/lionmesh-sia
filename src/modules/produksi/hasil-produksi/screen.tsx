@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { Notice } from "@/components/ui/notice";
 import { PageHeader } from "@/components/ui/page-header";
 import { EmptyState } from "@/components/ui/states";
 import {
@@ -10,31 +9,12 @@ import {
 } from "@/components/ui/status-badge";
 import { TableActionLink } from "@/components/ui/table-action-link";
 import { useTableState } from "@/components/ui/use-table-state";
+import { bacaKoleksi } from "@/modules/produksi/store";
 import { ProduksiSubnav } from "../components/produksi-subnav";
-import {
-  HasilProduksiSpkItem,
-  INITIAL_HASIL_PRODUKSI_LIST,
-} from "./types";
-
-const HASIL_PRODUKSI_STORAGE_KEY = "lionmesh_hasil_produksi_list_v1";
+import type { HasilProduksiSpkItem } from "./types";
 
 export function HasilProduksiScreen() {
-  const [items] = useState<HasilProduksiSpkItem[]>(() => {
-    if (typeof window !== "undefined") {
-      try {
-        const saved = sessionStorage.getItem(HASIL_PRODUKSI_STORAGE_KEY);
-        if (saved) {
-          const parsed = JSON.parse(saved) as HasilProduksiSpkItem[];
-          if (Array.isArray(parsed) && parsed.length > 0) {
-            return parsed;
-          }
-        }
-      } catch {
-        // Abaikan jika sessionStorage tidak tersedia
-      }
-    }
-    return INITIAL_HASIL_PRODUKSI_LIST;
-  });
+  const [items] = useState<HasilProduksiSpkItem[]>(() => bacaKoleksi("hasilProduksi"));
   const table = useTableState(items, { pageSize: items.length || 1 });
 
   return (
@@ -51,12 +31,6 @@ export function HasilProduksiScreen() {
         variant="cycle"
       />
 
-      <Notice
-        className="mt-5"
-        tone="warning"
-        title="QC mengembalikan 2 lembar SPK-2611-013 untuk rework."
-        variant="card"
-      />
 
       {/* Card Sedang diproses */}
       <section className="shadow-card mt-5 flex flex-col gap-[14px] rounded-[10px] border border-transparent bg-white p-[20px]">

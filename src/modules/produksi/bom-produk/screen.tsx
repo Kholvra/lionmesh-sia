@@ -6,29 +6,13 @@ import { EmptyState } from "@/components/ui/states";
 import { PageHeader } from "@/components/ui/page-header";
 import { TableActionLink } from "@/components/ui/table-action-link";
 import { useTableState } from "@/components/ui/use-table-state";
+import { bacaKoleksi } from "@/modules/produksi/store";
 import { useProduksiActor } from "../context/actor-context";
 import { ProduksiSubnav } from "../components/produksi-subnav";
-import { BomItem, INITIAL_BOM_LIST } from "./types";
-
-const STORAGE_KEY = "lionmesh_bom_list_v1";
+import type { BomItem } from "./types";
 
 export function BomProdukScreen() {
-  const [bomList] = useState<BomItem[]>(() => {
-    if (typeof window !== "undefined") {
-      try {
-        const saved = sessionStorage.getItem(STORAGE_KEY);
-        if (saved) {
-          const parsed = JSON.parse(saved) as BomItem[];
-          if (Array.isArray(parsed) && parsed.length > 0) {
-            return parsed;
-          }
-        }
-      } catch {
-        // Abaikan jika error membaca storage
-      }
-    }
-    return INITIAL_BOM_LIST;
-  });
+  const [bomList] = useState<BomItem[]>(() => bacaKoleksi("bom"));
   const { can, activeRole } = useProduksiActor();
   const canEdit = can("create_bom_version");
 

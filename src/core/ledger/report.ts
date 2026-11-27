@@ -1,54 +1,19 @@
 import { moneyToCents, sumSigned } from "./money.ts";
+import { kelompokAkun, isPeranPersediaan } from "./rules.ts";
+import type {
+  AkunRingkas,
+  BarisLabaRugi,
+  BarisLaporan,
+  BarisNeraca,
+  LaporanBukuBesar,
+  LaporanDaftarJurnal,
+  LaporanLabaRugi,
+  LaporanNeraca,
+  LaporanNeracaSaldo,
+} from "./report-types.ts";
 
-export type KelompokAkun =
-  | "aset"
-  | "kewajiban"
-  | "ekuitas"
-  | "pendapatan"
-  | "beban"
-  | null;
-
-const PERAN_ASET = [
-  "kas_bank",
-  "piutang_usaha",
-  "persediaan_bahan",
-  "barang_dalam_proses",
-  "persediaan_barang_jadi",
-] as const;
-
-const PERAN_KEWAJIBAN = ["utang_usaha", "gr_ir", "utang_gaji"] as const;
-const PERAN_EKUITAS = ["laba_ditahan"] as const;
-const PERAN_PENDAPATAN = ["penjualan"] as const;
-const PERAN_BEBAN = [
-  "hpp",
-  "tenaga_kerja_langsung",
-  "overhead_pabrik",
-  "beban_gaji_admin",
-] as const;
-
-/**
- * Reports classify accounts by role, never by account number (D-35 / INV-04).
- * A role outside the approved COA is returned as null so the caller can surface
- * it instead of silently dropping the amount.
- */
-export function kelompokAkun(peran: string): KelompokAkun {
-  if ((PERAN_ASET as readonly string[]).includes(peran)) return "aset";
-  if ((PERAN_KEWAJIBAN as readonly string[]).includes(peran)) return "kewajiban";
-  if ((PERAN_EKUITAS as readonly string[]).includes(peran)) return "ekuitas";
-  if ((PERAN_PENDAPATAN as readonly string[]).includes(peran)) return "pendapatan";
-  if ((PERAN_BEBAN as readonly string[]).includes(peran)) return "beban";
-  return null;
-}
-
-const PERAN_PERSEDIAAN = [
-  "persediaan_bahan",
-  "barang_dalam_proses",
-  "persediaan_barang_jadi",
-] as const;
-
-export function isPeranPersediaan(peran: string): boolean {
-  return (PERAN_PERSEDIAAN as readonly string[]).includes(peran);
-}
+export { kelompokAkun, isPeranPersediaan } from "./rules.ts";
+export type { KelompokAkun } from "./report-types.ts";
 
 /**
  * Net persediaan journal movement (debit − credit) in cents for one period.
@@ -66,125 +31,20 @@ export function totalJurnalPersediaanCents(
   return sumSigned(pasangan, "debit-minus-credit").toString();
 }
 
-export interface BarisLaporan {
-  barisId: string;
-  jurnalId: string;
-  tanggal: string;
-  dibuatPada: string;
-  sumberTipe: string;
-  sumberNomor: string;
-  sumberPemicu: string;
-  akunId: string;
-  akunNomor: string;
-  akunNama: string;
-  akunPeran: string;
-  debit: string;
-  kredit: string;
-}
-
-export interface AkunRingkas {
-  id: string;
-  nomor: string;
-  nama: string;
-  peran: string;
-}
-
-export interface BarisBukuBesar {
-  barisId: string;
-  jurnalId: string;
-  tanggal: string;
-  sumberTipe: string;
-  sumberNomor: string;
-  sumberPemicu: string;
-  debitCents: string;
-  kreditCents: string;
-  saldoCents: string;
-}
-
-export interface LaporanBukuBesar {
-  akun: AkunRingkas;
-  saldoAwalCents: string;
-  baris: BarisBukuBesar[];
-  totalDebitCents: string;
-  totalKreditCents: string;
-  saldoAkhirCents: string;
-}
-
-export interface BarisNeracaSaldo {
-  akunId: string;
-  nomor: string;
-  nama: string;
-  peran: string;
-  debitCents: string;
-  kreditCents: string;
-}
-
-export interface LaporanNeracaSaldo {
-  baris: BarisNeracaSaldo[];
-  totalDebitCents: string;
-  totalKreditCents: string;
-  selisihCents: string;
-  seimbang: boolean;
-}
-
-export interface BarisLabaRugi {
-  akunId: string;
-  nomor: string;
-  nama: string;
-  peran: string;
-  nilaiCents: string;
-}
-
-export interface LaporanLabaRugi {
-  pendapatan: BarisLabaRugi[];
-  beban: BarisLabaRugi[];
-  totalPendapatanCents: string;
-  totalBebanCents: string;
-  labaBersihCents: string;
-}
-
-export interface BarisNeraca {
-  akunId: string;
-  nomor: string;
-  nama: string;
-  peran: string;
-  nilaiCents: string;
-}
-
-export interface LaporanNeraca {
-  aset: BarisNeraca[];
-  kewajiban: BarisNeraca[];
-  ekuitas: BarisNeraca[];
-  belumDiklasifikasi: BarisNeraca[];
-  labaTahunBerjalanCents: string;
-  totalAsetCents: string;
-  totalKewajibanCents: string;
-  totalEkuitasCents: string;
-  totalPasivaCents: string;
-  selisihCents: string;
-  seimbang: boolean;
-}
-
-export interface BarisDaftarJurnal {
-  barisId: string;
-  jurnalId: string;
-  tanggal: string;
-  sumberTipe: string;
-  sumberNomor: string;
-  sumberPemicu: string;
-  akunNomor: string;
-  akunNama: string;
-  akunPeran: string;
-  debitCents: string;
-  kreditCents: string;
-}
-
-export interface LaporanDaftarJurnal {
-  baris: BarisDaftarJurnal[];
-  jumlahJurnal: number;
-  totalDebitCents: string;
-  totalKreditCents: string;
-}
+export type {
+  AkunRingkas,
+  BarisBukuBesar,
+  BarisDaftarJurnal,
+  BarisLabaRugi,
+  BarisLaporan,
+  BarisNeraca,
+  BarisNeracaSaldo,
+  LaporanBukuBesar,
+  LaporanDaftarJurnal,
+  LaporanLabaRugi,
+  LaporanNeraca,
+  LaporanNeracaSaldo,
+} from "./report-types.ts";
 
 interface AkunTerkumpul {
   akunId: string;

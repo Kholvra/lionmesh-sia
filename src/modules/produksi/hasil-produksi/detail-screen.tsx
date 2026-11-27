@@ -3,21 +3,19 @@
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { Suspense, useMemo, useState } from "react";
-import { ArrowIcon } from "@/components/ui/arrow-icon";
 import { CustomSelect } from "@/components/ui/custom-select";
 import { Notice } from "@/components/ui/notice";
 import { PageHeader } from "@/components/ui/page-header";
 import { SpkStepper } from "@/components/ui/spk-stepper";
-import { LoadingState } from "@/components/ui/states";
-import { ProduksiSubnav } from "../components/produksi-subnav";
-import { INITIAL_SPK_LIST, SpkItem } from "../perintah-produksi/types";
+import { EmptyState, LoadingState } from "@/components/ui/states";
 import {
-  HasilProduksiSpkItem,
-  INITIAL_HASIL_PRODUKSI_LIST,
-} from "./types";
-
-const HASIL_PRODUKSI_STORAGE_KEY = "lionmesh_hasil_produksi_list_v1";
-const SPK_STORAGE_KEY = "lionmesh_spk_list_v1";
+  bacaKoleksi,
+  simpanHasilTercatat,
+  simpanKoleksi,
+} from "@/modules/produksi/store";
+import { ProduksiSubnav } from "../components/produksi-subnav";
+import type { SpkItem } from "../perintah-produksi/types";
+import type { HasilProduksiSpkItem } from "./types";
 
 const KENDALA_OPTIONS = [
   "Mesin berhenti",
@@ -57,56 +55,23 @@ function CatatHasilSpkContent({ initialNomorSpk }: { initialNomorSpk?: string })
 
   const slug = (initialNomorSpk ?? params?.nomorSpk ?? "spk-2611-013").toLowerCase();
 
-  const [hasilList] = useState<HasilProduksiSpkItem[]>(() => {
-    if (typeof window !== "undefined") {
-      try {
-        const savedHasil = sessionStorage.getItem(HASIL_PRODUKSI_STORAGE_KEY);
-        if (savedHasil) {
-          const parsed = JSON.parse(savedHasil) as HasilProduksiSpkItem[];
-          if (Array.isArray(parsed) && parsed.length > 0) return parsed;
-        }
-      } catch {
-        // Abaikan jika sessionStorage tidak tersedia
-      }
-    }
-    return INITIAL_HASIL_PRODUKSI_LIST;
-  });
+  const [hasilList] = useState<HasilProduksiSpkItem[]>(() =>
+    bacaKoleksi("hasilProduksi"),
+  );
+  const [spkList] = useState<SpkItem[]>(() => bacaKoleksi("spk"));
 
-  const [spkList] = useState<SpkItem[]>(() => {
-    if (typeof window !== "undefined") {
-      try {
-        const savedSpk = sessionStorage.getItem(SPK_STORAGE_KEY);
-        if (savedSpk) {
-          const parsed = JSON.parse(savedSpk) as SpkItem[];
-          if (Array.isArray(parsed) && parsed.length > 0) return parsed;
-        }
-      } catch {
-        // Abaikan jika sessionStorage tidak tersedia
-      }
-    }
-    return INITIAL_SPK_LIST;
-  });
+  const currentSpk = useMemo<HasilProduksiSpkItem | null>(
+    () =>
+      hasilList.find((item) => item.nomorSpk.toLowerCase() === slug) ?? null,
+    [hasilList, slug],
+  );
 
-  const currentSpk = useMemo<HasilProduksiSpkItem>(() => {
-    const found = hasilList.find(
-      (item) => item.nomorSpk.toLowerCase() === slug
-    );
-    if (found) return found;
-
-    return {
-      id: "spk-2611-013",
-      nomorSpk: "SPK-2611-013",
-      jadwalText: "27–28 Nov",
-      produkNama: "Wiremesh M6",
-      produkKode: "WM-M6",
-      targetLembar: 120,
-      bahanDiterimaText: "4,3 ton · 27 Nov 06.40",
-      status: "DIPROSES",
-    };
-  }, [hasilList, slug]);
-
-  const targetLembar = currentSpk.targetLembar;
-  const dikeluarkanTon = 4.3;
+  const targetLembar = currentSpk?.targetLembar ?? 0;
+  const dikeluarkanTon = (() => {
+    const bagian = currentSpk?.bahanDiterimaText.split("·")[0] ?? "";
+    const nilai = parseTonValue(bagian);
+    return Number.isFinite(nilai) ? nilai : 0;
+  })();
 
   // Form states
   const [jumlahJadiInput, setJumlahJadiInput] = useState<string>(
@@ -148,7 +113,7 @@ function CatatHasilSpkContent({ initialNomorSpk }: { initialNomorSpk?: string })
     const sisa = Number((dikeluarkanTon - (terpakai + scrap)).toFixed(2));
     if (sisa <= 0) return "0 ton";
     return formatTonId(sisa);
-  }, [terpakaiInput, scrapInput]);
+  }, [terpakaiInput, scrapInput, dikeluarkanTon]);
 
   const scrapInfoText = useMemo(() => {
     const terpakai = parseTonValue(terpakaiInput);
@@ -159,19 +124,23 @@ function CatatHasilSpkContent({ initialNomorSpk }: { initialNomorSpk?: string })
     const isOverTolerance =
       Number.isFinite(scrap) && totalDipakai > 0 && scrap / totalDipakai > 0.025;
 
-    if (isOverTolerance) {
-      return `Potongan ujung dan cacat las. Selisih terhadap standar BOM v2 (4,24 t untuk ${targetLembar} lembar) di luar toleransi scrap (1,5%) — perlu investigasi.`;
-    }
-    return `Potongan ujung dan cacat las. Selisih terhadap standar BOM v2 (4,24 t untuk ${targetLembar} lembar): 1,5%, masih dalam toleransi scrap.`;
-  }, [terpakaiInput, scrapInput, targetLembar]);
+    return isOverTolerance
+      ? "Potongan ujung dan cacat las. Scrap di atas toleransi — perlu investigasi."
+      : "Potongan ujung dan cacat las. Scrap masih dalam toleransi.";
+  }, [terpakaiInput, scrapInput]);
 
-  const handleContohKurangDariTarget = () => {
-    setErrorBanner(null);
-    setJumlahJadiInput("96 lembar");
-    setKendala("Mesin berhenti");
-    setKeteranganKendala("Elektroda mesin las 1 diganti, berhenti 3 jam.");
-    setJadwalUlang("29 November 2026 · Mesin las 2");
-  };
+  if (!currentSpk) {
+    return (
+      <div className="w-full text-[#172335] animate-fade-in">
+        <ProduksiSubnav />
+        <EmptyState
+          judul="SPK yang sedang diproses tidak ditemukan."
+          variant="inline"
+        />
+      </div>
+    );
+  }
+
 
   const handleSimpan = (e: React.FormEvent) => {
     e.preventDefault();
@@ -234,15 +203,8 @@ function CatatHasilSpkContent({ initialNomorSpk }: { initialNomorSpk?: string })
       selesaiPada: selesaiPadaInput.trim() || "28 Nov 15.30",
     };
 
-    try {
-      sessionStorage.setItem(SPK_STORAGE_KEY, JSON.stringify(updatedSpkList));
-      sessionStorage.setItem(
-        `lionmesh_hasil_recorded_${currentSpk.nomorSpk.toLowerCase()}`,
-        JSON.stringify(recordedPayload)
-      );
-    } catch {
-      // Abaikan jika sessionStorage tidak tersedia
-    }
+    simpanKoleksi("spk", updatedSpkList);
+    simpanHasilTercatat(recordedPayload);
 
     router.push(
       `/produksi/hasil-produksi/${currentSpk.nomorSpk.toLowerCase()}/riwayat`
@@ -347,7 +309,7 @@ function CatatHasilSpkContent({ initialNomorSpk }: { initialNomorSpk?: string })
               <input
                 type="text"
                 readOnly
-                value="Produksi · Bayu, Agus, Siti"
+                value="—"
                 className="mt-1.5 w-full cursor-default rounded-[8px] border border-[#E5E7EB] bg-[#F1F3F6] px-3.5 py-2 text-[13px] text-[#172335] outline-none"
               />
             </div>
@@ -368,7 +330,7 @@ function CatatHasilSpkContent({ initialNomorSpk }: { initialNomorSpk?: string })
               <input
                 type="text"
                 readOnly
-                value="4,30 ton"
+                value={formatTonId(dikeluarkanTon)}
                 className="mt-1.5 w-full cursor-default rounded-[8px] border border-[#E5E7EB] bg-[#F1F3F6] px-3.5 py-2 text-[13px] text-[#172335] outline-none"
               />
             </div>
@@ -491,16 +453,7 @@ function CatatHasilSpkContent({ initialNomorSpk }: { initialNomorSpk?: string })
             Batal
           </Link>
 
-          {!isKurangDariTarget && (
-            <button
-              type="button"
-              onClick={handleContohKurangDariTarget}
-              className="group inline-flex items-center gap-1.5 text-[12px] font-semibold text-[#C96A00] transition-all duration-150 hover:text-[#E88A06] hover:underline"
-            >
-              <span>Contoh hasil kurang dari target</span>
-              <ArrowIcon className="transition-transform duration-150 group-hover:translate-x-0.5" />
-            </button>
-          )}
+
         </div>
       </form>
     </div>

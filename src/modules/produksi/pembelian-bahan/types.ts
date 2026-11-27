@@ -16,4 +16,3 @@ export interface PurchaseRequestItem {
   createdAtShort: string;
 }
 
-export const INITIAL_PR_LIST: PurchaseRequestItem[] = [];

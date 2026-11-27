@@ -7,6 +7,7 @@ import { DataTable } from "@/components/ui/data-table";
 import type { DataTableColumn } from "@/components/ui/data-table.types";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { useTableState } from "@/components/ui/use-table-state";
+import { pathKaryawanDetail } from "@/modules/penggajian/karyawan/constants";
 import { samarkanRekening } from "@/modules/penggajian/karyawan/format";
 import type { BarisKaryawan } from "@/modules/penggajian/karyawan/queries";
 import { STATUS_KARYAWAN } from "@/modules/penggajian/karyawan/status";
@@ -73,7 +74,7 @@ function buildColumns(
       header: "Aksi",
       align: "right",
       render: (row) => (
-        <Link className={ui.buttonSmall} href={`/penggajian/karyawan/${row.id}`}>
+        <Link className={ui.buttonSmall} href={pathKaryawanDetail(row.id)}>
           Lihat
         </Link>
       ),

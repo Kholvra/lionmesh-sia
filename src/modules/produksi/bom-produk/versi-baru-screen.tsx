@@ -8,15 +8,13 @@ import { CustomSelect } from "@/components/ui/custom-select";
 import { Notice } from "@/components/ui/notice";
 import { PageHeader } from "@/components/ui/page-header";
 import { LoadingState } from "@/components/ui/states";
+import { bacaKoleksi, simpanKoleksi } from "@/modules/produksi/store";
 import { ProduksiSubnav } from "../components/produksi-subnav";
 import {
   BAHAN_BAKU_OPTIONS,
-  BomItem,
-  INITIAL_BOM_LIST,
   PRODUK_MASTER_OPTIONS,
+  type BomItem,
 } from "./types";
-
-const STORAGE_KEY = "lionmesh_bom_list_v1";
 
 const BULAN_ID = [
   "Jan",
@@ -75,29 +73,14 @@ function VersiBomBaruContent() {
 
   const dateInputRef = useRef<HTMLInputElement>(null);
 
-  const [bomList] = useState<BomItem[]>(() => {
-    if (typeof window !== "undefined") {
-      try {
-        const saved = sessionStorage.getItem(STORAGE_KEY);
-        if (saved) {
-          const parsed = JSON.parse(saved) as BomItem[];
-          if (Array.isArray(parsed) && parsed.length > 0) {
-            return parsed;
-          }
-        }
-      } catch {
-        // Abaikan
-      }
-    }
-    return INITIAL_BOM_LIST;
-  });
+  const [bomList] = useState<BomItem[]>(() => bacaKoleksi("bom"));
 
   const existingBom = useMemo(() => {
     if (!kodeParam) return null;
     return (
-      bomList.find((item) => item.produkKode.toLowerCase() === kodeParam.toLowerCase()) ??
-      INITIAL_BOM_LIST.find((item) => item.produkKode.toLowerCase() === kodeParam.toLowerCase()) ??
-      null
+      bomList.find(
+        (item) => item.produkKode.toLowerCase() === kodeParam.toLowerCase(),
+      ) ?? null
     );
   }, [bomList, kodeParam]);
 
@@ -228,11 +211,7 @@ function VersiBomBaruContent() {
         )
       : [...bomList, updatedItem];
 
-    try {
-      sessionStorage.setItem(STORAGE_KEY, JSON.stringify(nextList));
-    } catch {
-      // Abaikan
-    }
+    simpanKoleksi("bom", nextList);
 
     router.push("/produksi/bom-produk");
   };

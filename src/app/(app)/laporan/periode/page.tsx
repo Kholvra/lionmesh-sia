@@ -9,6 +9,7 @@ import {
 } from "@/core/ledger";
 import { cekIzin } from "@/lib/auth/permissions";
 import { requireSesi } from "@/lib/auth/server";
+import { firstParam } from "@/lib/first-param";
 import { createClient } from "@/lib/supabase/server";
 import { Notice } from "@/components/ui/notice";
 import { PageHeader } from "@/components/ui/page-header";
@@ -72,7 +73,7 @@ export default async function PeriodePage({ searchParams }: PageProps) {
     );
   });
 
-  const tahunParam = Array.isArray(query.tahun) ? query.tahun[0] : query.tahun;
+  const tahunParam = firstParam(query.tahun);
   const tahunAngka = Number(tahunParam);
   const tahun =
     Number.isInteger(tahunAngka) &&
@@ -83,9 +84,7 @@ export default async function PeriodePage({ searchParams }: PageProps) {
 
   const pemeriksaan = await getPemeriksaanTutupTahun(supabase, tahun);
 
-  const berhasil = Array.isArray(query.berhasil)
-    ? query.berhasil[0]
-    : query.berhasil;
+  const berhasil = firstParam(query.berhasil);
   let pesanSukses: string | null = null;
   if (berhasil?.startsWith("tahun-")) {
     pesanSukses = `Tahun buku ${berhasil.slice("tahun-".length)} berhasil ditutup.`;

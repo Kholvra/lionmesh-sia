@@ -2,28 +2,20 @@
 
 import { useMemo, useState } from "react";
 import { MetricCardGrid } from "@/components/ui/metric-card";
-import { useParams } from "next/navigation";
 import { Notice } from "@/components/ui/notice";
 import { PageHeader } from "@/components/ui/page-header";
 import {
   STATUS_POSTING_HPP,
   StatusBadge,
 } from "@/components/ui/status-badge";
+import { EmptyState } from "@/components/ui/states";
 import { useTableState } from "@/components/ui/use-table-state";
 import { useProduksiActor } from "@/modules/produksi/context/actor-context";
 import { ProduksiSubnav } from "@/modules/produksi/components/produksi-subnav";
-import { HppSpkSummary, INITIAL_HPP_LIST } from "./types";
+import type { HppSpkSummary } from "./types";
 
 export function DetailHppScreen() {
-  const params = useParams<{ nomorSpk: string }>();
-  const spkSlug = (params?.nomorSpk ?? "spk-2611-013").toLowerCase();
-
-  const [hppData, setHppData] = useState<HppSpkSummary>(() => {
-    const found = INITIAL_HPP_LIST.find(
-      (item) => item.nomorSpk.toLowerCase() === spkSlug
-    );
-    return found ?? INITIAL_HPP_LIST[0];
-  });
+  const [hppData, setHppData] = useState<HppSpkSummary | null>(null);
 
   const { can, activeRole } = useProduksiActor();
   const canPostHpp = can("post_final_hpp");
@@ -34,6 +26,7 @@ export function DetailHppScreen() {
   } | null>(null);
 
   const handlePostingFinalHpp = () => {
+    if (!hppData) return;
     if (hppData.statusWo !== "SELESAI") {
       setNotification({
         type: "error",
@@ -42,19 +35,22 @@ export function DetailHppScreen() {
       return;
     }
 
-    setHppData((prev) => ({
-      ...prev,
-      statusPostingHpp: "FINAL_DIPOSTING",
-      tanggalPosting: "24 Nov 2026 · 10.00",
-    }));
+    setHppData((prev) =>
+      prev
+        ? {
+            ...prev,
+            statusPostingHpp: "FINAL_DIPOSTING",
+            tanggalPosting: new Date().toLocaleString("id-ID"),
+          }
+        : prev,
+    );
 
     setNotification({
       type: "success",
       message: `Jurnal HPP Final untuk ${hppData.nomorSpk} sebesar Rp ${hppData.totalHppRp.toLocaleString("id-ID")} berhasil diposting ke Buku Besar. Akun Barang Dalam Proses (WIP) telah ditutup ke Persediaan Barang Jadi.`,
     });
   };
-  const hppAction =
-    hppData.statusPostingHpp === "FINAL_DIPOSTING" ? (
+  const hppAction = !hppData ? null : hppData.statusPostingHpp === "FINAL_DIPOSTING" ? (
       <div className="inline-flex items-center gap-2">
         <StatusBadge
           status={hppData.statusPostingHpp}
@@ -83,6 +79,7 @@ export function DetailHppScreen() {
     );
 
   const jurnalRows = useMemo(() => {
+    if (!hppData) return [];
     return [
       {
         akun: "11400 · Barang Dalam Proses (WIP)",
@@ -131,6 +128,18 @@ export function DetailHppScreen() {
   const tabelJurnal = useTableState(jurnalRows, {
     pageSize: jurnalRows.length || 1,
   });
+
+  if (!hppData) {
+    return (
+      <div className="mx-auto max-w-[1156px] text-[#172335] animate-fade-in">
+        <ProduksiSubnav />
+        <EmptyState
+          judul="Rincian HPP untuk perintah ini tidak tersedia."
+          variant="inline"
+        />
+      </div>
+    );
+  }
 
   return (
     <div className="mx-auto max-w-[1156px] text-[#172335] animate-fade-in">
@@ -262,7 +271,7 @@ export function DetailHppScreen() {
                   Bahan tambahan + Jam kerja rework mesin las
                 </td>
                 <td className="px-[12px] py-3.5 font-medium text-[#C96A00]">
-                  Catatan QC: Rework 2 lembar
+                  Catatan QC
                 </td>
                 <td className="px-[12px] py-3.5 text-right font-semibold text-[#172335] tabular-nums">
                   Rp {hppData.biayaReworkRp.toLocaleString("id-ID")}
@@ -276,7 +285,7 @@ export function DetailHppScreen() {
                   Kerugian produksi di atas batas toleransi
                 </td>
                 <td className="px-[12px] py-3.5 font-medium text-[#526174]">
-                  Tidak ada reject abnormal
+                  Dari keputusan QC
                 </td>
                 <td className="px-[12px] py-3.5 text-right font-semibold text-[#15803D] tabular-nums">
                   − Rp {hppData.rejectAbnormalRp.toLocaleString("id-ID")}

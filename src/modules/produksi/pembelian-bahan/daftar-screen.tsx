@@ -13,27 +13,9 @@ import {
 import { SpkStepper } from "@/components/ui/spk-stepper";
 import { TableActionLink } from "@/components/ui/table-action-link";
 import { useTableState } from "@/components/ui/use-table-state";
+import { bacaKoleksi } from "@/modules/produksi/store";
 import { ProduksiSubnav } from "../components/produksi-subnav";
-import {
-  INITIAL_PR_LIST,
-  PrFilterTab,
-  PurchaseRequestItem,
-} from "./types";
-
-const PR_STORAGE_KEY = "lionmesh_pr_list_v1";
-
-const DEFAULT_FALLBACK_PR: PurchaseRequestItem = {
-  id: "pr-2611-010",
-  nomorPr: "PR-2611-010",
-  nomorSpk: "SPK-2611-013",
-  produkLabel: "SPK-2611-013 · Wiremesh M6 · 120 lembar",
-  bahanNama: "Wire rod 6 mm",
-  bahanKode: "BB-WR06",
-  jumlahDimintaTon: 1.1,
-  dibutuhkanPalingLambat: "27 November 2026 · 07.00",
-  status: "DIPERIKSA_PURCHASING",
-  createdAtShort: "21 Nov 2026",
-};
+import type { PrFilterTab, PurchaseRequestItem } from "./types";
 
 
 function DaftarPermintaanBahanContent() {
@@ -41,25 +23,7 @@ function DaftarPermintaanBahanContent() {
   const submittedNomor = searchParams.get("submitted");
   const tabParam = searchParams.get("tab") as PrFilterTab | null;
 
-  const [prList] = useState<PurchaseRequestItem[]>(() => {
-    if (typeof window !== "undefined") {
-      try {
-        const savedPr = sessionStorage.getItem(PR_STORAGE_KEY);
-        if (savedPr) {
-          const parsed = JSON.parse(savedPr) as PurchaseRequestItem[];
-          if (Array.isArray(parsed) && parsed.length > 0) {
-            return parsed;
-          }
-        }
-        if (INITIAL_PR_LIST.length > 0) {
-          return INITIAL_PR_LIST;
-        }
-      } catch {
-        // Abaikan
-      }
-    }
-    return [DEFAULT_FALLBACK_PR];
-  });
+  const [prList] = useState<PurchaseRequestItem[]>(() => bacaKoleksi("pr"));
   const [activeTab, setActiveTab] = useState<PrFilterTab>(
     tabParam &&
       ["diperiksa_purchasing", "menunggu_pembelian", "dikeluarkan"].includes(
@@ -73,25 +37,15 @@ function DaftarPermintaanBahanContent() {
     if (!submittedNomor || activeTab !== "diperiksa_purchasing") return null;
     return (
       prList.find(
-        (item) => item.nomorPr.toLowerCase() === submittedNomor.toLowerCase()
-      ) ?? DEFAULT_FALLBACK_PR
+        (item) => item.nomorPr.toLowerCase() === submittedNomor.toLowerCase(),
+      ) ?? null
     );
   }, [prList, submittedNomor, activeTab]);
 
-  const menungguPembelianItems = useMemo(() => {
-    const explicitItems = prList.filter(
-      (p) => p.status === "MENUNGGU_PEMBELIAN"
-    );
-    if (explicitItems.length > 0) return explicitItems;
-
-    const baseItem = prList[0] ?? DEFAULT_FALLBACK_PR;
-    return [
-      {
-        ...baseItem,
-        status: "MENUNGGU_PEMBELIAN" as const,
-      },
-    ];
-  }, [prList]);
+  const menungguPembelianItems = useMemo(
+    () => prList.filter((p) => p.status === "MENUNGGU_PEMBELIAN"),
+    [prList],
+  );
 
   const counts = useMemo(() => {
     const diperiksaCount =
@@ -128,7 +82,7 @@ function DaftarPermintaanBahanContent() {
     pageSize: filteredList.length || 1,
   });
 
-  const featuredMenungguItem = menungguPembelianItems[0] ?? DEFAULT_FALLBACK_PR;
+  const featuredMenungguItem = menungguPembelianItems[0] ?? null;
 
   const tabs: { key: PrFilterTab; label: string }[] = [
     {
@@ -191,7 +145,7 @@ function DaftarPermintaanBahanContent() {
                   maximumFractionDigits: 1,
                 }
               )}{" "}
-              ton) disetujui Manajemen 22 Nov. Gudang mengeluarkan bahan
+              ton) menunggu proses pembelian. Gudang mengeluarkan bahan
               setelah wire rod diterima dan lolos QC; status SPK lalu menjadi
               Bahan siap.
             </p>

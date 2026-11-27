@@ -1,21 +1,14 @@
 "use client";
 
 import { useParams } from "next/navigation";
-import { Suspense, useMemo, useState } from "react";
+import { Suspense, useMemo } from "react";
 import { Notice } from "@/components/ui/notice";
 import { PageHeader } from "@/components/ui/page-header";
 import { SpkStepper } from "@/components/ui/spk-stepper";
-import { LoadingState } from "@/components/ui/states";
+import { EmptyState, LoadingState } from "@/components/ui/states";
 import { useTableState } from "@/components/ui/use-table-state";
+import { bacaHasilTercatat } from "@/modules/produksi/store";
 import { ProduksiSubnav } from "../components/produksi-subnav";
-
-interface RecordedSummary {
-  nomorSpk: string;
-  produkNama: string;
-  jumlahJadi: number;
-  scrapText: string;
-  selesaiPada: string;
-}
 
 
 function RiwayatHasilSpkContent({ initialNomorSpk }: { initialNomorSpk?: string }) {
@@ -25,60 +18,29 @@ function RiwayatHasilSpkContent({ initialNomorSpk }: { initialNomorSpk?: string 
     return (initialNomorSpk ?? params?.nomorSpk ?? "spk-2611-013").toLowerCase();
   }, [initialNomorSpk, params?.nomorSpk]);
 
-  const [summary] = useState<RecordedSummary>(() => {
-    if (typeof window !== "undefined") {
-      try {
-        const saved = sessionStorage.getItem(
-          `lionmesh_hasil_recorded_${nomorSpkSlug}`
-        );
-        if (saved) {
-          const parsed = JSON.parse(saved) as RecordedSummary;
-          if (parsed && parsed.nomorSpk) {
-            return {
-              ...parsed,
-              selesaiPada: parsed.selesaiPada
-                .replace("November 2026 · ", "Nov ")
-                .replace("November 2026 ", "Nov "),
-            };
-          }
-        }
-      } catch {
-        // Abaikan
-      }
-    }
+  const summary = useMemo(() => {
+    const saved = bacaHasilTercatat(nomorSpkSlug);
+    if (!saved) return null;
     return {
-      nomorSpk: nomorSpkSlug.toUpperCase(),
-      produkNama: "Wiremesh M6",
-      jumlahJadi: 120,
-      scrapText: "0,08 ton",
-      selesaiPada: "28 Nov 15.30",
+      ...saved,
+      selesaiPada: saved.selesaiPada
+        .replace("November 2026 · ", "Nov ")
+        .replace("November 2026 ", "Nov "),
     };
-  });
+  }, [nomorSpkSlug]);
 
   const riwayatRows = useMemo(
-    () => [
-      {
-        waktu: summary.selesaiPada,
-        kejadian: `Hasil ${summary.jumlahJadi} lembar dicatat`,
-        oleh: "Produksi · Bayu",
-      },
-      {
-        waktu: "27 Nov 06.40",
-        kejadian: "Bahan 4,3 ton diterima dari Gudang",
-        oleh: "Gudang · Sari",
-      },
-      {
-        waktu: "21 Nov 09.10",
-        kejadian: "Cek bahan: kurang 1,1 ton; PR-2611-010 diajukan",
-        oleh: "Produksi · Bayu",
-      },
-      {
-        waktu: "21 Nov 08.00",
-        kejadian: "SPK dibuat",
-        oleh: "Produksi · Bayu",
-      },
-    ],
-    [summary.jumlahJadi, summary.selesaiPada]
+    () =>
+      summary
+        ? [
+            {
+              waktu: summary.selesaiPada,
+              kejadian: `Hasil ${summary.jumlahJadi} lembar dicatat`,
+              oleh: "Produksi",
+            },
+          ]
+        : [],
+    [summary],
   );
   const tabel = useTableState(riwayatRows, {
     pageSize: riwayatRows.length || 1,
@@ -94,21 +56,23 @@ function RiwayatHasilSpkContent({ initialNomorSpk }: { initialNomorSpk?: string 
           { href: "/produksi", label: "Siklus Produksi" },
           "PR-004 Mencatat hasil dan pemakaian bahan",
         ]}
-        title={summary.nomorSpk}
+        title={summary?.nomorSpk ?? nomorSpkSlug.toUpperCase()}
         variant="cycle"
       />
 
-      <Notice
-        title={`Hasil ${summary.nomorSpk} tercatat`}
-        tone="success"
-        variant="card"
-      >
-        <p className="mt-0.5 text-[12px]">
-          {summary.jumlahJadi} lembar {summary.produkNama} menunggu
-          pemeriksaan QC. Scrap {summary.scrapText} dicatat untuk
-          perhitungan biaya.
-        </p>
-      </Notice>
+      {summary && (
+        <Notice
+          title={`Hasil ${summary.nomorSpk} tercatat`}
+          tone="success"
+          variant="card"
+        >
+          <p className="mt-0.5 text-[12px]">
+            {summary.jumlahJadi} lembar {summary.produkNama} menunggu
+            pemeriksaan QC. Scrap {summary.scrapText} dicatat untuk
+            perhitungan biaya.
+          </p>
+        </Notice>
+      )}
 
       <SpkStepper activeStep={4} />
 
@@ -148,6 +112,18 @@ function RiwayatHasilSpkContent({ initialNomorSpk }: { initialNomorSpk?: string 
                   </td>
                 </tr>
               ))}
+              {tabel.isEmpty && (
+                <tr>
+                  <td colSpan={3}>
+                    <div className="py-8 text-center">
+                      <EmptyState
+                        judul="Belum ada hasil produksi yang dicatat untuk perintah ini."
+                        variant="inline"
+                      />
+                    </div>
+                  </td>
+                </tr>
+              )}
             </tbody>
           </table>
         </div>

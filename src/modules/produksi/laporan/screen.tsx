@@ -4,7 +4,7 @@ import { useMemo, useState } from "react";
 import { MetricCardGrid } from "@/components/ui/metric-card";
 import { PageHeader } from "@/components/ui/page-header";
 import { SegmentedTabs } from "@/components/ui/segmented-tabs";
-import { ErrorState } from "@/components/ui/states";
+import { EmptyState, ErrorState } from "@/components/ui/states";
 import {
   STATUS_KATEGORI_PERSEDIAAAN,
   StatusBadge,
@@ -14,10 +14,7 @@ import { useTableState } from "@/components/ui/use-table-state";
 import { useProduksiActor } from "@/modules/produksi/context/actor-context";
 import { tabLaporanProduksi } from "@/modules/produksi/auth/actor";
 import { ProduksiSubnav } from "../components/produksi-subnav";
-import {
-  INITIAL_LAPORAN_PRODUKSI,
-  INITIAL_LAPORAN_WIP,
-  INITIAL_REKAP_PERSEDIAAN,
+import type {
   LaporanProduksiRow,
   LaporanWipRow,
   RekapPersediaanRow,
@@ -39,9 +36,9 @@ export function LaporanProduksiScreen() {
     [activeRole, activeTab],
   );
 
-  const [dataProduksi] = useState<LaporanProduksiRow[]>(INITIAL_LAPORAN_PRODUKSI);
-  const [dataWip] = useState<LaporanWipRow[]>(INITIAL_LAPORAN_WIP);
-  const [dataPersediaan] = useState<RekapPersediaanRow[]>(INITIAL_REKAP_PERSEDIAAN);
+  const [dataProduksi] = useState<LaporanProduksiRow[]>([]);
+  const [dataWip] = useState<LaporanWipRow[]>([]);
+  const [dataPersediaan] = useState<RekapPersediaanRow[]>([]);
   const tabelProduksi = useTableState(dataProduksi, {
     pageSize: dataProduksi.length || 1,
   });
@@ -246,6 +243,18 @@ export function LaporanProduksiScreen() {
                     </td>
                   </tr>
                 ))}
+                {tabelProduksi.isEmpty && (
+                  <tr>
+                    <td colSpan={9}>
+                      <div className="py-8 text-center">
+                        <EmptyState
+                          judul="Belum ada hasil produksi pada periode ini."
+                          variant="inline"
+                        />
+                      </div>
+                    </td>
+                  </tr>
+                )}
               </tbody>
             </table>
           </div>
@@ -316,6 +325,18 @@ export function LaporanProduksiScreen() {
                     </td>
                   </tr>
                 ))}
+                {tabelWip.isEmpty && (
+                  <tr>
+                    <td colSpan={7}>
+                      <div className="py-8 text-center">
+                        <EmptyState
+                          judul="Belum ada saldo WIP pada periode ini."
+                          variant="inline"
+                        />
+                      </div>
+                    </td>
+                  </tr>
+                )}
               </tbody>
             </table>
           </div>
@@ -381,6 +402,18 @@ export function LaporanProduksiScreen() {
                     </td>
                   </tr>
                 ))}
+                {tabelPersediaan.isEmpty && (
+                  <tr>
+                    <td colSpan={6}>
+                      <div className="py-8 text-center">
+                        <EmptyState
+                          judul="Belum ada rekap persediaan pada periode ini."
+                          variant="inline"
+                        />
+                      </div>
+                    </td>
+                  </tr>
+                )}
               </tbody>
             </table>
           </div>

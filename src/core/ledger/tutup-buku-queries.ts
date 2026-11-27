@@ -2,120 +2,34 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 
 import { formatRupiah } from "@/lib/format/money";
 import { fail, ok, type Result } from "@/lib/result";
-import { isRecord } from "@/lib/validation";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { buatPeriode, type PeriodeLaporan } from "./periode";
 import { hitungNeracaSaldo } from "./report";
 import { listBarisJurnal } from "./report-queries";
+import {
+  getTahunBuku,
+  hitungSetengahPosting,
+  listPeriodeAkuntansiStatus,
+} from "./tutup-buku-reads";
 import type {
   NeracaSaldoPemeriksaan,
   PemeriksaanTutupPeriode,
   PemeriksaanTutupTahun,
   PeriodeAkuntansiStatus,
-  TahunBukuStatus,
 } from "./tutup-buku";
 
-function ambilTeks(value: unknown): string | null {
-  return typeof value === "string" ? value : null;
-}
+export {
+  getTahunBuku,
+  listPeriodeAkuntansiStatus,
+} from "./tutup-buku-reads";
 
-function parsePeriodeRow(value: unknown): PeriodeAkuntansiStatus | null {
-  if (!isRecord(value)) return null;
+type StatusPeriode = "buka" | "kunci" | "belum_ada";
 
-  const tahun = Number(value.tahun);
-  const bulan = Number(value.bulan);
-  const status = ambilTeks(value.status);
-
-  if (!Number.isInteger(tahun) || !Number.isInteger(bulan)) return null;
-  if (bulan < 1 || bulan > 12) return null;
-  if (status !== "buka" && status !== "kunci") return null;
-
-  return {
-    ...buatPeriode(tahun, bulan),
-    status,
-    dikunciAt: ambilTeks(value.dikunci_at),
-    dikunciOleh: ambilTeks(value.dikunci_oleh),
-  };
-}
-
-export async function listPeriodeAkuntansiStatus(
-  supabase: SupabaseClient,
-): Promise<Result<PeriodeAkuntansiStatus[]>> {
-  const { data, error } = await supabase
-    .from("periode_akuntansi")
-    .select("tahun, bulan, status, dikunci_at, dikunci_oleh")
-    .order("tahun", { ascending: true })
-    .order("bulan", { ascending: true });
-
-  if (error) return fail(`Gagal membaca periode akuntansi: ${error.message}`);
-  if (!Array.isArray(data)) return fail("Respons periode akuntansi tidak valid.");
-
-  const hasil: PeriodeAkuntansiStatus[] = [];
-  for (const item of data) {
-    const periode = parsePeriodeRow(item);
-    if (!periode) return fail("Data periode akuntansi tidak lengkap.");
-    hasil.push(periode);
-  }
-
-  return ok(hasil);
-}
-
-export async function getTahunBuku(
-  supabase: SupabaseClient,
-  tahun: number,
-): Promise<Result<TahunBukuStatus>> {
-  const { data, error } = await supabase
-    .from("tahun_buku")
-    .select("id, tahun, status, ditutup_at, ditutup_oleh")
-    .eq("tahun", tahun)
-    .maybeSingle();
-
-  if (error) return fail(`Gagal membaca tahun buku: ${error.message}`);
-
-  if (!data) {
-    return ok({
-      id: null,
-      tahun,
-      status: "terbuka",
-      ditutupAt: null,
-      ditutupOleh: null,
-    });
-  }
-
-  if (!isRecord(data)) return fail("Respons tahun buku tidak valid.");
-
-  const status = ambilTeks(data.status);
-  if (status !== "terbuka" && status !== "ditutup") {
-    return fail("Status tahun buku tidak valid.");
-  }
-
-  return ok({
-    id: ambilTeks(data.id),
-    tahun: Number(data.tahun),
-    status,
-    ditutupAt: ambilTeks(data.ditutup_at),
-    ditutupOleh: ambilTeks(data.ditutup_oleh),
-  });
-}
-
-async function hitungSetengahPosting(
-  admin: SupabaseClient,
-  tahun: number,
-  bulan: number,
-): Promise<Result<number>> {
-  const { data, error } = await admin.rpc("c010_hitung_setengah_posting", {
-    p_tahun: tahun,
-    p_bulan: bulan,
-  });
-
-  if (error) {
-    return fail(`Gagal memeriksa dokumen setengah posting: ${error.message}`);
-  }
-  if (typeof data !== "number" || !Number.isInteger(data) || data < 0) {
-    return fail("Respons pemeriksaan setengah posting tidak valid.");
-  }
-  return ok(data);
-}
+type TahunSebelumnya = {
+  tahun: number;
+  status: "terbuka" | "ditutup" | "tidak_ada";
+  punyaAktivitas: boolean;
+} | null;
 
 async function periksaNeraca(
   supabase: SupabaseClient,
@@ -137,7 +51,7 @@ function statusPeriode(
   rows: readonly PeriodeAkuntansiStatus[],
   tahun: number,
   bulan: number,
-): "buka" | "kunci" | "belum_ada" {
+): StatusPeriode {
   return (
     rows.find((row) => row.tahun === tahun && row.bulan === bulan)?.status ??
     "belum_ada"
@@ -148,16 +62,7 @@ async function tahunSebelumnya(
   supabase: SupabaseClient,
   rows: readonly PeriodeAkuntansiStatus[],
   tahun: number,
-): Promise<
-  Result<
-    | {
-        tahun: number;
-        status: "terbuka" | "ditutup" | "tidak_ada";
-        punyaAktivitas: boolean;
-      }
-    | null
-  >
-> {
+): Promise<Result<TahunSebelumnya>> {
   if (tahun <= 2000) return ok(null);
 
   const sebelumnya = tahun - 1;
@@ -172,6 +77,86 @@ async function tahunSebelumnya(
     status: tahunBuku.data.id === null ? "tidak_ada" : tahunBuku.data.status,
     punyaAktivitas,
   });
+}
+
+interface DasarAlasanTutup {
+  setengahPosting: number;
+  neraca: NeracaSaldoPemeriksaan;
+  tahunSebelumnya: TahunSebelumnya;
+}
+
+type AlasanTutupInput =
+  | (DasarAlasanTutup & {
+      jenis: "periode";
+      label: string;
+      bulan: number;
+      sudahDitutup: boolean;
+      statusSebelumnya: StatusPeriode;
+      labelSebelumnya: string;
+    })
+  | (DasarAlasanTutup & {
+      jenis: "tahun";
+      tahun: number;
+      sudahDitutup: boolean;
+      periodeTerbuka: readonly { label: string }[];
+      desemberStatus: StatusPeriode;
+    });
+
+function susunAlasanTutup(input: AlasanTutupInput): string[] {
+  const alasan: string[] = [];
+
+  if (input.jenis === "periode") {
+    if (input.sudahDitutup) {
+      alasan.push(`Periode ${input.label} sudah ditutup.`);
+    }
+    if (input.bulan === 12) {
+      alasan.push(
+        "Desember ditutup lewat tutup buku tahunan, bukan tutup periode bulanan.",
+      );
+    }
+    if (input.statusSebelumnya === "buka") {
+      alasan.push(`Periode ${input.labelSebelumnya} belum ditutup.`);
+    }
+    if (input.setengahPosting > 0) {
+      alasan.push(
+        `Ada ${input.setengahPosting} dokumen setengah posting pada ${input.label}.`,
+      );
+    }
+  } else {
+    if (input.sudahDitutup) {
+      alasan.push(`Tahun buku ${input.tahun} sudah ditutup.`);
+    }
+    for (const periode of input.periodeTerbuka) {
+      alasan.push(`Periode ${periode.label} belum ditutup.`);
+    }
+    if (input.desemberStatus === "kunci") {
+      alasan.push(
+        `Desember ${input.tahun} sudah ditutup; jurnal penutup tidak bisa dibuat.`,
+      );
+    }
+    if (input.setengahPosting > 0) {
+      alasan.push(
+        `Ada ${input.setengahPosting} dokumen setengah posting pada tahun ${input.tahun}.`,
+      );
+    }
+  }
+
+  if (!input.neraca.seimbang) {
+    alasan.push(
+      `Neraca saldo tidak seimbang: selisih ${formatRupiah(
+        input.neraca.selisihCents,
+      )}.`,
+    );
+  }
+  if (
+    input.tahunSebelumnya &&
+    input.tahunSebelumnya.punyaAktivitas &&
+    input.tahunSebelumnya.status !== "ditutup"
+  ) {
+    alasan.push(`Tahun buku ${input.tahunSebelumnya.tahun} belum ditutup.`);
+  }
+
+  return alasan;
 }
 
 export async function getPemeriksaanTutupPeriode(
@@ -212,37 +197,17 @@ export async function getPemeriksaanTutupPeriode(
   if (!tahunLaluHasil.ok) return tahunLaluHasil;
   const tahunLalu = tahunLaluHasil.data;
 
-  const alasan: string[] = [];
-  if (status === "kunci") {
-    alasan.push(`Periode ${periode.label} sudah ditutup.`);
-  }
-  if (periode.bulan === 12) {
-    alasan.push(
-      "Desember ditutup lewat tutup buku tahunan, bukan tutup periode bulanan.",
-    );
-  }
-  if (statusSebelumnya === "buka") {
-    alasan.push(`Periode ${sebelumnya.label} belum ditutup.`);
-  }
-  if (setengah.data > 0) {
-    alasan.push(
-      `Ada ${setengah.data} dokumen setengah posting pada ${periode.label}.`,
-    );
-  }
-  if (!neraca.data.seimbang) {
-    alasan.push(
-      `Neraca saldo tidak seimbang: selisih ${formatRupiah(
-        neraca.data.selisihCents,
-      )}.`,
-    );
-  }
-  if (
-    tahunLalu &&
-    tahunLalu.punyaAktivitas &&
-    tahunLalu.status !== "ditutup"
-  ) {
-    alasan.push(`Tahun buku ${tahunLalu.tahun} belum ditutup.`);
-  }
+  const alasan = susunAlasanTutup({
+    jenis: "periode",
+    label: periode.label,
+    bulan: periode.bulan,
+    sudahDitutup: status === "kunci",
+    statusSebelumnya,
+    labelSebelumnya: sebelumnya.label,
+    setengahPosting: setengah.data,
+    neraca: neraca.data,
+    tahunSebelumnya: tahunLalu,
+  });
 
   return ok({
     periode,
@@ -307,37 +272,16 @@ export async function getPemeriksaanTutupTahun(
   if (!tahunLaluHasil.ok) return tahunLaluHasil;
   const tahunLalu = tahunLaluHasil.data;
 
-  const alasan: string[] = [];
-  if (tahunBuku.data.status === "ditutup") {
-    alasan.push(`Tahun buku ${tahun} sudah ditutup.`);
-  }
-  for (const periode of periodeTerbuka) {
-    alasan.push(`Periode ${periode.label} belum ditutup.`);
-  }
-  if (desemberStatus === "kunci") {
-    alasan.push(
-      `Desember ${tahun} sudah ditutup; jurnal penutup tidak bisa dibuat.`,
-    );
-  }
-  if (totalSetengah > 0) {
-    alasan.push(
-      `Ada ${totalSetengah} dokumen setengah posting pada tahun ${tahun}.`,
-    );
-  }
-  if (!neraca.data.seimbang) {
-    alasan.push(
-      `Neraca saldo tidak seimbang: selisih ${formatRupiah(
-        neraca.data.selisihCents,
-      )}.`,
-    );
-  }
-  if (
-    tahunLalu &&
-    tahunLalu.punyaAktivitas &&
-    tahunLalu.status !== "ditutup"
-  ) {
-    alasan.push(`Tahun buku ${tahunLalu.tahun} belum ditutup.`);
-  }
+  const alasan = susunAlasanTutup({
+    jenis: "tahun",
+    tahun,
+    sudahDitutup: tahunBuku.data.status === "ditutup",
+    periodeTerbuka,
+    desemberStatus,
+    setengahPosting: totalSetengah,
+    neraca: neraca.data,
+    tahunSebelumnya: tahunLalu,
+  });
 
   return ok({
     tahun,

@@ -6,17 +6,12 @@ import { useMemo, useRef, useState } from "react";
 import { CustomSelect } from "@/components/ui/custom-select";
 import { Notice } from "@/components/ui/notice";
 import { PageHeader } from "@/components/ui/page-header";
-import { BomItem, INITIAL_BOM_LIST } from "../bom-produk/types";
+import { EmptyState } from "@/components/ui/states";
+import { hitungKebutuhanBahan } from "@/modules/produksi/kebutuhan-bahan";
+import { bacaKoleksi, simpanKoleksi } from "@/modules/produksi/store";
+import type { BomItem } from "../bom-produk/types";
 import { ProduksiSubnav } from "../components/produksi-subnav";
-import {
-  INITIAL_SPK_LIST,
-  MESIN_OPTIONS,
-  SpkItem,
-  STOK_BAHAN_TERSEDIA_TON,
-} from "./types";
-
-const BOM_STORAGE_KEY = "lionmesh_bom_list_v1";
-const SPK_STORAGE_KEY = "lionmesh_spk_list_v1";
+import { MESIN_OPTIONS, type SpkItem } from "./types";
 
 const BULAN_ID = [
   "Jan",
@@ -37,11 +32,6 @@ function parseLembar(val: string): number {
   const cleaned = val.replace(/lembar/gi, "").replace(/\./g, "").replace(",", ".").trim();
   const num = parseFloat(cleaned);
   return Number.isFinite(num) ? Math.floor(num) : NaN;
-}
-
-function parsePercent(val: string): number {
-  const num = parseFloat(val.replace("%", "").replace(",", ".").trim());
-  return Number.isFinite(num) ? num : 0;
 }
 
 function formatJadwalRange(mulaiISO: string, selesaiISO: string): string {
@@ -69,35 +59,8 @@ export function TambahPerintahProduksiScreen() {
   const mulaiRef = useRef<HTMLInputElement>(null);
   const selesaiRef = useRef<HTMLInputElement>(null);
 
-  const [bomList] = useState<BomItem[]>(() => {
-    if (typeof window !== "undefined") {
-      try {
-        const savedBom = sessionStorage.getItem(BOM_STORAGE_KEY);
-        if (savedBom) {
-          const parsed = JSON.parse(savedBom) as BomItem[];
-          if (Array.isArray(parsed) && parsed.length > 0) return parsed;
-        }
-      } catch {
-        // Abaikan
-      }
-    }
-    return INITIAL_BOM_LIST;
-  });
-
-  const [spkList] = useState<SpkItem[]>(() => {
-    if (typeof window !== "undefined") {
-      try {
-        const savedSpk = sessionStorage.getItem(SPK_STORAGE_KEY);
-        if (savedSpk) {
-          const parsed = JSON.parse(savedSpk) as SpkItem[];
-          if (Array.isArray(parsed) && parsed.length > 0) return parsed;
-        }
-      } catch {
-        // Abaikan
-      }
-    }
-    return INITIAL_SPK_LIST;
-  });
+  const [bomList] = useState<BomItem[]>(() => bacaKoleksi("bom"));
+  const [spkList] = useState<SpkItem[]>(() => bacaKoleksi("spk"));
 
   // Hanya produk yang memiliki versi BOM berlaku
   const produkOptions = useMemo(
@@ -115,14 +78,15 @@ export function TambahPerintahProduksiScreen() {
   const [selesaiISO, setSelesaiISO] = useState<string>("2026-11-28");
   const [fieldErrors, setFieldErrors] = useState<FormErrors>({});
 
-  const activeBom = useMemo(() => {
-    const kode = selectedProdukLabel.split(" · ")[1] || "WM-M6";
-    return (
-      bomList.find((b) => b.produkKode === kode) ??
+  const activeBom = useMemo(
+    () =>
+      bomList.find(
+        (b) => b.produkKode === (selectedProdukLabel.split(" · ")[1] || "WM-M6"),
+      ) ??
       bomList[0] ??
-      INITIAL_BOM_LIST[0]
-    );
-  }, [bomList, selectedProdukLabel]);
+      null,
+    [bomList, selectedProdukLabel],
+  );
 
   const versiBomLabel = useMemo(() => {
     if (!activeBom) return "Tidak ada versi BOM berlaku";
@@ -132,32 +96,10 @@ export function TambahPerintahProduksiScreen() {
   const [customVersiBom, setCustomVersiBom] = useState<string | null>(null);
   const selectedVersiBom = customVersiBom ?? versiBomLabel;
 
-  // Perhitungan kebutuhan bahan otomatis
   const kebutuhanKalkulasi = useMemo(() => {
     const qty = parseLembar(jumlahInput);
     const validQty = Number.isFinite(qty) && qty > 0 ? qty : 0;
-    const perLembarKg = activeBom?.jumlahPerLembarKg ?? 35.3;
-    const scrapPct = parsePercent(activeBom?.toleransiScrap ?? "1,5%");
-
-    const totalKg = validQty * perLembarKg * (1 + scrapPct / 100);
-    const totalTon = totalKg / 1000;
-    const stokTersediaTon =
-      STOK_BAHAN_TERSEDIA_TON[activeBom?.komponenKode ?? "BB-WR06"] ?? 3.2;
-
-    return {
-      perLembarText: `${perLembarKg.toLocaleString("id-ID", {
-        minimumFractionDigits: 1,
-      })} kg + scrap ${activeBom?.toleransiScrap ?? "1,5%"}`,
-      totalTonText: `${totalTon.toLocaleString("id-ID", {
-        minimumFractionDigits: 1,
-        maximumFractionDigits: 1,
-      })} ton`,
-      tersediaTonText: `${stokTersediaTon.toLocaleString("id-ID", {
-        minimumFractionDigits: 1,
-        maximumFractionDigits: 1,
-      })} ton`,
-      isKurang: totalTon > stokTersediaTon,
-    };
+    return activeBom ? hitungKebutuhanBahan(validQty, activeBom) : null;
   }, [jumlahInput, activeBom]);
 
   const openPickerSafe = (input: HTMLInputElement | null) => {
@@ -211,7 +153,11 @@ export function TambahPerintahProduksiScreen() {
 
     setFieldErrors({});
 
-    const nextSeq = 13 + Math.max(0, spkList.length - INITIAL_SPK_LIST.length);
+    const nextSeq =
+      spkList.reduce((max, item) => {
+        const match = /^SPK-2611-(\d{3})$/.exec(item.nomorSpk);
+        return match ? Math.max(max, Number(match[1])) : max;
+      }, 12) + 1;
     const nomorSpkBaru = `SPK-2611-${String(nextSeq).padStart(3, "0")}`;
 
     const newSpk: SpkItem = {
@@ -231,17 +177,34 @@ export function TambahPerintahProduksiScreen() {
     };
 
     const updatedSpkList = [newSpk, ...spkList];
-    try {
-      sessionStorage.setItem(SPK_STORAGE_KEY, JSON.stringify(updatedSpkList));
-    } catch {
-      // Abaikan
-    }
+    simpanKoleksi("spk", updatedSpkList);
 
     router.push(`/produksi/perintah-produksi/${nomorSpkBaru.toLowerCase()}?saved=1`);
   };
 
   const errorMessages = Object.values(fieldErrors).filter(Boolean) as string[];
   const hasErrors = errorMessages.length > 0;
+
+  if (!activeBom || !kebutuhanKalkulasi) {
+    return (
+      <div className="w-full text-[#172335] animate-fade-in">
+        <ProduksiSubnav />
+        <PageHeader
+          back={{ href: "/produksi/perintah-produksi", label: "Perintah produksi" }}
+          breadcrumb={[
+            { href: "/produksi", label: "Siklus Produksi" },
+            "PR-002 Membuat perintah produksi",
+          ]}
+          title="Tambah perintah produksi"
+          variant="cycle"
+        />
+        <EmptyState
+          judul="Belum ada versi BOM yang berlaku untuk dibuatkan perintah produksi."
+          variant="inline"
+        />
+      </div>
+    );
+  }
 
   return (
     <div className="w-full text-[#172335] animate-fade-in">

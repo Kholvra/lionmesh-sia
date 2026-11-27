@@ -6,12 +6,13 @@ import { EmptyState, ErrorState } from "@/components/ui/states";
 import { createKaryawan, deactivateKaryawan, updateKaryawan } from "@/modules/penggajian/karyawan/actions";
 import { KaryawanForm } from "@/modules/penggajian/karyawan/components/karyawan-form";
 import { NonaktifForm } from "@/modules/penggajian/karyawan/components/nonaktif-form";
+import { PATH_KARYAWAN, pathKaryawanDetail } from "@/modules/penggajian/karyawan/constants";
 import { getDaftarAktif, getKaryawanUntukUbah } from "@/modules/penggajian/karyawan/queries";
 import { aksesSesi } from "@/modules/penggajian/karyawan/sesi";
 import { ui } from "@/modules/penggajian/ui/kelas";
 
 const ITEM = "GJ-001 Mengelola data karyawan";
-const DAFTAR = { href: "/penggajian/karyawan", label: "Data karyawan" };
+const DAFTAR = { href: PATH_KARYAWAN, label: "Data karyawan" };
 const BREADCRUMB = [
   { label: "Siklus Penggajian", accent: true },
   ITEM,
@@ -51,13 +52,13 @@ export function KaryawanTambahScreen() {
 
 async function UbahKonten({ id }: { id: string }) {
   const akses = await aksesSesi();
-  const back = { href: `/penggajian/karyawan/${id}`, label: "Detail karyawan" };
+  const back = { href: pathKaryawanDetail(id), label: "Detail karyawan" };
   if (!akses.bolehMengubah) {
     return (<><PageHeader back={back} breadcrumb={BREADCRUMB} title="Ubah data karyawan" /><ErrorState judul="Anda tidak punya akses ke data karyawan" teks="Data karyawan hanya bisa dibuka oleh HR, Accounting, dan Finance. Hubungi HR bila Anda membutuhkannya." variant="compact" /></>);
   }
   const karyawan = await getKaryawanUntukUbah(id, akses);
   if (!karyawan) {
-    return (<><PageHeader back={DAFTAR} breadcrumb={BREADCRUMB} title="Ubah data karyawan" /><EmptyState actionHref="/penggajian/karyawan" actionLabel="Kembali ke data karyawan" judul="Karyawan tidak ditemukan" teks="Data mungkin sudah dipindahkan atau tautannya salah." variant="compact" /></>);
+    return (<><PageHeader back={DAFTAR} breadcrumb={BREADCRUMB} title="Ubah data karyawan" /><EmptyState actionHref={PATH_KARYAWAN} actionLabel="Kembali ke data karyawan" judul="Karyawan tidak ditemukan" teks="Data mungkin sudah dipindahkan atau tautannya salah." variant="compact" /></>);
   }
 
   return (
@@ -92,13 +93,13 @@ export function KaryawanUbahScreen({ id }: { id: string }) {
 
 async function StatusKonten({ id }: { id: string }) {
   const akses = await aksesSesi();
-  const back = { href: `/penggajian/karyawan/${id}`, label: "Detail karyawan" };
+  const back = { href: pathKaryawanDetail(id), label: "Detail karyawan" };
   if (!akses.bolehMengubah) {
     return (<><PageHeader back={back} breadcrumb={BREADCRUMB} title="Nonaktifkan karyawan" /><ErrorState judul="Anda tidak punya akses ke data karyawan" teks="Data karyawan hanya bisa dibuka oleh HR, Accounting, dan Finance. Hubungi HR bila Anda membutuhkannya." variant="compact" /></>);
   }
   const karyawan = await getKaryawanUntukUbah(id, akses);
   if (!karyawan) {
-    return (<><PageHeader back={DAFTAR} breadcrumb={BREADCRUMB} title="Nonaktifkan karyawan" /><EmptyState actionHref="/penggajian/karyawan" actionLabel="Kembali ke data karyawan" judul="Karyawan tidak ditemukan" teks="Data mungkin sudah dipindahkan atau tautannya salah." variant="compact" /></>);
+    return (<><PageHeader back={DAFTAR} breadcrumb={BREADCRUMB} title="Nonaktifkan karyawan" /><EmptyState actionHref={PATH_KARYAWAN} actionLabel="Kembali ke data karyawan" judul="Karyawan tidak ditemukan" teks="Data mungkin sudah dipindahkan atau tautannya salah." variant="compact" /></>);
   }
 
   return (

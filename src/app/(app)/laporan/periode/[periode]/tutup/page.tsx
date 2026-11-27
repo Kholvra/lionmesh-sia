@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { getPemeriksaanTutupPeriode, parsePeriode } from "@/core/ledger";
 import { cekIzin } from "@/lib/auth/permissions";
 import { requireSesi } from "@/lib/auth/server";
+import { firstParam } from "@/lib/first-param";
 import { createClient } from "@/lib/supabase/server";
 import { Notice } from "@/components/ui/notice";
 
@@ -28,7 +29,7 @@ export default async function TutupPeriodePage({ params }: PageProps) {
     return <AksesDitolak />;
   }
 
-  const { periode: kunci } = await params;
+  const kunci = firstParam((await params).periode);
   const periode = parsePeriode(kunci);
   if (!periode.ok) notFound();
 

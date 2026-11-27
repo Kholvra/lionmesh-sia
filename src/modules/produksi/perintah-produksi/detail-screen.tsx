@@ -6,18 +6,12 @@ import { Suspense, useMemo, useState } from "react";
 import { Notice } from "@/components/ui/notice";
 import { PageHeader } from "@/components/ui/page-header";
 import { SpkStepper } from "@/components/ui/spk-stepper";
-import { LoadingState } from "@/components/ui/states";
+import { EmptyState, LoadingState } from "@/components/ui/states";
+import { hitungKebutuhanBahan } from "@/modules/produksi/kebutuhan-bahan";
+import { bacaKoleksi } from "@/modules/produksi/store";
+import type { BomItem } from "../bom-produk/types";
 import { ProduksiSubnav } from "../components/produksi-subnav";
-import { BomItem, INITIAL_BOM_LIST } from "../bom-produk/types";
-import {
-  INITIAL_SPK_LIST,
-  SpkItem,
-  SpkStatusType,
-  STOK_BAHAN_TERSEDIA_TON,
-} from "./types";
-
-const SPK_STORAGE_KEY = "lionmesh_spk_list_v1";
-const BOM_STORAGE_KEY = "lionmesh_bom_list_v1";
+import type { SpkItem, SpkStatusType } from "./types";
 
 const BULAN_LENGKAP_ID = [
   "Januari",
@@ -45,11 +39,6 @@ function formatJadwalLengkap(mulaiISO: string, selesaiISO: string, fallback: str
   return `${d1} ${BULAN_LENGKAP_ID[m1 - 1]}–${d2} ${BULAN_LENGKAP_ID[m2 - 1]} ${y2}`;
 }
 
-function parsePercent(val: string): number {
-  const num = parseFloat(val.replace("%", "").replace(",", ".").trim());
-  return Number.isFinite(num) ? num : 0;
-}
-
 
 function getActiveStepFromStatus(status: SpkStatusType): number {
   switch (status) {
@@ -73,99 +62,53 @@ function DetailSpkContent({ initialNomorSpk }: { initialNomorSpk?: string }) {
   const searchParams = useSearchParams();
   const isJustSaved = searchParams.get("saved") === "1";
 
-  const [spkList] = useState<SpkItem[]>(() => {
-    if (typeof window !== "undefined") {
-      try {
-        const savedSpk = sessionStorage.getItem(SPK_STORAGE_KEY);
-        if (savedSpk) {
-          const parsed = JSON.parse(savedSpk) as SpkItem[];
-          if (Array.isArray(parsed) && parsed.length > 0) return parsed;
-        }
-      } catch {
-        // Abaikan
-      }
-    }
-    return INITIAL_SPK_LIST;
-  });
+  const [spkList] = useState<SpkItem[]>(() => bacaKoleksi("spk"));
+  const [bomList] = useState<BomItem[]>(() => bacaKoleksi("bom"));
 
-  const [bomList] = useState<BomItem[]>(() => {
-    if (typeof window !== "undefined") {
-      try {
-        const savedBom = sessionStorage.getItem(BOM_STORAGE_KEY);
-        if (savedBom) {
-          const parsed = JSON.parse(savedBom) as BomItem[];
-          if (Array.isArray(parsed) && parsed.length > 0) return parsed;
-        }
-      } catch {
-        // Abaikan
-      }
-    }
-    return INITIAL_BOM_LIST;
-  });
-
-  const currentSpk = useMemo<SpkItem>(() => {
+  const currentSpk = useMemo<SpkItem | null>(() => {
     const slug = (initialNomorSpk ?? params?.nomorSpk ?? "spk-2611-013").toLowerCase();
-    const found = spkList.find((item) => item.nomorSpk.toLowerCase() === slug);
-    if (found) return found;
-
-    // Fallback default SPK-2611-013
-    return {
-      id: "spk-2611-013",
-      nomorSpk: "SPK-2611-013",
-      sumberInfo: "dari SO-2611-015",
-      produkNama: "Wiremesh M6",
-      produkKode: "WM-M6",
-      versiBom: "v2",
-      mesin: "Mesin las 1",
-      jumlahLembar: 120,
-      jadwalText: "27–28 Nov",
-      tanggalMulaiISO: "2026-11-27",
-      tanggalSelesaiISO: "2026-11-28",
-      status: "DIRENCANAKAN",
-      filterCategory: "direncanakan",
-    };
+    return (
+      spkList.find((item) => item.nomorSpk.toLowerCase() === slug) ?? null
+    );
   }, [initialNomorSpk, params?.nomorSpk, spkList]);
 
-  const relatedBom = useMemo(() => {
-    return (
-      bomList.find((b) => b.produkKode === currentSpk.produkKode) ??
-      INITIAL_BOM_LIST[0]
-    );
-  }, [bomList, currentSpk.produkKode]);
-
-  const kebutuhanBahan = useMemo(() => {
-    const perLembarKg = relatedBom.jumlahPerLembarKg;
-    const scrapPct = parsePercent(relatedBom.toleransiScrap);
-    const totalKg = currentSpk.jumlahLembar * perLembarKg * (1 + scrapPct / 100);
-    const totalTon = totalKg / 1000;
-    const tersediaTon = STOK_BAHAN_TERSEDIA_TON[relatedBom.komponenKode] ?? 3.2;
-
-    return {
-      perLembarText: `${perLembarKg.toLocaleString("id-ID", {
-        minimumFractionDigits: 1,
-      })} kg + scrap ${relatedBom.toleransiScrap}`,
-      totalTonText: `${totalTon.toLocaleString("id-ID", {
-        minimumFractionDigits: 1,
-        maximumFractionDigits: 1,
-      })} ton`,
-      tersediaTonText: `${tersediaTon.toLocaleString("id-ID", {
-        minimumFractionDigits: 1,
-        maximumFractionDigits: 1,
-      })} ton`,
-    };
-  }, [currentSpk.jumlahLembar, relatedBom]);
-
-  const activeStep = getActiveStepFromStatus(currentSpk.status);
-  const jadwalLengkap = formatJadwalLengkap(
-    currentSpk.tanggalMulaiISO,
-    currentSpk.tanggalSelesaiISO,
-    currentSpk.jadwalText
+  const relatedBom = useMemo<BomItem | null>(
+    () =>
+      bomList.find((b) => b.produkKode === currentSpk?.produkKode) ?? null,
+    [bomList, currentSpk?.produkKode],
   );
 
-  const versiBomKeterangan =
-    currentSpk.sumberInfo === "dari SO-2611-015"
-      ? `${currentSpk.versiBom} · untuk SO-2611-015 PT Graha Konstruksi`
-      : `${currentSpk.versiBom} · ${currentSpk.sumberInfo}`;
+  const kebutuhanBahan = useMemo(
+    () =>
+      currentSpk && relatedBom
+        ? hitungKebutuhanBahan(currentSpk.jumlahLembar, relatedBom)
+        : null,
+    [currentSpk, relatedBom],
+  );
+
+  const activeStep = currentSpk ? getActiveStepFromStatus(currentSpk.status) : 1;
+  const jadwalLengkap = currentSpk
+    ? formatJadwalLengkap(
+        currentSpk.tanggalMulaiISO,
+        currentSpk.tanggalSelesaiISO,
+        currentSpk.jadwalText,
+      )
+    : "";
+  const versiBomKeterangan = currentSpk
+    ? `${currentSpk.versiBom} · ${currentSpk.sumberInfo}`
+    : "";
+
+  if (!currentSpk || !relatedBom || !kebutuhanBahan) {
+    return (
+      <div className="w-full text-[#172335] animate-fade-in">
+        <ProduksiSubnav />
+        <EmptyState
+          judul="Perintah produksi atau versi BOM terkait tidak ditemukan."
+          variant="inline"
+        />
+      </div>
+    );
+  }
 
   return (
     <div className="w-full text-[#172335] animate-fade-in">

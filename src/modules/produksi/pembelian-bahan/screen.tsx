@@ -3,22 +3,15 @@
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useMemo, useState } from "react";
-import { ArrowIcon } from "@/components/ui/arrow-icon";
 import { Notice } from "@/components/ui/notice";
 import { PageHeader } from "@/components/ui/page-header";
-import { LoadingState } from "@/components/ui/states";
-import { ProduksiSubnav } from "../components/produksi-subnav";
-import { BomItem, INITIAL_BOM_LIST } from "../bom-produk/types";
-import {
-  INITIAL_SPK_LIST,
-  SpkItem,
-  STOK_BAHAN_TERSEDIA_TON,
-} from "../perintah-produksi/types";
-import { INITIAL_PR_LIST, PurchaseRequestItem } from "./types";
-
-const SPK_STORAGE_KEY = "lionmesh_spk_list_v1";
-const BOM_STORAGE_KEY = "lionmesh_bom_list_v1";
-const PR_STORAGE_KEY = "lionmesh_pr_list_v1";
+import { EmptyState, LoadingState } from "@/components/ui/states";
+import { hitungKebutuhanBahan } from "@/modules/produksi/kebutuhan-bahan";
+import { bacaKoleksi, simpanKoleksi } from "@/modules/produksi/store";
+import type { BomItem } from "../bom-produk/types";
+import type { SpkItem } from "../perintah-produksi/types";
+import type { PurchaseRequestItem } from "./types";
+import { ProduksiSubnav } from "@/modules/produksi/components/produksi-subnav";
 
 const BULAN_LENGKAP_ID = [
   "Januari",
@@ -36,15 +29,10 @@ const BULAN_LENGKAP_ID = [
 ];
 
 function formatTanggalDeadline(isoDate: string): string {
-  if (!isoDate) return "27 November 2026 · 07.00";
+  if (!isoDate) return "";
   const [y, m, d] = isoDate.split("-").map(Number);
   if (!y || !m || !d) return `${isoDate} · 07.00`;
   return `${d} ${BULAN_LENGKAP_ID[m - 1]} ${y} · 07.00`;
-}
-
-function parsePercent(val: string): number {
-  const num = parseFloat(val.replace("%", "").replace(",", ".").trim());
-  return Number.isFinite(num) ? num : 0;
 }
 
 function parseTonInput(val: string): number {
@@ -65,142 +53,63 @@ function AjukanPembelianBahanContent() {
   const searchParams = useSearchParams();
   const spkQuery = (searchParams.get("spk") ?? "spk-2611-013").toLowerCase();
 
-  const [spkList] = useState<SpkItem[]>(() => {
-    if (typeof window !== "undefined") {
-      try {
-        const savedSpk = sessionStorage.getItem(SPK_STORAGE_KEY);
-        if (savedSpk) {
-          const parsed = JSON.parse(savedSpk) as SpkItem[];
-          if (Array.isArray(parsed) && parsed.length > 0) return parsed;
-        }
-      } catch {
-        // Abaikan
-      }
-    }
-    return INITIAL_SPK_LIST;
-  });
+  const [spkList] = useState<SpkItem[]>(() => bacaKoleksi("spk"));
+  const [bomList] = useState<BomItem[]>(() => bacaKoleksi("bom"));
+  const [prList] = useState<PurchaseRequestItem[]>(() => bacaKoleksi("pr"));
 
-  const [bomList] = useState<BomItem[]>(() => {
-    if (typeof window !== "undefined") {
-      try {
-        const savedBom = sessionStorage.getItem(BOM_STORAGE_KEY);
-        if (savedBom) {
-          const parsed = JSON.parse(savedBom) as BomItem[];
-          if (Array.isArray(parsed) && parsed.length > 0) return parsed;
-        }
-      } catch {
-        // Abaikan
-      }
-    }
-    return INITIAL_BOM_LIST;
-  });
+  const targetSpk = useMemo<SpkItem | null>(
+    () => spkList.find((s) => s.nomorSpk.toLowerCase() === spkQuery) ?? null,
+    [spkList, spkQuery],
+  );
 
-  const [prList] = useState<PurchaseRequestItem[]>(() => {
-    if (typeof window !== "undefined") {
-      try {
-        const savedPr = sessionStorage.getItem(PR_STORAGE_KEY);
-        if (savedPr) {
-          const parsed = JSON.parse(savedPr) as PurchaseRequestItem[];
-          if (Array.isArray(parsed) && parsed.length > 0) return parsed;
-        }
-      } catch {
-        // Abaikan
-      }
-    }
-    return INITIAL_PR_LIST;
-  });
+  const relatedBom = useMemo<BomItem | null>(
+    () => bomList.find((b) => b.produkKode === targetSpk?.produkKode) ?? null,
+    [bomList, targetSpk?.produkKode],
+  );
 
-  const targetSpk = useMemo<SpkItem>(() => {
-    const found = spkList.find((s) => s.nomorSpk.toLowerCase() === spkQuery);
-    if (found) return found;
-
-    return {
-      id: "spk-2611-013",
-      nomorSpk: "SPK-2611-013",
-      sumberInfo: "dari SO-2611-015",
-      produkNama: "Wiremesh M6",
-      produkKode: "WM-M6",
-      versiBom: "v2",
-      mesin: "Mesin las 1",
-      jumlahLembar: 120,
-      jadwalText: "27–28 Nov",
-      tanggalMulaiISO: "2026-11-27",
-      tanggalSelesaiISO: "2026-11-28",
-      status: "DIRENCANAKAN",
-      filterCategory: "direncanakan",
-    };
-  }, [spkList, spkQuery]);
-
-  const relatedBom = useMemo(() => {
-    return (
-      bomList.find((b) => b.produkKode === targetSpk.produkKode) ??
-      INITIAL_BOM_LIST[0]
-    );
-  }, [bomList, targetSpk.produkKode]);
-
-  const bahanSummary = useMemo(() => {
-    const perLembarKg = relatedBom.jumlahPerLembarKg;
-    const scrapPct = parsePercent(relatedBom.toleransiScrap);
-    const totalKg = targetSpk.jumlahLembar * perLembarKg * (1 + scrapPct / 100);
-    const kebutuhanTon = Number((totalKg / 1000).toFixed(1));
-    const tersediaTon = Number(
-      (STOK_BAHAN_TERSEDIA_TON[relatedBom.komponenKode] ?? 3.2).toFixed(1)
-    );
-    const kekuranganTon = Number(
-      Math.max(0.1, kebutuhanTon - tersediaTon).toFixed(1)
-    );
-
-    return {
-      kebutuhanTon,
-      tersediaTon,
-      kekuranganTon,
-      kebutuhanText: `${kebutuhanTon.toLocaleString("id-ID", {
-        minimumFractionDigits: 1,
-        maximumFractionDigits: 1,
-      })} ton`,
-      tersediaText: `${tersediaTon.toLocaleString("id-ID", {
-        minimumFractionDigits: 1,
-        maximumFractionDigits: 1,
-      })} ton`,
-      kekuranganText: `${kekuranganTon.toLocaleString("id-ID", {
-        minimumFractionDigits: 1,
-        maximumFractionDigits: 1,
-      })} ton`,
-    };
-  }, [relatedBom, targetSpk.jumlahLembar]);
+  const bahanSummary = useMemo(
+    () =>
+      targetSpk && relatedBom
+        ? hitungKebutuhanBahan(targetSpk.jumlahLembar, relatedBom)
+        : null,
+    [targetSpk, relatedBom],
+  );
 
   const [customJumlahDiminta, setCustomJumlahDiminta] = useState<string | null>(null);
-  const jumlahDiminta = customJumlahDiminta ?? bahanSummary.kekuranganText;
+  const jumlahDiminta = customJumlahDiminta ?? bahanSummary?.kekuranganText ?? "";
   const setJumlahDiminta = (val: string) => setCustomJumlahDiminta(val);
 
   const [customDeadline, setCustomDeadline] = useState<string | null>(null);
-  const dibutuhkanPalingLambat = customDeadline ?? formatTanggalDeadline(targetSpk.tanggalMulaiISO);
+  const dibutuhkanPalingLambat =
+    customDeadline ?? formatTanggalDeadline(targetSpk?.tanggalMulaiISO ?? "");
   const setDibutuhkanPalingLambat = (val: string) => setCustomDeadline(val);
 
   const [fieldErrors, setFieldErrors] = useState<FormErrors>({});
 
-  const existingPrForSpk = useMemo(() => {
-    return (
+  const existingPrForSpk = useMemo(
+    () =>
       prList.find(
-        (pr) => pr.nomorSpk.toLowerCase() === targetSpk.nomorSpk.toLowerCase()
-      ) ?? null
-    );
-  }, [prList, targetSpk.nomorSpk]);
+        (pr) => pr.nomorSpk.toLowerCase() === targetSpk?.nomorSpk.toLowerCase(),
+      ) ?? null,
+    [prList, targetSpk?.nomorSpk],
+  );
 
   const formatTonDisplay = (val: number) =>
     `${val.toLocaleString("id-ID", {
       minimumFractionDigits: Number.isInteger(val) ? 0 : 1,
       maximumFractionDigits: 1,
     })} ton`;
-
-  const handleContohMelebihiKebutuhan = () => {
-    const contohLebih = "2 ton";
-    setJumlahDiminta(contohLebih);
-    setFieldErrors({
-      jumlahBanner: `Jumlah ${contohLebih} melebihi kekurangan ${targetSpk.nomorSpk} (${bahanSummary.kekuranganText}). Permintaan hanya untuk selisih kebutuhan dan stok tersedia.`,
-      jumlahField: `Maksimal ${bahanSummary.kekuranganText} untuk SPK ini.`,
-    });
-  };
+  if (!targetSpk || !relatedBom || !bahanSummary) {
+    return (
+      <div className="w-full text-[#172335] animate-fade-in">
+        <ProduksiSubnav />
+        <EmptyState
+          judul="Perintah produksi atau versi BOM terkait tidak ditemukan."
+          variant="inline"
+        />
+      </div>
+    );
+  }
 
   const handleAjukan = (e: React.FormEvent) => {
     e.preventDefault();
@@ -256,12 +165,8 @@ function AjukanPembelianBahanContent() {
         : item
     );
 
-    try {
-      sessionStorage.setItem(PR_STORAGE_KEY, JSON.stringify(updatedPrList));
-      sessionStorage.setItem(SPK_STORAGE_KEY, JSON.stringify(updatedSpkList));
-    } catch {
-      // Abaikan jika sessionStorage tidak tersedia
-    }
+    simpanKoleksi("pr", updatedPrList);
+    simpanKoleksi("spk", updatedSpkList);
 
     router.push(
       `/produksi/pembelian-bahan/daftar?submitted=${encodeURIComponent(nomorPrBaru)}`
@@ -375,7 +280,7 @@ function AjukanPembelianBahanContent() {
               ) : (
                 <p className="shadow-card mt-1.5 text-[11px] border-transparent leading-relaxed text-[#526174]">
                   Kebutuhan {bahanSummary.kebutuhanText} − tersedia{" "}
-                  {bahanSummary.tersediaText}. Hanya kekurangan yang diminta;
+                  {bahanSummary.tersediaTonText}. Hanya kekurangan yang diminta;
                   Purchasing memeriksa, Manajemen menyetujui.
                 </p>
               )}
@@ -439,16 +344,7 @@ function AjukanPembelianBahanContent() {
                 Batal
               </Link>
 
-              {!hasErrors && (
-                <button
-                  type="button"
-                  onClick={handleContohMelebihiKebutuhan}
-                  className="group inline-flex items-center gap-1.5 text-[12px] font-semibold text-[#C96A00] transition-all duration-150 hover:text-[#E88A06] hover:underline"
-                >
-                  <span>Contoh melebihi kebutuhan</span>
-                  <ArrowIcon className="transition-transform duration-150 group-hover:translate-x-0.5" />
-                </button>
-              )}
+
             </>
           ) : (
             <div className="flex flex-wrap items-center gap-3">

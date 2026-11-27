@@ -1,14 +1,16 @@
-export type TipeProduk = "bahan" | "barang_dalam_proses" | "barang_jadi";
+import { DAFTAR_AKUN_PERSEDIAAN } from "../ledger/rules.ts";
+
+export type TipeProduk = (typeof DAFTAR_AKUN_PERSEDIAAN)[number]["tipeProduk"];
 
 export const DAFTAR_TIPE_PRODUK: readonly {
   value: TipeProduk;
   label: string;
   akunPersediaan: string;
-}[] = [
-  { value: "bahan", label: "Bahan", akunPersediaan: "120" },
-  { value: "barang_dalam_proses", label: "Barang dalam proses", akunPersediaan: "121" },
-  { value: "barang_jadi", label: "Barang jadi", akunPersediaan: "122" },
-];
+}[] = DAFTAR_AKUN_PERSEDIAAN.map((item) => ({
+  value: item.tipeProduk,
+  label: item.label,
+  akunPersediaan: item.nomor,
+}));
 
 export interface Satuan {
   id: string;

@@ -1,10 +1,13 @@
 "use client";
 
 import Link from "next/link";
+import { useMemo, useState } from "react";
 import { MetricCardGrid } from "@/components/ui/metric-card";
 import { PageHeader } from "@/components/ui/page-header";
 import { STATUS_TUGAS_PRODUKSI, StatusBadge } from "@/components/ui/status-badge";
+import { EmptyState } from "@/components/ui/states";
 import { TableActionLink } from "@/components/ui/table-action-link";
+import { bacaKoleksi } from "@/modules/produksi/store";
 import { ProduksiSubnav } from "../components/produksi-subnav";
 
 interface TaskItem {
@@ -17,55 +20,55 @@ interface TaskItem {
   href: string;
 }
 
-interface ActivityItem {
-  time: string;
-  description: string;
-}
-
-const TASKS_NEED_ACTION: TaskItem[] = [
-  {
-    id: "task-1",
-    title: "SPK-2611-013 · dari SO-2611-015",
-    subtitle: "Wiremesh M6 · 120 lembar",
-    siklus: "Produksi",
-    statusLabel: "Menunggu cek bahan Gudang",
-    actionLabel: "Lihat",
-    href: "/produksi/perintah-produksi?spk=SPK-2611-013",
-  },
-  {
-    id: "task-2",
-    title: "PR-2611-010 · wire rod 6 mm",
-    subtitle: "1,1 ton",
-    siklus: "Produksi",
-    statusLabel: "Diperiksa Purchasing",
-    actionLabel: "Lihat",
-    href: "/produksi/pembelian-bahan?pr=PR-2611-010",
-  },
-  {
-    id: "task-3",
-    title: "SPK-2611-012 · Wiremesh M8",
-    subtitle: "Selesai diproduksi · 400 lembar",
-    siklus: "Produksi",
-    statusLabel: "Hasil belum dicatat",
-    actionLabel: "Catat hasil",
-    href: "/produksi/hasil-produksi?spk=SPK-2611-012",
-  },
-];
-
-const RECENT_ACTIVITIES: ActivityItem[] = [
-  { time: "09.30", description: "Mesin las 2 selesai SPK-2611-012" },
-  { time: "08.00", description: "SPK-2611-013 dibuat" },
-  { time: "Kemarin", description: "SPK-2611-011 dikirim ke QC" },
-];
-
 export function ProduksiHubScreen() {
+  const [spkList] = useState(() => bacaKoleksi("spk"));
+  const [prList] = useState(() => bacaKoleksi("pr"));
+
+  const tasks = useMemo<TaskItem[]>(
+    () => [
+      ...spkList
+        .filter((spk) => spk.filterCategory === "direncanakan")
+        .map((spk) => ({
+          id: spk.id,
+          title: `${spk.nomorSpk} · ${spk.produkNama}`,
+          subtitle: `${spk.jumlahLembar.toLocaleString("id-ID")} lembar`,
+          siklus: "Produksi",
+          statusLabel: "Menunggu cek bahan Gudang",
+          actionLabel: "Lihat",
+          href: `/produksi/perintah-produksi/${spk.nomorSpk.toLowerCase()}`,
+        })),
+      ...spkList
+        .filter((spk) => spk.filterCategory === "diproses")
+        .map((spk) => ({
+          id: spk.id,
+          title: `${spk.nomorSpk} · ${spk.produkNama}`,
+          subtitle: `${spk.jumlahLembar.toLocaleString("id-ID")} lembar`,
+          siklus: "Produksi",
+          statusLabel: "Hasil belum dicatat",
+          actionLabel: "Catat hasil",
+          href: `/produksi/hasil-produksi?spk=${spk.nomorSpk.toLowerCase()}`,
+        })),
+      ...prList
+        .filter((pr) => pr.status === "DIPERIKSA_PURCHASING")
+        .map((pr) => ({
+          id: pr.id,
+          title: `${pr.nomorPr} · ${pr.bahanNama}`,
+          subtitle: `${pr.jumlahDimintaTon.toLocaleString("id-ID")} ton`,
+          siklus: "Produksi",
+          statusLabel: "Diperiksa Purchasing",
+          actionLabel: "Lihat",
+          href: `/produksi/pembelian-bahan?pr=${pr.nomorPr.toLowerCase()}`,
+        })),
+    ],
+    [spkList, prList],
+  );
   return (
     <div className="w-full text-[#172335] animate-fade-in">
       <ProduksiSubnav />
 
       <PageHeader
         breadcrumb={["Beranda", "Produksi"]}
-        description="21 November 2026 · Siklus produksi"
+        description="Siklus produksi"
         separator="·"
         title="Beranda"
         variant="cycle"
@@ -75,9 +78,9 @@ export function ProduksiHubScreen() {
         className="mt-6"
         columns={3}
         items={[
-          { label: "SPK berjalan", value: 2, hover: "lift-eased", minHeight: true },
-          { label: "Permintaan bahan", value: 1, hover: "lift-eased", minHeight: true },
-          { label: "Menunggu QC", value: 1, hover: "lift-eased", minHeight: true },
+          { label: "SPK berjalan", value: spkList.filter((s) => s.status === "DIPROSES" || s.status === "MENUNGGU_BAHAN").length, hover: "lift-eased", minHeight: true },
+          { label: "Permintaan bahan", value: prList.length, hover: "lift-eased", minHeight: true },
+          { label: "Menunggu QC", value: spkList.filter((s) => s.status === "MENUNGGU_QC").length, hover: "lift-eased", minHeight: true },
         ]}
       />
 
@@ -89,45 +92,52 @@ export function ProduksiHubScreen() {
             <h2 className="text-[16px] font-bold text-[#172335]">
               Perlu tindakan Anda
             </h2>
-            <span className="text-[13px] text-[#526174]">3 tugas</span>
+            <span className="text-[13px] text-[#526174]">{tasks.length} tugas</span>
           </div>
 
           <div className="mt-3.5 space-y-3">
-            {TASKS_NEED_ACTION.map((task) => (
-              <div
-                key={task.id}
-                className="shadow-card flex items-center justify-between rounded-[10px] border border-transparent bg-white px-5 py-4 transition-all duration-150 ease-out hover:-translate-y-0.5 hover:shadow-md hover:border-slate-200"
-              >
-                <div>
-                  <h3 className="text-[14px] font-semibold text-[#172335]">
-                    {task.title}
-                  </h3>
-                  <p className="mt-0.5 text-[12px] text-[#526174]">
-                    {task.subtitle}
-                  </p>
-                  <div className="mt-2 flex items-center gap-2">
-                    <span className="text-[11px] text-[#526174]">
-                      {task.siklus}
-                    </span>
-                    <span className="text-[#526174]">·</span>
-                    <StatusBadge
-                      status={task.statusLabel}
-                      statuses={STATUS_TUGAS_PRODUKSI}
-                      variant="compact"
-                    />
+            {tasks.length === 0 ? (
+              <EmptyState
+                judul="Belum ada tugas yang menunggu tindakan."
+                variant="inline"
+              />
+            ) : (
+              tasks.map((task) => (
+                <div
+                  key={task.id}
+                  className="shadow-card flex items-center justify-between rounded-[10px] border border-transparent bg-white px-5 py-4 transition-all duration-150 ease-out hover:-translate-y-0.5 hover:shadow-md hover:border-slate-200"
+                >
+                  <div>
+                    <h3 className="text-[14px] font-semibold text-[#172335]">
+                      {task.title}
+                    </h3>
+                    <p className="mt-0.5 text-[12px] text-[#526174]">
+                      {task.subtitle}
+                    </p>
+                    <div className="mt-2 flex items-center gap-2">
+                      <span className="text-[11px] text-[#526174]">
+                        {task.siklus}
+                      </span>
+                      <span className="text-[#526174]">·</span>
+                      <StatusBadge
+                        status={task.statusLabel}
+                        statuses={STATUS_TUGAS_PRODUKSI}
+                        variant="compact"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <Link
+                      href={task.href}
+                      className="inline-flex h-[32px] items-center rounded-[6px] bg-[#E88A06] px-3.5 text-[12px] font-semibold text-white shadow-2xs transition-all duration-150 ease-out hover:bg-[#D17B05] active:scale-[0.98]"
+                    >
+                      {task.actionLabel}
+                    </Link>
                   </div>
                 </div>
-
-                <div>
-                  <Link
-                    href={task.href}
-                    className="inline-flex h-[32px] items-center rounded-[6px] bg-[#E88A06] px-3.5 text-[12px] font-semibold text-white shadow-2xs transition-all duration-150 ease-out hover:bg-[#D17B05] active:scale-[0.98]"
-                  >
-                    {task.actionLabel}
-                  </Link>
-                </div>
-              </div>
-            ))}
+              ))
+            )}
           </div>
         </div>
 
@@ -142,21 +152,11 @@ export function ProduksiHubScreen() {
               {/* Vertical connector line */}
               <div className="absolute top-2.5 bottom-2.5 left-[7px] w-[2px] bg-slate-200" />
 
-              <div className="space-y-6">
-                {RECENT_ACTIVITIES.map((act, index) => (
-                  <div key={index} className="relative">
-                    {/* Circle marker */}
-                    <div className="absolute -left-[24px] top-1.5 h-[16px] w-[16px] rounded-full border-2 border-white bg-slate-400 shadow-2xs transition-transform duration-150 hover:scale-110" />
-                    <div>
-                      <p className="text-[11px] font-medium text-[#526174]">
-                        {act.time}
-                      </p>
-                      <p className="mt-0.5 text-[13px] font-medium text-[#172335]">
-                        {act.description}
-                      </p>
-                    </div>
-                  </div>
-                ))}
+              <div className="py-4 text-center">
+                <EmptyState
+                  judul="Belum ada aktivitas terbaru."
+                  variant="inline"
+                />
               </div>
             </div>
           </div>
@@ -191,10 +191,7 @@ export function ProduksiHubScreen() {
         </TableActionLink>
       </div>
 
-      {/* Prototype Footnote */}
-      <p className="mt-6 text-[12px] text-[#526174]">
-        Data ilustrasi untuk prototipe
-      </p>
+
     </div>
   );
 }

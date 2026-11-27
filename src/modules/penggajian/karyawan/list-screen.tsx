@@ -4,6 +4,7 @@ import { Suspense } from "react";
 import { PageHeader } from "@/components/ui/page-header";
 import { EmptyState, ErrorState } from "@/components/ui/states";
 import { KaryawanTable, KaryawanTableLoading } from "@/modules/penggajian/karyawan/components/karyawan-table";
+import { PATH_KARYAWAN_TAMBAH } from "@/modules/penggajian/karyawan/constants";
 import { listKaryawan } from "@/modules/penggajian/karyawan/queries";
 import { aksesSesi } from "@/modules/penggajian/karyawan/sesi";
 import { ui } from "@/modules/penggajian/ui/kelas";
@@ -37,7 +38,7 @@ async function DaftarKaryawan() {
       <PageHeader
         actions={
           akses.bolehMengubah ? (
-            <Link className={ui.buttonPrimary} href="/penggajian/karyawan/tambah">
+            <Link className={ui.buttonPrimary} href={PATH_KARYAWAN_TAMBAH}>
               Tambah karyawan
             </Link>
           ) : null
@@ -50,7 +51,7 @@ async function DaftarKaryawan() {
         <h2 className={ui.cardTitle}>Direktori karyawan</h2>
         {rows.length === 0 ? (
           <EmptyState
-            actionHref="/penggajian/karyawan/tambah"
+            actionHref={PATH_KARYAWAN_TAMBAH}
             actionLabel={akses.bolehMengubah ? "Tambah karyawan" : undefined}
             judul="Belum ada data karyawan"
             teks="Tambahkan karyawan pertama agar presensi dan penggajian bisa dicatat."
