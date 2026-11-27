@@ -9,6 +9,8 @@ import {
   uangMentahKeCents,
   type MutasiKartu,
 } from "./report.ts";
+import { isDecimal } from "./decimal.ts";
+import { defaultValuationStrategy } from "./valuation.ts";
 
 let urutan = 0;
 
@@ -122,4 +124,42 @@ test("rekonsiliasi cocok saat selisih nol dan menandai selisih", () => {
   assert.equal(selisih.nilaiMutasiCents, "8333333");
   assert.equal(selisih.nilaiJurnalCents, "-150000000");
   assert.equal(selisih.selisihCents, "158333333");
+});
+
+test("desimal inventory menolak kosong, negatif saat dilarang, dan presisi lebih", () => {
+  assert.equal(isDecimal("", true), false);
+  assert.equal(isDecimal("0", false), false);
+  assert.equal(isDecimal("-0.01", true), true);
+  assert.equal(isDecimal("-0.01", true, false), false);
+  assert.equal(isDecimal("1.00001", true), false);
+  assert.equal(isDecimal("0.0000", true), true);
+});
+
+test("uang mentah menolak kosong dan presisi lebih dari dua angka", () => {
+  assert.equal(uangMentahKeCents("0"), "0");
+  assert.throws(() => uangMentahKeCents(""), /desimal/i);
+  assert.throws(() => uangMentahKeCents("1.001"), /desimal/i);
+});
+
+test("qty nol tetap memakai tanda nilai negatif", () => {
+  const baris = mutasi("PENYESUAIAN", "0", "5");
+  const laporan = hitungKartuPersediaan([baris], { qty: "2", nilai: "200" });
+
+  assert.equal(laporan.baris[0].qtyMasuk, "0");
+  assert.equal(laporan.baris[0].qtyKeluar, "0");
+  assert.equal(laporan.baris[0].nilaiKeluarCents, "500");
+  assert.equal(laporan.saldoAkhirNilaiCents, "19500");
+  assert.equal(hitungTotalNilaiMutasiCents([baris]), "-500");
+});
+
+test("valuasi membulatkan setengah sen ke atas", () => {
+  const hasil = defaultValuationStrategy.calculateIncoming(
+    "0", "0", "0", "0.0001", "650",
+  );
+
+  assert.equal(hasil.nilaiMasuk, "0.07");
+  assert.throws(
+    () => defaultValuationStrategy.calculateIncoming("0", "0", "0", "0.00001", "1"),
+    /desimal/i,
+  );
 });

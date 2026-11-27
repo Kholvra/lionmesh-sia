@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 import { SignOutButton } from "@/components/sign-out-button";
+import { cekIzin } from "@/lib/auth/permissions";
 import type { Peran } from "@/lib/auth/types";
 import {
   cocokRute,
@@ -60,12 +61,8 @@ export function Sidebar({
   peran: Peran | null;
 }) {
   const pathname = usePathname();
-  const primary = NAV_PRIMARY.filter(
-    (item) => !item.peran || (peran !== null && item.peran.includes(peran)),
-  );
-  const utility = NAV_UTILITY.filter(
-    (item) => !item.peran || (peran !== null && item.peran.includes(peran)),
-  );
+  const primary = NAV_PRIMARY.filter((item) => !item.aksi || cekIzin(peran, item.aksi));
+  const utility = NAV_UTILITY.filter((item) => !item.aksi || cekIzin(peran, item.aksi));
   // Keep the parent section active on child screens, matching the shell
   // pattern: Laporan stays orange while /laporan/periode is open.
   const activeHref = [...primary, ...utility].find(

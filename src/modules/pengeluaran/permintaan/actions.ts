@@ -18,6 +18,7 @@ import {
   parseKeputusanApproval,
   parsePenolakan,
   parsePermintaanForm,
+  PESAN_WO_WAJIB,
 } from "./schema";
 
 const PESAN_SESI = "Sesi Anda sudah berakhir. Silakan masuk lagi.";
@@ -41,11 +42,17 @@ export async function ajukanPermintaanAction(
     return { status: "error", message: pesanIzin("ajukan") };
   }
 
-  const parsed = parsePermintaanForm(formData);
+  const parsed = parsePermintaanForm(formData, {
+    requireWo: context.data.peran === "Produksi",
+  });
   if (!parsed.input) {
+    const message =
+      parsed.fieldErrors.wo_id === PESAN_WO_WAJIB
+        ? PESAN_WO_WAJIB
+        : "Periksa kembali data permintaan.";
     return {
       status: "error",
-      message: "Periksa kembali data permintaan.",
+      message,
       fieldErrors: parsed.fieldErrors,
     };
   }

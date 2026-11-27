@@ -1,14 +1,17 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { formatRupiah } from "./format.ts";
+import { rupiahKeCents } from "./format.ts";
 
-test("rupiah tampil apa adanya untuk angka besar", () => {
-  assert.equal(formatRupiah("9007199254740993"), "Rp 9.007.199.254.740.993,00");
+test("nominal desimal dikonversi ke sen tanpa kehilangan digit", () => {
+  assert.equal(rupiahKeCents("9007199254740993"), BigInt("900719925474099300"));
+  assert.equal(rupiahKeCents("0"), BigInt(0));
+  assert.equal(rupiahKeCents("1500"), BigInt(150000));
+  assert.equal(rupiahKeCents("1500.5"), BigInt(150050));
+  assert.equal(rupiahKeCents("0.5"), BigInt(50));
 });
 
-test("rupiah dengan koma desimal dan nol", () => {
-  assert.equal(formatRupiah("0"), "Rp 0,00");
-  assert.equal(formatRupiah("1500"), "Rp 1.500,00");
-  assert.equal(formatRupiah("0.5"), "Rp 0,50");
+test("nominal dengan presisi lebih dari dua desimal ditolak", () => {
+  assert.throws(() => rupiahKeCents("1500.567"));
+  assert.throws(() => rupiahKeCents(""));
 });

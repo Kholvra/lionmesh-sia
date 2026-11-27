@@ -1,3 +1,5 @@
+import { parseDecimal, sumSigned, type DecimalOptions } from "../ledger/money.ts";
+
 export interface MutasiKartu {
   id: string;
   tanggal: string;
@@ -41,21 +43,29 @@ export interface LaporanKartuPersediaan {
 const SKALA_QTY = 4;
 const SKALA_UANG = 2;
 
+const PILIHAN_QTY: DecimalOptions = {
+  scale: SKALA_QTY,
+  allowNegative: true,
+  rejectExcessPrecision: true,
+  allowLeadingZeros: true,
+  trim: true,
+};
+const PILIHAN_UANG: DecimalOptions = {
+  scale: SKALA_UANG,
+  allowNegative: true,
+  rejectExcessPrecision: true,
+  allowLeadingZeros: true,
+  trim: true,
+};
+
 function pangkat(scale: number): bigint {
   return BigInt(10) ** BigInt(scale);
 }
 
 function parseDesimal(value: string, skala: number): bigint {
-  const cocok = /^(-?)(\d+)(?:\.(\d+))?$/.exec(value.trim());
-  if (!cocok) {
-    throw new Error(`Nilai desimal tidak valid: ${value}`);
-  }
-
-  const negatif = cocok[1] === "-";
-  const utuh = BigInt(cocok[2]);
-  const pecahan = (cocok[3] ?? "").slice(0, skala).padEnd(skala, "0");
-  const nilai = utuh * pangkat(skala) + BigInt(pecahan || "0");
-  return negatif ? -nilai : nilai;
+  const hasil = parseDecimal(value, skala === SKALA_QTY ? PILIHAN_QTY : PILIHAN_UANG);
+  if (hasil === null) throw new Error(`Nilai desimal tidak valid: ${value}`);
+  return hasil;
 }
 
 function formatDesimal(units: bigint, skala: number): string {
@@ -92,7 +102,7 @@ export function hitungSaldoKartu(
     const qtyItem = parseDesimal(item.qty, SKALA_QTY);
     const nilaiItem = parseDesimal(item.nilai, SKALA_UANG);
     qty += qtyItem;
-    nilai += qtyItem > BigInt(0) ? nilaiItem : -nilaiItem;
+    nilai = sumSigned([[qtyItem, nilaiItem]], "quantity-sign", nilai);
   }
 
   return {
@@ -129,7 +139,7 @@ export function hitungKartuPersediaan(
     const qty = parseDesimal(item.qty, SKALA_QTY);
     const nilai = parseDesimal(item.nilai, SKALA_UANG);
     const masuk = qty > BigInt(0);
-    const nilaiBertanda = masuk ? nilai : -nilai;
+    const nilaiBertanda = sumSigned([[qty, nilai]], "quantity-sign");
 
     saldoQty += qty;
     saldoNilai += nilaiBertanda;
@@ -176,13 +186,14 @@ export interface RekonsiliasiPersediaan {
 export function hitungTotalNilaiMutasiCents(
   mutasi: readonly MutasiKartu[],
 ): string {
-  let total = BigInt(0);
+  const pasangan: [bigint, bigint][] = [];
   for (const item of mutasi) {
-    const qty = parseDesimal(item.qty, SKALA_QTY);
-    const nilai = parseDesimal(item.nilai, SKALA_UANG);
-    total += qty > BigInt(0) ? nilai : -nilai;
+    pasangan.push([
+      parseDesimal(item.qty, SKALA_QTY),
+      parseDesimal(item.nilai, SKALA_UANG),
+    ]);
   }
-  return total.toString();
+  return sumSigned(pasangan, "quantity-sign").toString();
 }
 
 /**
@@ -196,7 +207,7 @@ export function rekonsiliasiPersediaan(
 ): RekonsiliasiPersediaan {
   const mutasi = BigInt(nilaiMutasiCents);
   const jurnal = BigInt(nilaiJurnalCents);
-  const selisih = mutasi - jurnal;
+  const selisih = sumSigned([[mutasi, jurnal]], "first-minus-second");
   return {
     nilaiMutasiCents: mutasi.toString(),
     nilaiJurnalCents: jurnal.toString(),

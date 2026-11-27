@@ -6,16 +6,21 @@ import {
   canActorPerform,
   PRODUKSI_ACTORS,
   type ProduksiAction,
-  type ProduksiActorRole,
 } from "../auth/actor";
 
 interface ProduksiActorContextType {
-  activeRole: ProduksiActorRole;
+  activeRole: Peran | null;
   can: (action: ProduksiAction) => boolean;
-  activeActorInfo: (typeof PRODUKSI_ACTORS)[number];
+  activeActorInfo: (typeof PRODUKSI_ACTORS)[number] | null;
 }
 
 const ProduksiActorContext = createContext<ProduksiActorContextType | null>(null);
+
+const AKSES_DITOLAK: ProduksiActorContextType = {
+  activeRole: null,
+  can: () => false,
+  activeActorInfo: null,
+};
 
 export function ProduksiActorProvider({
   children,
@@ -24,37 +29,22 @@ export function ProduksiActorProvider({
   children: React.ReactNode;
   userRole?: Peran | null;
 }) {
-  const activeRole: ProduksiActorRole =
-    userRole && PRODUKSI_ACTORS.some((a) => a.role === userRole)
-      ? (userRole as ProduksiActorRole)
-      : "Produksi";
+  const activeRole = userRole ?? null;
+  const peranAksi = PRODUKSI_ACTORS.some((a) => a.role === activeRole)
+    ? activeRole
+    : null;
 
-  const can = (action: ProduksiAction) => canActorPerform(activeRole, action);
-
+  const can = (action: ProduksiAction) => canActorPerform(peranAksi, action);
   const activeActorInfo =
-    PRODUKSI_ACTORS.find((a) => a.role === activeRole) ?? PRODUKSI_ACTORS[0];
+    PRODUKSI_ACTORS.find((a) => a.role === peranAksi) ?? null;
 
   return (
-    <ProduksiActorContext.Provider
-      value={{
-        activeRole,
-        can,
-        activeActorInfo,
-      }}
-    >
+    <ProduksiActorContext.Provider value={{ activeRole, can, activeActorInfo }}>
       {children}
     </ProduksiActorContext.Provider>
   );
 }
 
-export function useProduksiActor() {
-  const context = useContext(ProduksiActorContext);
-  if (!context) {
-    return {
-      activeRole: "Produksi" as ProduksiActorRole,
-      can: (action: ProduksiAction) => canActorPerform("Produksi", action),
-      activeActorInfo: PRODUKSI_ACTORS[0],
-    };
-  }
-  return context;
+export function useProduksiActor(): ProduksiActorContextType {
+  return useContext(ProduksiActorContext) ?? AKSES_DITOLAK;
 }

@@ -5,7 +5,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 
 import styles from "@/components/auth.module.css";
-import { createClient } from "@/lib/supabase/client";
+import { signInAction } from "@/lib/auth/server";
 
 function MailIcon() {
   return (
@@ -53,15 +53,10 @@ export function AuthForm() {
     setIsLoading(true);
 
     try {
-      const supabase = createClient();
-      const result = await supabase.auth.signInWithPassword({ email: email.trim(), password });
-      if (result.error || !result.data.user) throw new Error();
-
-      const { data: profile, error: profileError } = await supabase
-        .from("profiles").select("aktif").eq("id", result.data.user.id).single();
-      if (profileError || !profile?.aktif) {
-        await supabase.auth.signOut();
-        throw new Error();
+      const result = await signInAction(email, password);
+      if (!result.ok) {
+        setError(result.message);
+        return;
       }
       router.push("/pengaturan");
       router.refresh();

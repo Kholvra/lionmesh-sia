@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useMemo, useState } from "react";
 import { ArrowIcon } from "@/components/ui/arrow-icon";
 import { useProduksiActor } from "@/modules/produksi/context/actor-context";
+import { tabLaporanProduksi } from "@/modules/produksi/auth/actor";
 import { ProduksiSubnav } from "@/modules/produksi/components/produksi-subnav";
 import {
   INITIAL_LAPORAN_PRODUKSI,
@@ -25,19 +26,34 @@ export function LaporanProduksiScreen() {
   const canViewWip = can("view_report_wip");
   const canViewPersediaan = can("view_report_persediaan");
 
-  const effectiveActiveTab: LaporanTab = useMemo(() => {
-    if (activeRole === "Gudang" && activeTab !== "persediaan") {
-      return "persediaan";
-    }
-    if (activeRole === "Produksi" && activeTab === "persediaan") {
-      return "produksi";
-    }
-    return activeTab;
-  }, [activeRole, activeTab]);
+  const effectiveActiveTab: LaporanTab | null = useMemo(
+    () => tabLaporanProduksi(activeRole, activeTab),
+    [activeRole, activeTab],
+  );
 
   const [dataProduksi] = useState<LaporanProduksiRow[]>(INITIAL_LAPORAN_PRODUKSI);
   const [dataWip] = useState<LaporanWipRow[]>(INITIAL_LAPORAN_WIP);
   const [dataPersediaan] = useState<RekapPersediaanRow[]>(INITIAL_REKAP_PERSEDIAAN);
+
+  if (effectiveActiveTab === null) {
+    return (
+      <div className="mx-auto max-w-[1156px] text-[#172335] animate-fade-in">
+        <ProduksiSubnav />
+        <section
+          aria-labelledby="akses-ditolak-laporan"
+          className="shadow-card mt-5 rounded-[10px] border border-transparent bg-white p-[20px]"
+        >
+          <h1 className="text-[15px] font-semibold" id="akses-ditolak-laporan">
+            Akses ditolak
+          </h1>
+          <p className="mt-1 text-[13px] text-[#526174]">
+            Peran Anda tidak memiliki akses ke laporan produksi. Hubungi
+            administrator bila akses ini dibutuhkan.
+          </p>
+        </section>
+      </div>
+    );
+  }
 
   // Perhitungan agregasi metrik
   const totalDiproses = dataProduksi.reduce((acc, c) => acc + c.jumlahDiproses, 0);

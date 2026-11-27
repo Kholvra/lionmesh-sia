@@ -12,6 +12,7 @@ import {
   totalJurnalPersediaanCents,
   type BarisLaporan,
 } from "./report.ts";
+import { isMoney, moneyToCents } from "./money.ts";
 
 type AkunKunci =
   | "kas"
@@ -322,4 +323,23 @@ test("isPeranPersediaan mengenali tiga peran akun persediaan", () => {
   assert.equal(isPeranPersediaan("persediaan_barang_jadi"), true);
   assert.equal(isPeranPersediaan("kas_bank"), false);
   assert.equal(isPeranPersediaan("hpp"), false);
+});
+
+test("uang menolak kosong, negatif, dan presisi lebih", () => {
+  assert.equal(isMoney(""), false);
+  assert.equal(isMoney("0"), true);
+  assert.equal(isMoney("0.00"), true);
+  assert.equal(isMoney("-0.01"), false);
+  assert.equal(isMoney("1.001"), false);
+  assert.equal(moneyToCents("0"), BigInt(0));
+  assert.equal(moneyToCents("0.01"), BigInt(1));
+  assert.throws(() => moneyToCents(""), /uang/i);
+  assert.throws(() => moneyToCents("-0.01"), /uang/i);
+  assert.throws(() => moneyToCents("1.001"), /uang/i);
+});
+
+test("saldo neto memakai konvensi debit dikurangi kredit", () => {
+  assert.equal(saldoNetoCents([baris("kas", "0.01", "0")]), "1");
+  assert.equal(saldoNetoCents([baris("kas", "0", "0.01")]), "-1");
+  assert.throws(() => saldoNetoCents([baris("kas", "0.001", "0")]), /uang/i);
 });

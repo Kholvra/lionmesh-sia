@@ -9,15 +9,22 @@ export function statusPemasok(aktif: boolean): "aktif" | "nonaktif" {
   return aktif ? "aktif" : "nonaktif";
 }
 
-export function formatRupiah(value: string | number): string {
-  // Format from the decimal string so a value beyond Number.MAX_SAFE_INTEGER
-  // still displays exactly what the database holds.
+const POLA_RUPIAH = /^-?\d+(?:\.\d+)?$/;
+
+/** Converts validated decimal IDR to integer cents for the canonical formatter. */
+export function rupiahKeCents(value: string | number): bigint {
   const teks = typeof value === "number" ? String(value) : value;
-  const [bulatRaw = "0", desimalRaw = ""] = teks.split(".");
-  const bulat = BigInt(bulatRaw === "" ? "0" : bulatRaw);
-  const desimal = desimalRaw.padEnd(2, "0").slice(0, 2);
-  const grup = new Intl.NumberFormat("id-ID").format(bulat);
-  return `Rp ${grup},${desimal}`;
+  if (!POLA_RUPIAH.test(teks)) {
+    throw new Error(`Nilai rupiah tidak valid: ${teks}`);
+  }
+  const negatif = teks.startsWith("-");
+  const [bulatRaw, desimalRaw = ""] = (negatif ? teks.slice(1) : teks).split(".");
+  if (desimalRaw.length > 2) {
+    throw new Error(`Nilai rupiah maksimal 2 angka desimal: ${teks}`);
+  }
+  const nilai =
+    BigInt(bulatRaw) * BigInt(100) + BigInt(desimalRaw.padEnd(2, "0"));
+  return negatif ? -nilai : nilai;
 }
 
 export function formatPersen(value: string | number): string {

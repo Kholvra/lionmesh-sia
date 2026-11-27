@@ -1,11 +1,14 @@
+"use server";
+
 import { redirect } from "next/navigation";
+import { z } from "zod";
 
 import { createClient } from "@/lib/supabase/server";
-import type { Result } from "@/lib/result";
+import { fail, ok, type Result } from "@/lib/result";
 import { cekIzin, type AksiDomain } from "./permissions";
 import type { Profile } from "./types";
 
-export class AuthError extends Error {
+class AuthError extends Error {
   constructor(message: string) {
     super(message);
     this.name = "AuthError";
@@ -118,4 +121,67 @@ export async function assertIzin(
     ok: true,
     data: profile,
   };
+}
+
+const PESAN_GAGAL_MASUK = "Username atau password salah.";
+const PESAN_GAGAL_KELUAR = "Gagal keluar. Silakan coba lagi.";
+
+const masukSchema = z.object({
+  email: z
+    .string({ error: PESAN_GAGAL_MASUK })
+    .trim()
+    .min(1, PESAN_GAGAL_MASUK)
+    .email(PESAN_GAGAL_MASUK),
+  password: z
+    .string({ error: PESAN_GAGAL_MASUK })
+    .min(1, PESAN_GAGAL_MASUK),
+});
+
+export async function signInAction(
+  email: string,
+  password: string,
+): Promise<Result<void>> {
+  const parsed = masukSchema.safeParse({ email, password });
+  if (!parsed.success) {
+    return fail(parsed.error.issues[0]?.message ?? PESAN_GAGAL_MASUK);
+  }
+
+  try {
+    const supabase = await createClient();
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email: parsed.data.email,
+      password: parsed.data.password,
+    });
+    if (error || !data.user) return fail(PESAN_GAGAL_MASUK);
+
+    const { data: profile, error: profileError } = await supabase
+      .from("profiles")
+      .select("aktif")
+      .eq("id", data.user.id)
+      .single();
+
+    if (profileError || !profile?.aktif) {
+      try {
+        await supabase.auth.signOut();
+      } catch {
+        // Cleanup stays best-effort; the inactive profile still cannot sign in.
+      }
+      return fail(PESAN_GAGAL_MASUK);
+    }
+
+    return ok(undefined);
+  } catch {
+    return fail(PESAN_GAGAL_MASUK);
+  }
+}
+
+export async function signOutAction(): Promise<Result<void>> {
+  try {
+    const supabase = await createClient();
+    const { error } = await supabase.auth.signOut();
+    if (error) return fail(PESAN_GAGAL_KELUAR);
+    return ok(undefined);
+  } catch {
+    return fail(PESAN_GAGAL_KELUAR);
+  }
 }

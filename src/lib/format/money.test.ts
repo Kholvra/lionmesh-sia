@@ -19,3 +19,14 @@ test("rupiah besar tidak kehilangan presisi", () => {
     "Rp 9.007.199.254.740.993,00",
   );
 });
+
+test("rupiah menolak sen pecahan dan nilai kosong", () => {
+  for (const nilai of ["1500.5", "1500.567", ""]) {
+    assert.throws(() => formatRupiah(nilai));
+  }
+});
+
+test("rupiah menampilkan nilai rupiah yang sudah dikonversi ke sen", () => {
+  assert.equal(formatRupiah("150050"), "Rp 1.500,50");
+  assert.equal(formatRupiah("-150050"), "-Rp 1.500,50");
+});

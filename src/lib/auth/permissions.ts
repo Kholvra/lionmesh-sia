@@ -37,6 +37,9 @@ export const MATRIKS_IZIN = {
   bayar_pemasok: ["Finance"],
   rekonsiliasi_bank: ["Accounting"],
   lihat_laporan_pembelian: ["Purchasing", "Accounting", "Manajemen"],
+  // Permintaan pembelian: Gudang/Produksi hanya melihat pengajuan sendiri.
+  lihat_permintaan_pembelian: ["Gudang", "Produksi", "Purchasing", "Manajemen"],
+  lihat_permintaan_pembelian_sendiri: ["Gudang", "Produksi"],
 
   // Produksi
   kelola_data_produk: ["Produksi"],
@@ -53,6 +56,21 @@ export const MATRIKS_IZIN = {
   periksa_qc_hasil: ["QC"],
   catat_biaya_produksi: ["Accounting"],
   lihat_laporan_produksi: ["Produksi", "Gudang", "Manajemen", "Accounting"],
+  // Izin laporan produksi (PR-007) berbeda dari lihat_laporan_produksi lintas siklus:
+  // Gudang hanya melihat tab persediaan, bukan tab produksi/WIP.
+  lihat_laporan_hasil_produksi: ["Produksi", "Accounting", "Manajemen"],
+  lihat_laporan_saldo_wip: ["Produksi", "Accounting", "Manajemen"],
+  lihat_laporan_persediaan_jadi: ["Gudang", "Accounting", "Manajemen"],
+  buat_versi_bom: ["Produksi"],
+  lihat_perintah_produksi: [
+    "Produksi",
+    "Gudang",
+    "QC",
+    "Purchasing",
+    "Manajemen",
+    "Accounting",
+  ],
+  posting_hpp_final: ["Accounting"],
 
   // Penggajian
   kelola_data_karyawan: ["HR"],
@@ -67,6 +85,11 @@ export const MATRIKS_IZIN = {
   terbitkan_slip: ["HR"],
   jurnal_payroll: ["Accounting"],
   lihat_laporan_payroll: ["HR", "Accounting", "Direksi"],
+  // Pembacaan data karyawan (GJ-001, P-06, D-58) per tingkat kerahasiaan.
+  baca_data_karyawan: ["HR", "Accounting", "Finance"],
+  baca_identitas_karyawan: ["HR", "Accounting"],
+  baca_gaji_ptkp_karyawan: ["HR", "Accounting"],
+  baca_rekening_karyawan: ["HR", "Finance"],
 
   // Core master data (C-011, PT-06)
   kelola_kategori_produk: ["Produksi"],

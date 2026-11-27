@@ -1,4 +1,4 @@
-import type { Peran } from "@/lib/auth/types";
+import type { AksiDomain } from "@/lib/auth/permissions";
 
 export type NavIcon =
   | "dashboard"
@@ -20,8 +20,8 @@ export type NavItem = {
    * the app is broken, so the item is rendered as unavailable instead.
    */
   tersedia: boolean;
-  /** When set, only these roles see the item. */
-  peran?: readonly Peran[];
+  /** Saat diset, hanya peran yang memiliki aksi ini melihat item. */
+  aksi?: AksiDomain;
 };
 
 export const NAV_PRIMARY: NavItem[] = [
@@ -36,7 +36,7 @@ export const NAV_PRIMARY: NavItem[] = [
     href: "/laporan/periode",
     icon: "periode",
     tersedia: true,
-    peran: ["Accounting"],
+    aksi: "tutup_periode",
   },
 ];
 

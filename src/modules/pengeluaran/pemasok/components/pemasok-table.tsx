@@ -12,10 +12,11 @@ import {
   type TableSort,
 } from "@/components/ui";
 import type { Pemasok } from "@/core/pemasok";
+import { formatRupiah } from "@/lib/format/money";
 import { PATH_PEMASOK } from "../constants";
 import {
   formatPersen,
-  formatRupiah,
+  rupiahKeCents,
   STATUS_PEMASOK,
   statusPemasok,
 } from "../format";
@@ -92,7 +93,7 @@ export function PemasokTable({
         sortValue: (row) => Number(row.toleransi_persen),
         render: (row) =>
           `${formatPersen(row.toleransi_persen)} / ${formatRupiah(
-            row.toleransi_nominal,
+            rupiahKeCents(row.toleransi_nominal),
           )}`,
       },
       {

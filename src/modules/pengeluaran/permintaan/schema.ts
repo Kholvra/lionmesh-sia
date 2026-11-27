@@ -9,6 +9,13 @@ const QTY = z
   .regex(/^\d+(\.\d{1,4})?$/, "Qty harus lebih dari 0 dan maksimal 4 angka desimal")
   .refine((value) => Number(value) > 0, "Qty harus lebih dari 0");
 
+export const PESAN_WO_WAJIB =
+  "Referensi perintah produksi wajib diisi untuk pemohon Produksi";
+
+interface ParsePermintaanOptions {
+  requireWo?: boolean;
+}
+
 const barisSchema = z.object({
   produkId: UUID,
   satuanId: UUID,
@@ -64,7 +71,10 @@ function text(formData: FormData, key: string): string {
   return typeof value === "string" ? value.trim() : "";
 }
 
-export function parsePermintaanForm(formData: FormData): {
+export function parsePermintaanForm(
+  formData: FormData,
+  options: ParsePermintaanOptions = {},
+): {
   input: PermintaanFormInput | null;
   fieldErrors: Record<string, string>;
 } {
@@ -83,6 +93,8 @@ export function parsePermintaanForm(formData: FormData): {
   const woId = text(formData, "wo_id");
   if (woId.length > 0 && !UUID.safeParse(woId).success) {
     fieldErrors.wo_id = "Referensi perintah produksi tidak valid";
+  } else if (woId.length === 0 && options.requireWo) {
+    fieldErrors.wo_id = PESAN_WO_WAJIB;
   }
 
   const produkIds = formData.getAll("produk_id").map(String);

@@ -220,7 +220,7 @@ export function PermintaanActions({
         <AjukanUlangForm permintaan={permintaan} />
       ) : null}
 
-      {bisaBatal ? <BatalkanForm permintaan={permintaan} /> : null}
+      {canAjukan && bisaBatal ? <BatalkanForm permintaan={permintaan} /> : null}
     </div>
   );
 }

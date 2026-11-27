@@ -1,3 +1,4 @@
+import { cekIzin, type AksiDomain } from "@/lib/auth/permissions";
 import type { Peran } from "@/lib/auth/types";
 
 /**
@@ -56,48 +57,53 @@ export type ProduksiActorRole =
   | "Accounting";
 
 /**
- * Matriks Izin Spesifik Siklus Produksi (berdasarkan requirement dokumen PR-001 s/d PR-007).
+ * Pemetaan aksi lokal siklus produksi ke aksi domain pada MATRIKS_IZIN.
+ * Semua keputusan wewenang dibaca dari matriks tunggal melalui cekIzin.
  */
-export const PRODUKSI_PERMISSIONS = {
-  // PR-001: BOM
-  create_bom_version: ["Produksi"],
-  view_bom: ["Produksi", "Gudang", "Purchasing", "Manajemen", "Accounting"],
+const PRODUKSI_AKSI = {
+  create_bom_version: "buat_versi_bom",
+  view_bom: "lihat_bom",
+  create_spk: "buat_perintah_produksi",
+  cancel_spk: "ubah_batal_perintah_produksi",
+  view_spk: "lihat_perintah_produksi",
+  request_bahan: "ajukan_permintaan_bahan",
+  check_stok_bahan: "cek_ketersediaan_bahan",
+  verify_pr_bahan: "verifikasi_permintaan_bahan",
+  approve_pr_bahan: "setujui_pembelian_bahan",
+  issue_bahan_gudang: "catat_pemakaian_bahan_keluar",
+  confirm_bahan_usage: "catat_pemakaian_bahan_terpakai",
+  record_hasil_produksi: "catat_hasil_produksi",
+  inspect_qc: "periksa_qc_hasil",
+  receive_finish_goods: "terima_barang_jadi",
+  record_kartu_jam_kerja: "catat_kartu_jam_kerja",
+  post_final_hpp: "posting_hpp_final",
+  view_hpp_detail: "lihat_hpp_perintah_produksi",
+  view_report_produksi: "lihat_laporan_hasil_produksi",
+  view_report_wip: "lihat_laporan_saldo_wip",
+  view_report_persediaan: "lihat_laporan_persediaan_jadi",
+} as const satisfies Record<string, AksiDomain>;
 
-  // PR-002: Perintah Produksi (SPK)
-  create_spk: ["Produksi"],
-  cancel_spk: ["Produksi"],
-  view_spk: ["Produksi", "Gudang", "QC", "Purchasing", "Manajemen", "Accounting"],
-
-  // PR-003: Permintaan Bahan (PR)
-  request_bahan: ["Produksi"],
-  check_stok_bahan: ["Gudang"],
-  verify_pr_bahan: ["Purchasing"],
-  approve_pr_bahan: ["Manajemen"],
-
-  // PR-004: Pemakaian Bahan & WIP
-  issue_bahan_gudang: ["Gudang"],
-  confirm_bahan_usage: ["Produksi"],
-
-  // PR-005: Hasil Produksi & QC
-  record_hasil_produksi: ["Produksi"],
-  inspect_qc: ["QC"],
-  receive_finish_goods: ["Gudang"],
-
-  // PR-006: Biaya Produksi & HPP
-  record_kartu_jam_kerja: ["Produksi"],
-  post_final_hpp: ["Accounting"],
-  view_hpp_detail: ["Produksi", "Accounting", "Manajemen"],
-
-  // PR-007: Laporan & Efisiensi
-  view_report_produksi: ["Produksi", "Accounting", "Manajemen"],
-  view_report_wip: ["Produksi", "Accounting", "Manajemen"],
-  view_report_persediaan: ["Gudang", "Accounting", "Manajemen"],
-} as const;
-
-export type ProduksiAction = keyof typeof PRODUKSI_PERMISSIONS;
+export type ProduksiAction = keyof typeof PRODUKSI_AKSI;
 
 export function canActorPerform(role: Peran | null | undefined, action: ProduksiAction): boolean {
-  if (!role) return false;
-  const allowed = PRODUKSI_PERMISSIONS[action] as readonly string[];
-  return allowed.includes(role);
+  return cekIzin(role, PRODUKSI_AKSI[action]);
+}
+
+/**
+ * Tab laporan PR-007: Gudang dibuka pada persediaan, Produksi tidak pernah
+ * dibuka pada persediaan; Accounting/Manajemen mempertahankan pilihan tab.
+ * Tanpa satu pun izin laporan, hasil null menandakan akses ditolak.
+ */
+export function tabLaporanProduksi(
+  peran: Peran | null | undefined,
+  tab: "produksi" | "wip" | "persediaan",
+): "produksi" | "wip" | "persediaan" | null {
+  const bisaProduksi = canActorPerform(peran, "view_report_produksi");
+  const bisaWip = canActorPerform(peran, "view_report_wip");
+  const bisaPersediaan = canActorPerform(peran, "view_report_persediaan");
+
+  if (!bisaProduksi && !bisaWip && !bisaPersediaan) return null;
+  if (bisaPersediaan && !bisaProduksi && !bisaWip) return "persediaan";
+  if (bisaProduksi && !bisaPersediaan && tab === "persediaan") return "produksi";
+  return tab;
 }

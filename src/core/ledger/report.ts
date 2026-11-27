@@ -1,4 +1,4 @@
-import { moneyToCents } from "./money.ts";
+import { moneyToCents, sumSigned } from "./money.ts";
 
 export type KelompokAkun =
   | "aset"
@@ -58,12 +58,12 @@ export function isPeranPersediaan(peran: string): boolean {
 export function totalJurnalPersediaanCents(
   baris: readonly BarisLaporan[],
 ): string {
-  let total = BigInt(0);
+  const pasangan: [bigint, bigint][] = [];
   for (const item of baris) {
     if (!isPeranPersediaan(item.akunPeran)) continue;
-    total += moneyToCents(item.debit) - moneyToCents(item.kredit);
+    pasangan.push([moneyToCents(item.debit), moneyToCents(item.kredit)]);
   }
-  return total.toString();
+  return sumSigned(pasangan, "debit-minus-credit").toString();
 }
 
 export interface BarisLaporan {
@@ -195,6 +195,10 @@ interface AkunTerkumpul {
   kredit: bigint;
 }
 
+function netoAkun(akun: AkunTerkumpul): bigint {
+  return sumSigned([[akun.debit, akun.kredit]], "debit-minus-credit");
+}
+
 function waktu(value: string): number {
   const hasil = Date.parse(value);
   return Number.isNaN(hasil) ? 0 : hasil;
@@ -264,7 +268,7 @@ export function hitungBukuBesar(
   const baris = terpilih.map((row) => {
     const debit = moneyToCents(row.debit);
     const kredit = moneyToCents(row.kredit);
-    saldo += debit - kredit;
+    saldo = sumSigned([[debit, kredit]], "debit-minus-credit", saldo);
     totalDebit += debit;
     totalKredit += kredit;
 
@@ -292,12 +296,11 @@ export function hitungBukuBesar(
 }
 
 export function saldoNetoCents(rows: readonly BarisLaporan[]): string {
-  const neto = rows.reduce(
-    (jumlah, row) =>
-      jumlah + moneyToCents(row.debit) - moneyToCents(row.kredit),
-    BigInt(0),
-  );
-  return neto.toString();
+  const pasangan: [bigint, bigint][] = rows.map((row): [bigint, bigint] => [
+    moneyToCents(row.debit),
+    moneyToCents(row.kredit),
+  ]);
+  return sumSigned(pasangan, "debit-minus-credit").toString();
 }
 
 export function hitungNeracaSaldo(
@@ -305,7 +308,7 @@ export function hitungNeracaSaldo(
 ): LaporanNeracaSaldo {
   const terkumpul = [...kumpulkan(rows).values()]
     .map((akun) => {
-      const neto = akun.debit - akun.kredit;
+      const neto = netoAkun(akun);
       return {
         akunId: akun.akunId,
         nomor: akun.nomor,
@@ -355,7 +358,7 @@ export function hitungLabaRugi(
     const kelompok = kelompokAkun(akun.peran);
     if (kelompok !== "pendapatan" && kelompok !== "beban") continue;
 
-    const neto = akun.debit - akun.kredit;
+    const neto = netoAkun(akun);
     const nilai = kelompok === "pendapatan" ? -neto : neto;
     if (nilai === BigInt(0)) continue;
 
@@ -402,7 +405,7 @@ export function hitungNeraca(
   const belumDiklasifikasi: BarisNeraca[] = [];
 
   for (const akun of kumpulkan(rowsKumulatif).values()) {
-    const neto = akun.debit - akun.kredit;
+    const neto = netoAkun(akun);
     const kelompok = kelompokAkun(akun.peran);
 
     if (kelompok === "aset") {
@@ -433,7 +436,7 @@ export function hitungNeraca(
     if (kelompok !== "pendapatan" && kelompok !== "beban") continue;
     // Both revenue and expense accounts contribute -net to profit:
     // revenue is credit-normal (negative net), expense is debit-normal.
-    labaTahunBerjalan += -(akun.debit - akun.kredit);
+    labaTahunBerjalan += -netoAkun(akun);
   }
 
   const totalAset = aset.reduce(
