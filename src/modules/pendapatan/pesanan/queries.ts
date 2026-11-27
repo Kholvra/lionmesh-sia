@@ -1,7 +1,14 @@
 import { getDokumen, listRiwayatStatus } from "@/core/dokumen";
+import {
+  getKetersediaanProdukGudang,
+  listAlokasiPesanan,
+  listGudangAktif,
+} from "@/core/inventory";
 import { listPelanggan } from "@/core/pelanggan";
 import { createAdminClient } from "@/lib/supabase/admin";
 import type {
+  KetersediaanBarisInfo,
+  KetersediaanPesananData,
   PelangganRef,
   PesananDetail,
   PesananItemRow,
@@ -319,4 +326,72 @@ export async function getFormReferenceData(): Promise<{
   );
 
   return { pelangganList, produkList, tarifPpn };
+}
+
+export async function getKetersediaanPesananData(
+  pesananId: string,
+  items: PesananItemRow[],
+): Promise<KetersediaanPesananData> {
+  const supabase = createAdminClient();
+  if (!supabase) {
+    return { gudangList: [], baris: [] };
+  }
+
+  const [gudangRes, allocRes] = await Promise.all([
+    listGudangAktif(supabase),
+    listAlokasiPesanan(supabase, pesananId),
+  ]);
+
+  const gudangList = gudangRes.ok ? gudangRes.data : [];
+  const allocList = allocRes.ok ? allocRes.data : [];
+
+  const allocPerItem = new Map<string, number>();
+  for (const a of allocList) {
+    if (a.status === "teralokasi") {
+      allocPerItem.set(
+        a.pesanan_item_id,
+        (allocPerItem.get(a.pesanan_item_id) ?? 0) + Number(a.qty),
+      );
+    }
+  }
+
+  const baris: KetersediaanBarisInfo[] = [];
+
+  for (const it of items) {
+    const qtyTeralokasi = allocPerItem.get(it.id) ?? 0;
+    const qtySisaKebutuhan = Math.max(0, it.qty - qtyTeralokasi);
+
+    const tersediaPerGudang: KetersediaanBarisInfo["tersediaPerGudang"] = {};
+    for (const g of gudangList) {
+      const kRes = await getKetersediaanProdukGudang(supabase, it.produkId, g.id);
+      if (kRes.ok) {
+        tersediaPerGudang[g.id] = {
+          saldoQty: kRes.data.saldoQty,
+          alokasiAktifQty: kRes.data.alokasiAktifQty,
+          tersediaQty: kRes.data.tersediaQty,
+        };
+      }
+    }
+
+    baris.push({
+      pesananItemId: it.id,
+      produkId: it.produkId,
+      produkKode: it.produkKode,
+      produkNama: it.produkNama,
+      satuanKode: it.satuanKode,
+      qtyDiminta: it.qty,
+      qtyTeralokasi,
+      qtySisaKebutuhan,
+      tersediaPerGudang,
+    });
+  }
+
+  return { gudangList, baris };
+}
+
+export async function listPesananKetersediaan(): Promise<PesananRingkas[]> {
+  const all = await listPesanan();
+  return all.filter((p) =>
+    ["VERIFIED", "MENUNGGU_STOK", "SIAP_KIRIM"].includes(p.status),
+  );
 }

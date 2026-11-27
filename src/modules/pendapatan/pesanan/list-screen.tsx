@@ -54,6 +54,9 @@ export async function PesananListScreen({
           <Link className={styles.secondaryButton} href="/pendapatan/pelanggan">
             Data Pelanggan
           </Link>
+          <Link className={styles.secondaryButton} href="/pendapatan/ketersediaan">
+            Ketersediaan Stok
+          </Link>
           {canCreate ? (
             <Link className={styles.primaryButton} href={PATH_PESANAN_BARU}>
               + Buat Pesanan

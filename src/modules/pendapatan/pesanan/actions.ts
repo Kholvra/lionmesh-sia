@@ -9,6 +9,12 @@ import {
   pindahStatusDokumen,
   revisiDokumen,
 } from "@/core/dokumen";
+import {
+  alokasiStokPesanan,
+  lepasAlokasiPesanan,
+  listAlokasiPesanan,
+  listGudangAktif,
+} from "@/core/inventory";
 import { getPelanggan } from "@/core/pelanggan";
 import { requireIzin } from "@/lib/auth/server";
 import { fail, ok, type Result } from "@/lib/result";
@@ -573,6 +579,9 @@ export async function batalkanPesananAction(
 
   if (!transRes.ok) return fail(transRes.message);
 
+  // Lepas alokasi aktif jika pesanan sudah memiliki alokasi stok (PD-003 AC-05)
+  await lepasAlokasiPesanan(supabase, id, profile.id);
+
   await supabase
     .from("pesanan")
     .update({
@@ -584,5 +593,159 @@ export async function batalkanPesananAction(
 
   revalidatePath(PATH_PESANAN);
   revalidatePath(`${PATH_PESANAN}/${id}`);
+  revalidatePath("/pendapatan/ketersediaan");
   return ok({ status: "DIBATALKAN" });
+}
+
+export interface AlokasiBarisRequest {
+  pesananItemId: string;
+  produkId: string;
+  gudangId?: string;
+  qtyAlokasi: number;
+}
+
+export async function alokasiStokAction(
+  pesananId: string,
+  itemsRequest: AlokasiBarisRequest[],
+): Promise<Result<{ status: string; message: string }>> {
+  if (!isValidUuid(pesananId)) return fail("ID pesanan tidak valid.");
+
+  let profile;
+  try {
+    const sesi = await requireIzin("cek_alokasi_stok");
+    profile = sesi.profile;
+  } catch (err: unknown) {
+    return fail(err instanceof Error ? err.message : "Akses ditolak.");
+  }
+
+  const supabase = createAdminClient();
+  if (!supabase) return fail("Layanan basis data tidak tersedia.");
+
+  const { data: pesanan, error: fetchErr } = await supabase
+    .from("pesanan")
+    .select("id, dokumen_id, status")
+    .eq("id", pesananId)
+    .maybeSingle();
+
+  if (fetchErr || !pesanan) return fail("Pesanan tidak ditemukan.");
+
+  if (pesanan.status === "DIBATALKAN") {
+    return fail("Pesanan dibatalkan. Stok tidak dapat dialokasikan.");
+  }
+
+  if (pesanan.status !== "VERIFIED" && pesanan.status !== "MENUNGGU_STOK") {
+    return fail("Pesanan belum terverifikasi. Stok tidak dapat dialokasikan.");
+  }
+
+  const gudangRes = await listGudangAktif(supabase);
+  if (!gudangRes.ok) return fail(gudangRes.message);
+  const gudangList = gudangRes.data;
+  if (gudangList.length === 0) {
+    return fail("Tidak ada gudang aktif yang tersedia.");
+  }
+
+  const { data: pesananItems } = await supabase
+    .from("pesanan_item")
+    .select("id, produk_id, qty::text")
+    .eq("pesanan_id", pesananId);
+
+  const itemMap = new Map<string, { produkId: string; qty: number }>();
+  for (const row of pesananItems ?? []) {
+    itemMap.set(String(row.id), {
+      produkId: String(row.produk_id),
+      qty: Number(row.qty ?? 0),
+    });
+  }
+
+  const positiveRequests = itemsRequest.filter((r) => r.qtyAlokasi > 0);
+  if (positiveRequests.length === 0) {
+    return fail("Jumlah alokasi harus lebih dari nol.");
+  }
+
+  for (const req of positiveRequests) {
+    const targetGudangId =
+      gudangList.length === 1 ? gudangList[0].id : (req.gudangId ?? "").trim();
+
+    if (!targetGudangId) {
+      return fail("Pilih gudang untuk alokasi.");
+    }
+
+    const itemInfo = itemMap.get(req.pesananItemId);
+    if (!itemInfo) {
+      return fail("Baris pesanan tidak ditemukan.");
+    }
+
+    const allocRes = await alokasiStokPesanan(supabase, {
+      pesananId,
+      pesananItemId: req.pesananItemId,
+      produkId: itemInfo.produkId,
+      gudangId: targetGudangId,
+      qtyDimintaBaris: itemInfo.qty,
+      qtyAlokasi: req.qtyAlokasi,
+      actorId: profile.id,
+    });
+
+    if (!allocRes.ok) {
+      return fail(allocRes.message);
+    }
+  }
+
+  // Evaluasi apakah seluruh baris sudah teralokasi penuh (AC-08)
+  const allAllocRes = await listAlokasiPesanan(supabase, pesananId);
+  if (!allAllocRes.ok) return fail(allAllocRes.message);
+
+  const allocPerItem = new Map<string, number>();
+  for (const a of allAllocRes.data) {
+    if (a.status === "teralokasi") {
+      allocPerItem.set(
+        a.pesanan_item_id,
+        (allocPerItem.get(a.pesanan_item_id) ?? 0) + Number(a.qty),
+      );
+    }
+  }
+
+  let semuaPenuh = true;
+  for (const [itemId, info] of itemMap.entries()) {
+    const teralokasi = allocPerItem.get(itemId) ?? 0;
+    if (teralokasi + 0.0001 < info.qty) {
+      semuaPenuh = false;
+      break;
+    }
+  }
+
+  const statusTujuan = semuaPenuh ? "SIAP_KIRIM" : "MENUNGGU_STOK";
+
+  if (statusTujuan !== pesanan.status && pesanan.dokumen_id) {
+    const dokRes = await getDokumen(supabase, String(pesanan.dokumen_id));
+    if (dokRes.ok && dokRes.data) {
+      const transRes = await pindahStatusDokumen(supabase, {
+        dokumenId: String(pesanan.dokumen_id),
+        versi: dokRes.data.versi,
+        statusTujuan,
+        aksi: "CEK_STOK",
+        actorId: profile.id,
+      });
+
+      if (transRes.ok) {
+        await supabase
+          .from("pesanan")
+          .update({
+            status: statusTujuan,
+            updated_by: profile.id,
+          })
+          .eq("id", pesananId);
+      }
+    }
+  }
+
+  revalidatePath(PATH_PESANAN);
+  revalidatePath(`${PATH_PESANAN}/${pesananId}`);
+  revalidatePath("/pendapatan/ketersediaan");
+  return ok({
+    status: statusTujuan,
+    message:
+      statusTujuan === "SIAP_KIRIM"
+        ? "Seluruh stok berhasil dialokasikan. Pesanan Siap Kirim."
+        : "Alokasi sebagian tersimpan. Pesanan berstatus Menunggu Stok.",
+  });
 }

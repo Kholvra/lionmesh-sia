@@ -84,3 +84,28 @@ export interface PesananDetail extends PesananRingkas {
   riwayat: RiwayatStatus[];
   dokumenVersi: number;
 }
+
+export interface KetersediaanBarisInfo {
+  pesananItemId: string;
+  produkId: string;
+  produkKode: string;
+  produkNama: string;
+  satuanKode: string;
+  qtyDiminta: number;
+  qtyTeralokasi: number;
+  qtySisaKebutuhan: number;
+  tersediaPerGudang: Record<
+    string,
+    {
+      saldoQty: number;
+      alokasiAktifQty: number;
+      tersediaQty: number;
+    }
+  >;
+}
+
+export interface KetersediaanPesananData {
+  gudangList: Array<{ id: string; kode: string; nama: string }>;
+  baris: KetersediaanBarisInfo[];
+}
+

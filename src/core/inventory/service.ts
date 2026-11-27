@@ -2,6 +2,8 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { fail, ok, type Result } from "@/lib/result";
 import { isDecimal } from "./decimal";
 import type {
+  AlokasiStok,
+  AlokasiStokItemInput,
   CatatMutasiInput,
   CatatMutasiResult,
   OpnameStokInput,
@@ -9,6 +11,7 @@ import type {
   TransferStokInput,
   TransferStokResult,
 } from "./types";
+import { getKetersediaanProdukGudang } from "./queries";
 
 /**
  * Mencatat mutasi stok dan memperbarui saldo stok dalam satu transaksi (ARCH-04).
@@ -171,4 +174,128 @@ export async function opnameStok(
       hargaRata: data.saldo.harga_rata,
     },
   });
+}
+
+/**
+ * PD-003: Alokasi stok untuk baris pesanan tanpa mengubah saldo_stok maupun mutasi_stok.
+ * Menjamin total alokasi aktif <= saldo fisik (INV-01) dan <= sisa qty pesanan (INV-04).
+ */
+export async function alokasiStokPesanan(
+  supabase: SupabaseClient,
+  input: AlokasiStokItemInput,
+): Promise<Result<AlokasiStok>> {
+  if (!Number.isFinite(input.qtyAlokasi) || input.qtyAlokasi <= 0) {
+    return fail("Jumlah alokasi harus lebih dari nol.");
+  }
+
+  // Hitung sisa kebutuhan baris pesanan
+  const { data: existingItemAlloc, error: allocErr } = await supabase
+    .from("alokasi_stok")
+    .select("qty::text")
+    .eq("pesanan_item_id", input.pesananItemId)
+    .eq("status", "teralokasi");
+
+  if (allocErr) return fail(allocErr.message);
+
+  let sudahTeralokasi = 0;
+  for (const row of existingItemAlloc ?? []) {
+    sudahTeralokasi += Number(row.qty ?? 0);
+  }
+
+  const sisaKebutuhan =
+    Math.round(
+      (input.qtyDimintaBaris -
+        (input.qtyTerkirimBaris ?? 0) -
+        sudahTeralokasi +
+        Number.EPSILON) *
+        10000,
+    ) / 10000;
+
+  if (input.qtyAlokasi > sisaKebutuhan) {
+    return fail("Alokasi melebihi jumlah yang dipesan.");
+  }
+
+  // Periksa ketersediaan di gudang
+  const ketersediaanRes = await getKetersediaanProdukGudang(
+    supabase,
+    input.produkId,
+    input.gudangId,
+  );
+  if (!ketersediaanRes.ok) return fail(ketersediaanRes.message);
+
+  const tersedia = ketersediaanRes.data.tersediaQty;
+  if (input.qtyAlokasi > tersedia) {
+    return fail(
+      `Stok tersedia hanya ${tersedia}. Alokasi tidak boleh melebihi stok tersedia.`,
+    );
+  }
+
+  const { data: inserted, error: insertErr } = await supabase
+    .from("alokasi_stok")
+    .insert({
+      pesanan_id: input.pesananId,
+      pesanan_item_id: input.pesananItemId,
+      produk_id: input.produkId,
+      gudang_id: input.gudangId,
+      qty: input.qtyAlokasi,
+      status: "teralokasi",
+      created_by: input.actorId,
+      updated_by: input.actorId,
+    })
+    .select(
+      "id, pesanan_id, pesanan_item_id, produk_id, gudang_id, qty::text, status, created_by, created_at, updated_by, updated_at",
+    )
+    .single();
+
+  if (insertErr || !inserted) {
+    return fail(insertErr?.message ?? "Gagal menyimpan alokasi stok.");
+  }
+
+  // Race condition guard (AC-04): pastikan tidak melebihi saldo fisik setelah insert
+  const postCheck = await getKetersediaanProdukGudang(
+    supabase,
+    input.produkId,
+    input.gudangId,
+  );
+  if (postCheck.ok && postCheck.data.alokasiAktifQty > postCheck.data.saldoQty) {
+    await supabase.from("alokasi_stok").delete().eq("id", inserted.id);
+    return fail("Stok tersedia berubah. Muat ulang dan coba lagi.");
+  }
+
+  return ok({
+    id: String(inserted.id),
+    pesanan_id: String(inserted.pesanan_id),
+    pesanan_item_id: String(inserted.pesanan_item_id),
+    produk_id: String(inserted.produk_id),
+    gudang_id: String(inserted.gudang_id),
+    qty: String(inserted.qty),
+    status: inserted.status as AlokasiStok["status"],
+    created_by: inserted.created_by ? String(inserted.created_by) : null,
+    created_at: String(inserted.created_at),
+    updated_by: inserted.updated_by ? String(inserted.updated_by) : null,
+    updated_at: String(inserted.updated_at),
+  });
+}
+
+/**
+ * PD-003 (AC-05): Melepas seluruh alokasi aktif milik pesanan (mis. saat pembatalan).
+ */
+export async function lepasAlokasiPesanan(
+  supabase: SupabaseClient,
+  pesananId: string,
+  actorId: string,
+): Promise<Result<{ dilepasCount: number }>> {
+  const { data, error } = await supabase
+    .from("alokasi_stok")
+    .update({
+      status: "dilepas",
+      updated_by: actorId,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("pesanan_id", pesananId)
+    .eq("status", "teralokasi")
+    .select("id");
+
+  if (error) return fail(error.message);
+  return ok({ dilepasCount: (data ?? []).length });
 }

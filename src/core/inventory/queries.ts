@@ -1,5 +1,11 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import type { MutasiStok, SaldoStok } from "./types";
+import type {
+  AlokasiStok,
+  GudangRingkas,
+  KetersediaanProdukGudang,
+  MutasiStok,
+  SaldoStok,
+} from "./types";
 import { fail, ok, type Result } from "@/lib/result";
 
 export async function getSaldoStok(
@@ -117,6 +123,97 @@ export async function listMutasiStok(
       created_at: row.created_at,
       updated_by: row.updated_by,
       updated_at: row.updated_at,
+    })),
+  );
+}
+
+export async function listGudangAktif(
+  supabase: SupabaseClient,
+): Promise<Result<GudangRingkas[]>> {
+  const { data, error } = await supabase
+    .from("gudang")
+    .select("id, kode, nama")
+    .eq("aktif", true)
+    .order("nama", { ascending: true });
+
+  if (error) return fail(error.message);
+  return ok(
+    (data ?? []).map((g) => ({
+      id: String(g.id),
+      kode: String(g.kode),
+      nama: String(g.nama),
+    })),
+  );
+}
+
+export async function getKetersediaanProdukGudang(
+  supabase: SupabaseClient,
+  produkId: string,
+  gudangId: string,
+): Promise<Result<KetersediaanProdukGudang>> {
+  const [saldoRes, alokasiRes] = await Promise.all([
+    supabase
+      .from("saldo_stok")
+      .select("qty::text")
+      .eq("produk_id", produkId)
+      .eq("gudang_id", gudangId)
+      .maybeSingle(),
+    supabase
+      .from("alokasi_stok")
+      .select("qty::text")
+      .eq("produk_id", produkId)
+      .eq("gudang_id", gudangId)
+      .eq("status", "teralokasi"),
+  ]);
+
+  if (saldoRes.error) return fail(saldoRes.error.message);
+  if (alokasiRes.error) return fail(alokasiRes.error.message);
+
+  const saldoQty = saldoRes.data ? Number(saldoRes.data.qty ?? 0) : 0;
+  let alokasiAktifQty = 0;
+  for (const row of alokasiRes.data ?? []) {
+    alokasiAktifQty += Number(row.qty ?? 0);
+  }
+
+  const tersediaQty = Math.max(
+    0,
+    Math.round((saldoQty - alokasiAktifQty + Number.EPSILON) * 10000) / 10000,
+  );
+
+  return ok({
+    produkId,
+    gudangId,
+    saldoQty,
+    alokasiAktifQty,
+    tersediaQty,
+  });
+}
+
+export async function listAlokasiPesanan(
+  supabase: SupabaseClient,
+  pesananId: string,
+): Promise<Result<AlokasiStok[]>> {
+  const { data, error } = await supabase
+    .from("alokasi_stok")
+    .select("id, pesanan_id, pesanan_item_id, produk_id, gudang_id, qty::text, status, created_by, created_at, updated_by, updated_at")
+    .eq("pesanan_id", pesananId)
+    .order("created_at", { ascending: true });
+
+  if (error) return fail(error.message);
+
+  return ok(
+    (data ?? []).map((row) => ({
+      id: String(row.id),
+      pesanan_id: String(row.pesanan_id),
+      pesanan_item_id: String(row.pesanan_item_id),
+      produk_id: String(row.produk_id),
+      gudang_id: String(row.gudang_id),
+      qty: String(row.qty),
+      status: row.status as AlokasiStok["status"],
+      created_by: row.created_by ? String(row.created_by) : null,
+      created_at: String(row.created_at),
+      updated_by: row.updated_by ? String(row.updated_by) : null,
+      updated_at: String(row.updated_at),
     })),
   );
 }

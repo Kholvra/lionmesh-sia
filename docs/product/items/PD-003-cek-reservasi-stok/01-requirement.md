@@ -7,8 +7,8 @@ milestone: M1
 lane: active
 sequence: unset
 type: feature
-req_status: specified
-delivery_status: not_started
+req_status: validated
+delivery_status: done
 priority: P0
 size: M
 depends_on:

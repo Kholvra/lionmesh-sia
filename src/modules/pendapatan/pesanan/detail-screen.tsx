@@ -4,10 +4,11 @@ import { StatusBadge } from "@/components/ui/status-badge";
 import { cekIzin } from "@/lib/auth/permissions";
 import type { Profile } from "@/lib/auth/types";
 import { PesananBaruScreen } from "./baru-screen";
+import { AlokasiStokPanel } from "./components/alokasi-stok-panel";
 import { PesananActions } from "./components/pesanan-actions";
 import { formatAngka, formatRupiah, formatTanggal, formatWaktu } from "./format";
 import styles from "./pesanan.module.css";
-import { getPesananDetail } from "./queries";
+import { getKetersediaanPesananData, getPesananDetail } from "./queries";
 import { STATUS_PESANAN_OPTIONS } from "./types";
 
 type PesananDetailScreenProps = {
@@ -46,6 +47,19 @@ export async function PesananDetailScreen({
   const canVerify = cekIzin(profile.peran, "verifikasi_pesanan");
   const canOverride = cekIzin(profile.peran, "override_batas_kredit");
   const canCancel = cekIzin(profile.peran, "batalkan_pesanan");
+  const canAllocate = cekIzin(profile.peran, "cek_alokasi_stok");
+
+  const showStokPanel = [
+    "VERIFIED",
+    "MENUNGGU_STOK",
+    "SIAP_KIRIM",
+    "TERKIRIM_SEBAGIAN",
+    "TERKIRIM",
+  ].includes(detail.status);
+
+  const ketersediaanData = showStokPanel
+    ? await getKetersediaanPesananData(detail.id, detail.items)
+    : null;
 
   if (
     mode === "edit" &&
@@ -235,6 +249,15 @@ export async function PesananDetailScreen({
               </dl>
             </div>
           </div>
+
+          {ketersediaanData ? (
+            <AlokasiStokPanel
+              canAllocate={canAllocate}
+              data={ketersediaanData}
+              pesananId={detail.id}
+              status={detail.status}
+            />
+          ) : null}
         </div>
 
         {/* Right Rail: Audit Trail (4 cols, newest first) */}
