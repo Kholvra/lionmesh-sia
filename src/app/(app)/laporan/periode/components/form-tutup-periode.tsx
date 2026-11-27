@@ -3,6 +3,8 @@
 import Link from "next/link";
 import { useActionState } from "react";
 
+import { SubmitButton } from "@/components/ui/submit-button";
+
 import { tutupPeriodeAction, type AksiTutupState } from "../actions";
 import styles from "../periode.module.css";
 
@@ -24,13 +26,15 @@ export function FormTutupPeriode({
     <div className={styles.actions}>
       <form action={formAction} className={styles.formInline}>
         <input name="periode" type="hidden" value={periode} />
-        <button
+        <SubmitButton
           className={styles.primaryButton}
+          busyLabel="Menutup…"
           disabled={!bisaDitutup || pending}
+          pending={pending}
           type="submit"
         >
-          {pending ? "Menutup…" : "Tutup periode"}
-        </button>
+          Tutup periode
+        </SubmitButton>
       </form>
 
       <Link className={styles.secondaryButton} href="/laporan/periode">

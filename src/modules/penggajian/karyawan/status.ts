@@ -1,4 +1,4 @@
-import type { StatusOption } from "@/components/ui";
+import type { StatusOption } from "@/components/ui/status-badge";
 
 export const STATUS_KARYAWAN: readonly StatusOption[] = [
   { value: "AKTIF", label: "Aktif", tone: "success" },

@@ -4,8 +4,11 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useMemo, useState } from "react";
 import { ArrowIcon } from "@/components/ui/arrow-icon";
-import { BomItem, INITIAL_BOM_LIST } from "../bom-produk/types";
+import { Notice } from "@/components/ui/notice";
+import { PageHeader } from "@/components/ui/page-header";
+import { LoadingState } from "@/components/ui/states";
 import { ProduksiSubnav } from "../components/produksi-subnav";
+import { BomItem, INITIAL_BOM_LIST } from "../bom-produk/types";
 import {
   INITIAL_SPK_LIST,
   SpkItem,
@@ -275,47 +278,31 @@ function AjukanPembelianBahanContent() {
     <div className="w-full text-[#172335] animate-fade-in">
       <ProduksiSubnav />
 
-      {/* Back Link ke SPK terkait */}
-      <Link
-        href={`/produksi/perintah-produksi/${targetSpk.nomorSpk.toLowerCase()}`}
-        className="group inline-flex items-center gap-1.5 text-xs font-semibold text-[#C96A00] hover:text-[#E88A06]"
-      >
-        <ArrowIcon
-          direction="left"
-          className="transition-transform duration-150 group-hover:-translate-x-0.5"
-        />
-        <span>{targetSpk.nomorSpk}</span>
-      </Link>
+      <PageHeader
+        back={{
+          href: `/produksi/perintah-produksi/${targetSpk.nomorSpk.toLowerCase()}`,
+          label: targetSpk.nomorSpk,
+        }}
+        breadcrumb={[
+          { href: "/produksi", label: "Siklus Produksi" },
+          "PR-003 Mengajukan pembelian bahan",
+        ]}
+        title="Ajukan pembelian bahan"
+        variant="cycle"
+      />
 
-      {/* Breadcrumb */}
-      <nav className="mt-2 text-xs font-medium text-[#526174]">
-        <Link
-          href="/produksi"
-          className="text-[#C96A00] underline decoration-[#C96A00]/60 underline-offset-2 hover:text-[#E88A06]"
-        >
-          Siklus Produksi
-        </Link>
-        <span className="mx-1.5">/</span>
-        <span>PR-003 Mengajukan pembelian bahan</span>
-      </nav>
-
-      {/* Page Title */}
-      <h1 className="mt-1.5 text-[28px] leading-tight font-bold tracking-tight text-[#172335]">
-        Ajukan pembelian bahan
-      </h1>
-
-      {/* Banner Error Validasi */}
       {hasErrors && (
-        <div className="mt-4 rounded-[10px] border border-[#FECACA] bg-[#FEE2E2]/80 px-5 py-3 text-[#B91C1C] animate-slide-down">
-          <p className="text-[13px] font-semibold">
-            Permintaan belum bisa diajukan
-          </p>
+        <Notice
+          title="Permintaan belum bisa diajukan"
+          tone="error"
+          variant="card"
+        >
           <div className="mt-0.5 space-y-0.5 text-[12px]">
             {bannerMessages.map((msg, idx) => (
               <p key={idx}>{msg}</p>
             ))}
           </div>
-        </div>
+        </Notice>
       )}
 
       {/* Form Card: Permintaan bahan */}
@@ -487,7 +474,7 @@ function AjukanPembelianBahanContent() {
 
 export function PembelianBahanScreen() {
   return (
-    <Suspense fallback={<div className="h-40 flex items-center justify-center text-sm text-[#526174]">Memuat formulir...</div>}>
+    <Suspense fallback={<LoadingState judul="Memuat formulir..." variant="inline" />}>
       <AjukanPembelianBahanContent />
     </Suspense>
   );

@@ -10,6 +10,10 @@ import {
 import { cekIzin } from "@/lib/auth/permissions";
 import { requireSesi } from "@/lib/auth/server";
 import { createClient } from "@/lib/supabase/server";
+import { Notice } from "@/components/ui/notice";
+import { PageHeader } from "@/components/ui/page-header";
+import { Select } from "@/components/ui/select";
+import { SubmitButton } from "@/components/ui/submit-button";
 
 import { susunOpsiPeriode } from "../period-options";
 import laporanStyles from "../laporan.module.css";
@@ -49,12 +53,7 @@ export default async function PeriodePage({ searchParams }: PageProps) {
         judul="Periode akuntansi"
         profil={profile}
       >
-        <p
-          className={`${laporanStyles.alert} ${laporanStyles.alertDanger}`}
-          role="alert"
-        >
-          {rows.message}
-        </p>
+        <Notice nada="bahaya" variant="bordered">{rows.message}</Notice>
       </PeriodeShell>
     );
   }
@@ -108,22 +107,19 @@ export default async function PeriodePage({ searchParams }: PageProps) {
       profil={profile}
     >
       {pesanSukses ? (
-        <p className={styles.alertSuccess} role="status">
-          {pesanSukses}
-        </p>
+        <Notice tone="success" variant="bordered">{pesanSukses}</Notice>
       ) : null}
 
       <section
         aria-labelledby="daftar-periode-title"
         className={styles.section}
       >
-        <div className={styles.sectionHeader}>
-          <h2 className={styles.sectionTitle} id="daftar-periode-title">
-            Daftar periode
-          </h2>
-          <p className={styles.sectionMeta}>
-            12 bulan terakhir dan periode yang sudah tersimpan
-          </p>
+        <div id="daftar-periode-title">
+          <PageHeader
+            title="Daftar periode"
+            description="12 bulan terakhir dan periode yang sudah tersimpan"
+            variant="section"
+          />
         </div>
         <DaftarPeriode rows={baris} />
       </section>
@@ -132,13 +128,12 @@ export default async function PeriodePage({ searchParams }: PageProps) {
         aria-labelledby="tutup-tahun-section"
         className={styles.section}
       >
-        <div className={styles.sectionHeader}>
-          <h2 className={styles.sectionTitle} id="tutup-tahun-section">
-            Tutup buku tahunan
-          </h2>
-          <p className={styles.sectionMeta}>
-            Operasi tahunan; tidak perlu rute terpisah
-          </p>
+        <div id="tutup-tahun-section">
+          <PageHeader
+            title="Tutup buku tahunan"
+            description="Operasi tahunan; tidak perlu rute terpisah"
+            variant="section"
+          />
         </div>
 
         <div className={styles.yearFilter}>
@@ -151,7 +146,7 @@ export default async function PeriodePage({ searchParams }: PageProps) {
               <label className={laporanStyles.filterLabel} htmlFor="tahun">
                 Tahun buku
               </label>
-              <select
+              <Select
                 className={laporanStyles.select}
                 defaultValue={String(tahun)}
                 id="tahun"
@@ -162,23 +157,18 @@ export default async function PeriodePage({ searchParams }: PageProps) {
                     {item}
                   </option>
                 ))}
-              </select>
+              </Select>
             </div>
-            <button className={styles.primaryButton} type="submit">
+            <SubmitButton className={styles.primaryButton} type="submit">
               Tampilkan
-            </button>
+            </SubmitButton>
           </form>
         </div>
 
         {pemeriksaan.ok ? (
           <TutupTahun pemeriksaan={pemeriksaan.data} />
         ) : (
-          <p
-            className={`${laporanStyles.alert} ${laporanStyles.alertDanger}`}
-            role="alert"
-          >
-            {pemeriksaan.message}
-          </p>
+          <Notice nada="bahaya" variant="bordered">{pemeriksaan.message}</Notice>
         )}
       </section>
     </PeriodeShell>

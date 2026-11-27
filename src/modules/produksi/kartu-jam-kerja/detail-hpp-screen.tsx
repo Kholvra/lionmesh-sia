@@ -1,9 +1,15 @@
 "use client";
 
-import Link from "next/link";
-import { useParams } from "next/navigation";
 import { useMemo, useState } from "react";
-import { ArrowIcon } from "@/components/ui/arrow-icon";
+import { MetricCardGrid } from "@/components/ui/metric-card";
+import { useParams } from "next/navigation";
+import { Notice } from "@/components/ui/notice";
+import { PageHeader } from "@/components/ui/page-header";
+import {
+  STATUS_POSTING_HPP,
+  StatusBadge,
+} from "@/components/ui/status-badge";
+import { useTableState } from "@/components/ui/use-table-state";
 import { useProduksiActor } from "@/modules/produksi/context/actor-context";
 import { ProduksiSubnav } from "@/modules/produksi/components/produksi-subnav";
 import { HppSpkSummary, INITIAL_HPP_LIST } from "./types";
@@ -47,6 +53,34 @@ export function DetailHppScreen() {
       message: `Jurnal HPP Final untuk ${hppData.nomorSpk} sebesar Rp ${hppData.totalHppRp.toLocaleString("id-ID")} berhasil diposting ke Buku Besar. Akun Barang Dalam Proses (WIP) telah ditutup ke Persediaan Barang Jadi.`,
     });
   };
+  const hppAction =
+    hppData.statusPostingHpp === "FINAL_DIPOSTING" ? (
+      <div className="inline-flex items-center gap-2">
+        <StatusBadge
+          status={hppData.statusPostingHpp}
+          statuses={STATUS_POSTING_HPP}
+          variant="compact"
+        />
+        <span className="text-[12px] font-semibold text-[#15803D]">
+          ({hppData.tanggalPosting})
+        </span>
+      </div>
+    ) : canPostHpp ? (
+      <button
+        type="button"
+        onClick={handlePostingFinalHpp}
+        className="inline-flex items-center justify-center rounded-[8px] bg-[#E88A06] px-4 py-2 text-[13px] font-semibold text-white shadow-2xs transition-all duration-150 ease-out hover:bg-[#D17B05] active:scale-[0.98]"
+      >
+        Posting Jurnal HPP Final
+      </button>
+    ) : (
+      <div
+        className="inline-flex items-center rounded-[8px] border border-slate-200 bg-slate-100 px-3.5 py-2 text-[12px] font-medium text-slate-500"
+        title="Wewenang posting jurnal HPP final dipegang oleh peran Accounting."
+      >
+        Posting HPP: Wewenang Accounting (Aktor: {activeRole})
+      </div>
+    );
 
   const jurnalRows = useMemo(() => {
     return [
@@ -94,125 +128,67 @@ export function DetailHppScreen() {
       },
     ];
   }, [hppData]);
+  const tabelJurnal = useTableState(jurnalRows, {
+    pageSize: jurnalRows.length || 1,
+  });
 
   return (
     <div className="mx-auto max-w-[1156px] text-[#172335] animate-fade-in">
       <ProduksiSubnav />
 
-      {/* Back Link */}
-      <Link
-        href="/produksi/kartu-jam-kerja"
-        className="group inline-flex items-center gap-1.5 text-xs font-semibold text-[#C96A00] hover:text-[#E88A06]"
-      >
-        <ArrowIcon
-          direction="left"
-          className="transition-transform duration-150 group-hover:-translate-x-0.5"
-        />
-        <span>Kembali ke daftar HPP</span>
-      </Link>
+      <PageHeader
+        actions={hppAction}
+        back={{ href: "/produksi/kartu-jam-kerja", label: "Kembali ke daftar HPP" }}
+        breadcrumb={[
+          { href: "/produksi", label: "Siklus Produksi" },
+          "PR-006 Biaya produksi dan HPP",
+          hppData.nomorSpk,
+        ]}
+        description={`${hppData.produkNama} · ${hppData.jumlahLulus} lembar lulus QC · Jadwal ${hppData.jadwalText}`}
+        title={`Rincian HPP ${hppData.nomorSpk}`}
+        variant="cycle"
+      />
 
-      {/* Breadcrumb */}
-      <nav className="mt-2 text-xs font-medium text-[#526174]">
-        <Link
-          href="/produksi"
-          className="text-[#C96A00] underline decoration-[#C96A00]/60 underline-offset-2 hover:text-[#E88A06]"
-        >
-          Siklus Produksi
-        </Link>
-        <span className="mx-1.5">/</span>
-        <span>PR-006 Biaya produksi dan HPP</span>
-        <span className="mx-1.5">/</span>
-        <span>{hppData.nomorSpk}</span>
-      </nav>
-
-      {/* Header */}
-      <div className="mt-2 flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h1 className="text-[28px] leading-tight font-bold tracking-tight text-[#172335]">
-            Rincian HPP {hppData.nomorSpk}
-          </h1>
-          <p className="mt-1 text-[13px] text-[#526174]">
-            {hppData.produkNama} · {hppData.jumlahLulus} lembar lulus QC · Jadwal{" "}
-            {hppData.jadwalText}
-          </p>
-        </div>
-
-        <div className="flex items-center gap-2">
-          {hppData.statusPostingHpp === "FINAL_DIPOSTING" ? (
-            <div className="rounded-[8px] border border-[#86EFAC] bg-[#DCFCE7] px-3.5 py-2 text-[12px] font-semibold text-[#15803D]">
-              ✓ Jurnal HPP Final Diposting ({hppData.tanggalPosting})
-            </div>
-          ) : canPostHpp ? (
-            <button
-              type="button"
-              onClick={handlePostingFinalHpp}
-              className="inline-flex items-center justify-center rounded-[8px] bg-[#E88A06] px-4 py-2 text-[13px] font-semibold text-white shadow-2xs transition-all duration-150 ease-out hover:bg-[#D17B05] active:scale-[0.98]"
-            >
-              Posting Jurnal HPP Final
-            </button>
-          ) : (
-            <div
-              className="inline-flex items-center rounded-[8px] border border-slate-200 bg-slate-100 px-3.5 py-2 text-[12px] font-medium text-slate-500"
-              title="Wewenang posting jurnal HPP final dipegang oleh peran Accounting."
-            >
-              Posting HPP: Wewenang Accounting (Aktor: {activeRole})
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* Notification Banner */}
       {notification && (
-        <div
-          className={`shadow-card mt-4 rounded-[10px] border border-transparent p-4 text-[13px] animate-slide-down ${
+        <Notice
+          className="mt-4"
+          title={
             notification.type === "success"
-              ? "bg-[#DCFCE7] text-[#15803D]"
-              : "bg-[#FEE2E2] text-[#B91C1C]"
-          }`}
-        >
-          <p className="font-semibold">
-            {notification.type === "success"
               ? "Berhasil Diposting"
-              : "Tidak Dapat Memposting HPP"}
-          </p>
+              : "Tidak Dapat Memposting HPP"
+          }
+          tone={notification.type === "success" ? "success" : "error"}
+          variant="card"
+        >
           <p className="mt-0.5 text-[12px]">{notification.message}</p>
-        </div>
+        </Notice>
       )}
 
-      {/* Ringkasan Angka HPP */}
-      <div className="mt-5 grid grid-cols-1 gap-[16px] md:grid-cols-3">
-        <div className="shadow-card flex flex-col justify-start gap-[6px] rounded-[10px] border border-transparent bg-white px-[20px] py-[16px]">
-          <p className="text-[13px] text-[#526174]">Total HPP Perintah</p>
-          <p className="text-[26px] font-bold text-[#172335] tabular-nums">
-            Rp {hppData.totalHppRp.toLocaleString("id-ID")}
-          </p>
-          <p className="text-[11px] text-[#526174]">
-            Akumulasi 5 komponen biaya
-          </p>
-        </div>
-
-        <div className="shadow-card flex flex-col justify-start gap-[6px] rounded-[10px] border border-transparent bg-white px-[20px] py-[16px]">
-          <p className="text-[13px] text-[#526174]">HPP per Lembar</p>
-          <p className="text-[26px] font-bold text-[#B45309] tabular-nums">
-            Rp {hppData.hppPerUnitRp.toLocaleString("id-ID")}
-          </p>
-          <p className="text-[11px] text-[#526174]">
-            Total HPP ÷ {hppData.jumlahLulus} lembar lulus
-          </p>
-        </div>
-
-        <div className="shadow-card flex flex-col justify-start gap-[6px] rounded-[10px] border border-transparent bg-white px-[20px] py-[16px]">
-          <p className="text-[13px] text-[#526174]">Status Dokumen SPK</p>
-          <p className="text-[22px] font-semibold text-[#172335]">
-            {hppData.statusWo}
-          </p>
-          <p className="text-[11px] text-[#526174]">
-            {hppData.statusPostingHpp === "FINAL_DIPOSTING"
-              ? "Akun WIP telah ditutup"
-              : "Pembebanan WIP berjalan"}
-          </p>
-        </div>
-      </div>
+      <MetricCardGrid
+        className="mt-5"
+        columns={3}
+        items={[
+          {
+            hint: "Akumulasi 5 komponen biaya",
+            label: "Total HPP Perintah",
+            value: `Rp ${hppData.totalHppRp.toLocaleString("id-ID")}`,
+          },
+          {
+            hint: `Total HPP ÷ ${hppData.jumlahLulus} lembar lulus`,
+            label: "HPP per Lembar",
+            tone: "warning",
+            value: `Rp ${hppData.hppPerUnitRp.toLocaleString("id-ID")}`,
+          },
+          {
+            hint:
+              hppData.statusPostingHpp === "FINAL_DIPOSTING"
+                ? "Akun WIP telah ditutup"
+                : "Pembebanan WIP berjalan",
+            label: "Status Dokumen SPK",
+            value: hppData.statusWo,
+          },
+        ]}
+      />
 
       {/* Breakdown 5 Komponen Sesuai Rumus Mengikat */}
       <section className="shadow-card mt-5 flex flex-col gap-[14px] rounded-[10px] border border-transparent bg-white p-[20px]">
@@ -342,7 +318,7 @@ export function DetailHppScreen() {
               </tr>
             </thead>
             <tbody className="divide-y divide-[#E5E7EB]/80 text-[13px]">
-              {jurnalRows.map((j, i) => (
+              {tabelJurnal.visibleRows.map((j, i) => (
                 <tr key={i} className="hover:bg-slate-50/70">
                   <td className="px-[12px] py-3 font-medium text-[#172335]">
                     {j.akun}

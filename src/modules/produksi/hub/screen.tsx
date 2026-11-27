@@ -1,7 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowIcon } from "@/components/ui/arrow-icon";
+import { MetricCardGrid } from "@/components/ui/metric-card";
+import { PageHeader } from "@/components/ui/page-header";
+import { STATUS_TUGAS_PRODUKSI, StatusBadge } from "@/components/ui/status-badge";
+import { TableActionLink } from "@/components/ui/table-action-link";
 import { ProduksiSubnav } from "../components/produksi-subnav";
 
 interface TaskItem {
@@ -10,7 +13,6 @@ interface TaskItem {
   subtitle: string;
   siklus: string;
   statusLabel: string;
-  statusVariant: "amber" | "indigo";
   actionLabel: string;
   href: string;
 }
@@ -27,7 +29,6 @@ const TASKS_NEED_ACTION: TaskItem[] = [
     subtitle: "Wiremesh M6 · 120 lembar",
     siklus: "Produksi",
     statusLabel: "Menunggu cek bahan Gudang",
-    statusVariant: "amber",
     actionLabel: "Lihat",
     href: "/produksi/perintah-produksi?spk=SPK-2611-013",
   },
@@ -37,7 +38,6 @@ const TASKS_NEED_ACTION: TaskItem[] = [
     subtitle: "1,1 ton",
     siklus: "Produksi",
     statusLabel: "Diperiksa Purchasing",
-    statusVariant: "indigo",
     actionLabel: "Lihat",
     href: "/produksi/pembelian-bahan?pr=PR-2611-010",
   },
@@ -47,7 +47,6 @@ const TASKS_NEED_ACTION: TaskItem[] = [
     subtitle: "Selesai diproduksi · 400 lembar",
     siklus: "Produksi",
     statusLabel: "Hasil belum dicatat",
-    statusVariant: "amber",
     actionLabel: "Catat hasil",
     href: "/produksi/hasil-produksi?spk=SPK-2611-012",
   },
@@ -64,52 +63,23 @@ export function ProduksiHubScreen() {
     <div className="w-full text-[#172335] animate-fade-in">
       <ProduksiSubnav />
 
-      {/* Breadcrumb & Header */}
-      <nav className="text-xs font-medium text-[#526174]">
-        <span>Beranda</span>
-        <span className="mx-1.5">·</span>
-        <span>Produksi</span>
-      </nav>
+      <PageHeader
+        breadcrumb={["Beranda", "Produksi"]}
+        description="21 November 2026 · Siklus produksi"
+        separator="·"
+        title="Beranda"
+        variant="cycle"
+      />
 
-      <h1 className="mt-1.5 text-[28px] leading-tight font-bold tracking-tight text-[#172335]">
-        Beranda
-      </h1>
-      <p className="mt-1 text-[13px] text-[#526174]">
-        21 November 2026 · Siklus produksi
-      </p>
-
-      {/* 3 Summary Metric Cards */}
-      <div className="mt-6 grid grid-cols-1 gap-[16px] md:grid-cols-3">
-        {/* Card 1 */}
-        <div className="shadow-card flex min-h-[108px] flex-col justify-start gap-[6px] rounded-[10px] border border-transparent bg-white px-[20px] py-[16px] transition-all duration-150 ease-out hover:-translate-y-0.5 hover:shadow-md">
-          <p className="text-[13px] leading-none font-normal text-[#526174]">
-            SPK berjalan
-          </p>
-          <p className="mt-1 text-[26px] leading-none font-semibold text-[#172335]">
-            2
-          </p>
-        </div>
-
-        {/* Card 2 */}
-        <div className="shadow-card flex min-h-[108px] flex-col justify-start gap-[6px] rounded-[10px] border border-transparent bg-white px-[20px] py-[16px] transition-all duration-150 ease-out hover:-translate-y-0.5 hover:shadow-md">
-          <p className="text-[13px] leading-none font-normal text-[#526174]">
-            Permintaan bahan
-          </p>
-          <p className="mt-1 text-[26px] leading-none font-semibold text-[#172335]">
-            1
-          </p>
-        </div>
-
-        {/* Card 3 */}
-        <div className="shadow-card flex min-h-[108px] flex-col justify-start gap-[6px] rounded-[10px] border border-transparent bg-white px-[20px] py-[16px] transition-all duration-150 ease-out hover:-translate-y-0.5 hover:shadow-md">
-          <p className="text-[13px] leading-none font-normal text-[#526174]">
-            Menunggu QC
-          </p>
-          <p className="mt-1 text-[26px] leading-none font-semibold text-[#172335]">
-            1
-          </p>
-        </div>
-      </div>
+      <MetricCardGrid
+        className="mt-6"
+        columns={3}
+        items={[
+          { label: "SPK berjalan", value: 2, hover: "lift-eased", minHeight: true },
+          { label: "Permintaan bahan", value: 1, hover: "lift-eased", minHeight: true },
+          { label: "Menunggu QC", value: 1, hover: "lift-eased", minHeight: true },
+        ]}
+      />
 
       {/* Content Section: 2 Columns */}
       <div className="mt-6 grid grid-cols-1 gap-[24px] lg:grid-cols-12">
@@ -140,15 +110,11 @@ export function ProduksiHubScreen() {
                       {task.siklus}
                     </span>
                     <span className="text-[#526174]">·</span>
-                    <span
-                      className={`inline-flex items-center rounded-[6px] px-2 py-0.5 text-[11px] font-medium ${
-                        task.statusVariant === "amber"
-                          ? "bg-[#FEF3C7] text-[#92400E]"
-                          : "bg-[#E0E7FF] text-[#3730A3]"
-                      }`}
-                    >
-                      {task.statusLabel}
-                    </span>
+                    <StatusBadge
+                      status={task.statusLabel}
+                      statuses={STATUS_TUGAS_PRODUKSI}
+                      variant="compact"
+                    />
                   </div>
                 </div>
 
@@ -199,34 +165,30 @@ export function ProduksiHubScreen() {
 
       {/* Quick Links Row */}
       <div className="mt-8 flex flex-wrap items-center gap-3">
-        <Link
+        <TableActionLink
+          className="gap-1.5 rounded-[8px] border border-slate-200 bg-white px-3.5 py-2 text-[#172335] shadow-2xs transition-all duration-150 ease-out hover:-translate-y-0.5 hover:shadow-md hover:bg-slate-50 active:scale-[0.98]"
           href="/produksi/bom-produk"
-          className="group inline-flex items-center gap-1.5 rounded-[8px] border border-slate-200 bg-white px-3.5 py-2 text-[12px] font-semibold text-[#172335] shadow-2xs transition-all duration-150 ease-out hover:-translate-y-0.5 hover:shadow-md hover:bg-slate-50 active:scale-[0.98]"
         >
-          <span>Kelola BOM Produk</span>
-          <ArrowIcon className="transition-transform duration-150 group-hover:translate-x-0.5" />
-        </Link>
-        <Link
+          Kelola BOM Produk
+        </TableActionLink>
+        <TableActionLink
+          className="gap-1.5 rounded-[8px] border border-slate-200 bg-white px-3.5 py-2 text-[#172335] shadow-2xs transition-all duration-150 ease-out hover:-translate-y-0.5 hover:shadow-md hover:bg-slate-50 active:scale-[0.98]"
           href="/produksi/perintah-produksi"
-          className="group inline-flex items-center gap-1.5 rounded-[8px] border border-slate-200 bg-white px-3.5 py-2 text-[12px] font-semibold text-[#172335] shadow-2xs transition-all duration-150 ease-out hover:-translate-y-0.5 hover:shadow-md hover:bg-slate-50 active:scale-[0.98]"
         >
-          <span>Perintah Produksi (SPK)</span>
-          <ArrowIcon className="transition-transform duration-150 group-hover:translate-x-0.5" />
-        </Link>
-        <Link
+          Perintah Produksi (SPK)
+        </TableActionLink>
+        <TableActionLink
+          className="gap-1.5 rounded-[8px] border border-slate-200 bg-white px-3.5 py-2 text-[#172335] shadow-2xs transition-all duration-150 ease-out hover:-translate-y-0.5 hover:shadow-md hover:bg-slate-50 active:scale-[0.98]"
           href="/produksi/pembelian-bahan"
-          className="group inline-flex items-center gap-1.5 rounded-[8px] border border-slate-200 bg-white px-3.5 py-2 text-[12px] font-semibold text-[#172335] shadow-2xs transition-all duration-150 ease-out hover:-translate-y-0.5 hover:shadow-md hover:bg-slate-50 active:scale-[0.98]"
         >
-          <span>Pembelian Bahan</span>
-          <ArrowIcon className="transition-transform duration-150 group-hover:translate-x-0.5" />
-        </Link>
-        <Link
+          Pembelian Bahan
+        </TableActionLink>
+        <TableActionLink
+          className="gap-1.5 rounded-[8px] border border-slate-200 bg-white px-3.5 py-2 text-[#172335] shadow-2xs transition-all duration-150 ease-out hover:-translate-y-0.5 hover:shadow-md hover:bg-slate-50 active:scale-[0.98]"
           href="/produksi/hasil-produksi"
-          className="group inline-flex items-center gap-1.5 rounded-[8px] border border-slate-200 bg-white px-3.5 py-2 text-[12px] font-semibold text-[#172335] shadow-2xs transition-all duration-150 ease-out hover:-translate-y-0.5 hover:shadow-md hover:bg-slate-50 active:scale-[0.98]"
         >
-          <span>Catat Hasil Produksi</span>
-          <ArrowIcon className="transition-transform duration-150 group-hover:translate-x-0.5" />
-        </Link>
+          Catat Hasil Produksi
+        </TableActionLink>
       </div>
 
       {/* Prototype Footnote */}

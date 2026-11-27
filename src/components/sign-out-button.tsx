@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 
+import { Notice } from "@/components/ui/notice";
 import styles from "@/components/auth.module.css";
 import { signOutAction } from "@/lib/auth/server";
 
@@ -38,7 +39,7 @@ export function SignOutButton({ variant = "dark" }: { variant?: "dark" | "light"
       >
         {variant === "light" ? "Keluar" : "keluar"}
       </button>
-      {error && <p className={styles.error} role="alert">{error}</p>}
+      {error && <Notice className={styles.error} tone="danger">{error}</Notice>}
     </>
   );
 }

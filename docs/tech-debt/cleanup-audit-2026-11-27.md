@@ -48,28 +48,38 @@ data produksi aman).
       `permintaan/schema.ts` / action server.
 
 ## Fase 2 — Fondasi UI bersama (dipakai semua siklus)
+Bukti 2026-11-27 (branch `post-merge-consolidation`, 7 produser + 5
+konsumen paralel): 12 primitif baru di `components/ui` + barrel,
+8 file lama dihapus; `typecheck`/`lint`/`arch:check` hijau,
+`pnpm test` 124/124, `pnpm build` hijau; spot-check visual
+/penggajian/karyawan identik.
+Risiko sisa: (1) delta piksel kecil di mana prototipe pakai nilai
+non-token (dipetakan ke token terdekat, disengaja); (2) dev overlay
+"1 Issue" pra-ada (`Date.now()` di AppLayout saat prerender, di luar
+scope, build produksi hijau); (3) NIK berhuruf akan beda hasil cari
+(NIK valid numerik, ekuivalen).
 
-- [ ] C1. `useTableState` + `sortRows` generik — 8 tabel
+- [x] C1. `useTableState` + `sortRows` generik — 8 tabel
       (master, pemasok, permintaan, karyawan, antrean, notifikasi,
       periode, laporan).
-- [ ] C2. Satu set Loading/Error/Empty — promosikan
+- [x] C2. Satu set Loading/Error/Empty — promosikan
       `MasterLoading`/`MasterError`; gantikan salinan inline
       (pengeluaran routes, notifikasi, `GagalMemuat` laporan 24×,
       `states`/`gagal-dimuat` GJ).
-- [ ] C3. Satu `PageHeader` (+ breadcrumb, back link) — gabungkan
+- [x] C3. Satu `PageHeader` (+ breadcrumb, back link) — gabungkan
       `SectionHeader` laporan (16×), `PageHeader` GJ (15×), breadcrumb
       produksi (13×).
-- [ ] C4. Satukan badge & pesan — `StatusBadge` gantikan badge rakitan
+- [x] C4. Satukan badge & pesan — `StatusBadge` gantikan badge rakitan
       produksi (7+ situs); satu `Notice`/`Pesan`/`Callout`
       (pengeluaran `Pesan` 3+1, GJ `Notice` 7, callout produksi 5).
-- [ ] C5. Primitif form — satu `Select` (3 implementasi), satu
+- [x] C5. Primitif form — satu `Select` (3 implementasi), satu
       `SubmitButton` "Memproses…" (5+), satu footer submit/batal.
-- [ ] C6. Kartu & grid — satu `MetricCard`/`Ringkasan` (26+),
+- [x] C6. Kartu & grid — satu `MetricCard`/`Ringkasan` (26+),
       `SegmentedTabs`, `TableActionLink`, `SpkStepper` (produksi).
-- [ ] C7. CSS bersama — 49 blok kembar pemasok↔permintaan; header/card/
+- [x] C7. CSS bersama — 49 blok kembar pemasok↔permintaan; header/card/
       button/alert kembar notifikasi↔pengaturan↔master↔dashboard;
       focus-ring ×5 → 1 utilitas; hapus dead CSS (±14 blok).
-- [ ] C8. Tiga panah SVG → satu `ArrowIcon`; hex hardcode
+- [x] C8. Tiga panah SVG → satu `ArrowIcon`; hex hardcode
       `custom-select` → token; barrel `ui/index` ekspor semua;
       `confirm-dialog` satu guard; `status-badge` tanpa side-effect render.
 

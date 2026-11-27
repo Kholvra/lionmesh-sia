@@ -2,52 +2,26 @@
 
 import Link from "next/link";
 import { useMemo, useState } from "react";
-import { ArrowIcon } from "@/components/ui/arrow-icon";
+import { EmptyState } from "@/components/ui/states";
+import { Notice } from "@/components/ui/notice";
+import { PageHeader } from "@/components/ui/page-header";
+import { SegmentedTabs } from "@/components/ui/segmented-tabs";
+import {
+  STATUS_PERINTAH_PRODUKSI,
+  StatusBadge,
+} from "@/components/ui/status-badge";
+import { TableActionLink } from "@/components/ui/table-action-link";
+import { useTableState } from "@/components/ui/use-table-state";
 import { useProduksiActor } from "../context/actor-context";
 import { ProduksiSubnav } from "../components/produksi-subnav";
 import {
   INITIAL_SPK_LIST,
   SpkFilterTab,
   SpkItem,
-  SpkStatusType,
 } from "./types";
 
 const SPK_STORAGE_KEY = "lionmesh_spk_list_v1";
 
-function renderStatusBadge(status: SpkStatusType) {
-  switch (status) {
-    case "MENUNGGU_QC":
-      return (
-        <span className="inline-flex items-center rounded-[6px] bg-[#FEF3C7] px-2.5 py-1 text-[11px] font-semibold text-[#B45309]">
-          Menunggu QC
-        </span>
-      );
-    case "BARANG_JADI":
-      return (
-        <span className="inline-flex items-center rounded-[6px] bg-[#DCFCE7] px-2.5 py-1 text-[11px] font-semibold text-[#15803D]">
-          Barang jadi
-        </span>
-      );
-    case "DIRENCANAKAN":
-      return (
-        <span className="inline-flex items-center rounded-[6px] bg-[#F1F5F9] px-2.5 py-1 text-[11px] font-semibold text-[#475569]">
-          Direncanakan
-        </span>
-      );
-    case "MENUNGGU_BAHAN":
-      return (
-        <span className="inline-flex items-center rounded-[6px] bg-[#DBEAFE] px-2.5 py-1 text-[11px] font-semibold text-[#1D4ED8]">
-          Menunggu bahan
-        </span>
-      );
-    case "DIPROSES":
-      return (
-        <span className="inline-flex items-center rounded-[6px] bg-[#FFEDD5] px-2.5 py-1 text-[11px] font-semibold text-[#C2410C]">
-          Diproses
-        </span>
-      );
-  }
-}
 
 export function PerintahProduksiScreen() {
   const [spkList] = useState<SpkItem[]>(() => {
@@ -66,7 +40,6 @@ export function PerintahProduksiScreen() {
     }
     return INITIAL_SPK_LIST;
   });
-  const [activeTab, setActiveTab] = useState<SpkFilterTab>("semua");
   const { can, activeRole } = useProduksiActor();
   const canCreate = can("create_spk");
 
@@ -83,10 +56,12 @@ export function PerintahProduksiScreen() {
     };
   }, [spkList]);
 
-  const filteredSpk = useMemo(() => {
-    if (activeTab === "semua") return spkList;
-    return spkList.filter((item) => item.filterCategory === activeTab);
-  }, [spkList, activeTab]);
+  const table = useTableState(spkList, {
+    getFilterValue: (item) => item.filterCategory,
+    initialFilterValue: "semua",
+    matchAllFilterValue: "semua",
+    pageSize: spkList.length || 1,
+  });
 
   const tabs: { key: SpkFilterTab; label: string }[] = [
     { key: "semua", label: `Semua (${counts.semua})` },
@@ -121,36 +96,21 @@ export function PerintahProduksiScreen() {
     <div className="w-full text-[#172335] animate-fade-in">
       <ProduksiSubnav />
 
-      {/* Breadcrumb */}
-      <nav className="text-xs font-medium text-[#526174]">
-        <Link
-          href="/produksi"
-          className="text-[#C96A00] underline decoration-[#C96A00]/60 underline-offset-2 hover:text-[#E88A06]"
-        >
-          Siklus Produksi
-        </Link>
-        <span className="mx-1.5">/</span>
-        <span>PR-002 Membuat perintah produksi</span>
-      </nav>
+      <PageHeader
+        breadcrumb={[
+          { href: "/produksi", label: "Siklus Produksi" },
+          "PR-002 Membuat perintah produksi",
+        ]}
+        description="Satu perintah produksi (SPK) untuk satu produk dan jadwal. Kebutuhan bahan dihitung dari data produksi."
+        title="Perintah produksi"
+        variant="cycle"
+      />
 
-      {/* Header */}
-      <h1 className="mt-1.5 text-[28px] leading-tight font-bold tracking-tight text-[#172335]">
-        Perintah produksi
-      </h1>
-      <p className="mt-1.5 text-[13px] text-[#526174]">
-        Satu perintah produksi (SPK) untuk satu produk dan jadwal. Kebutuhan bahan dihitung
-        dari data produksi.
-      </p>
-
-      {/* Alert Callout Permintaan dari Gudang */}
-      <div className="shadow-card mt-5 rounded-[10px] border border-transparent bg-[#FEF3C7]/85 px-5 py-3.5 animate-slide-down">
-        <p className="text-[13px] font-semibold text-[#92400E]">
-          Permintaan dari Gudang: Wiremesh M6 kurang 120 lembar
-        </p>
+      <Notice className="mt-5" tone="warning" title="Permintaan dari Gudang: Wiremesh M6 kurang 120 lembar" variant="card">
         <p className="mt-0.5 text-[12px] text-[#B45309]">
           Untuk SO-2611-015 PT Graha Konstruksi, dikirim 28 Nov.
         </p>
-      </div>
+      </Notice>
 
       {/* Primary Action Button */}
       <div className="mt-5 flex items-center gap-3">
@@ -174,28 +134,12 @@ export function PerintahProduksiScreen() {
           Daftar perintah produksi
         </h2>
 
-        {/* Filter Tabs */}
-        <div>
-          <div className="inline-flex flex-wrap items-center gap-1 rounded-[8px] bg-[#F1F5F9] p-1">
-            {tabs.map((tab) => {
-              const isActive = activeTab === tab.key;
-              return (
-                <button
-                  key={tab.key}
-                  type="button"
-                  onClick={() => setActiveTab(tab.key)}
-                  className={`rounded-[6px] border px-3 py-1.5 text-[12px] transition-all duration-150 ease-out active:scale-[0.98] ${
-                    isActive
-                      ? "border-[#E5E7EB] bg-white font-semibold text-[#172335] shadow-2xs"
-                      : "border-transparent font-medium text-[#526174] hover:text-[#172335]"
-                  }`}
-                >
-                  {tab.label}
-                </button>
-              );
-            })}
-          </div>
-        </div>
+        <SegmentedTabs
+          eased
+          items={tabs}
+          onValueChange={(key) => table.setFilterValue(key)}
+          value={table.filterValue}
+        />
 
         {/* Table */}
         <div className="overflow-x-auto">
@@ -211,7 +155,7 @@ export function PerintahProduksiScreen() {
               </tr>
             </thead>
             <tbody className="divide-y divide-[#E5E7EB]/80">
-              {filteredSpk.map((item) => (
+              {table.visibleRows.map((item) => (
                 <tr
                   key={item.id}
                   className="transition-colors hover:bg-slate-50/70"
@@ -234,27 +178,31 @@ export function PerintahProduksiScreen() {
                     {item.jadwalText}
                   </td>
                   <td className="px-[12px] py-4">
-                    {renderStatusBadge(item.status)}
+                    <StatusBadge
+                      status={item.status}
+                      statuses={STATUS_PERINTAH_PRODUKSI}
+                      variant="compact"
+                    />
                   </td>
                   <td className="px-[12px] py-4 text-right">
-                    <Link
+                    <TableActionLink
                       href={`/produksi/perintah-produksi/${item.nomorSpk.toLowerCase()}`}
-                      className="group inline-flex items-center gap-1.5 text-[12px] font-semibold text-[#C96A00] hover:text-[#E88A06]"
                     >
-                      <span>Lihat</span>
-                      <ArrowIcon className="transition-transform duration-150 group-hover:translate-x-0.5" />
-                    </Link>
+                      Lihat
+                    </TableActionLink>
                   </td>
                 </tr>
               ))}
 
-              {filteredSpk.length === 0 && (
+              {table.isEmpty && (
                 <tr>
-                  <td
-                    colSpan={6}
-                    className="px-4 py-8 text-center text-[13px] text-[#526174]"
-                  >
-                    Belum ada perintah produksi pada kategori ini.
+                  <td colSpan={6}>
+                  <div className="py-8 text-center">
+                    <EmptyState
+                      judul="Belum ada perintah produksi pada kategori ini."
+                      variant="inline"
+                    />
+                  </div>
                   </td>
                 </tr>
               )}

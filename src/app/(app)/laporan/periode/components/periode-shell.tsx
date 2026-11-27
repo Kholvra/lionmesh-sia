@@ -1,6 +1,7 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 
+import { ArrowIcon } from "@/components/ui/arrow-icon";
 import type { Profile } from "@/lib/auth/types";
 
 import laporanStyles from "../../laporan.module.css";
@@ -29,18 +30,7 @@ export function PeriodeShell({
         <div>
           {kembali ? (
             <Link className={styles.backLink} href={kembali.href}>
-              <svg
-                aria-hidden="true"
-                className={styles.backIcon}
-                fill="none"
-                stroke="currentColor"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth="1.75"
-                viewBox="0 0 16 16"
-              >
-                <path d="M10 3 5 8l5 5" />
-              </svg>
+              <ArrowIcon className={styles.backIcon} direction="left" />
               {kembali.label}
             </Link>
           ) : null}

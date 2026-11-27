@@ -2,20 +2,24 @@ import Link from "next/link";
 import { Suspense } from "react";
 import type { ReactNode } from "react";
 
-import { StatusBadge } from "@/components/ui";
+import { Notice } from "@/components/ui/notice";
+import { PageHeader } from "@/components/ui/page-header";
+import { EmptyState, ErrorState } from "@/components/ui/states";
+import { StatusBadge } from "@/components/ui/status-badge";
 import { addGajiPokok } from "@/modules/penggajian/karyawan/actions";
 import { GajiPokokForm } from "@/modules/penggajian/karyawan/components/gaji-pokok-form";
-import { KaryawanTidakDitemukan, TidakBerwenang } from "@/modules/penggajian/karyawan/components/states";
 import { formatRupiah, formatTanggal, formatWaktu } from "@/modules/penggajian/karyawan/format";
 import { getKaryawan, type DetailKaryawan } from "@/modules/penggajian/karyawan/queries";
 import { aksesSesi } from "@/modules/penggajian/karyawan/sesi";
 import { KEADAAN_GAJI, STATUS_KARYAWAN } from "@/modules/penggajian/karyawan/status";
-import { Notice } from "@/modules/penggajian/ui/notice";
-import { PageHeader } from "@/modules/penggajian/ui/page-header";
 import { ui } from "@/modules/penggajian/ui/kelas";
 
 const ITEM = "GJ-001 Mengelola data karyawan";
 const KEMBALI = { href: "/penggajian/karyawan", label: "Data karyawan" };
+const BREADCRUMB = [
+  { label: "Siklus Penggajian", accent: true },
+  ITEM,
+] as const;
 
 const PESAN: Record<string, string> = {
   dibuat: "Karyawan tersimpan.",
@@ -133,11 +137,31 @@ function RiwayatPerubahan({ karyawan }: { karyawan: DetailKaryawan }) {
 async function DetailKonten({ id, pesan }: { id: string; pesan?: string }) {
   const akses = await aksesSesi();
   if (!akses.bolehMembaca) {
-    return (<><PageHeader back={KEMBALI} item={ITEM} title="Detail karyawan" /><TidakBerwenang /></>);
+    return (
+      <>
+        <PageHeader back={KEMBALI} breadcrumb={BREADCRUMB} title="Detail karyawan" />
+        <ErrorState
+          judul="Anda tidak punya akses ke data karyawan"
+          teks="Data karyawan hanya bisa dibuka oleh HR, Accounting, dan Finance. Hubungi HR bila Anda membutuhkannya."
+          variant="compact"
+        />
+      </>
+    );
   }
   const karyawan = await getKaryawan(id, akses);
   if (!karyawan) {
-    return (<><PageHeader back={KEMBALI} item={ITEM} title="Detail karyawan" /><KaryawanTidakDitemukan /></>);
+    return (
+      <>
+        <PageHeader back={KEMBALI} breadcrumb={BREADCRUMB} title="Detail karyawan" />
+        <EmptyState
+          actionHref="/penggajian/karyawan"
+          actionLabel="Kembali ke data karyawan"
+          judul="Karyawan tidak ditemukan"
+          teks="Data mungkin sudah dipindahkan atau tautannya salah."
+          variant="compact"
+        />
+      </>
+    );
   }
 
   const bolehUbah = akses.bolehMengubah && karyawan.status === "AKTIF";
@@ -146,7 +170,7 @@ async function DetailKonten({ id, pesan }: { id: string; pesan?: string }) {
       <PageHeader
         back={KEMBALI}
         description="Lihat identitas dan informasi payroll tanpa menghapus riwayat lama."
-        item={ITEM}
+        breadcrumb={BREADCRUMB}
         title={`Detail karyawan / ${karyawan.nama}`}
       />
       <div className={ui.stack}>
@@ -177,7 +201,7 @@ async function DetailKonten({ id, pesan }: { id: string; pesan?: string }) {
 
 export function KaryawanDetailScreen({ id, pesan }: { id: string; pesan?: string }) {
   return (
-    <Suspense fallback={<PageHeader back={KEMBALI} description="Memuat data karyawan…" item={ITEM} title="Detail karyawan" />}>
+    <Suspense fallback={<PageHeader back={KEMBALI} breadcrumb={BREADCRUMB} description="Memuat data karyawan…" title="Detail karyawan" />}>
       <DetailKonten id={id} pesan={pesan} />
     </Suspense>
   );

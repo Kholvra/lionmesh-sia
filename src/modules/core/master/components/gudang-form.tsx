@@ -1,9 +1,10 @@
 "use client";
 
-import Link from "next/link";
 import { useActionState } from "react";
 
 import { FormField, Input } from "@/components/ui";
+import { FormFooter } from "@/components/ui/form-footer";
+import { Notice } from "@/components/ui/notice";
 import type { Gudang } from "@/core/master/types";
 
 import { simpanGudangAction } from "../actions";
@@ -31,15 +32,15 @@ export function GudangForm({ gudang }: GudangFormProps) {
       {gudang ? <input name="id" type="hidden" value={gudang.id} /> : null}
 
       {state.status === "error" && state.message ? (
-        <p className={styles.messageError} role="alert">
+        <Notice className={styles.messageError} tone="danger">
           {state.message}
-        </p>
+        </Notice>
       ) : null}
 
       {state.status === "success" && state.message ? (
-        <p className={styles.messageSuccess} role="status">
+        <Notice className={styles.messageSuccess} tone="success">
           {state.message}
-        </p>
+        </Notice>
       ) : null}
 
       <div className={styles.formGrid}>
@@ -62,18 +63,12 @@ export function GudangForm({ gudang }: GudangFormProps) {
         </FormField>
       </div>
 
-      <div className={styles.formActions}>
-        <button className={styles.primaryButton} disabled={pending} type="submit">
-          {pending
-            ? "Menyimpan..."
-            : gudang
-              ? "Simpan perubahan"
-              : "Simpan gudang"}
-        </button>
-        <Link className={styles.secondaryButton} href={cancelHref}>
-          Batal
-        </Link>
-      </div>
+      <FormFooter
+        busy={pending}
+        busyLabel="Menyimpan..."
+        cancelHref={cancelHref}
+        submitLabel={gudang ? "Simpan perubahan" : "Simpan gudang"}
+      />
     </form>
   );
 }

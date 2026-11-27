@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 
+import { PageHeader } from "@/components/ui/page-header";
 import { requireSesi } from "@/lib/auth/server";
 
 import { DaftarNotifikasi } from "./components/daftar-notifikasi";
@@ -17,23 +18,18 @@ export default async function NotifikasiPage() {
   const data = await muatHalamanNotifikasi(user.id);
 
   return (
-    <section aria-labelledby="judul-notifikasi" className={styles.page}>
-      <header className={styles.header}>
-        <div>
-          <p className={styles.breadcrumb}>Notifikasi</p>
-          <h1 className={styles.title} id="judul-notifikasi">
-            Notifikasi
-          </h1>
-          <p className={styles.description}>
-            Kejadian yang menunggu tindakan Anda. Setiap pengiriman email punya
-            status yang bisa diperiksa di daftar ini.
+    <section aria-label="Notifikasi" className={styles.page}>
+      <PageHeader
+        actions={
+          <p className={styles.meta}>
+            <strong className={styles.metaAngka}>{data.belumDibaca}</strong> belum
+            dibaca · {data.daftar.length} notifikasi terbaru
           </p>
-        </div>
-        <p className={styles.meta}>
-          <strong className={styles.metaAngka}>{data.belumDibaca}</strong> belum
-          dibaca · {data.daftar.length} notifikasi terbaru
-        </p>
-      </header>
+        }
+        breadcrumb={["Notifikasi"]}
+        description="Kejadian yang menunggu tindakan Anda. Setiap pengiriman email punya status yang bisa diperiksa di daftar ini."
+        title="Notifikasi"
+      />
 
       <section className={styles.panelCard} aria-label="Daftar notifikasi">
         <DaftarNotifikasi

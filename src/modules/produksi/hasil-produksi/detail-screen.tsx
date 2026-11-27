@@ -5,6 +5,10 @@ import { useParams, useRouter } from "next/navigation";
 import { Suspense, useMemo, useState } from "react";
 import { ArrowIcon } from "@/components/ui/arrow-icon";
 import { CustomSelect } from "@/components/ui/custom-select";
+import { Notice } from "@/components/ui/notice";
+import { PageHeader } from "@/components/ui/page-header";
+import { SpkStepper } from "@/components/ui/spk-stepper";
+import { LoadingState } from "@/components/ui/states";
 import { ProduksiSubnav } from "../components/produksi-subnav";
 import { INITIAL_SPK_LIST, SpkItem } from "../perintah-produksi/types";
 import {
@@ -22,20 +26,6 @@ const KENDALA_OPTIONS = [
   "Lainnya",
 ];
 
-interface StepDefinition {
-  step: number;
-  title: string;
-  actor: string;
-}
-
-const SPK_STEPS: StepDefinition[] = [
-  { step: 1, title: "Direncanakan", actor: "Produksi" },
-  { step: 2, title: "Cek bahan", actor: "Gudang" },
-  { step: 3, title: "Berjalan", actor: "Gudang · Produksi" },
-  { step: 4, title: "Hasil dicatat", actor: "Produksi" },
-  { step: 5, title: "QC lulus", actor: "QC" },
-  { step: 6, title: "Selesai", actor: "Gudang" },
-];
 
 function parseLembarInput(val: string): number {
   const cleaned = val
@@ -263,105 +253,39 @@ function CatatHasilSpkContent({ initialNomorSpk }: { initialNomorSpk?: string })
     <div className="w-full text-[#172335] animate-fade-in">
       <ProduksiSubnav />
 
-      {/* Back Link */}
-      <Link
-        href="/produksi/hasil-produksi"
-        className="group inline-flex items-center gap-1.5 text-xs font-semibold text-[#C96A00] hover:text-[#E88A06]"
-      >
-        <ArrowIcon
-          direction="left"
-          className="transition-transform duration-150 group-hover:-translate-x-0.5"
-        />
-        <span>Hasil produksi</span>
-      </Link>
+      <PageHeader
+        back={{ href: "/produksi/hasil-produksi", label: "Hasil produksi" }}
+        breadcrumb={[
+          { href: "/produksi", label: "Siklus Produksi" },
+          "PR-004 Mencatat hasil dan pemakaian bahan",
+        ]}
+        title={`Catat hasil ${currentSpk.nomorSpk}`}
+        variant="cycle"
+      />
 
-      {/* Breadcrumb */}
-      <nav className="mt-2 text-xs font-medium text-[#526174]">
-        <Link
-          href="/produksi"
-          className="text-[#C96A00] underline decoration-[#C96A00]/60 underline-offset-2 hover:text-[#E88A06]"
-        >
-          Siklus Produksi
-        </Link>
-        <span className="mx-1.5">/</span>
-        <span>PR-004 Mencatat hasil dan pemakaian bahan</span>
-      </nav>
-
-      {/* Page Title */}
-      <h1 className="mt-1.5 text-[28px] leading-tight font-bold tracking-tight text-[#172335]">
-        Catat hasil {currentSpk.nomorSpk}
-      </h1>
-
-      {/* Banner Error Validasi jika ada */}
       {errorBanner && (
-        <div className="shadow-card mt-4 rounded-[10px] border border-transparent bg-[#FEE2E2]/85 px-5 py-3 text-[#B91C1C] animate-slide-down">
-          <p className="text-[13px] font-semibold">
-            Hasil produksi belum bisa disimpan
-          </p>
+        <Notice
+          title="Hasil produksi belum bisa disimpan"
+          tone="error"
+          variant="card"
+        >
           <p className="mt-0.5 text-[12px]">{errorBanner}</p>
-        </div>
+        </Notice>
       )}
 
-      {/* Callout Banner Kuning saat Hasil Kurang dari Target */}
       {isKurangDariTarget ? (
-        <div className="shadow-card mt-4 rounded-[10px] border border-transparent bg-[#FEF3C7]/85 px-5 py-3.5 animate-slide-down">
-          <p className="text-[13px] font-semibold text-[#92400E]">
-            Hasil {validJumlahJadi} dari {targetLembar} lembar
-          </p>
+        <Notice
+          title={`Hasil ${validJumlahJadi} dari ${targetLembar} lembar`}
+          tone="warning"
+          variant="card"
+        >
           <p className="mt-0.5 text-[12px] text-[#B45309]">
             Catat kendalanya. {validJumlahJadi} lembar dikirim ke QC;{" "}
             {barangDalamProses} lembar sisanya dijadwalkan ulang.
           </p>
-        </div>
+        </Notice>
       ) : (
-        <section className="shadow-card mt-4 rounded-[10px] border border-transparent bg-white px-5 py-3.5">
-          <div className="flex flex-wrap items-center justify-between gap-2">
-            {SPK_STEPS.map((item, idx) => {
-              const activeStep = 3;
-              const isCurrent = item.step === activeStep;
-              const isCompleted = item.step < activeStep;
-              return (
-                <div key={item.step} className="contents">
-                  <div className="flex shrink-0 items-center gap-2.5">
-                    <span
-                      className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-[11px] font-semibold ${
-                        isCurrent
-                          ? "bg-[#E88A06] text-white"
-                          : isCompleted
-                            ? "bg-[#DCFCE7] text-[#15803D]"
-                            : "border border-[#94A3B8] bg-white text-[#526174]"
-                      }`}
-                    >
-                      {isCompleted ? "✓" : item.step}
-                    </span>
-                    <div className="leading-tight whitespace-nowrap">
-                      <p
-                        className={`text-[12px] ${
-                          isCurrent
-                            ? "font-semibold text-[#172335]"
-                            : "font-medium text-[#526174]"
-                        }`}
-                      >
-                        {item.title}
-                      </p>
-                      <p className="mt-0.5 text-[10px] text-[#94A3B8]">
-                        {item.actor}
-                      </p>
-                    </div>
-                  </div>
-
-                  {idx < SPK_STEPS.length - 1 && (
-                    <div
-                      className={`hidden h-[2px] w-[56px] shrink-0 lg:block xl:w-[80px] ${
-                        isCompleted ? "bg-[#86EFAC]" : "bg-[#CBD5E1]"
-                      }`}
-                    />
-                  )}
-                </div>
-              );
-            })}
-          </div>
-        </section>
+        <SpkStepper activeStep={3} />
       )}
 
       <form onSubmit={handleSimpan}>
@@ -585,7 +509,7 @@ function CatatHasilSpkContent({ initialNomorSpk }: { initialNomorSpk?: string })
 
 export function CatatHasilSpkScreen({ nomorSpk }: { nomorSpk?: string }) {
   return (
-    <Suspense fallback={<div className="h-40 flex items-center justify-center text-sm text-[#526174]">Memuat formulir...</div>}>
+    <Suspense fallback={<LoadingState judul="Memuat formulir..." variant="inline" />}>
       <CatatHasilSpkContent initialNomorSpk={nomorSpk} />
     </Suspense>
   );

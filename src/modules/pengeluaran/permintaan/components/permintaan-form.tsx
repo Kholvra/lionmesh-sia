@@ -1,9 +1,12 @@
 "use client";
 
-import Link from "next/link";
 import { useActionState, useState } from "react";
 
 import { FormField, Input } from "@/components/ui";
+import { FormFooter } from "@/components/ui/form-footer";
+import { Notice } from "@/components/ui/notice";
+import { Select } from "@/components/ui/select";
+import { SubmitButton } from "@/components/ui/submit-button";
 import type { Gudang, Produk, Satuan } from "@/core/master";
 import type { Peran } from "@/lib/auth/types";
 import { ajukanPermintaanAction } from "../actions";
@@ -56,14 +59,10 @@ export function PermintaanForm({ gudang, peran, produk, satuan }: Props) {
   return (
     <form action={formAction} className={styles.form} noValidate>
       {state.status === "error" && state.message ? (
-        <p className={styles.messageError} role="alert">
-          {state.message}
-        </p>
+        <Notice tone="danger">{state.message}</Notice>
       ) : null}
       {state.status === "success" && state.message ? (
-        <p className={styles.messageSuccess} role="status">
-          {state.message}
-        </p>
+        <Notice tone="success">{state.message}</Notice>
       ) : null}
 
       <div className={styles.formGrid}>
@@ -73,19 +72,16 @@ export function PermintaanForm({ gudang, peran, produk, satuan }: Props) {
           name="gudang_id"
           required
         >
-          <select
-            className={styles.select}
+          <Select
             defaultValue={gudang.length === 1 ? gudang[0]?.id : ""}
-            id="gudang_id"
-            name="gudang_id"
-          >
-            <option value="">Pilih gudang</option>
-            {gudang.map((item) => (
-              <option key={item.id} value={item.id}>
-                {item.kode} — {item.nama}
-              </option>
-            ))}
-          </select>
+            options={[
+              { label: "Pilih gudang", value: "" },
+              ...gudang.map((item) => ({
+                label: `${item.kode} — ${item.nama}`,
+                value: item.id,
+              })),
+            ]}
+          />
         </FormField>
 
         <FormField
@@ -133,24 +129,23 @@ export function PermintaanForm({ gudang, peran, produk, satuan }: Props) {
               Minimal satu baris. Qty memakai maksimal 4 angka desimal.
             </p>
           </div>
-          <button
-            className={styles.secondaryButton}
+          <SubmitButton
             onClick={() =>
               setRows((current) => [
                 ...current,
                 { key: nextKey++, produkId: "", satuanId: "", qty: "" },
               ])
             }
+            size="lg"
             type="button"
+            variant="secondary"
           >
             Tambah baris
-          </button>
+          </SubmitButton>
         </div>
 
         {fieldErrors.baris ? (
-          <p className={styles.lineError} role="alert">
-            {fieldErrors.baris}
-          </p>
+          <Notice tone="danger">{fieldErrors.baris}</Notice>
         ) : null}
 
         {rows.map((row, index) => (
@@ -160,40 +155,38 @@ export function PermintaanForm({ gudang, peran, produk, satuan }: Props) {
                 <label className={styles.detailLabel} htmlFor={`produk-${row.key}`}>
                   Produk
                 </label>
-                <select
-                  className={styles.select}
+                <Select
                   id={`produk-${row.key}`}
                   name="produk_id"
                   onChange={(event) => pilihProduk(row.key, event.target.value)}
+                  options={[
+                    { label: "Pilih produk", value: "" },
+                    ...produk.map((item) => ({
+                      label: `${item.kode} — ${item.nama}`,
+                      value: item.id,
+                    })),
+                  ]}
                   value={row.produkId}
-                >
-                  <option value="">Pilih produk</option>
-                  {produk.map((item) => (
-                    <option key={item.id} value={item.id}>
-                      {item.kode} — {item.nama}
-                    </option>
-                  ))}
-                </select>
+                />
               </div>
 
               <div>
                 <label className={styles.detailLabel} htmlFor={`satuan-${row.key}`}>
                   Satuan
                 </label>
-                <select
-                  className={styles.select}
+                <Select
                   id={`satuan-${row.key}`}
                   name="satuan_id"
                   onChange={(event) => updateRow(row.key, { satuanId: event.target.value })}
+                  options={[
+                    { label: "Pilih satuan", value: "" },
+                    ...satuan.map((item) => ({
+                      label: item.kode,
+                      value: item.id,
+                    })),
+                  ]}
                   value={row.satuanId}
-                >
-                  <option value="">Pilih satuan</option>
-                  {satuan.map((item) => (
-                    <option key={item.id} value={item.id}>
-                      {item.kode}
-                    </option>
-                  ))}
-                </select>
+                />
               </div>
 
               <div>
@@ -210,35 +203,35 @@ export function PermintaanForm({ gudang, peran, produk, satuan }: Props) {
                 />
               </div>
 
-              <button
+              <SubmitButton
                 aria-label={`Hapus baris ${index + 1}`}
-                className={styles.secondaryButton}
                 disabled={rows.length === 1}
                 onClick={() =>
                   setRows((current) => current.filter((item) => item.key !== row.key))
                 }
+                size="lg"
                 type="button"
+                variant="secondary"
               >
                 Hapus
-              </button>
+              </SubmitButton>
             </div>
             {fieldErrors[`baris_${index}`] ? (
-              <p className={styles.lineError} role="alert">
+              <Notice tone="danger">
                 Baris {index + 1}: {fieldErrors[`baris_${index}`]}
-              </p>
+              </Notice>
             ) : null}
           </div>
         ))}
       </section>
 
-      <div className={styles.formActions}>
-        <button className={styles.primaryButton} disabled={pending} type="submit">
-          {pending ? "Mengajukan..." : "Ajukan permintaan"}
-        </button>
-        <Link className={styles.secondaryButton} href={PATH_PERMINTAAN}>
-          Batal
-        </Link>
-      </div>
+      <FormFooter
+        busy={pending}
+        busyLabel="Mengajukan..."
+        cancelHref={PATH_PERMINTAAN}
+        size="lg"
+        submitLabel="Ajukan permintaan"
+      />
     </form>
   );
 }

@@ -3,6 +3,8 @@
 import { useActionState } from "react";
 
 import { FormField, Input } from "@/components/ui";
+import { Notice } from "@/components/ui/notice";
+import { SubmitButton } from "@/components/ui/submit-button";
 import type { KategoriProduk } from "@/core/master/types";
 
 import { simpanKategoriProdukAction } from "../actions";
@@ -26,15 +28,15 @@ export function KategoriProdukForm({ kategori }: KategoriProdukFormProps) {
       {kategori ? <input name="id" type="hidden" value={kategori.id} /> : null}
 
       {state.status === "error" && state.message ? (
-        <p className={styles.messageError} role="alert">
+        <Notice className={styles.messageError} tone="danger">
           {state.message}
-        </p>
+        </Notice>
       ) : null}
 
       {state.status === "success" && state.message ? (
-        <p className={styles.messageSuccess} role="status">
+        <Notice className={styles.messageSuccess} tone="success">
           {state.message}
-        </p>
+        </Notice>
       ) : null}
 
       <div className={styles.formGridTiga}>
@@ -56,9 +58,9 @@ export function KategoriProdukForm({ kategori }: KategoriProdukFormProps) {
           />
         </FormField>
 
-        <button className={styles.primaryButton} disabled={pending} type="submit">
-          {pending ? "Menyimpan..." : kategori ? "Simpan" : "Tambah kategori"}
-        </button>
+        <SubmitButton busy={pending} busyLabel="Menyimpan..." size="lg">
+          {kategori ? "Simpan" : "Tambah kategori"}
+        </SubmitButton>
       </div>
     </form>
   );

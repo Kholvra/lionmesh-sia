@@ -1,20 +1,24 @@
 import { Suspense } from "react";
 
+import { Notice } from "@/components/ui/notice";
+import { PageHeader } from "@/components/ui/page-header";
+import { EmptyState, ErrorState } from "@/components/ui/states";
 import { createKaryawan, deactivateKaryawan, updateKaryawan } from "@/modules/penggajian/karyawan/actions";
 import { KaryawanForm } from "@/modules/penggajian/karyawan/components/karyawan-form";
 import { NonaktifForm } from "@/modules/penggajian/karyawan/components/nonaktif-form";
-import { KaryawanTidakDitemukan, TidakBerwenang } from "@/modules/penggajian/karyawan/components/states";
 import { getDaftarAktif, getKaryawanUntukUbah } from "@/modules/penggajian/karyawan/queries";
 import { aksesSesi } from "@/modules/penggajian/karyawan/sesi";
-import { Notice } from "@/modules/penggajian/ui/notice";
-import { PageHeader } from "@/modules/penggajian/ui/page-header";
 import { ui } from "@/modules/penggajian/ui/kelas";
 
 const ITEM = "GJ-001 Mengelola data karyawan";
 const DAFTAR = { href: "/penggajian/karyawan", label: "Data karyawan" };
+const BREADCRUMB = [
+  { label: "Siklus Penggajian", accent: true },
+  ITEM,
+] as const;
 
 function Memuat({ title }: { title: string }) {
-  return <PageHeader back={DAFTAR} description="Memuat formulir…" item={ITEM} title={title} />;
+  return <PageHeader back={DAFTAR} breadcrumb={BREADCRUMB} description="Memuat formulir…" title={title} />;
 }
 
 async function TambahKonten() {
@@ -23,11 +27,11 @@ async function TambahKonten() {
     <PageHeader
       back={DAFTAR}
       description="Data harus unik dan setiap perubahan tercatat dengan pelaku dan waktunya."
-      item={ITEM}
+      breadcrumb={BREADCRUMB}
       title="Tambah karyawan"
     />
   );
-  if (!akses.bolehMengubah) return (<>{header}<TidakBerwenang /></>);
+  if (!akses.bolehMengubah) return (<>{header}<ErrorState judul="Anda tidak punya akses ke data karyawan" teks="Data karyawan hanya bisa dibuka oleh HR, Accounting, dan Finance. Hubungi HR bila Anda membutuhkannya." variant="compact" /></>);
 
   return (
     <>
@@ -49,11 +53,11 @@ async function UbahKonten({ id }: { id: string }) {
   const akses = await aksesSesi();
   const back = { href: `/penggajian/karyawan/${id}`, label: "Detail karyawan" };
   if (!akses.bolehMengubah) {
-    return (<><PageHeader back={back} item={ITEM} title="Ubah data karyawan" /><TidakBerwenang /></>);
+    return (<><PageHeader back={back} breadcrumb={BREADCRUMB} title="Ubah data karyawan" /><ErrorState judul="Anda tidak punya akses ke data karyawan" teks="Data karyawan hanya bisa dibuka oleh HR, Accounting, dan Finance. Hubungi HR bila Anda membutuhkannya." variant="compact" /></>);
   }
   const karyawan = await getKaryawanUntukUbah(id, akses);
   if (!karyawan) {
-    return (<><PageHeader back={DAFTAR} item={ITEM} title="Ubah data karyawan" /><KaryawanTidakDitemukan /></>);
+    return (<><PageHeader back={DAFTAR} breadcrumb={BREADCRUMB} title="Ubah data karyawan" /><EmptyState actionHref="/penggajian/karyawan" actionLabel="Kembali ke data karyawan" judul="Karyawan tidak ditemukan" teks="Data mungkin sudah dipindahkan atau tautannya salah." variant="compact" /></>);
   }
 
   return (
@@ -61,7 +65,7 @@ async function UbahKonten({ id }: { id: string }) {
       <PageHeader
         back={back}
         description="NIK tetap. Perubahan gaji pokok dicatat sebagai entri baru di halaman detail."
-        item={ITEM}
+        breadcrumb={BREADCRUMB}
         title={`Ubah data karyawan / ${karyawan.nama}`}
       />
       {karyawan.status === "NONAKTIF" ? (
@@ -90,11 +94,11 @@ async function StatusKonten({ id }: { id: string }) {
   const akses = await aksesSesi();
   const back = { href: `/penggajian/karyawan/${id}`, label: "Detail karyawan" };
   if (!akses.bolehMengubah) {
-    return (<><PageHeader back={back} item={ITEM} title="Nonaktifkan karyawan" /><TidakBerwenang /></>);
+    return (<><PageHeader back={back} breadcrumb={BREADCRUMB} title="Nonaktifkan karyawan" /><ErrorState judul="Anda tidak punya akses ke data karyawan" teks="Data karyawan hanya bisa dibuka oleh HR, Accounting, dan Finance. Hubungi HR bila Anda membutuhkannya." variant="compact" /></>);
   }
   const karyawan = await getKaryawanUntukUbah(id, akses);
   if (!karyawan) {
-    return (<><PageHeader back={DAFTAR} item={ITEM} title="Nonaktifkan karyawan" /><KaryawanTidakDitemukan /></>);
+    return (<><PageHeader back={DAFTAR} breadcrumb={BREADCRUMB} title="Nonaktifkan karyawan" /><EmptyState actionHref="/penggajian/karyawan" actionLabel="Kembali ke data karyawan" judul="Karyawan tidak ditemukan" teks="Data mungkin sudah dipindahkan atau tautannya salah." variant="compact" /></>);
   }
 
   return (
@@ -102,7 +106,7 @@ async function StatusKonten({ id }: { id: string }) {
       <PageHeader
         back={back}
         description="Nonaktif bukan hapus. Data, riwayat gaji, dan presensi tetap tersimpan."
-        item={ITEM}
+        breadcrumb={BREADCRUMB}
         title={`Nonaktifkan karyawan / ${karyawan.nama}`}
       />
       <div className={ui.stack}>

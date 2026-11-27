@@ -1,3 +1,4 @@
+@import "../components/ui/shared.css";
 @import "tailwindcss";
 
 :root {

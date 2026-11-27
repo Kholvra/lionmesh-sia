@@ -1,8 +1,8 @@
-import { MasterLoading } from "@/modules/core/master/components/master-loading";
+import { LoadingState } from "@/components/ui/states";
 
 export default function Loading() {
   return (
-    <MasterLoading
+    <LoadingState
       judul="Memuat Master gudang"
       teks="Data master sedang disiapkan."
     />

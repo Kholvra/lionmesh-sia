@@ -1,9 +1,12 @@
 "use client";
 
-import { Form, FormField, Input } from "@/components/ui";
+import { Form } from "@/components/ui/form";
+import { FormField } from "@/components/ui/form-field";
+import { FormFooter } from "@/components/ui/form-footer";
+import { Input } from "@/components/ui/input";
+import { Notice } from "@/components/ui/notice";
 import type { AksiState } from "@/modules/penggajian/karyawan/actions";
 import { useAksiForm } from "@/modules/penggajian/karyawan/components/use-aksi-form";
-import { Notice } from "@/modules/penggajian/ui/notice";
 import { ui } from "@/modules/penggajian/ui/kelas";
 
 type GajiPokokFormProps = {
@@ -26,11 +29,10 @@ export function GajiPokokForm({ aksi }: GajiPokokFormProps) {
       <FormField error={e.tanggalBerlaku} label="Tanggal berlaku" name="tanggalBerlaku" required>
         <Input type="date" />
       </FormField>
-      <div className={ui.formActions}>
-        <button className={ui.buttonPrimary} disabled={pending} type="submit">
-          {pending ? "Menyimpan…" : "Tambah gaji pokok"}
-        </button>
-      </div>
+      <FormFooter
+        submitDisabled={pending}
+        submitLabel={pending ? "Menyimpan…" : "Tambah gaji pokok"}
+      />
     </Form>
   );
 }

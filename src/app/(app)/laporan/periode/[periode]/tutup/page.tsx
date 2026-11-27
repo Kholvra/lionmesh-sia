@@ -5,8 +5,8 @@ import { getPemeriksaanTutupPeriode, parsePeriode } from "@/core/ledger";
 import { cekIzin } from "@/lib/auth/permissions";
 import { requireSesi } from "@/lib/auth/server";
 import { createClient } from "@/lib/supabase/server";
+import { Notice } from "@/components/ui/notice";
 
-import laporanStyles from "../../../laporan.module.css";
 import { FormTutupPeriode } from "../../components/form-tutup-periode";
 import { KartuPemeriksaanPeriode } from "../../components/kartu-pemeriksaan-periode";
 import { AksesDitolak, PeriodeShell } from "../../components/periode-shell";
@@ -43,12 +43,7 @@ export default async function TutupPeriodePage({ params }: PageProps) {
         kembali={{ href: "/laporan/periode", label: "Periode akuntansi" }}
         profil={profile}
       >
-        <p
-          className={`${laporanStyles.alert} ${laporanStyles.alertDanger}`}
-          role="alert"
-        >
-          {hasil.message}
-        </p>
+        <Notice nada="bahaya" variant="bordered">{hasil.message}</Notice>
       </PeriodeShell>
     );
   }

@@ -1,11 +1,19 @@
 "use client";
 
-import Link from "next/link";
 import { useMemo, useState } from "react";
-import { ArrowIcon } from "@/components/ui/arrow-icon";
+import { MetricCardGrid } from "@/components/ui/metric-card";
+import { PageHeader } from "@/components/ui/page-header";
+import { SegmentedTabs } from "@/components/ui/segmented-tabs";
+import { ErrorState } from "@/components/ui/states";
+import {
+  STATUS_KATEGORI_PERSEDIAAAN,
+  StatusBadge,
+} from "@/components/ui/status-badge";
+import { TableActionLink } from "@/components/ui/table-action-link";
+import { useTableState } from "@/components/ui/use-table-state";
 import { useProduksiActor } from "@/modules/produksi/context/actor-context";
 import { tabLaporanProduksi } from "@/modules/produksi/auth/actor";
-import { ProduksiSubnav } from "@/modules/produksi/components/produksi-subnav";
+import { ProduksiSubnav } from "../components/produksi-subnav";
 import {
   INITIAL_LAPORAN_PRODUKSI,
   INITIAL_LAPORAN_WIP,
@@ -34,23 +42,23 @@ export function LaporanProduksiScreen() {
   const [dataProduksi] = useState<LaporanProduksiRow[]>(INITIAL_LAPORAN_PRODUKSI);
   const [dataWip] = useState<LaporanWipRow[]>(INITIAL_LAPORAN_WIP);
   const [dataPersediaan] = useState<RekapPersediaanRow[]>(INITIAL_REKAP_PERSEDIAAN);
+  const tabelProduksi = useTableState(dataProduksi, {
+    pageSize: dataProduksi.length || 1,
+  });
+  const tabelWip = useTableState(dataWip, { pageSize: dataWip.length || 1 });
+  const tabelPersediaan = useTableState(dataPersediaan, {
+    pageSize: dataPersediaan.length || 1,
+  });
 
   if (effectiveActiveTab === null) {
     return (
       <div className="mx-auto max-w-[1156px] text-[#172335] animate-fade-in">
         <ProduksiSubnav />
-        <section
-          aria-labelledby="akses-ditolak-laporan"
-          className="shadow-card mt-5 rounded-[10px] border border-transparent bg-white p-[20px]"
-        >
-          <h1 className="text-[15px] font-semibold" id="akses-ditolak-laporan">
-            Akses ditolak
-          </h1>
-          <p className="mt-1 text-[13px] text-[#526174]">
-            Peran Anda tidak memiliki akses ke laporan produksi. Hubungi
-            administrator bila akses ini dibutuhkan.
-          </p>
-        </section>
+        <ErrorState
+          judul="Akses ditolak"
+          teks="Peran Anda tidak memiliki akses ke laporan produksi. Hubungi administrator bila akses ini dibutuhkan."
+          variant="compact"
+        />
       </div>
     );
   }
@@ -86,130 +94,86 @@ export function LaporanProduksiScreen() {
     <div className="mx-auto max-w-[1156px] text-[#172335] animate-fade-in">
       <ProduksiSubnav />
 
-      {/* Breadcrumb */}
-      <nav className="text-xs font-medium text-[#526174]">
-        <Link
-          href="/produksi"
-          className="text-[#C96A00] underline decoration-[#C96A00]/60 underline-offset-2 hover:text-[#E88A06]"
-        >
-          Siklus Produksi
-        </Link>
-        <span className="mx-1.5">/</span>
-        <span>PR-007 Laporan produksi dan efisiensi</span>
-      </nav>
-
-      {/* Header & Filter Periode */}
-      <div className="mt-2 flex flex-wrap items-baseline justify-between gap-3">
-        <div>
-          <h1 className="text-[28px] leading-tight font-bold tracking-tight text-[#172335]">
-            Laporan produksi & efisiensi
-          </h1>
-          <p className="mt-1 text-[13px] text-[#526174]">
-            Ringkasan hasil pabrik, analisis yield dan efisiensi bahan standar
-            BOM, posisi WIP, serta rekapitulasi persediaan.
-          </p>
-        </div>
-
-        <div className="flex items-center gap-2">
-          <label className="text-xs font-medium text-[#526174]">Periode:</label>
-          <select
-            value={periode}
-            onChange={(e) => setPeriode(e.target.value)}
-            className="rounded-[8px] border border-[#E5E7EB] bg-white px-3 py-1.5 text-[13px] font-semibold text-[#172335] shadow-2xs outline-none focus:border-[#E88A06]"
-          >
-            <option value="November 2026">November 2026</option>
-            <option value="Oktober 2026">Oktober 2026</option>
-            <option value="September 2026">September 2026</option>
-          </select>
-        </div>
-      </div>
-
-      {/* 4 Summary Metric Cards */}
-      <div className="mt-5 grid grid-cols-1 gap-[16px] sm:grid-cols-2 md:grid-cols-4">
-        {/* Card 1: Output Lulus */}
-        <div className="shadow-card flex flex-col justify-start gap-[6px] rounded-[10px] border border-transparent bg-white px-[20px] py-[16px] transition-all duration-150 hover:-translate-y-0.5 hover:shadow-md">
-          <p className="text-[13px] text-[#526174]">Total Output Lulus</p>
-          <p className="text-[26px] font-bold text-[#172335] tabular-nums">
-            {totalLulusQc.toLocaleString("id-ID")}{" "}
-            <span className="text-[14px] font-normal text-[#526174]">lembar</span>
-          </p>
-          <p className="text-[11px] text-[#526174]">
-            Dari {totalDiproses} lembar diproses
-          </p>
-        </div>
-
-        {/* Card 2: Yield */}
-        <div className="shadow-card flex flex-col justify-start gap-[6px] rounded-[10px] border border-transparent bg-white px-[20px] py-[16px] transition-all duration-150 hover:-translate-y-0.5 hover:shadow-md">
-          <p className="text-[13px] text-[#526174]">Rata-rata Yield</p>
-          <p className="text-[26px] font-bold text-[#15803D] tabular-nums">
-            {avgYield}%
-          </p>
-          <p className="text-[11px] text-[#526174]">Lolos QC ÷ Jumlah diproses</p>
-        </div>
-
-        {/* Card 3: Efisiensi Bahan */}
-        <div className="shadow-card flex flex-col justify-start gap-[6px] rounded-[10px] border border-transparent bg-white px-[20px] py-[16px] transition-all duration-150 hover:-translate-y-0.5 hover:shadow-md">
-          <p className="text-[13px] text-[#526174]">Efisiensi Bahan</p>
-          <p className="text-[26px] font-bold text-[#B45309] tabular-nums">
-            {avgEfisiensiBahan}%
-          </p>
-          <p className="text-[11px] text-[#526174]">Standar BOM ÷ Bahan aktual</p>
-        </div>
-
-        {/* Card 4: Saldo WIP */}
-        <div className="shadow-card flex flex-col justify-start gap-[6px] rounded-[10px] border border-transparent bg-white px-[20px] py-[16px] transition-all duration-150 hover:-translate-y-0.5 hover:shadow-md">
-          <p className="text-[13px] text-[#526174]">Total Saldo WIP</p>
-          <p className="text-[26px] font-bold text-[#172335] tabular-nums">
-            Rp {(totalNilaiWip / 1000000).toFixed(1)} jt
-          </p>
-          <p className="text-[11px] text-[#526174]">1 perintah dalam proses</p>
-        </div>
-      </div>
-
-      {/* Tab Switcher */}
-      <div className="mt-5">
-        <div className="inline-flex items-center gap-1 rounded-[8px] bg-[#F1F5F9] p-1">
-          {canViewProduksi && (
-            <button
-              type="button"
-              onClick={() => setActiveTab("produksi")}
-              className={`rounded-[6px] border px-3.5 py-1.5 text-[12px] transition-all duration-150 active:scale-[0.98] ${
-                effectiveActiveTab === "produksi"
-                  ? "border-[#E5E7EB] bg-white font-semibold text-[#172335] shadow-2xs"
-                  : "border-transparent font-medium text-[#526174] hover:text-[#172335]"
-              }`}
+      <PageHeader
+        actions={
+          <div className="flex items-center gap-2">
+            <label className="text-xs font-medium text-[#526174]">Periode:</label>
+            <select
+              value={periode}
+              onChange={(e) => setPeriode(e.target.value)}
+              className="rounded-[8px] border border-[#E5E7EB] bg-white px-3 py-1.5 text-[13px] font-semibold text-[#172335] shadow-2xs outline-none focus:border-[#E88A06]"
             >
-              Laporan Produksi & Efisiensi ({dataProduksi.length})
-            </button>
-          )}
-          {canViewWip && (
-            <button
-              type="button"
-              onClick={() => setActiveTab("wip")}
-              className={`rounded-[6px] border px-3.5 py-1.5 text-[12px] transition-all duration-150 active:scale-[0.98] ${
-                effectiveActiveTab === "wip"
-                  ? "border-[#E5E7EB] bg-white font-semibold text-[#172335] shadow-2xs"
-                  : "border-transparent font-medium text-[#526174] hover:text-[#172335]"
-              }`}
-            >
-              Posisi Saldo WIP ({dataWip.length})
-            </button>
-          )}
-          {canViewPersediaan && (
-            <button
-              type="button"
-              onClick={() => setActiveTab("persediaan")}
-              className={`rounded-[6px] border px-3.5 py-1.5 text-[12px] transition-all duration-150 active:scale-[0.98] ${
-                effectiveActiveTab === "persediaan"
-                  ? "border-[#E5E7EB] bg-white font-semibold text-[#172335] shadow-2xs"
-                  : "border-transparent font-medium text-[#526174] hover:text-[#172335]"
-              }`}
-            >
-              Persediaan Jadi & Mutasi ({dataPersediaan.length})
-            </button>
-          )}
-        </div>
-      </div>
+              <option value="November 2026">November 2026</option>
+              <option value="Oktober 2026">Oktober 2026</option>
+              <option value="September 2026">September 2026</option>
+            </select>
+          </div>
+        }
+        breadcrumb={[
+          { href: "/produksi", label: "Siklus Produksi" },
+          "PR-007 Laporan produksi dan efisiensi",
+        ]}
+        description="Ringkasan hasil pabrik, analisis yield dan efisiensi bahan standar BOM, posisi WIP, serta rekapitulasi persediaan."
+        title="Laporan produksi & efisiensi"
+        variant="cycle"
+      />
+
+      <MetricCardGrid
+        className="mt-5"
+        columns={4}
+        items={[
+          {
+            hint: `Dari ${totalDiproses} lembar diproses`,
+            hover: "lift",
+            label: "Total Output Lulus",
+            unit: "lembar",
+            value: totalLulusQc.toLocaleString("id-ID"),
+          },
+          {
+            hint: "Lolos QC ÷ Jumlah diproses",
+            hover: "lift",
+            label: "Rata-rata Yield",
+            tone: "success",
+            value: `${avgYield}%`,
+          },
+          {
+            hint: "Standar BOM ÷ Bahan aktual",
+            hover: "lift",
+            label: "Efisiensi Bahan",
+            tone: "warning",
+            value: `${avgEfisiensiBahan}%`,
+          },
+          {
+            hint: "1 perintah dalam proses",
+            hover: "lift",
+            label: "Total Saldo WIP",
+            value: `Rp ${(totalNilaiWip / 1000000).toFixed(1)} jt`,
+          },
+        ]}
+      />
+
+      <SegmentedTabs
+        items={[
+          {
+            hidden: !canViewProduksi,
+            key: "produksi",
+            label: `Laporan Produksi & Efisiensi (${dataProduksi.length})`,
+          },
+          {
+            hidden: !canViewWip,
+            key: "wip",
+            label: `Posisi Saldo WIP (${dataWip.length})`,
+          },
+          {
+            hidden: !canViewPersediaan,
+            key: "persediaan",
+            label: `Persediaan Jadi & Mutasi (${dataPersediaan.length})`,
+          },
+        ]}
+        onValueChange={(key) => setActiveTab(key as LaporanTab)}
+        spacing="wide"
+        value={effectiveActiveTab}
+      />
 
       {/* TAB 1: LAPORAN PRODUKSI */}
       {effectiveActiveTab === "produksi" && (
@@ -239,7 +203,7 @@ export function LaporanProduksiScreen() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-[#E5E7EB]/80 text-[13px]">
-                {dataProduksi.map((row) => (
+                {tabelProduksi.visibleRows.map((row) => (
                   <tr
                     key={row.nomorSpk}
                     className="transition-colors hover:bg-slate-50/70"
@@ -274,13 +238,11 @@ export function LaporanProduksiScreen() {
                       {row.efisiensiBahanPersen}%
                     </td>
                     <td className="px-[12px] py-3.5 text-right">
-                      <Link
+                      <TableActionLink
                         href={`/produksi/perintah-produksi/${row.nomorSpk.toLowerCase()}`}
-                        className="group inline-flex items-center gap-1 text-[12px] font-semibold text-[#C96A00] hover:text-[#E88A06]"
                       >
-                        <span>Lihat SPK</span>
-                        <ArrowIcon className="transition-transform duration-150 group-hover:translate-x-0.5" />
-                      </Link>
+                        Lihat SPK
+                      </TableActionLink>
                     </td>
                   </tr>
                 ))}
@@ -321,7 +283,7 @@ export function LaporanProduksiScreen() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-[#E5E7EB]/80 text-[13px]">
-                {dataWip.map((row) => (
+                {tabelWip.visibleRows.map((row) => (
                   <tr
                     key={row.nomorSpk}
                     className="transition-colors hover:bg-slate-50/70"
@@ -388,20 +350,14 @@ export function LaporanProduksiScreen() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-[#E5E7EB]/80 text-[13px]">
-                {dataPersediaan.map((row, i) => (
+                {tabelPersediaan.visibleRows.map((row, i) => (
                   <tr key={i} className="hover:bg-slate-50/70">
                     <td className="px-[12px] py-3.5 font-medium">
-                      <span
-                        className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-[11px] font-semibold ${
-                          row.kategori === "Bahan Baku"
-                            ? "bg-[#DBEAFE] text-[#1D4ED8]"
-                            : row.kategori === "Barang Dalam Proses (WIP)"
-                              ? "bg-[#FEF3C7] text-[#92400E]"
-                              : "bg-[#DCFCE7] text-[#15803D]"
-                        }`}
-                      >
-                        {row.kategori}
-                      </span>
+                      <StatusBadge
+                        status={row.kategori}
+                        statuses={STATUS_KATEGORI_PERSEDIAAAN}
+                        variant="compact"
+                      />
                     </td>
                     <td className="px-[12px] py-3.5">
                       <p className="font-semibold text-[#172335]">

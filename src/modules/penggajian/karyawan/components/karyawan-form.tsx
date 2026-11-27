@@ -1,14 +1,15 @@
 "use client";
 
-import Link from "next/link";
-
-import { Form, FormField, Input } from "@/components/ui";
+import { Form } from "@/components/ui/form";
+import { FormField } from "@/components/ui/form-field";
+import { FormFooter } from "@/components/ui/form-footer";
+import { Input } from "@/components/ui/input";
+import { Notice } from "@/components/ui/notice";
+import { Select } from "@/components/ui/select";
 import type { AksiState } from "@/modules/penggajian/karyawan/actions";
-import { Pilihan } from "@/modules/penggajian/karyawan/components/pilihan";
 import { useAksiForm } from "@/modules/penggajian/karyawan/components/use-aksi-form";
 import { TIPE_KARYAWAN } from "@/modules/penggajian/karyawan/rules";
 import type { DaftarAktif, Karyawan } from "@/modules/penggajian/karyawan/types";
-import { Notice } from "@/modules/penggajian/ui/notice";
 import { ui } from "@/modules/penggajian/ui/kelas";
 
 type KaryawanFormProps = {
@@ -48,13 +49,13 @@ export function KaryawanForm({ aksi, batalHref, daftar, karyawan }: KaryawanForm
             <Input defaultValue={karyawan?.nama} />
           </FormField>
           <FormField error={e.departemenId} label="Departemen" name="departemenId" required>
-            <Pilihan defaultValue={karyawan?.departemenId} invalid={Boolean(e.departemenId)} name="departemenId" options={opsi(daftar.departemen)} required />
+            <Select defaultValue={karyawan?.departemenId ?? ""} invalid={Boolean(e.departemenId)} name="departemenId" options={opsi(daftar.departemen)} required />
           </FormField>
           <FormField error={e.jabatanId} label="Jabatan" name="jabatanId" required>
-            <Pilihan defaultValue={karyawan?.jabatanId} invalid={Boolean(e.jabatanId)} name="jabatanId" options={opsi(daftar.jabatan)} required />
+            <Select defaultValue={karyawan?.jabatanId ?? ""} invalid={Boolean(e.jabatanId)} name="jabatanId" options={opsi(daftar.jabatan)} required />
           </FormField>
           <FormField error={e.tipe} label="Tipe" name="tipe" required>
-            <Pilihan defaultValue={karyawan?.tipe} invalid={Boolean(e.tipe)} name="tipe" options={TIPE_KARYAWAN} required />
+            <Select defaultValue={karyawan?.tipe ?? ""} invalid={Boolean(e.tipe)} name="tipe" options={TIPE_KARYAWAN} required />
           </FormField>
           <FormField error={e.tanggalMasuk} label="Tanggal masuk" name="tanggalMasuk" required>
             <Input defaultValue={karyawan?.tanggalMasuk} type="date" />
@@ -66,8 +67,8 @@ export function KaryawanForm({ aksi, batalHref, daftar, karyawan }: KaryawanForm
         <legend className={ui.legend}>Pajak dan rekening</legend>
         <div className={ui.formGrid}>
           <FormField error={e.ptkpKode} helpText="Hanya kategori dari daftar PTKP yang berlaku." label="Status PTKP" name="ptkpKode" required>
-            <Pilihan
-              defaultValue={karyawan?.ptkpKode}
+            <Select
+              defaultValue={karyawan?.ptkpKode ?? ""}
               invalid={Boolean(e.ptkpKode)}
               name="ptkpKode"
               options={daftar.ptkp.map((item) => ({ value: item.kode, label: `${item.kode} · ${item.keterangan}` }))}
@@ -100,14 +101,11 @@ export function KaryawanForm({ aksi, batalHref, daftar, karyawan }: KaryawanForm
         </fieldset>
       )}
 
-      <div className={ui.formActions}>
-        <button className={ui.buttonPrimary} disabled={pending} type="submit">
-          {pending ? "Menyimpan…" : ubah ? "Simpan perubahan" : "Simpan karyawan"}
-        </button>
-        <Link className={ui.button} href={batalHref}>
-          Batal
-        </Link>
-      </div>
+      <FormFooter
+        cancelHref={batalHref}
+        submitDisabled={pending}
+        submitLabel={pending ? "Menyimpan…" : ubah ? "Simpan perubahan" : "Simpan karyawan"}
+      />
     </Form>
   );
 }

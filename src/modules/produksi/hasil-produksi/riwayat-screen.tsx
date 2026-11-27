@@ -1,9 +1,12 @@
 "use client";
 
-import Link from "next/link";
 import { useParams } from "next/navigation";
 import { Suspense, useMemo, useState } from "react";
-import { ArrowIcon } from "@/components/ui/arrow-icon";
+import { Notice } from "@/components/ui/notice";
+import { PageHeader } from "@/components/ui/page-header";
+import { SpkStepper } from "@/components/ui/spk-stepper";
+import { LoadingState } from "@/components/ui/states";
+import { useTableState } from "@/components/ui/use-table-state";
 import { ProduksiSubnav } from "../components/produksi-subnav";
 
 interface RecordedSummary {
@@ -14,20 +17,6 @@ interface RecordedSummary {
   selesaiPada: string;
 }
 
-interface StepDefinition {
-  step: number;
-  title: string;
-  actor: string;
-}
-
-const SPK_STEPS: StepDefinition[] = [
-  { step: 1, title: "Direncanakan", actor: "Produksi" },
-  { step: 2, title: "Cek bahan", actor: "Gudang" },
-  { step: 3, title: "Berjalan", actor: "Gudang · Produksi" },
-  { step: 4, title: "Hasil dicatat", actor: "Produksi" },
-  { step: 5, title: "QC lulus", actor: "QC" },
-  { step: 6, title: "Selesai", actor: "Gudang" },
-];
 
 function RiwayatHasilSpkContent({ initialNomorSpk }: { initialNomorSpk?: string }) {
   const params = useParams<{ nomorSpk: string }>();
@@ -91,101 +80,37 @@ function RiwayatHasilSpkContent({ initialNomorSpk }: { initialNomorSpk?: string 
     ],
     [summary.jumlahJadi, summary.selesaiPada]
   );
+  const tabel = useTableState(riwayatRows, {
+    pageSize: riwayatRows.length || 1,
+  });
 
   return (
     <div className="w-full text-[#172335] animate-fade-in">
       <ProduksiSubnav />
 
-      {/* Back Link */}
-      <Link
-        href="/produksi/hasil-produksi"
-        className="group inline-flex items-center gap-1.5 text-xs font-semibold text-[#C96A00] hover:text-[#E88A06]"
+      <PageHeader
+        back={{ href: "/produksi/hasil-produksi", label: "Hasil produksi" }}
+        breadcrumb={[
+          { href: "/produksi", label: "Siklus Produksi" },
+          "PR-004 Mencatat hasil dan pemakaian bahan",
+        ]}
+        title={summary.nomorSpk}
+        variant="cycle"
+      />
+
+      <Notice
+        title={`Hasil ${summary.nomorSpk} tercatat`}
+        tone="success"
+        variant="card"
       >
-        <ArrowIcon
-          direction="left"
-          className="transition-transform duration-150 group-hover:-translate-x-0.5"
-        />
-        <span>Hasil produksi</span>
-      </Link>
-
-      {/* Breadcrumb */}
-      <nav className="mt-2 text-xs font-medium text-[#526174]">
-        <Link
-          href="/produksi"
-          className="text-[#C96A00] underline decoration-[#C96A00]/60 underline-offset-2 hover:text-[#E88A06]"
-        >
-          Siklus Produksi
-        </Link>
-        <span className="mx-1.5">/</span>
-        <span>PR-004 Mencatat hasil dan pemakaian bahan</span>
-      </nav>
-
-      {/* Page Title */}
-      <h1 className="mt-1.5 text-[28px] leading-tight font-bold tracking-tight text-[#172335]">
-        {summary.nomorSpk}
-      </h1>
-
-      {/* Banner Sukses Hasil Tercatat */}
-      <div className="shadow-card mt-4 rounded-[10px] border border-transparent bg-[#DCFCE7]/85 px-5 py-3.5 text-[#15803D] animate-slide-down">
-        <p className="text-[13px] font-semibold">
-          Hasil {summary.nomorSpk} tercatat
-        </p>
         <p className="mt-0.5 text-[12px]">
           {summary.jumlahJadi} lembar {summary.produkNama} menunggu
           pemeriksaan QC. Scrap {summary.scrapText} dicatat untuk
           perhitungan biaya.
         </p>
-      </div>
+      </Notice>
 
-      {/* Stepper Card */}
-      <section className="shadow-card mt-4 rounded-[10px] border border-transparent bg-white px-5 py-3.5">
-        <div className="flex flex-wrap items-center justify-between gap-2">
-          {SPK_STEPS.map((item, idx) => {
-            const activeStep = 4;
-            const isCurrent = item.step === activeStep;
-            const isCompleted = item.step < activeStep;
-            return (
-              <div key={item.step} className="contents">
-                <div className="flex shrink-0 items-center gap-2.5">
-                  <span
-                    className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-[11px] font-semibold ${
-                      isCurrent
-                        ? "bg-[#E88A06] text-white"
-                        : isCompleted
-                          ? "bg-[#DCFCE7] text-[#15803D]"
-                          : "border border-[#94A3B8] bg-white text-[#526174]"
-                    }`}
-                  >
-                    {isCompleted ? "✓" : item.step}
-                  </span>
-                  <div className="leading-tight whitespace-nowrap">
-                    <p
-                      className={`text-[12px] ${
-                        isCurrent
-                          ? "font-semibold text-[#172335]"
-                          : "font-medium text-[#526174]"
-                      }`}
-                    >
-                      {item.title}
-                    </p>
-                    <p className="mt-0.5 text-[10px] text-[#94A3B8]">
-                      {item.actor}
-                    </p>
-                  </div>
-                </div>
-
-                {idx < SPK_STEPS.length - 1 && (
-                  <div
-                    className={`hidden h-[2px] w-[56px] shrink-0 lg:block xl:w-[80px] ${
-                      isCompleted ? "bg-[#86EFAC]" : "bg-[#CBD5E1]"
-                    }`}
-                  />
-                )}
-              </div>
-            );
-          })}
-        </div>
-      </section>
+      <SpkStepper activeStep={4} />
 
       {/* Card Riwayat */}
       <section className="shadow-card mt-4 flex flex-col gap-[14px] rounded-[10px] border border-transparent bg-white p-[20px]">
@@ -207,7 +132,7 @@ function RiwayatHasilSpkContent({ initialNomorSpk }: { initialNomorSpk?: string 
               </tr>
             </thead>
             <tbody className="divide-y divide-[#E5E7EB]/80">
-              {riwayatRows.map((row, index) => (
+                {tabel.visibleRows.map((row, index) => (
                 <tr
                   key={index}
                   className="transition-colors hover:bg-slate-50/70"
@@ -233,7 +158,7 @@ function RiwayatHasilSpkContent({ initialNomorSpk }: { initialNomorSpk?: string 
 
 export function RiwayatHasilSpkScreen({ nomorSpk }: { nomorSpk?: string }) {
   return (
-    <Suspense fallback={<div className="h-40 flex items-center justify-center text-sm text-[#526174]">Memuat riwayat...</div>}>
+    <Suspense fallback={<LoadingState judul="Memuat riwayat..." variant="inline" />}>
       <RiwayatHasilSpkContent initialNomorSpk={nomorSpk} />
     </Suspense>
   );

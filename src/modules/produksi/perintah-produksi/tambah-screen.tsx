@@ -3,8 +3,9 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useMemo, useRef, useState } from "react";
-import { ArrowIcon } from "@/components/ui/arrow-icon";
 import { CustomSelect } from "@/components/ui/custom-select";
+import { Notice } from "@/components/ui/notice";
+import { PageHeader } from "@/components/ui/page-header";
 import { BomItem, INITIAL_BOM_LIST } from "../bom-produk/types";
 import { ProduksiSubnav } from "../components/produksi-subnav";
 import {
@@ -246,43 +247,25 @@ export function TambahPerintahProduksiScreen() {
     <div className="w-full text-[#172335] animate-fade-in">
       <ProduksiSubnav />
 
-      {/* Back Link */}
-      <Link
-        href="/produksi/perintah-produksi"
-        className="group inline-flex items-center gap-1.5 text-xs font-semibold text-[#C96A00] hover:text-[#E88A06]"
-      >
-        <ArrowIcon
-          direction="left"
-          className="transition-transform duration-150 group-hover:-translate-x-0.5"
-        />
-        <span>Perintah produksi</span>
-      </Link>
+      <PageHeader
+        back={{ href: "/produksi/perintah-produksi", label: "Perintah produksi" }}
+        breadcrumb={[
+          { href: "/produksi", label: "Siklus Produksi" },
+          "PR-002 Membuat perintah produksi",
+        ]}
+        title="Tambah perintah produksi"
+        variant="cycle"
+      />
 
-      {/* Breadcrumb */}
-      <nav className="mt-1.5 text-xs font-medium text-[#526174]">
-        <Link
-          href="/produksi"
-          className="text-[#C96A00] underline decoration-[#C96A00]/60 underline-offset-2 hover:text-[#E88A06]"
-        >
-          Siklus Produksi
-        </Link>
-        <span className="mx-1.5">/</span>
-        <span>PR-002 Membuat perintah produksi</span>
-      </nav>
-
-      {/* Page Title */}
-      <h1 className="mt-1 text-[26px] leading-tight font-bold tracking-tight text-[#172335]">
-        Tambah perintah produksi
-      </h1>
-
-      {/* Error Banner */}
       {hasErrors && (
-        <div className="mt-2.5 flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 rounded-[10px] border border-[#FECACA] bg-[#FEE2E2]/80 px-4 py-2 text-[#B91C1C] animate-slide-down">
-          <p className="text-[12px] font-semibold">
-            Perintah produksi belum bisa disimpan:
-          </p>
-          <p className="text-[12px]">{errorMessages.join(" • ")}</p>
-        </div>
+        <Notice className="mt-2.5" tone="error" variant="card">
+          <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 text-[12px]">
+            <p className="font-semibold">
+              Perintah produksi belum bisa disimpan:
+            </p>
+            <p>{errorMessages.join(" • ")}</p>
+          </div>
+        </Notice>
       )}
 
       <form onSubmit={handleSimpan}>

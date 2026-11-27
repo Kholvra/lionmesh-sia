@@ -1,12 +1,10 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 
-import {
-  DataTable,
-  ROWS_PER_PAGE,
-  type DataTableColumn,
-} from "@/components/ui";
+import { DataTable } from "@/components/ui/data-table";
+import type { DataTableColumn } from "@/components/ui/data-table.types";
+import { useTableState } from "@/components/ui/use-table-state";
 
 export interface ReportColumn {
   id: string;
@@ -40,7 +38,9 @@ export function ReportTable({
   rows,
   emptyMessage,
 }: ReportTableProps) {
-  const [page, setPage] = useState(1);
+  const { onPageChange, page, totalItems, visibleRows } = useTableState(rows, {
+    initialSort: null,
+  });
 
   const tableColumns = useMemo<DataTableColumn<ReportRow>[]>(
     () =>
@@ -53,23 +53,18 @@ export function ReportTable({
     [columns],
   );
 
-  const terlihat = useMemo(
-    () => rows.slice((page - 1) * ROWS_PER_PAGE, page * ROWS_PER_PAGE),
-    [page, rows],
-  );
-
   return (
     <DataTable
       caption={caption}
       columns={tableColumns}
       emptyMessage={emptyMessage}
-      onPageChange={setPage}
+      onPageChange={onPageChange}
       onSortChange={tidakMengurutkan}
       page={page}
       rowKey={(row) => row.key}
-      rows={terlihat}
+      rows={visibleRows}
       sort={null}
-      totalItems={rows.length}
+      totalItems={totalItems}
     />
   );
 }

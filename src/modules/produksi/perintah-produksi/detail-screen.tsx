@@ -3,9 +3,12 @@
 import Link from "next/link";
 import { useParams, useSearchParams } from "next/navigation";
 import { Suspense, useMemo, useState } from "react";
-import { ArrowIcon } from "@/components/ui/arrow-icon";
-import { BomItem, INITIAL_BOM_LIST } from "../bom-produk/types";
+import { Notice } from "@/components/ui/notice";
+import { PageHeader } from "@/components/ui/page-header";
+import { SpkStepper } from "@/components/ui/spk-stepper";
+import { LoadingState } from "@/components/ui/states";
 import { ProduksiSubnav } from "../components/produksi-subnav";
+import { BomItem, INITIAL_BOM_LIST } from "../bom-produk/types";
 import {
   INITIAL_SPK_LIST,
   SpkItem,
@@ -47,20 +50,6 @@ function parsePercent(val: string): number {
   return Number.isFinite(num) ? num : 0;
 }
 
-interface StepDefinition {
-  step: number;
-  title: string;
-  actor: string;
-}
-
-const SPK_STEPS: StepDefinition[] = [
-  { step: 1, title: "Direncanakan", actor: "Produksi" },
-  { step: 2, title: "Cek bahan", actor: "Gudang" },
-  { step: 3, title: "Berjalan", actor: "Gudang · Produksi" },
-  { step: 4, title: "Hasil dicatat", actor: "Produksi" },
-  { step: 5, title: "QC lulus", actor: "QC" },
-  { step: 6, title: "Selesai", actor: "Gudang" },
-];
 
 function getActiveStepFromStatus(status: SpkStatusType): number {
   switch (status) {
@@ -182,91 +171,34 @@ function DetailSpkContent({ initialNomorSpk }: { initialNomorSpk?: string }) {
     <div className="w-full text-[#172335] animate-fade-in">
       <ProduksiSubnav />
 
-      {/* Back Link */}
-      <Link
-        href="/produksi/perintah-produksi"
-        className="group inline-flex items-center gap-1.5 text-xs font-semibold text-[#C96A00] hover:text-[#E88A06]"
-      >
-        <ArrowIcon
-          direction="left"
-          className="transition-transform duration-150 group-hover:-translate-x-0.5"
-        />
-        <span>Perintah produksi</span>
-      </Link>
+      <PageHeader
+        back={{ href: "/produksi/perintah-produksi", label: "Perintah produksi" }}
+        breadcrumb={[
+          { href: "/produksi", label: "Siklus Produksi" },
+          "PR-002 Membuat perintah produksi",
+        ]}
+        title={currentSpk.nomorSpk}
+        variant="cycle"
+      />
 
-      {/* Breadcrumb */}
-      <nav className="mt-2 text-xs font-medium text-[#526174]">
-        <Link
-          href="/produksi"
-          className="text-[#C96A00] underline decoration-[#C96A00]/60 underline-offset-2 hover:text-[#E88A06]"
-        >
-          Siklus Produksi
-        </Link>
-        <span className="mx-1.5">/</span>
-        <span>PR-002 Membuat perintah produksi</span>
-      </nav>
-
-      {/* Page Title */}
-      <h1 className="mt-1.5 text-[28px] leading-tight font-bold tracking-tight text-[#172335]">
-        {currentSpk.nomorSpk}
-      </h1>
-
-      {/* Banner Tersimpan */}
       {isJustSaved && (
-        <div className="shadow-card mt-4 rounded-[10px] border border-transparent bg-[#E6F4EA]/85 px-5 py-3 text-[#166534] animate-slide-down">
-          <p className="text-[13px] font-semibold">
-            {currentSpk.nomorSpk} tersimpan
-          </p>
+        <Notice
+          title={`${currentSpk.nomorSpk} tersimpan`}
+          tone="success"
+          variant="card"
+        >
           <p className="mt-0.5 text-[12px]">
             Status Direncanakan. SPK masuk daftar Gudang untuk dicek bahannya.
           </p>
-        </div>
+        </Notice>
       )}
 
-      {/* Stepper Card (6 Tahap SPK) */}
-      <section className="shadow-card mt-4 rounded-[10px] border border-transparent bg-white px-5 py-3.5 transition-shadow duration-150 hover:shadow-md">
-        <div className="flex flex-wrap items-center justify-between gap-2">
-          {SPK_STEPS.map((item, idx) => {
-            const isCurrent = item.step === activeStep;
-            const isCompleted = item.step < activeStep;
-            return (
-              <div key={item.step} className="contents">
-                <div className="flex shrink-0 items-center gap-2.5">
-                  <span
-                    className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-[11px] font-semibold ${
-                      isCurrent
-                        ? "bg-[#E88A06] text-white"
-                        : isCompleted
-                          ? "bg-[#DCFCE7] text-[#15803D]"
-                          : "border border-[#94A3B8] bg-white text-[#526174]"
-                    }`}
-                  >
-                    {item.step}
-                  </span>
-                  <div className="leading-tight whitespace-nowrap">
-                    <p
-                      className={`text-[12px] ${
-                        isCurrent
-                          ? "font-semibold text-[#172335]"
-                          : "font-medium text-[#526174]"
-                      }`}
-                    >
-                      {item.title}
-                    </p>
-                    <p className="mt-0.5 text-[10px] text-[#94A3B8]">
-                      {item.actor}
-                    </p>
-                  </div>
-                </div>
-
-                {idx < SPK_STEPS.length - 1 && (
-                  <div className="hidden h-[2px] w-[56px] shrink-0 bg-[#CBD5E1] lg:block xl:w-[80px]" />
-                )}
-              </div>
-            );
-          })}
-        </div>
-      </section>
+      <SpkStepper
+        activeStep={activeStep}
+        completedMarker="number"
+        connectorTone="neutral"
+        hoverable
+      />
 
       {/* Card 1: Perintah produksi */}
       <section className="shadow-card mt-4 rounded-[10px] border border-transparent bg-white p-5">
@@ -350,7 +282,7 @@ function DetailSpkContent({ initialNomorSpk }: { initialNomorSpk?: string }) {
 
 export function DetailSpkScreen({ nomorSpk }: { nomorSpk?: string }) {
   return (
-    <Suspense fallback={<div className="h-40 flex items-center justify-center text-sm text-[#526174]">Memuat data SPK...</div>}>
+    <Suspense fallback={<LoadingState judul="Memuat data SPK..." variant="inline" />}>
       <DetailSpkContent initialNomorSpk={nomorSpk} />
     </Suspense>
   );

@@ -1,5 +1,8 @@
 import Link from "next/link";
 
+import { Notice } from "@/components/ui/notice";
+import { PageHeader } from "@/components/ui/page-header";
+import { submitButtonClassName } from "@/components/ui/submit-button";
 import { StatusBadge } from "@/components/ui";
 import { cekIzin } from "@/lib/auth/permissions";
 import type { Profile } from "@/lib/auth/types";
@@ -37,28 +40,22 @@ export async function SatuanScreen({ mode, profile, satuanId }: SatuanScreenProp
 
   return (
     <section aria-label="Master satuan" className={styles.page}>
-      <header className={styles.header}>
-        <div>
-          <p className={styles.breadcrumb}>Pengaturan / Master data</p>
-          <h1 className={styles.title}>Satuan</h1>
-          <p className={styles.description}>
-            Satuan dasar dan konversi antar satuan. Konversi hanya dicatat antara
-            dua satuan aktif.
-          </p>
-        </div>
-      </header>
+      <PageHeader
+        breadcrumb={["Pengaturan", "Master data"]}
+        description="Satuan dasar dan konversi antar satuan. Konversi hanya dicatat antara dua satuan aktif."
+        title="Satuan"
+      />
 
       <div className={styles.layout}>
         <section className={styles.panel} aria-label="Detail satuan">
           <div className={styles.panelCard}>
             {terpilih && tampilkanFormUbah ? (
               <>
-                <div className={styles.panelHeader}>
-                  <div>
-                    <h2 className={styles.panelTitle}>Ubah satuan</h2>
-                    <p className={styles.panelMeta}>{terpilih.kode}</p>
-                  </div>
-                </div>
+                <PageHeader
+                  description={terpilih.kode}
+                  title="Ubah satuan"
+                  variant="section"
+                />
                 <SatuanForm key={terpilih.id} satuan={terpilih} />
               </>
             ) : terpilih ? (
@@ -77,7 +74,11 @@ export async function SatuanScreen({ mode, profile, satuanId }: SatuanScreenProp
                 {canManage ? (
                   <div className={`${styles.buttonRow} ${styles.detailActions}`}>
                     <Link
-                      className={styles.secondaryButton}
+                      className={submitButtonClassName({
+                        className: styles.secondaryButton,
+                        size: "lg",
+                        variant: "secondary",
+                      })}
                       href={`${PATH_MASTER_SATUAN}?id=${terpilih.id}&mode=edit`}
                     >
                       Ubah data
@@ -104,27 +105,26 @@ export async function SatuanScreen({ mode, profile, satuanId }: SatuanScreenProp
               </div>
             ) : satuanId ? (
               <div>
-                <h2 className={styles.panelTitle}>Satuan tidak ditemukan</h2>
+                <PageHeader title="Satuan tidak ditemukan" variant="section" />
                 <p className={styles.emptyState}>
                   Satuan yang dipilih tidak tersedia.
                 </p>
-                <Link className={styles.secondaryButton} href={PATH_MASTER_SATUAN}>
+                <Link className={submitButtonClassName({ className: styles.secondaryButton, size: "lg", variant: "secondary" })} href={PATH_MASTER_SATUAN}>
                   Kembali ke daftar
                 </Link>
               </div>
             ) : canManage ? (
               <>
-                <div className={styles.panelHeader}>
-                  <div>
-                    <h2 className={styles.panelTitle}>Tambah satuan</h2>
-                    <p className={styles.panelMeta}>Kode dan nama wajib diisi.</p>
-                  </div>
-                </div>
+                <PageHeader
+                  description="Kode dan nama wajib diisi."
+                  title="Tambah satuan"
+                  variant="section"
+                />
                 <SatuanForm />
               </>
             ) : (
               <div>
-                <h2 className={styles.panelTitle}>Detail satuan</h2>
+                <PageHeader title="Detail satuan" variant="section" />
                 <p className={styles.emptyState}>
                   Pilih satuan dari daftar untuk melihat detail. Peran Anda tidak
                   dapat mengubah master satuan.
@@ -134,26 +134,26 @@ export async function SatuanScreen({ mode, profile, satuanId }: SatuanScreenProp
           </div>
         </section>
 
-        <section className={styles.listPanel} aria-labelledby="daftar-satuan">
+        <section className={styles.listPanel} aria-label="Daftar satuan">
           <div className={styles.panelCard}>
-            <div className={styles.panelHeader}>
-              <div>
-                <h2 className={styles.panelTitle} id="daftar-satuan">
-                  Daftar satuan
-                </h2>
-                <p className={styles.panelMeta}>
-                  {data.daftar.length} satuan · Aktor: {profile.peran ?? "—"}
-                </p>
-              </div>
-              {canManage ? (
-                <Link
-                  className={`${styles.primaryButton} ${styles.panelAction}`}
-                  href={PATH_MASTER_SATUAN}
-                >
-                  Tambah satuan
-                </Link>
-              ) : null}
-            </div>
+            <PageHeader
+              actions={
+                canManage ? (
+                  <Link
+                    className={submitButtonClassName({
+                      className: `${styles.primaryButton} ${styles.panelAction}`,
+                      size: "lg",
+                    })}
+                    href={PATH_MASTER_SATUAN}
+                  >
+                    Tambah satuan
+                  </Link>
+                ) : null
+              }
+              description={`${data.daftar.length} satuan · Aktor: ${profile.peran ?? "—"}`}
+              title="Daftar satuan"
+              variant="section"
+            />
 
             <MasterTable
               caption="Daftar satuan"
@@ -168,25 +168,20 @@ export async function SatuanScreen({ mode, profile, satuanId }: SatuanScreenProp
         </section>
       </div>
 
-      <section className={styles.section} aria-labelledby="konversi-satuan">
+      <section className={styles.section} aria-label="Konversi satuan">
         <div className={styles.panelCard}>
-          <div className={styles.sectionHeader}>
-            <div>
-              <h2 className={styles.panelTitle} id="konversi-satuan">
-                Konversi satuan
-              </h2>
-              <p className={styles.panelMeta}>
-                Faktor menyatakan berapa satuan tujuan dalam satu satuan asal.
-              </p>
-            </div>
-          </div>
+          <PageHeader
+            description="Faktor menyatakan berapa satuan tujuan dalam satu satuan asal."
+            title="Konversi satuan"
+            variant="section"
+          />
 
           {canManage ? <KonversiSatuanForm satuanAktif={data.satuanAktif} /> : null}
 
           {data.konversiError ? (
-            <p className={styles.messageError} role="alert">
+            <Notice className={styles.messageError} tone="danger">
               Daftar konversi gagal dimuat: {data.konversiError}
-            </p>
+            </Notice>
           ) : data.konversi.length === 0 ? (
             <p className={styles.emptyState}>Belum ada konversi satuan.</p>
           ) : (

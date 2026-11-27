@@ -4,17 +4,15 @@ import { hitungLabaRugi, listBarisJurnal, parsePeriode } from "@/core/ledger";
 import type { Profile } from "@/lib/auth/types";
 import { formatRupiah } from "@/lib/format/money";
 import { createClient } from "@/lib/supabase/server";
+import { PageHeader } from "@/components/ui/page-header";
+import { Ringkasan } from "@/components/ui/metric-card";
+import { EmptyState, ErrorState } from "@/components/ui/states";
 import { LaporanFilter } from "../components/laporan-filter";
-import {
-  LaporanShell,
-  PilihPeriode,
-  Ringkasan,
-  SectionHeader,
-} from "../components/laporan-shell";
+import { LaporanShell } from "../components/laporan-shell";
 import { ReportTable, type ReportRow } from "../components/report-table";
 import {
-  GagalMemuat,
   muatOpsiPeriode,
+  TEKS_PILIH_PERIODE,
   type LaporanParams,
 } from "./shared";
 
@@ -33,7 +31,7 @@ export async function LabaRugiScreen({ profil, params }: Props) {
     </LaporanShell>
   );
 
-  if (!opsi.ok) return bingkai(<GagalMemuat pesan={opsi.message} />);
+  if (!opsi.ok) return bingkai(<ErrorState judul="Laporan gagal dimuat" teks={opsi.message} variant="inline" />);
 
   const periode = parsePeriode(params.periode);
   if (!periode.ok) {
@@ -43,7 +41,7 @@ export async function LabaRugiScreen({ profil, params }: Props) {
           action="/laporan/laba-rugi"
           periodeOptions={opsi.data}
         />
-        <PilihPeriode pesan={periode.message} />
+        <EmptyState judul="Pilih periode laporan" teks={periode.message ?? TEKS_PILIH_PERIODE} variant="compact" />
       </>,
     );
   }
@@ -54,7 +52,7 @@ export async function LabaRugiScreen({ profil, params }: Props) {
   });
   if (!baris.ok) {
     return bingkai(
-      <GagalMemuat pesan={baris.message} />,
+      <ErrorState judul="Laporan gagal dimuat" teks={baris.message} variant="inline" />,
       periode.data.kunci,
     );
   }
@@ -99,10 +97,7 @@ export async function LabaRugiScreen({ profil, params }: Props) {
       />
 
       <section>
-        <SectionHeader
-          judul="Pendapatan"
-          meta={`${periode.data.label} · akun peran penjualan`}
-        />
+        <PageHeader title="Pendapatan" description={`${periode.data.label} · akun peran penjualan`} variant="section" />
         <ReportTable
           caption={`Pendapatan ${periode.data.label}`}
           columns={[
@@ -115,9 +110,10 @@ export async function LabaRugiScreen({ profil, params }: Props) {
       </section>
 
       <section>
-        <SectionHeader
-          judul="Beban"
-          meta="HPP, tenaga kerja langsung, overhead pabrik, dan beban gaji administrasi"
+        <PageHeader
+          title="Beban"
+          description="HPP, tenaga kerja langsung, overhead pabrik, dan beban gaji administrasi"
+          variant="section"
         />
         <ReportTable
           caption={`Beban ${periode.data.label}`}

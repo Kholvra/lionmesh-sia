@@ -1,9 +1,10 @@
 "use client";
 
-import Link from "next/link";
 import { useActionState } from "react";
 
 import { FormField, Input } from "@/components/ui";
+import { FormFooter } from "@/components/ui/form-footer";
+import { Notice } from "@/components/ui/notice";
 import type { MataUang } from "@/core/master/types";
 
 import { simpanMataUangAction } from "../actions";
@@ -31,15 +32,15 @@ export function MataUangForm({ mataUang }: MataUangFormProps) {
       {mataUang ? <input name="id" type="hidden" value={mataUang.id} /> : null}
 
       {state.status === "error" && state.message ? (
-        <p className={styles.messageError} role="alert">
+        <Notice className={styles.messageError} tone="danger">
           {state.message}
-        </p>
+        </Notice>
       ) : null}
 
       {state.status === "success" && state.message ? (
-        <p className={styles.messageSuccess} role="status">
+        <Notice className={styles.messageSuccess} tone="success">
           {state.message}
-        </p>
+        </Notice>
       ) : null}
 
       <div className={styles.formGrid}>
@@ -89,18 +90,12 @@ export function MataUangForm({ mataUang }: MataUangFormProps) {
         </div>
       </div>
 
-      <div className={styles.formActions}>
-        <button className={styles.primaryButton} disabled={pending} type="submit">
-          {pending
-            ? "Menyimpan..."
-            : mataUang
-              ? "Simpan perubahan"
-              : "Simpan mata uang"}
-        </button>
-        <Link className={styles.secondaryButton} href={cancelHref}>
-          Batal
-        </Link>
-      </div>
+      <FormFooter
+        busy={pending}
+        busyLabel="Menyimpan..."
+        cancelHref={cancelHref}
+        submitLabel={mataUang ? "Simpan perubahan" : "Simpan mata uang"}
+      />
     </form>
   );
 }

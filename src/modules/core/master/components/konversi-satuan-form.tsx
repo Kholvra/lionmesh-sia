@@ -3,12 +3,14 @@
 import { useActionState } from "react";
 
 import { FormField, Input } from "@/components/ui";
+import { Notice } from "@/components/ui/notice";
+import { Select } from "@/components/ui/select";
+import { SubmitButton } from "@/components/ui/submit-button";
 import type { Satuan } from "@/core/master/types";
 
 import { simpanKonversiSatuanAction } from "../actions";
 import { INITIAL_MASTER_ACTION_STATE } from "../form-state";
 import styles from "../master.module.css";
-import { Select } from "./select";
 
 type KonversiSatuanFormProps = {
   satuanAktif: readonly Satuan[];
@@ -25,15 +27,15 @@ export function KonversiSatuanForm({ satuanAktif }: KonversiSatuanFormProps) {
   return (
     <form action={formAction} className={styles.form} noValidate>
       {state.status === "error" && state.message ? (
-        <p className={styles.messageError} role="alert">
+        <Notice className={styles.messageError} tone="danger">
           {state.message}
-        </p>
+        </Notice>
       ) : null}
 
       {state.status === "success" && state.message ? (
-        <p className={styles.messageSuccess} role="status">
+        <Notice className={styles.messageSuccess} tone="success">
           {state.message}
-        </p>
+        </Notice>
       ) : null}
 
       <div className={styles.formGridTiga}>
@@ -43,7 +45,7 @@ export function KonversiSatuanForm({ satuanAktif }: KonversiSatuanFormProps) {
           name="satuan_dari"
           required
         >
-          <Select name="satuan_dari">
+          <Select className={styles.select} name="satuan_dari">
             <option value="">Pilih satuan</option>
             {satuanAktif.map((item) => (
               <option key={item.id} value={item.id}>
@@ -59,7 +61,7 @@ export function KonversiSatuanForm({ satuanAktif }: KonversiSatuanFormProps) {
           name="satuan_ke"
           required
         >
-          <Select name="satuan_ke">
+          <Select className={styles.select} name="satuan_ke">
             <option value="">Pilih satuan</option>
             {satuanAktif.map((item) => (
               <option key={item.id} value={item.id}>
@@ -86,9 +88,9 @@ export function KonversiSatuanForm({ satuanAktif }: KonversiSatuanFormProps) {
       </div>
 
       <div className={styles.formActions}>
-        <button className={styles.primaryButton} disabled={pending} type="submit">
-          {pending ? "Menyimpan..." : "Tambah konversi"}
-        </button>
+        <SubmitButton busy={pending} busyLabel="Menyimpan..." size="lg">
+          Tambah konversi
+        </SubmitButton>
       </div>
     </form>
   );

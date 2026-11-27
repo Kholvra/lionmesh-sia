@@ -4,8 +4,10 @@
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useMemo, useRef, useState } from "react";
-import { ArrowIcon } from "@/components/ui/arrow-icon";
 import { CustomSelect } from "@/components/ui/custom-select";
+import { Notice } from "@/components/ui/notice";
+import { PageHeader } from "@/components/ui/page-header";
+import { LoadingState } from "@/components/ui/states";
 import { ProduksiSubnav } from "../components/produksi-subnav";
 import {
   BAHAN_BAKU_OPTIONS,
@@ -242,47 +244,28 @@ function VersiBomBaruContent() {
     <div className="w-full text-[#172335] animate-fade-in">
       <ProduksiSubnav />
 
-      {/* Back Link */}
-      <Link
-        href="/produksi/bom-produk"
-        className="group inline-flex items-center gap-1.5 text-xs font-semibold text-[#C96A00] hover:text-[#E88A06]"
-      >
-        <ArrowIcon
-          direction="left"
-          className="transition-transform duration-150 group-hover:-translate-x-0.5"
-        />
-        <span>BOM produk</span>
-      </Link>
+      <PageHeader
+        back={{ href: "/produksi/bom-produk", label: "BOM produk" }}
+        breadcrumb={[
+          { href: "/produksi", label: "Siklus Produksi" },
+          "PR-001 Mengelola BOM berversi",
+        ]}
+        title={
+          isCreateNewBomMode
+            ? "Buat BOM produk baru"
+            : `Versi BOM baru · ${currentProdukName}`
+        }
+        variant="cycle"
+      />
 
-      {/* Breadcrumb */}
-      <nav className="mt-2 text-xs font-medium text-[#526174]">
-        <Link
-          href="/produksi"
-          className="text-[#C96A00] underline decoration-[#C96A00]/60 underline-offset-2 hover:text-[#E88A06]"
-        >
-          Siklus Produksi
-        </Link>
-        <span className="mx-1.5">/</span>
-        <span>PR-001 Mengelola BOM berversi</span>
-      </nav>
-
-      {/* Page Title */}
-      <h1 className="mt-1 text-[28px] leading-tight font-bold tracking-tight text-[#172335]">
-        {isCreateNewBomMode
-          ? "Buat BOM produk baru"
-          : `Versi BOM baru · ${currentProdukName}`}
-      </h1>
-
-      {/* Banner Error di Atas Form Card */}
       {hasErrors && (
-        <div className="shadow-card mt-3.5 rounded-[10px] border border-transparent bg-[#FEE2E2]/80 px-5 py-2.5 text-[#B91C1C] animate-slide-down">
-          <p className="text-[13px] font-semibold">Versi belum bisa disimpan</p>
+        <Notice className="mt-3.5" tone="error" title="Versi belum bisa disimpan" variant="card">
           <div className="mt-0.5 space-y-0.5 text-[12px]">
             {activeErrorMessages.map((msg, i) => (
               <p key={i}>{msg}</p>
             ))}
           </div>
-        </div>
+        </Notice>
       )}
 
       {/* Form Card */}
@@ -494,7 +477,7 @@ function VersiBomBaruContent() {
 
 export function VersiBomBaruScreen() {
   return (
-    <Suspense fallback={<div className="h-40 flex items-center justify-center text-sm text-[#526174]">Memuat...</div>}>
+    <Suspense fallback={<LoadingState judul="Memuat..." variant="inline" />}>
       <VersiBomBaruContent />
     </Suspense>
   );

@@ -1,10 +1,18 @@
 "use client";
 
-import Link from "next/link";
 import { useState } from "react";
-import { ArrowIcon } from "@/components/ui/arrow-icon";
+import { Notice } from "@/components/ui/notice";
+import { PageHeader } from "@/components/ui/page-header";
+import { SegmentedTabs } from "@/components/ui/segmented-tabs";
+import {
+  STATUS_KARTU_JAM_KERJA,
+  STATUS_POSTING_HPP,
+  StatusBadge,
+} from "@/components/ui/status-badge";
+import { TableActionLink } from "@/components/ui/table-action-link";
+import { useTableState } from "@/components/ui/use-table-state";
 import { useProduksiActor } from "@/modules/produksi/context/actor-context";
-import { ProduksiSubnav } from "@/modules/produksi/components/produksi-subnav";
+import { ProduksiSubnav } from "../components/produksi-subnav";
 import {
   HppSpkSummary,
   INITIAL_HPP_LIST,
@@ -36,6 +44,12 @@ export function KartuJamKerjaScreen() {
   });
 
   const [hppList] = useState<HppSpkSummary[]>(INITIAL_HPP_LIST);
+  const tabelKjk = useTableState(kjkList, {
+    pageSize: kjkList.length || 1,
+  });
+  const tabelHpp = useTableState(hppList, {
+    pageSize: hppList.length || 1,
+  });
 
   // Form modal tambah jam kerja
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -101,69 +115,48 @@ export function KartuJamKerjaScreen() {
     <div className="mx-auto max-w-[1156px] text-[#172335] animate-fade-in">
       <ProduksiSubnav />
 
-      {/* Breadcrumb */}
-      <nav className="text-xs font-medium text-[#526174]">
-        <Link
-          href="/produksi"
-          className="text-[#C96A00] underline decoration-[#C96A00]/60 underline-offset-2 hover:text-[#E88A06]"
-        >
-          Siklus Produksi
-        </Link>
-        <span className="mx-1.5">/</span>
-        <span>PR-006 Biaya produksi dan HPP</span>
-      </nav>
+      <PageHeader
+        breadcrumb={[
+          { href: "/produksi", label: "Siklus Produksi" },
+          "PR-006 Biaya produksi dan HPP",
+        ]}
+        description="Pencatatan kartu jam kerja tenaga kerja langsung (TKL) per SPK dan perhitungan HPP produk selesai menggunakan rumus mengikat (Bahan + TKL + Overhead + Rework − Reject abnormal)."
+        title="Biaya produksi & HPP"
+        variant="cycle"
+      />
 
-      {/* Header */}
-      <h1 className="mt-1.5 text-[28px] leading-tight font-bold tracking-tight text-[#172335]">
-        Biaya produksi & HPP
-      </h1>
-      <p className="mt-1.5 text-[13px] text-[#526174]">
-        Pencatatan kartu jam kerja tenaga kerja langsung (TKL) per SPK dan
-        perhitungan HPP produk selesai menggunakan rumus mengikat (Bahan + TKL +
-        Overhead + Rework − Reject abnormal).
-      </p>
-
-      {/* Callout Info Tarif & Formula */}
-      <div className="shadow-card mt-5 rounded-[10px] border border-transparent bg-[#FEF3C7]/85 px-5 py-3.5">
-        <p className="text-[13px] font-semibold text-[#92400E]">
-          Tarif Overhead Predeterminasi Periode Nov 2026: Rp 45.000 / DLH
-        </p>
+      <Notice
+        className="mt-5"
+        title="Tarif Overhead Predeterminasi Periode Nov 2026: Rp 45.000 / DLH"
+        tone="warning"
+        variant="card"
+      >
         <p className="mt-0.5 text-[12px] text-[#B45309]">
           Pembebanan TKL dan overhead otomatis dialokasikan ke akun WIP (Barang
           Dalam Proses) saat hasil dicatat. Jurnal HPP final diposting oleh
           Accounting saat SPK selesai.
         </p>
-      </div>
+      </Notice>
 
       {/* Action Bar & Tab Switcher */}
       <div className="mt-5 flex flex-wrap items-center justify-between gap-3">
-        <div className="inline-flex items-center gap-1 rounded-[8px] bg-[#F1F5F9] p-1">
-          <button
-            type="button"
-            onClick={() => setActiveTab("jam_kerja")}
-            className={`rounded-[6px] border px-3 py-1.5 text-[12px] transition-all duration-150 active:scale-[0.98] ${
-              activeTab === "jam_kerja"
-                ? "border-[#E5E7EB] bg-white font-semibold text-[#172335] shadow-2xs"
-                : "border-transparent font-medium text-[#526174] hover:text-[#172335]"
-            }`}
-          >
-            Kartu Jam Kerja TKL ({kjkList.length})
-          </button>
-          <button
-            type="button"
-            onClick={() => setActiveTab("kalkulasi_hpp")}
-            className={`rounded-[6px] border px-3 py-1.5 text-[12px] transition-all duration-150 active:scale-[0.98] ${
-              activeTab === "kalkulasi_hpp"
-                ? "border-[#E5E7EB] bg-white font-semibold text-[#172335] shadow-2xs"
-                : "border-transparent font-medium text-[#526174] hover:text-[#172335]"
-            }`}
-          >
-            Kalkulasi HPP Perintah ({hppList.length})
-          </button>
-        </div>
+        <SegmentedTabs
+          items={[
+            {
+              key: "jam_kerja",
+              label: `Kartu Jam Kerja TKL (${kjkList.length})`,
+            },
+            {
+              key: "kalkulasi_hpp",
+              label: `Kalkulasi HPP Perintah (${hppList.length})`,
+            },
+          ]}
+          onValueChange={(key) => setActiveTab(key as ActiveTab)}
+          value={activeTab}
+        />
 
-        {activeTab === "jam_kerja" && (
-          canRecordKjk ? (
+        {activeTab === "jam_kerja" &&
+          (canRecordKjk ? (
             <button
               type="button"
               onClick={() => setIsModalOpen(true)}
@@ -175,8 +168,7 @@ export function KartuJamKerjaScreen() {
             <span className="inline-flex items-center rounded-[6px] border border-slate-200 bg-slate-100 px-3 py-1.5 text-[11px] font-medium text-slate-500">
               Pencatatan jam kerja: Wewenang Produksi (Aktor: {activeRole})
             </span>
-          )
-        )}
+          ))}
       </div>
 
       {/* TAB 1: KARTU JAM KERJA */}
@@ -214,7 +206,7 @@ export function KartuJamKerjaScreen() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-[#E5E7EB]/80">
-                {kjkList.map((item) => (
+                {tabelKjk.visibleRows.map((item) => (
                   <tr
                     key={item.id}
                     className="transition-colors hover:bg-slate-50/70"
@@ -246,15 +238,11 @@ export function KartuJamKerjaScreen() {
                       Rp {item.totalTkl.toLocaleString("id-ID")}
                     </td>
                     <td className="px-[12px] py-3.5">
-                      {item.status === "DIBEBANKAN" ? (
-                        <span className="inline-flex items-center rounded-[6px] bg-[#DCFCE7] px-2 py-0.5 text-[11px] font-semibold text-[#15803D]">
-                          Dibebankan
-                        </span>
-                      ) : (
-                        <span className="inline-flex items-center rounded-[6px] bg-[#FEF3C7] px-2 py-0.5 text-[11px] font-semibold text-[#B45309]">
-                          Tercatat
-                        </span>
-                      )}
+                      <StatusBadge
+                        status={item.status}
+                        statuses={STATUS_KARTU_JAM_KERJA}
+                        variant="compact"
+                      />
                     </td>
                     <td className="px-[12px] py-3.5 text-[12px] text-[#526174]">
                       {item.kegiatan}
@@ -291,7 +279,7 @@ export function KartuJamKerjaScreen() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-[#E5E7EB]/80">
-                {hppList.map((item) => (
+                {tabelHpp.visibleRows.map((item) => (
                   <tr
                     key={item.nomorSpk}
                     className="transition-colors hover:bg-slate-50/70"
@@ -326,24 +314,18 @@ export function KartuJamKerjaScreen() {
                       Rp {item.hppPerUnitRp.toLocaleString("id-ID")}
                     </td>
                     <td className="px-[12px] py-3.5">
-                      {item.statusPostingHpp === "FINAL_DIPOSTING" ? (
-                        <span className="inline-flex items-center rounded-[6px] bg-[#DCFCE7] px-2.5 py-1 text-[11px] font-semibold text-[#15803D]">
-                          Final Diposting
-                        </span>
-                      ) : (
-                        <span className="inline-flex items-center rounded-[6px] bg-[#FEF3C7] px-2.5 py-1 text-[11px] font-semibold text-[#B45309]">
-                          WIP Dibebankan
-                        </span>
-                      )}
+                      <StatusBadge
+                        status={item.statusPostingHpp}
+                        statuses={STATUS_POSTING_HPP}
+                        variant="compact"
+                      />
                     </td>
                     <td className="px-[12px] py-3.5 text-right">
-                      <Link
+                      <TableActionLink
                         href={`/produksi/biaya-hpp/${item.nomorSpk.toLowerCase()}`}
-                        className="group inline-flex items-center gap-1.5 text-[12px] font-semibold text-[#C96A00] hover:text-[#E88A06]"
                       >
-                        <span>Lihat HPP</span>
-                        <ArrowIcon className="transition-transform duration-150 group-hover:translate-x-0.5" />
-                      </Link>
+                        Lihat HPP
+                      </TableActionLink>
                     </td>
                   </tr>
                 ))}
@@ -364,11 +346,9 @@ export function KartuJamKerjaScreen() {
               Data jam kerja akan dibebankan ke biaya WIP perintah produksi.
             </p>
 
-            {formError && (
-              <div className="mt-3 rounded-[6px] bg-[#FEE2E2] px-3 py-2 text-[12px] font-medium text-[#B91C1C] animate-slide-down">
-                {formError}
-              </div>
-            )}
+            <Notice className="mt-3" tone="error" variant="plain">
+              {formError}
+            </Notice>
 
             <form onSubmit={handleSimpanKjk} className="mt-4 space-y-3">
               <div>

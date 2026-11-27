@@ -4,18 +4,16 @@ import { hitungNeraca, listBarisJurnal, parsePeriode } from "@/core/ledger";
 import type { Profile } from "@/lib/auth/types";
 import { formatRupiah } from "@/lib/format/money";
 import { createClient } from "@/lib/supabase/server";
+import { Notice } from "@/components/ui/notice";
+import { PageHeader } from "@/components/ui/page-header";
+import { Ringkasan } from "@/components/ui/metric-card";
+import { EmptyState, ErrorState } from "@/components/ui/states";
 import { LaporanFilter } from "../components/laporan-filter";
-import {
-  LaporanShell,
-  Pesan,
-  PilihPeriode,
-  Ringkasan,
-  SectionHeader,
-} from "../components/laporan-shell";
+import { LaporanShell } from "../components/laporan-shell";
 import { ReportTable, type ReportRow } from "../components/report-table";
 import {
-  GagalMemuat,
   muatOpsiPeriode,
+  TEKS_PILIH_PERIODE,
   type LaporanParams,
 } from "./shared";
 
@@ -46,14 +44,14 @@ export async function NeracaScreen({ profil, params }: Props) {
     </LaporanShell>
   );
 
-  if (!opsi.ok) return bingkai(<GagalMemuat pesan={opsi.message} />);
+  if (!opsi.ok) return bingkai(<ErrorState judul="Laporan gagal dimuat" teks={opsi.message} variant="inline" />);
 
   const periode = parsePeriode(params.periode);
   if (!periode.ok) {
     return bingkai(
       <>
         <LaporanFilter action="/laporan/neraca" periodeOptions={opsi.data} />
-        <PilihPeriode pesan={periode.message} />
+        <EmptyState judul="Pilih periode laporan" teks={periode.message ?? TEKS_PILIH_PERIODE} variant="compact" />
       </>,
     );
   }
@@ -69,13 +67,13 @@ export async function NeracaScreen({ profil, params }: Props) {
 
   if (!kumulatif.ok) {
     return bingkai(
-      <GagalMemuat pesan={kumulatif.message} />,
+      <ErrorState judul="Laporan gagal dimuat" teks={kumulatif.message} variant="inline" />,
       periode.data.kunci,
     );
   }
   if (!tahunBerjalan.ok) {
     return bingkai(
-      <GagalMemuat pesan={tahunBerjalan.message} />,
+      <ErrorState judul="Laporan gagal dimuat" teks={tahunBerjalan.message} variant="inline" />,
       periode.data.kunci,
     );
   }
@@ -121,26 +119,27 @@ export async function NeracaScreen({ profil, params }: Props) {
       />
 
       {laporan.seimbang ? (
-        <Pesan>Aktiva sama dengan kewajiban ditambah ekuitas.</Pesan>
+        <Notice variant="bordered">Aktiva sama dengan kewajiban ditambah ekuitas.</Notice>
       ) : (
-        <Pesan nada="bahaya">
+        <Notice nada="bahaya" variant="bordered">
           Neraca tidak seimbang. Selisih {formatRupiah(laporan.selisihCents)}{" "}
           ditampilkan apa adanya; periksa jurnal sumber lewat jalur posting yang
           benar.
-        </Pesan>
+        </Notice>
       )}
 
       {laporan.belumDiklasifikasi.length > 0 ? (
-        <Pesan nada="bahaya">
+        <Notice nada="bahaya" variant="bordered">
           Ada akun dengan peran di luar COA laporan. Akun tersebut ditampilkan
           terpisah agar selisih tidak tersembunyi.
-        </Pesan>
+        </Notice>
       ) : null}
 
       <section>
-        <SectionHeader
-          judul="Aktiva"
-          meta={`${periode.data.label} · kumulatif sampai akhir periode`}
+        <PageHeader
+          title="Aktiva"
+          description={`${periode.data.label} · kumulatif sampai akhir periode`}
+          variant="section"
         />
         <ReportTable
           caption={`Aktiva ${periode.data.label}`}
@@ -154,7 +153,7 @@ export async function NeracaScreen({ profil, params }: Props) {
       </section>
 
       <section>
-        <SectionHeader judul="Kewajiban" meta={periode.data.label} />
+        <PageHeader title="Kewajiban" description={periode.data.label} variant="section" />
         <ReportTable
           caption={`Kewajiban ${periode.data.label}`}
           columns={[
@@ -167,7 +166,7 @@ export async function NeracaScreen({ profil, params }: Props) {
       </section>
 
       <section>
-        <SectionHeader judul="Ekuitas" meta="Termasuk laba tahun berjalan" />
+        <PageHeader title="Ekuitas" description="Termasuk laba tahun berjalan" variant="section" />
         <ReportTable
           caption={`Ekuitas ${periode.data.label}`}
           columns={[
@@ -181,7 +180,7 @@ export async function NeracaScreen({ profil, params }: Props) {
 
       {laporan.belumDiklasifikasi.length > 0 ? (
         <section>
-          <SectionHeader judul="Akun belum diklasifikasi" />
+          <PageHeader title="Akun belum diklasifikasi" variant="section" />
           <ReportTable
             caption="Akun yang belum diklasifikasi"
             columns={[

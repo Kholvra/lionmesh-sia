@@ -1,12 +1,14 @@
 "use client";
-
-import Link from "next/link";
 import { useRef, useState } from "react";
 
-import { ConfirmDialog, Form, FormField, Input } from "@/components/ui";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { Form } from "@/components/ui/form";
+import { FormField } from "@/components/ui/form-field";
+import { FormFooter } from "@/components/ui/form-footer";
+import { Input } from "@/components/ui/input";
+import { Notice } from "@/components/ui/notice";
 import type { AksiState } from "@/modules/penggajian/karyawan/actions";
 import { useAksiForm } from "@/modules/penggajian/karyawan/components/use-aksi-form";
-import { Notice } from "@/modules/penggajian/ui/notice";
 import { ui } from "@/modules/penggajian/ui/kelas";
 
 type NonaktifFormProps = {
@@ -47,14 +49,12 @@ export function NonaktifForm({ aksi, batalHref, nama }: NonaktifFormProps) {
             <Input type="date" />
           </FormField>
         </div>
-        <div className={ui.formActions}>
-          <button className={ui.buttonDanger} disabled={pending} type="submit">
-            {pending ? "Menyimpan…" : "Nonaktifkan karyawan"}
-          </button>
-          <Link className={ui.button} href={batalHref}>
-            Batal
-          </Link>
-        </div>
+        <FormFooter
+          cancelHref={batalHref}
+          submitDisabled={pending}
+          submitLabel={pending ? "Menyimpan…" : "Nonaktifkan karyawan"}
+          variant="danger"
+        />
       </Form>
       <ConfirmDialog
         cancelLabel="Batal"

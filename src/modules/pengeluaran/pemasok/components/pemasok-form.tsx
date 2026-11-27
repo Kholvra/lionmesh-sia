@@ -1,9 +1,10 @@
 "use client";
 
-import Link from "next/link";
 import { useActionState } from "react";
 
 import { FormField, Input } from "@/components/ui";
+import { FormFooter } from "@/components/ui/form-footer";
+import { Notice } from "@/components/ui/notice";
 import type { Pemasok } from "@/core/pemasok";
 import { simpanPemasokAction } from "../actions";
 import { PATH_PEMASOK } from "../constants";
@@ -30,15 +31,11 @@ export function PemasokForm({ pemasok }: PemasokFormProps) {
       {pemasok ? <input name="id" type="hidden" value={pemasok.id} /> : null}
 
       {state.status === "error" && state.message ? (
-        <p className={styles.messageError} role="alert">
-          {state.message}
-        </p>
+        <Notice tone="danger">{state.message}</Notice>
       ) : null}
 
       {state.status === "success" && state.message ? (
-        <p className={styles.messageSuccess} role="status">
-          {state.message}
-        </p>
+        <Notice tone="success">{state.message}</Notice>
       ) : null}
 
       <div className={styles.formGrid}>
@@ -160,18 +157,13 @@ export function PemasokForm({ pemasok }: PemasokFormProps) {
         </FormField>
       </div>
 
-      <div className={styles.formActions}>
-        <button className={styles.primaryButton} disabled={pending} type="submit">
-          {pending
-            ? "Menyimpan..."
-            : pemasok
-              ? "Simpan perubahan"
-              : "Simpan pemasok"}
-        </button>
-        <Link className={styles.secondaryButton} href={cancelHref}>
-          Batal
-        </Link>
-      </div>
+      <FormFooter
+        busy={pending}
+        busyLabel="Menyimpan..."
+        cancelHref={cancelHref}
+        size="lg"
+        submitLabel={pemasok ? "Simpan perubahan" : "Simpan pemasok"}
+      />
     </form>
   );
 }

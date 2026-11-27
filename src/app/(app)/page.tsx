@@ -1,8 +1,10 @@
 import { Suspense } from "react";
 
+import { MetricCard } from "@/components/ui/metric-card";
+import { Notice } from "@/components/ui/notice";
+import { PageHeader } from "@/components/ui/page-header";
 import { getDataDashboard, type SiklusDashboard } from "@/core/dashboard";
 import { requireSesi } from "@/lib/auth/server";
-
 import { AntreanTable } from "./dashboard/antrean-table";
 import styles from "./dashboard/dashboard.module.css";
 import { PeriodeSekarang } from "./dashboard/periode-sekarang";
@@ -44,94 +46,65 @@ export default async function DashboardPage() {
 
   return (
     <section aria-label="Dashboard umum" className={styles.page}>
-      <header className={styles.header}>
-        <div>
-          <p className={styles.breadcrumb}>Dashboard</p>
-          <h1 className={styles.title}>Dashboard umum</h1>
-          <p className={styles.description}>
-            Ringkasan lintas siklus dan dokumen yang menunggu tindakan Anda.
+      <PageHeader
+        actions={
+          <p className={styles.period}>
+            Periode{" "}
+            <Suspense fallback={<span>…</span>}>
+              <PeriodeSekarang />
+            </Suspense>
           </p>
-        </div>
-        <p className={styles.period}>
-          Periode{" "}
-          <Suspense fallback={<span>…</span>}>
-            <PeriodeSekarang />
-          </Suspense>
-        </p>
-      </header>
+        }
+        breadcrumb={["Dashboard"]}
+        description="Ringkasan lintas siklus dan dokumen yang menunggu tindakan Anda."
+        title="Dashboard umum"
+      />
 
       {data.error ? (
-        <div className={styles.alert} role="alert">
-          <div>
-            <p className={styles.alertTitle}>Sebagian ringkasan tidak tersedia</p>
-            <p className={styles.alertText}>{data.error}</p>
-          </div>
+        <Notice
+          className={styles.alert}
+          title="Sebagian ringkasan tidak tersedia"
+          tone="danger"
+        >
+          <p className={styles.alertText}>{data.error}</p>
           <RefreshButton label="Coba lagi" />
-        </div>
+        </Notice>
       ) : null}
 
-      <section aria-labelledby="ringkasan-siklus" className={styles.section}>
-        <header className={styles.sectionHeader}>
-          <h2 className={styles.sectionTitle} id="ringkasan-siklus">
-            Ringkasan siklus
-          </h2>
-          <p className={styles.sectionText}>
-            Hanya dokumen yang boleh Anda lihat dan tindaklanjuti yang dihitung.
-          </p>
-        </header>
+      <section aria-label="Ringkasan siklus" className={styles.section}>
+        <PageHeader
+          description="Hanya dokumen yang boleh Anda lihat dan tindaklanjuti yang dihitung."
+          title="Ringkasan siklus"
+          variant="section"
+        />
 
         <div className={styles.cards}>
           {data.ringkasan.kartu.map((kartu) => (
-            <article
-              className={styles.card}
-              data-status={kartu.status}
+            <MetricCard
+              footnote={KETERANGAN_SIKLUS[kartu.siklus]}
+              hint="dokumen menunggu tindakan"
               key={kartu.siklus}
-            >
-              <h3 className={styles.cardLabel}>Siklus {kartu.siklus}</h3>
-              {kartu.status === "tersedia" ? (
-                <>
-                  <p className={styles.cardValue}>{kartu.jumlah}</p>
-                  <p className={styles.cardContext}>
-                    dokumen menunggu tindakan
-                  </p>
-                </>
-              ) : (
-                <>
-                  <p className={styles.cardState}>
-                    {kartu.status === "gagal"
-                      ? "Gagal dimuat"
-                      : "Belum tersedia"}
-                  </p>
-                  <p className={styles.cardContext}>
-                    {kartu.status === "gagal"
-                      ? "Sumber siklus ini tidak dapat dibaca."
-                      : "Sumber siklus ini belum diimplementasikan."}
-                  </p>
-                </>
-              )}
-              <p className={styles.cardFootnote}>
-                {KETERANGAN_SIKLUS[kartu.siklus]}
-              </p>
-            </article>
+              label={`Siklus ${kartu.siklus}`}
+              status={kartu.status}
+              value={kartu.jumlah}
+              variant="dashboard"
+            />
           ))}
         </div>
       </section>
 
-      <section aria-labelledby="antrean-tindakan" className={styles.section}>
-        <header className={styles.sectionHeader}>
-          <h2 className={styles.sectionTitle} id="antrean-tindakan">
-            Menunggu tindakan saya
-          </h2>
-          <p className={styles.sectionText}>
-            Diurutkan dari dokumen yang paling lama menunggu.
-          </p>
-        </header>
+      <section aria-label="Menunggu tindakan saya" className={styles.section}>
+        <PageHeader
+          description="Diurutkan dari dokumen yang paling lama menunggu."
+          title="Menunggu tindakan saya"
+          variant="section"
+        />
 
         {data.ringkasan.tanpaSiklus > 0 ? (
-          <p className={styles.notice} role="status">
+          <Notice className={styles.notice} tone="warning">
             {data.ringkasan.tanpaSiklus} dokumen menunggu belum dapat dipetakan
             ke siklus. Hubungi administrator sistem.
-          </p>
+          </Notice>
         ) : null}
 
         <AntreanTable
@@ -140,15 +113,12 @@ export default async function DashboardPage() {
         />
       </section>
 
-      <section aria-labelledby="keterkaitan-siklus" className={styles.section}>
-        <header className={styles.sectionHeader}>
-          <h2 className={styles.sectionTitle} id="keterkaitan-siklus">
-            Keterkaitan antar siklus
-          </h2>
-          <p className={styles.sectionText}>
-            Alur kerja yang menyambungkan keempat siklus.
-          </p>
-        </header>
+      <section aria-label="Keterkaitan antar siklus" className={styles.section}>
+        <PageHeader
+          description="Alur kerja yang menyambungkan keempat siklus."
+          title="Keterkaitan antar siklus"
+          variant="section"
+        />
 
         <ol className={styles.flow}>
           {LANGKAH_KETERKAITAN.map((langkah) => (

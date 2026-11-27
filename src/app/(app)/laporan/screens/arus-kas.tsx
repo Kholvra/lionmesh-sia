@@ -11,18 +11,16 @@ import type { Profile } from "@/lib/auth/types";
 import { formatTanggal } from "@/lib/format/date";
 import { formatRupiah } from "@/lib/format/money";
 import { createClient } from "@/lib/supabase/server";
+import { Notice } from "@/components/ui/notice";
+import { PageHeader } from "@/components/ui/page-header";
+import { Ringkasan } from "@/components/ui/metric-card";
+import { EmptyState, ErrorState } from "@/components/ui/states";
 import { LaporanFilter } from "../components/laporan-filter";
-import {
-  LaporanShell,
-  Pesan,
-  PilihPeriode,
-  Ringkasan,
-  SectionHeader,
-} from "../components/laporan-shell";
+import { LaporanShell } from "../components/laporan-shell";
 import { ReportTable, type ReportRow } from "../components/report-table";
 import {
-  GagalMemuat,
   muatOpsiPeriode,
+  TEKS_PILIH_PERIODE,
   type LaporanParams,
 } from "./shared";
 
@@ -44,15 +42,15 @@ export async function ArusKasScreen({ profil, params }: Props) {
     </LaporanShell>
   );
 
-  if (!opsi.ok) return bingkai(<GagalMemuat pesan={opsi.message} />);
-  if (!akun.ok) return bingkai(<GagalMemuat pesan={akun.message} />);
+  if (!opsi.ok) return bingkai(<ErrorState judul="Laporan gagal dimuat" teks={opsi.message} variant="inline" />);
+  if (!akun.ok) return bingkai(<ErrorState judul="Laporan gagal dimuat" teks={akun.message} variant="inline" />);
 
   const periode = parsePeriode(params.periode);
   if (!periode.ok) {
     return bingkai(
       <>
         <LaporanFilter action="/laporan/arus-kas" periodeOptions={opsi.data} />
-        <PilihPeriode pesan={periode.message} />
+        <EmptyState judul="Pilih periode laporan" teks={periode.message ?? TEKS_PILIH_PERIODE} variant="compact" />
       </>,
     );
   }
@@ -66,10 +64,10 @@ export async function ArusKasScreen({ profil, params }: Props) {
           periodeOptions={opsi.data}
           periodeValue={periode.data.kunci}
         />
-        <Pesan>
+        <Notice variant="bordered">
           Akun dengan peran kas dan bank belum tersedia di COA. Arus kas tidak
           dapat disusun.
-        </Pesan>
+        </Notice>
       </>,
       periode.data.kunci,
     );
@@ -89,13 +87,13 @@ export async function ArusKasScreen({ profil, params }: Props) {
 
   if (!barisPeriode.ok) {
     return bingkai(
-      <GagalMemuat pesan={barisPeriode.message} />,
+      <ErrorState judul="Laporan gagal dimuat" teks={barisPeriode.message} variant="inline" />,
       periode.data.kunci,
     );
   }
   if (!barisSebelum.ok) {
     return bingkai(
-      <GagalMemuat pesan={barisSebelum.message} />,
+      <ErrorState judul="Laporan gagal dimuat" teks={barisSebelum.message} variant="inline" />,
       periode.data.kunci,
     );
   }
@@ -136,9 +134,10 @@ export async function ArusKasScreen({ profil, params }: Props) {
       />
 
       <section>
-        <SectionHeader
-          judul={`Arus kas ${laporan.akun.nomor} · ${laporan.akun.nama}`}
-          meta={`${periode.data.label} · ${laporan.baris.length} baris jurnal`}
+        <PageHeader
+          title={`Arus kas ${laporan.akun.nomor} · ${laporan.akun.nama}`}
+          description={`${periode.data.label} · ${laporan.baris.length} baris jurnal`}
+          variant="section"
         />
         <ReportTable
           caption={`Arus kas ${periode.data.label}`}

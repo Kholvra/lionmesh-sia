@@ -1,14 +1,12 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 
-import {
-  DataTable,
-  ROWS_PER_PAGE,
-  StatusBadge,
-  type DataTableColumn,
-} from "@/components/ui";
+import { DataTable } from "@/components/ui/data-table";
+import type { DataTableColumn } from "@/components/ui/data-table.types";
+import { StatusBadge } from "@/components/ui/status-badge";
+import { useTableState } from "@/components/ui/use-table-state";
 import type { PeriodeAkuntansiStatus } from "@/core/ledger";
 import { formatTanggalWaktu } from "@/lib/format/date";
 
@@ -20,7 +18,9 @@ interface DaftarPeriodeProps {
 }
 
 export function DaftarPeriode({ rows }: DaftarPeriodeProps) {
-  const [page, setPage] = useState(1);
+  const { onPageChange, page, totalItems, visibleRows } = useTableState(rows, {
+    initialSort: null,
+  });
 
   const columns = useMemo<DataTableColumn<PeriodeAkuntansiStatus>[]>(
     () => [
@@ -73,23 +73,18 @@ export function DaftarPeriode({ rows }: DaftarPeriodeProps) {
     [],
   );
 
-  const terlihat = useMemo(
-    () => rows.slice((page - 1) * ROWS_PER_PAGE, page * ROWS_PER_PAGE),
-    [page, rows],
-  );
-
   return (
     <DataTable
       caption="Daftar periode akuntansi"
       columns={columns}
       emptyMessage="Belum ada periode akuntansi."
-      onPageChange={setPage}
+      onPageChange={onPageChange}
       onSortChange={() => undefined}
       page={page}
       rowKey={(row) => row.kunci}
-      rows={terlihat}
+      rows={visibleRows}
       sort={null}
-      totalItems={rows.length}
+      totalItems={totalItems}
     />
   );
 }

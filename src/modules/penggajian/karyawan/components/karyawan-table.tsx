@@ -1,10 +1,12 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 
-import { DataTable, ROWS_PER_PAGE, StatusBadge } from "@/components/ui";
-import type { DataTableColumn, TableSort } from "@/components/ui";
+import { DataTable } from "@/components/ui/data-table";
+import type { DataTableColumn } from "@/components/ui/data-table.types";
+import { StatusBadge } from "@/components/ui/status-badge";
+import { useTableState } from "@/components/ui/use-table-state";
 import { samarkanRekening } from "@/modules/penggajian/karyawan/format";
 import type { BarisKaryawan } from "@/modules/penggajian/karyawan/queries";
 import { STATUS_KARYAWAN } from "@/modules/penggajian/karyawan/status";
@@ -17,6 +19,14 @@ type KaryawanTableProps = {
   tampilIdentitas: boolean;
   tampilRekening: boolean;
 };
+
+function getFilterValues(row: BarisKaryawan): readonly string[] {
+  return [row.nama, row.nik ?? ""];
+}
+
+function getFilterValue(row: BarisKaryawan): string {
+  return row.status;
+}
 
 function buildColumns(
   tampilIdentitas: boolean,
@@ -72,34 +82,20 @@ function buildColumns(
   return columns;
 }
 
-function sortRows(rows: BarisKaryawan[], columns: DataTableColumn<BarisKaryawan>[], sort: TableSort | null) {
-  const column = sort && columns.find((candidate) => candidate.id === sort.columnId);
-  if (!sort || !column?.sortValue) return rows;
-  const value = column.sortValue;
-  const factor = sort.direction === "ascending" ? 1 : -1;
-  return [...rows].sort((a, b) => String(value(a)).localeCompare(String(value(b)), "id") * factor);
-}
-
 export function KaryawanTable({ rows, tampilIdentitas, tampilRekening }: KaryawanTableProps) {
-  const [cari, setCari] = useState("");
-  const [status, setStatus] = useState<FilterStatus>("AKTIF");
-  const [page, setPage] = useState(1);
-  const [sort, setSort] = useState<TableSort | null>(null);
   const columns = useMemo(
     () => buildColumns(tampilIdentitas, tampilRekening),
     [tampilIdentitas, tampilRekening],
   );
-
-  const filtered = useMemo(() => {
-    const kata = cari.trim().toLowerCase();
-    return rows.filter(
-      (row) =>
-        (status === "SEMUA" || row.status === status) &&
-        (!kata || row.nama.toLowerCase().includes(kata) || row.nik?.includes(kata)),
-    );
-  }, [cari, rows, status]);
-  const sorted = useMemo(() => sortRows(filtered, columns, sort), [columns, filtered, sort]);
-  const pageRows = sorted.slice((page - 1) * ROWS_PER_PAGE, page * ROWS_PER_PAGE);
+  const table = useTableState<BarisKaryawan>(rows, {
+    columns,
+    getFilterValue,
+    getFilterValues,
+    initialFilterValue: "AKTIF",
+    initialSort: null,
+    matchAllFilterValue: "SEMUA",
+    resetPageOnSort: false,
+  });
 
   return (
     <>
@@ -109,12 +105,11 @@ export function KaryawanTable({ rows, tampilIdentitas, tampilRekening }: Karyawa
           <input
             className={ui.select}
             onChange={(event) => {
-              setCari(event.target.value);
-              setPage(1);
+              table.setFilterText(event.target.value);
             }}
             placeholder={tampilIdentitas ? "Nama atau NIK" : "Nama"}
             type="search"
-            value={cari}
+            value={table.filterText}
           />
         </label>
         <label className={ui.toolbarField}>
@@ -122,10 +117,9 @@ export function KaryawanTable({ rows, tampilIdentitas, tampilRekening }: Karyawa
           <select
             className={ui.select}
             onChange={(event) => {
-              setStatus(event.target.value as FilterStatus);
-              setPage(1);
+              table.setFilterValue(event.target.value as FilterStatus);
             }}
-            value={status}
+            value={table.filterValue}
           >
             <option value="AKTIF">Aktif</option>
             <option value="NONAKTIF">Nonaktif</option>
@@ -137,13 +131,13 @@ export function KaryawanTable({ rows, tampilIdentitas, tampilRekening }: Karyawa
         caption="Direktori karyawan"
         columns={columns}
         emptyMessage="Tidak ada karyawan yang cocok dengan pencarian atau status ini."
-        onPageChange={setPage}
-        onSortChange={setSort}
-        page={page}
+        onPageChange={table.setPage}
+        onSortChange={table.setSort}
+        page={table.page}
         rowKey={(row) => row.id}
-        rows={pageRows}
-        sort={sort}
-        totalItems={sorted.length}
+        rows={table.visibleRows}
+        sort={table.sort}
+        totalItems={table.totalItems}
       />
     </>
   );

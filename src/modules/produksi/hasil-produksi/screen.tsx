@@ -1,8 +1,15 @@
 "use client";
 
-import Link from "next/link";
 import { useState } from "react";
-import { ArrowIcon } from "@/components/ui/arrow-icon";
+import { Notice } from "@/components/ui/notice";
+import { PageHeader } from "@/components/ui/page-header";
+import { EmptyState } from "@/components/ui/states";
+import {
+  STATUS_HASIL_PRODUKSI,
+  StatusBadge,
+} from "@/components/ui/status-badge";
+import { TableActionLink } from "@/components/ui/table-action-link";
+import { useTableState } from "@/components/ui/use-table-state";
 import { ProduksiSubnav } from "../components/produksi-subnav";
 import {
   HasilProduksiSpkItem,
@@ -28,38 +35,28 @@ export function HasilProduksiScreen() {
     }
     return INITIAL_HASIL_PRODUKSI_LIST;
   });
+  const table = useTableState(items, { pageSize: items.length || 1 });
 
   return (
     <div className="w-full text-[#172335] animate-fade-in">
       <ProduksiSubnav />
 
-      {/* Breadcrumb */}
-      <nav className="text-xs font-medium text-[#526174]">
-        <Link
-          href="/produksi"
-          className="text-[#C96A00] underline decoration-[#C96A00]/60 underline-offset-2 hover:text-[#E88A06]"
-        >
-          Siklus Produksi
-        </Link>
-        <span className="mx-1.5">/</span>
-        <span>PR-005 Mencatat hasil produksi</span>
-      </nav>
+      <PageHeader
+        breadcrumb={[
+          { href: "/produksi", label: "Siklus Produksi" },
+          "PR-005 Mencatat hasil produksi",
+        ]}
+        description="Catat hasil dan pemakaian bahan aktual setelah produksi selesai. Hasil diteruskan ke QC."
+        title="Hasil produksi"
+        variant="cycle"
+      />
 
-      {/* Header */}
-      <h1 className="mt-1.5 text-[28px] leading-tight font-bold tracking-tight text-[#172335]">
-        Hasil produksi
-      </h1>
-      <p className="mt-1.5 text-[13px] text-[#526174]">
-        Catat hasil dan pemakaian bahan aktual setelah produksi selesai.
-        Hasil diteruskan ke QC.
-      </p>
-
-      {/* Callout Banner Rework dari QC */}
-      <div className="shadow-card mt-5 rounded-[10px] border border-transparent bg-[#FEF3C7]/85 px-5 py-3.5 animate-slide-down">
-        <p className="text-[13px] font-semibold text-[#92400E]">
-          QC mengembalikan 2 lembar SPK-2611-013 untuk rework.
-        </p>
-      </div>
+      <Notice
+        className="mt-5"
+        tone="warning"
+        title="QC mengembalikan 2 lembar SPK-2611-013 untuk rework."
+        variant="card"
+      />
 
       {/* Card Sedang diproses */}
       <section className="shadow-card mt-5 flex flex-col gap-[14px] rounded-[10px] border border-transparent bg-white p-[20px]">
@@ -82,7 +79,7 @@ export function HasilProduksiScreen() {
               </tr>
             </thead>
             <tbody className="divide-y divide-[#E5E7EB]/80">
-              {items.map((item) => (
+              {table.visibleRows.map((item) => (
                 <tr
                   key={item.id}
                   className="transition-colors hover:bg-slate-50/70"
@@ -105,39 +102,31 @@ export function HasilProduksiScreen() {
                     {item.bahanDiterimaText}
                   </td>
                   <td className="px-[12px] py-4">
-                    {item.status === "REWORK" ? (
-                      <span className="inline-flex items-center rounded-[6px] bg-[#FEF3C7] px-2.5 py-1 text-[11px] font-semibold text-[#B45309]">
-                        Rework
-                      </span>
-                    ) : (
-                      <span className="inline-flex items-center rounded-[6px] bg-[#DBEAFE] px-2.5 py-1 text-[11px] font-semibold text-[#1D4ED8]">
-                        Diproses
-                      </span>
-                    )}
+                    <StatusBadge
+                      status={item.status}
+                      statuses={STATUS_HASIL_PRODUKSI}
+                      variant="compact"
+                    />
                   </td>
                   <td className="px-[12px] py-4 text-right">
-                    <Link
+                    <TableActionLink
                       href={`/produksi/hasil-produksi/${item.nomorSpk.toLowerCase()}`}
-                      className="group inline-flex items-center gap-1.5 text-[12px] font-semibold text-[#C96A00] hover:text-[#E88A06]"
                     >
-                      <span>
-                        {item.status === "REWORK"
-                          ? "Lihat rework"
-                          : "Catat hasil"}
-                      </span>
-                      <ArrowIcon className="transition-transform duration-150 group-hover:translate-x-0.5" />
-                    </Link>
+                      {item.status === "REWORK" ? "Lihat rework" : "Catat hasil"}
+                    </TableActionLink>
                   </td>
                 </tr>
               ))}
 
-              {items.length === 0 && (
+              {table.isEmpty && (
                 <tr>
-                  <td
-                    colSpan={6}
-                    className="px-4 py-8 text-center text-[13px] text-[#526174]"
-                  >
-                    Belum ada SPK yang sedang diproses.
+                  <td colSpan={6}>
+                  <div className="py-8 text-center">
+                    <EmptyState
+                      judul="Belum ada SPK yang sedang diproses."
+                      variant="inline"
+                    />
+                  </div>
                   </td>
                 </tr>
               )}

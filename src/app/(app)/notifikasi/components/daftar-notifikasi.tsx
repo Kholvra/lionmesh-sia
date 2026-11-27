@@ -5,11 +5,13 @@ import { useMemo, useState, useTransition } from "react";
 
 import {
   DataTable,
-  ROWS_PER_PAGE,
   StatusBadge,
   type DataTableColumn,
   type StatusOption,
 } from "@/components/ui";
+import { Notice } from "@/components/ui/notice";
+import { SubmitButton } from "@/components/ui/submit-button";
+import { useTableState } from "@/components/ui/use-table-state";
 import type { Notifikasi } from "@/core/notifikasi";
 import { formatTanggalWaktu } from "@/lib/format/date";
 
@@ -35,7 +37,6 @@ type DaftarNotifikasiProps = {
 
 export function DaftarNotifikasi({ errorMessage, rows }: DaftarNotifikasiProps) {
   const router = useRouter();
-  const [page, setPage] = useState(1);
   const [pesan, setPesan] = useState<string | null>(null);
   const [sedangProses, mulaiProses] = useTransition();
 
@@ -61,7 +62,7 @@ export function DaftarNotifikasi({ errorMessage, rows }: DaftarNotifikasiProps) 
               statuses={STATUS_BACA}
             />
             {row.dibaca_at ? null : (
-              <button
+              <SubmitButton
                 className={styles.secondaryButton}
                 disabled={sedangProses}
                 onClick={() => {
@@ -76,9 +77,10 @@ export function DaftarNotifikasi({ errorMessage, rows }: DaftarNotifikasiProps) 
                   });
                 }}
                 type="button"
+                variant="secondary"
               >
                 Tandai dibaca
-              </button>
+              </SubmitButton>
             )}
           </span>
         ),
@@ -107,17 +109,15 @@ export function DaftarNotifikasi({ errorMessage, rows }: DaftarNotifikasiProps) 
     [router, sedangProses],
   );
 
-  const visibleRows = useMemo(
-    () => rows.slice((page - 1) * ROWS_PER_PAGE, page * ROWS_PER_PAGE),
-    [page, rows],
-  );
+  const { onPageChange, page, totalItems, visibleRows } = useTableState(rows);
+
 
   return (
     <div className={styles.list}>
       {pesan ? (
-        <p className={styles.messageError} role="alert">
+        <Notice className={styles.messageError} tone="danger">
           {pesan}
-        </p>
+        </Notice>
       ) : null}
 
       <DataTable
@@ -125,14 +125,14 @@ export function DaftarNotifikasi({ errorMessage, rows }: DaftarNotifikasiProps) 
         columns={columns}
         emptyMessage="Belum ada notifikasi. Kejadian yang menunggu tindakan Anda akan muncul di sini."
         errorMessage={errorMessage}
-        onPageChange={setPage}
+        onPageChange={onPageChange}
         onRetry={() => router.refresh()}
         onSortChange={() => undefined}
         page={page}
         rowKey={(row) => row.id}
         rows={visibleRows}
         sort={null}
-        totalItems={rows.length}
+        totalItems={totalItems}
       />
     </div>
   );
