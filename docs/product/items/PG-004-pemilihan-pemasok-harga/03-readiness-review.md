@@ -9,18 +9,22 @@
 | 3 | Status dan transisi eksplisit; jalur gagal juga | lolos | `DISETUJUI → PEMASOK_DITETAPKAN` (`D-46`). Tidak ada ganti pemasok. Pembatalan oleh pemohon (`D-48`) di `PG-002`. Jalur gagal (belum disetujui, nonaktif, tanpa alasan) ada |
 | 4 | Validasi punya pesan yang bisa dibaca | lolos | tabel Validasi memuat pesan untuk setiap kondisi gagal. Teks ditandai `[USULAN]` dan ikut kunci koordinator |
 | 5 | Acceptance criteria bisa dibuktikan | lolos | AC-01 sampai AC-11 punya langkah UI dari `pnpm db:reset` |
-| 6 | Semua `depends on` berstatus `done` | belum | `PG-001` dan `PG-002` masih `specified`, belum `done` |
+| 6 | Semua `depends on` berstatus `done` | lolos | `PG-001` (2026-11-26) dan `PG-002` (2026-11-27) `done`; `PG-003` selesai di branch yang sama, PR menunggu merge |
 | 7 | Tidak ada pertanyaan pemblokir terbuka | lolos | 10 pertanyaan: 4 terjawab `D-xx`, 6 terjawab `[USULAN-AGEN]`. Terbuka: 0 |
-| 8 | Gate fondasi terpenuhi | belum | `FND-001` `done`; `FND-002` sampai `FND-006` masih `specified`. `FND-007` juga belum (lihat Dependensi) |
+| 8 | Gate fondasi terpenuhi | lolos | `FND-001`-`FND-009` `done`; gate modul `D-54`/`D-67` terpenuhi |
 | 9 | Ukuran masuk akal untuk satu orang dalam satu track | lolos | usulan `S` (agen): satu layar pilih dan bandingkan. Sumber harga sudah ditetapkan sebagai input manual |
 
 ## Verdict
 
-`Blocked`
+`Ready` (2026-11-27)
 
-Alasan (dependensi belum `done`): `PG-001` dan `PG-002` (`depends on` di `backlog.md`), beserta gate fondasi `FND-002` sampai `FND-006` yang menjadi prasyarat keduanya; `PG-003` (status `DISETUJUI` berasal dari sana, belum di `depends on` backlog, `[USULAN-AGEN]` Q-10); serta `FND-007` karena item ini memakai tabel dan form.
+Dependensi `PG-001` dan `PG-002` sudah `done`; `PG-003` selesai di branch yang sama dan menunggu merge. Gate fondasi `FND-001`–`FND-009` `done`. Tidak ada pemblokir lain. Bukti implementasi ada di `05-evidence.md`; bukti database menyusul di `docs/tech-debt/pg-004-bukti-db.md`.
 
-Siap menjadi Ready begitu dependensi done; tidak ada pemblokir lain.
+## Keputusan yang ditetapkan saat implementasi (2026-11-27)
+
+| Hal | Keputusan | Alasan |
+|---|---|---|
+| Dasar "harga terendah" untuk banyak barang | Total harga terbaru seluruh barang permintaan per pemasok; pemasok harus mengutip semua barang | Satu pemasok untuk seluruh permintaan (`Q-09`) butuh dasar pembanding tunggal; harga sebagian tidak bisa menjadi dasar PO |
 
 ## Pertanyaan terbuka (2026-11-22)
 

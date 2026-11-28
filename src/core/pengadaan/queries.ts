@@ -3,9 +3,11 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { listRiwayatStatus, type RiwayatStatus } from "@/core/dokumen";
 import { fail, ok, type Result } from "@/lib/result";
 import type {
+  PemilihanPemasokView,
   PermintaanPembelian,
   PermintaanPembelianItem,
   PermintaanPembelianView,
+  RiwayatHarga,
 } from "./types";
 
 type Row = Record<string, unknown>;
@@ -164,3 +166,108 @@ export async function getPermintaanPembelian(
 }
 
 export type { PermintaanPembelian };
+
+/**
+ * Penawaran prices live per item and supplier. A supplier can only be chosen
+ * once it quotes every item of the request, so this read returns raw rows and
+ * the display layer aggregates them.
+ */
+export async function getPemilihanPemasok(
+  client: SupabaseClient,
+  dokumenId: string,
+): Promise<Result<PemilihanPemasokView | null>> {
+  const detail = await getPermintaanPembelian(client, dokumenId);
+  if (!detail.ok) return detail;
+  if (!detail.data) return ok(null);
+
+  const { data: pr, error: prError } = await client
+    .from("permintaan_pembelian")
+    .select("pemasok_id,alasan_pemilihan")
+    .eq("dokumen_id", dokumenId)
+    .single();
+  if (prError) return fail(prError.message);
+
+  const { data: penawaran, error: penawaranError } = await client
+    .from("penawaran_harga")
+    .select("id,permintaan_id,item_id,pemasok_id,harga::text,tanggal,created_at")
+    .eq("permintaan_id", dokumenId)
+    .order("tanggal", { ascending: false })
+    .order("created_at", { ascending: false });
+  if (penawaranError) return fail(penawaranError.message);
+
+  const header = pr as unknown as Row;
+
+  return ok({
+    header: detail.data.header,
+    items: detail.data.detail,
+    penawaran: ((penawaran ?? []) as unknown as Row[]).map((row) => ({
+      id: asString(row.id),
+      permintaanId: asString(row.permintaan_id),
+      itemId: asString(row.item_id),
+      pemasokId: asString(row.pemasok_id),
+      harga: asString(row.harga),
+      tanggal: asString(row.tanggal),
+      createdAt: asString(row.created_at),
+    })),
+    pemasokTerpilihId: header.pemasok_id === null ? null : asString(header.pemasok_id),
+    alasanPemilihan: header.alasan_pemilihan === null ? null : asString(header.alasan_pemilihan),
+    riwayat: detail.data.riwayat,
+  });
+}
+
+/**
+ * Price history per product across every request, so Purchasing can see what a
+ * supplier quoted before on the same product (PG-004 AC-06).
+ */
+export async function listRiwayatHarga(
+  client: SupabaseClient,
+  produkIds: readonly string[],
+): Promise<Result<RiwayatHarga[]>> {
+  if (produkIds.length === 0) return ok([]);
+
+  const { data: items, error: itemError } = await client
+    .from("permintaan_pembelian_item")
+    .select("id,produk_id")
+    .in("produk_id", [...produkIds]);
+  if (itemError) return fail(itemError.message);
+
+  const itemRows = (items ?? []) as unknown as Row[];
+  if (itemRows.length === 0) return ok([]);
+
+  const produkByItem = new Map(
+    itemRows.map((row) => [asString(row.id), asString(row.produk_id)]),
+  );
+
+  const { data: harga, error: hargaError } = await client
+    .from("penawaran_harga")
+    .select("id,item_id,pemasok_id,harga::text,tanggal")
+    .in("item_id", [...produkByItem.keys()])
+    .order("tanggal", { ascending: false })
+    .limit(200);
+  if (hargaError) return fail(hargaError.message);
+
+  const hargaRows = (harga ?? []) as unknown as Row[];
+  const { data: pemasok, error: pemasokError } = await client
+    .from("pemasok")
+    .select("id,nama")
+    .in("id", [...new Set(hargaRows.map((row) => asString(row.pemasok_id)))]);
+  if (pemasokError) return fail(pemasokError.message);
+
+  const namaPemasok = new Map(
+    ((pemasok ?? []) as unknown as Row[]).map((row) => [
+      asString(row.id),
+      asString(row.nama),
+    ]),
+  );
+
+  return ok(
+    hargaRows.map((row) => ({
+      id: asString(row.id),
+      produkId: produkByItem.get(asString(row.item_id)) ?? "",
+      pemasokId: asString(row.pemasok_id),
+      pemasokNama: namaPemasok.get(asString(row.pemasok_id)) ?? "Pemasok",
+      harga: asString(row.harga),
+      tanggal: asString(row.tanggal),
+    })),
+  );
+}
