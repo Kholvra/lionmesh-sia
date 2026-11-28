@@ -127,4 +127,37 @@ export const ui = {
     "m-0 font-bold tabular-nums text-[color:var(--text-primary)] text-[length:var(--font-size-display)] leading-[var(--line-height-display)]",
   teksTebal:
     "m-0 font-semibold text-[color:var(--text-primary)] text-[length:var(--font-size-section)] leading-[var(--line-height-section)]",
+
+  // Added by GJ-003.
+  // Process stepper (Figma "Stepper alur rekap"). Each step carries data-status.
+  stepper:
+    "m-0 flex items-center gap-[var(--space-3)] px-[var(--space-5)] py-[var(--space-4)] list-none border-[length:var(--border-width-default)] border-solid border-[var(--border-subtle)] rounded-[var(--radius-lg)] bg-[var(--bg-surface)]",
+  langkah: [
+    "group flex flex-[1_1_0] items-center gap-[var(--space-2)]",
+    "not-last:after:content-[''] not-last:after:flex-[1_1_auto] not-last:after:h-[var(--border-width-default)] not-last:after:ms-[var(--space-2)] not-last:after:bg-[var(--border-subtle)]",
+    "data-[status=selesai]:not-last:after:bg-[var(--text-primary)]",
+  ].join(" "),
+  langkahNomor: [
+    "inline-flex flex-none items-center justify-center size-[var(--space-6)] rounded-[var(--radius-full)] font-semibold text-[length:var(--font-size-caption)]",
+    "border-[length:var(--border-width-default)] border-solid border-[var(--border-input)] text-[color:var(--text-secondary)]",
+    "group-data-[status=selesai]:border-[var(--text-primary)] group-data-[status=selesai]:bg-[var(--text-primary)] group-data-[status=selesai]:text-[color:var(--text-inverse)]",
+    "group-data-[status=aktif]:border-[var(--brand-500)] group-data-[status=aktif]:bg-[var(--brand-500)] group-data-[status=aktif]:text-[color:var(--text-on-brand)]",
+  ].join(" "),
+  langkahTeks: "grid",
+  langkahLabel: `text-[color:var(--text-primary)] ${bodySm} group-data-[status=aktif]:font-semibold group-data-[status=berikutnya]:text-[color:var(--text-secondary)]`,
+  langkahPeran:
+    "text-[color:var(--text-muted)] text-[length:var(--font-size-caption)] leading-[var(--line-height-caption)]",
+
+  // Decision timeline with a coloured marker per event (Figma "Linimasa keputusan").
+  linimasa: [
+    "m-0 p-0 list-none grid gap-[var(--space-4)]",
+    "[&>li]:relative [&>li]:grid [&>li]:gap-[var(--space-1)] [&>li]:ps-[var(--space-6)]",
+    "[&>li]:before:content-[''] [&>li]:before:absolute [&>li]:before:top-[var(--space-1)] [&>li]:before:start-0 [&>li]:before:size-[var(--space-3)] [&>li]:before:rounded-[var(--radius-full)] [&>li]:before:bg-[var(--text-muted)]",
+    "[&>li[data-tone=success]]:before:bg-[var(--status-success-text)] [&>li[data-tone=danger]]:before:bg-[var(--status-danger-text)]",
+    "[&>li[data-tone=warning]]:before:bg-[var(--status-warning-text)] [&>li[data-tone=info]]:before:bg-[var(--status-info-text)]",
+  ].join(" "),
+  linimasaKepala: "flex flex-wrap items-center gap-[var(--space-2)]",
+
+  // Stacked cell content (chip above a note) that keeps chips at their own width.
+  selTumpuk: "grid justify-items-start gap-[var(--space-1)]",
 } as const;
