@@ -14,7 +14,8 @@ insert into public.akun (id, nomor, nama, peran) values
   ('f0060000-0000-4000-8000-000000000011', '501', 'Harga pokok penjualan', 'hpp'),
   ('f0060000-0000-4000-8000-000000000012', '601', 'Tenaga kerja langsung', 'tenaga_kerja_langsung'),
   ('f0060000-0000-4000-8000-000000000013', '602', 'Overhead pabrik', 'overhead_pabrik'),
-  ('f0060000-0000-4000-8000-000000000014', '701', 'Beban gaji administrasi', 'beban_gaji_admin');
+  ('f0060000-0000-4000-8000-000000000014', '701', 'Beban gaji administrasi', 'beban_gaji_admin'),
+  ('f0060000-0000-4000-8000-000000000015', '703', 'Kerugian produksi abnormal', 'kerugian_produksi_abnormal');
 
 -- Reversal authorization belongs to the cancellation action in the calling module.
 insert into public.jenis_sumber_jurnal (kode, nama, peran_berhak)

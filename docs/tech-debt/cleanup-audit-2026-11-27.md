@@ -130,9 +130,9 @@ penuh (lihat item K10). Sisa satu keputusan: akun COA rugi abnormal.
       0021 (WO + RLS) + 16 RPC atomik; core `produksi/` + actions + zod;
       sessionStorage NOL; demo dihapus. Bukti 28 Nov: gate hijau
       (typecheck/lint/arch/test 162/build), reset+seed hijau, E2E BOM v1
-      via UI (simpan + baca-balik OK). Terbuka: akun COA
-      `kerugian_produksi_abnormal` (usul 702, tunggu Accounting) —
-      posting rugi abnormal fail-closed sampai diputuskan.
+      via UI (simpan + baca-balik OK). Akun rugi abnormal DITUTUP via
+      D-71 (703, seed + bump 0007); posting Dr 703 Rp190.000 terbukti
+      via RPC (rollback, DB tak tersentuh).
 
 ## Fase 4 — Scripts, migrasi, hygiene
 Bukti 2026-11-27 (branch `post-merge-consolidation`, 2 agen paralel):
