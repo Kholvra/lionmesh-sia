@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import { Suspense, type ReactNode } from "react";
 
 import { Sidebar } from "@/components/shell/sidebar";
 import { requireSesi } from "@/lib/auth/server";
@@ -8,7 +8,7 @@ import styles from "./layout.module.css";
 // The shell reads the session cookie, so it cannot be prerendered.
 export const instant = false;
 
-export default async function AppLayout({ children }: { children: ReactNode }) {
+async function AppShell({ children }: { children: ReactNode }) {
   const { profile } = await requireSesi();
 
   return (
@@ -24,5 +24,13 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
         {children}
       </main>
     </div>
+  );
+}
+
+export default function AppLayout({ children }: { children: ReactNode }) {
+  return (
+    <Suspense fallback={<div className={styles.shell} />}>
+      <AppShell>{children}</AppShell>
+    </Suspense>
   );
 }

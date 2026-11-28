@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import { connection } from "next/server";
 
 import { createClient } from "@/lib/supabase/server";
 import type { Result } from "@/lib/result";
@@ -20,6 +21,7 @@ export async function getSesiUser(): Promise<{
   user: { id: string; email?: string };
   profile: Profile;
 } | null> {
+  await connection();
   const supabase = await createClient();
   const {
     data: { user },
