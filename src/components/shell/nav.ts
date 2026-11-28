@@ -119,7 +119,7 @@ export const NAV_CYCLES: readonly NavCycle[] = [
         label: "Pembayaran pemasok",
         href: "/pengeluaran/pembayaran",
         icon: "pengeluaran",
-        tersedia: false,
+        tersedia: true,
       },
     ],
   },

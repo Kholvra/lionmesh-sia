@@ -1,1 +1,1 @@
-export const PATH_BAYAR = "/pengeluaran/pembayaran-pemasok";
+export const PATH_BAYAR = "/pengeluaran/pembayaran";

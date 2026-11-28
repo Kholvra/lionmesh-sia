@@ -3,7 +3,7 @@ import Link from "next/link";
 import { StatusBadge } from "@/components/ui";
 import { cekIzin } from "@/lib/auth/permissions";
 import type { Profile } from "@/lib/auth/types";
-import { formatRupiah } from "@/lib/format/number";
+import { formatRupiah } from "@/lib/format/money";
 import {
   formatTanggal,
   formatTanggalSingkat,
@@ -12,6 +12,7 @@ import {
 } from "./format";
 import common from "../permintaan/permintaan.module.css";
 import table from "../penerimaan/penerimaan.module.css";
+import { rupiahKeCents } from "@/modules/pengeluaran/pemasok/format";
 import { CatatPembayaranForm } from "./components/catat-form";
 import { PembayaranActions } from "./components/pembayaran-actions";
 import { PATH_BAYAR } from "./constants";
@@ -102,7 +103,7 @@ export async function PembayaranScreen({ bayarId, pemasokId, profile }: Props) {
                           <th scope="row">{row.nomorInvoice}</th>
                           <td>{row.pemasokNama}</td>
                           <td>{formatTanggalSingkat(row.jatuhTempo)}</td>
-                          <td className={table.nominal}>{formatRupiah(row.sisa)}</td>
+                          <td className={table.nominal}>{formatRupiah(rupiahKeCents(row.sisa))}</td>
                         </tr>
                       ))}
                     </tbody>
@@ -150,7 +151,7 @@ export async function PembayaranScreen({ bayarId, pemasokId, profile }: Props) {
                           </th>
                           <td>{row.pemasokNama}</td>
                           <td>{formatTanggalSingkat(row.tanggal)}</td>
-                          <td className={table.nominal}>{formatRupiah(row.nominal)}</td>
+                          <td className={table.nominal}>{formatRupiah(rupiahKeCents(row.nominal))}</td>
                           <td>
                             <StatusBadge status={row.status} statuses={STATUS_BAYAR} />
                           </td>
@@ -184,7 +185,7 @@ export async function PembayaranScreen({ bayarId, pemasokId, profile }: Props) {
                   <div className={common.detailItem}>
                     <dt className={common.detailLabel}>Nominal</dt>
                     <dd className={common.detailValue}>
-                      {formatRupiah(terpilih.header.nominal)}
+                      {formatRupiah(rupiahKeCents(terpilih.header.nominal))}
                     </dd>
                   </div>
                   <div className={common.detailItem}>
@@ -228,7 +229,7 @@ export async function PembayaranScreen({ bayarId, pemasokId, profile }: Props) {
                       {terpilih.alokasi.map((row) => (
                         <tr key={row.id}>
                           <th scope="row">{row.invoiceNomor ?? row.invoiceId}</th>
-                          <td className={table.nominal}>{formatRupiah(row.nominal)}</td>
+                          <td className={table.nominal}>{formatRupiah(rupiahKeCents(row.nominal))}</td>
                         </tr>
                       ))}
                     </tbody>

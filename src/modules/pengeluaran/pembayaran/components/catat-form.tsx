@@ -3,7 +3,8 @@
 import { useActionState, useMemo, useState } from "react";
 
 import { FormField, Input } from "@/components/ui";
-import { formatRupiah } from "@/lib/format/number";
+import { formatRupiah } from "@/lib/format/money";
+import { rupiahKeCents } from "@/modules/pengeluaran/pemasok/format";
 import { catatPembayaranAction } from "../actions";
 import { INITIAL_BAYAR_ACTION_STATE } from "../form-state";
 import common from "../../permintaan/permintaan.module.css";
@@ -68,7 +69,7 @@ export function CatatPembayaranForm({
               <option value="">Pilih pemasok</option>
               {pemasok.map((item) => (
                 <option key={item.id} value={item.id}>
-                  {item.nama} · sisa {formatRupiah(item.sisa)}
+                  {item.nama} · sisa {formatRupiah(rupiahKeCents(item.sisa))}
                 </option>
               ))}
             </select>
@@ -103,7 +104,7 @@ export function CatatPembayaranForm({
 
       <p className={common.panelMeta}>
         {terpilih
-          ? `Sisa utang ${terpilih.nama}: ${formatRupiah(terpilih.sisa)} dari ${terpilih.jumlahInvoice} invoice.`
+          ? `Sisa utang ${terpilih.nama}: ${formatRupiah(rupiahKeCents(terpilih.sisa))} dari ${terpilih.jumlahInvoice} invoice.`
           : "Pilih pemasok untuk melihat sisa utang."}
       </p>
 

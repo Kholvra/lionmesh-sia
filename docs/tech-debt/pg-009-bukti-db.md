@@ -5,7 +5,7 @@
 PG-009 sudah diimplementasikan: pembayaran pemasok dengan alokasi otomatis ke
 invoice tertua, verifikasi Accounting, hasil transfer (berhasil/gagal), jurnal
 Dr 201 / Cr 102, bukti transfer di Supabase Storage, dan pembatalan dengan
-jurnal pembalik. Migrasi `0029` menambah master rekening, dua tabel pembayaran,
+jurnal pembalik. Migrasi `0034` menambah master rekening, dua tabel pembayaran,
 jenis dokumen, transisi, dan bucket `bukti-transfer`.
 
 Dua hal belum terbukti:
@@ -30,7 +30,7 @@ Dua hal belum terbukti:
    - verifikasi: `accounting@lionmesh.test`
 4. Uji lampiran bukti transfer (PDF/JPG/PNG, maks 5 MB), lalu buka lewat tautan signed URL.
 5. Ambil screenshot 1280px dan perbarui `05-evidence.md`.
-6. Konfirmasi nomor migrasi `0029`, status `DIPOSTING`, dan tepi balik status invoice.
+6. Konfirmasi nomor migrasi `0034`, status `DIPOSTING`, dan tepi balik status invoice.
 
 ## Dampak
 

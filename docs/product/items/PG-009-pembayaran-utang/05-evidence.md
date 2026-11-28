@@ -12,12 +12,12 @@ Status: **usulan `done` dengan utang bukti database**. Pencatatan pembayaran, al
 
 | Bagian | Berkas |
 |---|---|
-| Migrasi | `supabase/migrations/0029_pg009_pembayaran_utang.sql` |
+| Migrasi | `supabase/migrations/0034_pg009_pembayaran_utang.sql` |
 | Seed | `supabase/seeds/0017_pg009_rekening_bank.sql` |
 | Core pengadaan | `src/core/pengadaan/{types,queries,service}.ts` |
 | Modul | `src/modules/pengeluaran/pembayaran/{screen,actions,schema,queries,format,constants,form-state}.ts(x)` |
 | Komponen | `src/modules/pengeluaran/pembayaran/components/*` |
-| Route | `src/app/(app)/pengeluaran/pembayaran-pemasok/{page,loading,error}.tsx` |
+| Route | `src/app/(app)/pengeluaran/pembayaran/{page,loading,error}.tsx` |
 | Test | `src/modules/pengeluaran/pembayaran/schema.test.ts` |
 
 Rancangan singkat:
@@ -49,7 +49,7 @@ Rancangan singkat:
 | `pnpm lint` | lolos |
 | `pnpm test` | lolos — 159 test (149 sebelumnya + 10 test PG-009) |
 | `pnpm arch:check` | lolos — 499 modul, 1824 dependensi |
-| `pnpm build` | lolos; route `/pengeluaran/pembayaran-pemasok` terdaftar |
+| `pnpm build` | lolos; route `/pengeluaran/pembayaran` terdaftar |
 | `pnpm check:migrations` | lolos — 29 berkas, nomor unik |
 | `pnpm db:reset` | belum dijalankan — tidak ada Docker/Supabase lokal |
 
@@ -81,7 +81,7 @@ Rancangan singkat:
 
 - **Status awal `DIAJUKAN`.** Requirement hanya menamai status gagal/batal/sukses; status "menunggu verifikasi" memakai `DIAJUKAN` yang sudah ada.
 - **Rekening placeholder.** Seed `0017` memakai "Bank Uji" dengan nomor `0000000000`; wajib diganti sebelum produksi.
-- **Migrasi `0029`** menambah tepi balik status invoice (`LUNAS → DIBAYAR_SEBAGIAN`, → `TERCATAT`) untuk pembalikan; menyentuh state machine terkunci D-46.
+- **Migrasi `0034`** menambah tepi balik status invoice (`LUNAS → DIBAYAR_SEBAGIAN`, → `TERCATAT`) untuk pembalikan; menyentuh state machine terkunci D-46.
 - **Bucket storage.** Migrasi membuat bucket privat `bukti-transfer`; kebijakan baca hanya lewat signed URL yang dibuat server (service role). Belum ada pengelolaan retensi/penghapusan berkas.
 - **Alokasi mengunci invoice.** `pembayaran_pemasok_aktif` dipanggil dua kali (hitung total lalu alokasi) dalam transaksi yang sama; baris invoice dikunci `for update` sehingga dua pembayaran bersamaan tidak membukukan sisa yang sama.
 - **Master rekening belum punya layar.** Pengelolaan rekening menunggu item master berikutnya; sekarang hanya lewat seed.
