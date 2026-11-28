@@ -31,12 +31,15 @@ import type {
   HasilQC,
   AjukanReturInput,
   BatalkanInvoiceInput,
+  BatalkanPembayaranInput,
   BatalkanPenerimaanInput,
   BatalkanPoInput,
   BatalkanReturInput,
   CatatInvoiceInput,
   CatatKonfirmasiPoInput,
+  CatatPembayaranInput,
   CocokkanUlangInvoiceInput,
+  HasilTransferInput,
   LokasiPemisahanInput,
   PeriksaPRDenganNilaiInput,
   PeriksaPRInput,
@@ -47,6 +50,7 @@ import type {
   TetapkanPemasokDenganAlasanInput,
   TetapkanPemasokPRInput,
   TutupExceptionInput,
+  VerifikasiPembayaranInput,
 } from "./types";
 
 function pesanKesalahan(
@@ -758,4 +762,99 @@ export async function batalkanInvoicePemasok(
   if (error) return fail(pesanKesalahan(error, "Gagal membatalkan invoice pemasok."));
   const hasil = parseDokumen(data);
   return hasil ? ok(hasil) : fail("Respons pembatalan invoice tidak valid.");
+}
+
+export async function catatPembayaranPemasok(
+  supabase: SupabaseClient,
+  input: CatatPembayaranInput,
+): Promise<Result<HasilDokumenPengadaan>> {
+  if (
+    !isUuid(input.actorId) ||
+    !isUuid(input.pemasokId) ||
+    !isUuid(input.rekeningBankId) ||
+    !/^\d+(\.\d{1,2})?$/.test(input.nominal) ||
+    !isIsoDate(input.tanggal)
+  ) {
+    return fail("Data pembayaran pemasok tidak valid.");
+  }
+
+  const { data, error } = await supabase.rpc("catat_pembayaran_pemasok", {
+    p_pemasok_id: input.pemasokId,
+    p_rekening_bank_id: input.rekeningBankId,
+    p_nominal: input.nominal,
+    p_tanggal: input.tanggal,
+    p_aktor_id: input.actorId,
+  });
+
+  if (error) return fail(pesanKesalahan(error, "Gagal mencatat pembayaran pemasok."));
+  const hasil = parseDokumen(data);
+  return hasil ? ok(hasil) : fail("Respons pembayaran pemasok tidak valid.");
+}
+
+export async function verifikasiPembayaranPemasok(
+  supabase: SupabaseClient,
+  input: VerifikasiPembayaranInput,
+): Promise<Result<{ dokumenId: string }>> {
+  if (!isUuid(input.actorId) || !isUuid(input.dokumenId)) {
+    return fail("Data verifikasi pembayaran tidak valid.");
+  }
+
+  const { error } = await supabase.rpc("verifikasi_pembayaran_pemasok", {
+    p_dokumen_id: input.dokumenId,
+    p_aktor_id: input.actorId,
+  });
+
+  if (error) return fail(pesanKesalahan(error, "Gagal memverifikasi pembayaran."));
+  return ok({ dokumenId: input.dokumenId });
+}
+
+export async function catatHasilTransferPemasok(
+  supabase: SupabaseClient,
+  input: HasilTransferInput,
+): Promise<Result<HasilDokumenPengadaan>> {
+  if (!isUuid(input.actorId) || !isUuid(input.dokumenId) || validasiVersi(input.versi)) {
+    return fail("Data hasil transfer tidak valid.");
+  }
+  if (input.berhasil && (input.buktiPath ?? "").trim().length === 0) {
+    return fail("Bukti transfer wajib dilampirkan");
+  }
+  if (!input.berhasil && (input.alasan ?? "").trim().length === 0) {
+    return fail("Alasan kegagalan transfer wajib diisi");
+  }
+
+  const { data, error } = await supabase.rpc("catat_hasil_transfer_pemasok", {
+    p_dokumen_id: input.dokumenId,
+    p_versi: input.versi,
+    p_berhasil: input.berhasil,
+    p_bukti_path: input.buktiPath?.trim() ?? null,
+    p_alasan: input.alasan?.trim() ?? null,
+    p_aktor_id: input.actorId,
+  });
+
+  if (error) return fail(pesanKesalahan(error, "Gagal mencatat hasil transfer."));
+  const hasil = parseDokumen(data);
+  return hasil ? ok(hasil) : fail("Respons hasil transfer tidak valid.");
+}
+
+export async function batalkanPembayaranPemasok(
+  supabase: SupabaseClient,
+  input: BatalkanPembayaranInput,
+): Promise<Result<HasilDokumenPengadaan>> {
+  if (!isUuid(input.actorId) || !isUuid(input.dokumenId) || validasiVersi(input.versi)) {
+    return fail("Data pembatalan pembayaran tidak valid.");
+  }
+  if (input.alasan.trim().length === 0) {
+    return fail("Alasan pembatalan wajib diisi");
+  }
+
+  const { data, error } = await supabase.rpc("batalkan_pembayaran_pemasok", {
+    p_dokumen_id: input.dokumenId,
+    p_versi: input.versi,
+    p_alasan: input.alasan.trim(),
+    p_aktor_id: input.actorId,
+  });
+
+  if (error) return fail(pesanKesalahan(error, "Gagal membatalkan pembayaran."));
+  const hasil = parseDokumen(data);
+  return hasil ? ok(hasil) : fail("Respons pembatalan pembayaran tidak valid.");
 }
