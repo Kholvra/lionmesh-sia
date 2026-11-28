@@ -9,9 +9,9 @@
 | 3 | Status dan transisi eksplisit; jalur gagal juga | lolos | Status PO turunan dan dokumen dari D-46 (`DITERBITKAN`, `DITERIMA_SEBAGIAN`, `DITERIMA`), `DIBATALKAN` dari D-48. Jalur gagal: penolakan kelebihan, pembatalan setelah QC ditolak (`01-requirement.md` Status dan Validasi). |
 | 4 | Validasi punya pesan yang bisa dibaca | lolos | Setiap kondisi punya isi informasi pesan yang tetap. Kalimat final adalah pekerjaan implementasi dan tidak mengubah perilaku. |
 | 5 | Acceptance criteria dapat dibuktikan | lolos | 14 AC dengan langkah UI atau pemeriksaan tabel. Tidak ada AC yang menunggu pertanyaan terbuka. |
-| 6 | Semua `depends on` berstatus `done` | belum | `PG-005` `specified`; `FND-005` `specified`. |
+| 6 | Semua `depends on` berstatus `done` | lolos | `PG-005` selesai di branch stack yang sama; `FND-005` `done` |
 | 7 | Tidak ada pertanyaan pemblokir terbuka | lolos | 10 pertanyaan: terjawab dengan D-xx atau [USULAN-AGEN] (lihat `00-discussion.md`). Tidak ada yang `Terbuka`. |
-| 8 | Gate fondasi terpenuhi | belum | `FND-002` sampai `FND-006` belum `done`; hanya `FND-001` yang `done`. |
+| 8 | Gate fondasi terpenuhi | lolos | `FND-001`-`FND-009` `done`; gate modul `D-54`/`D-67` terpenuhi |
 | 9 | Ukuran masuk akal untuk satu orang | lolos | Ukuran M (usulan). Satu dokumen, satu layar, satu track PG-C; QC dan retur ada di PG-007. |
 
 Pemeriksaan bersyarat:
@@ -26,11 +26,9 @@ Pemeriksaan bersyarat:
 
 ## Verdict
 
-`Blocked`
+`Ready` (2026-11-27)
 
-Alasan: dependensi belum `done`. Daftar dependensi (backlog `depends on`): `PG-005` dan `FND-005`. Gate fondasi `FND-002` sampai `FND-006` juga belum `done`.
-
-Siap menjadi `Ready` begitu dependensi done; tidak ada pemblokir lain.
+Dependensi `PG-005` selesai di branch stack yang sama dan `FND-005` `done`; gate fondasi `FND-001`–`FND-009` `done`. Dua hal yang perlu keputusan tech lead dicatat di `05-evidence.md` dan `docs/tech-debt/pg-006-bukti-db.md`: exception pada penerimaan sebagian (R-02 vs perilaku C-013) dan tidak adanya transisi mundur dari PO `DITERIMA`. Bukti database menyusul.
 
 ## Blockers / decisions needed
 

@@ -43,7 +43,7 @@ function loadTs(
 const calc = loadTs("../src/modules/pendapatan/retur/calc.ts");
 
 const migrationSql = readFileSync(
-  new URL("../supabase/migrations/0017_retur_penjualan.sql", import.meta.url),
+  new URL("../supabase/migrations/0040_retur_penjualan.sql", import.meta.url),
   "utf8",
 );
 const actionsSrc = readFileSync(

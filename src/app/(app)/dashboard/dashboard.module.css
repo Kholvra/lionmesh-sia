@@ -1,0 +1,253 @@
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+}
+
+.header {
+  composes: ui-page-header from global;
+}
+
+.header > div {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.breadcrumb {
+  composes: ui-page-breadcrumb from global;
+  margin: 0;
+}
+
+.title {
+  composes: ui-page-title from global;
+}
+
+.description {
+  composes: ui-page-description from global;
+  margin: 0;
+  font-size: var(--font-size-body);
+  line-height: var(--line-height-body);
+}
+
+.period {
+  flex: none;
+  margin: 0;
+  color: var(--text-muted);
+  font-size: var(--font-size-body-sm);
+  line-height: var(--line-height-body-sm);
+  white-space: nowrap;
+}
+
+.alert {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  padding: var(--space-4) var(--space-5);
+  border: var(--border-width-default) solid var(--status-danger-text);
+  border-radius: var(--radius-lg);
+  background: var(--status-danger-bg);
+  color: var(--status-danger-text);
+}
+
+.alertTitle {
+  margin: 0;
+  font-size: var(--font-size-body);
+  font-weight: 600;
+  line-height: var(--line-height-body);
+}
+
+.alertText {
+  margin: var(--space-1) 0 0;
+  font-size: var(--font-size-body-sm);
+  line-height: var(--line-height-body-sm);
+}
+
+.retryButton {
+  composes: ui-focus-ring from global;
+  flex: none;
+  min-height: var(--control-height);
+  padding-inline: var(--space-4);
+  border: 0;
+  border-radius: var(--radius-md);
+  background: var(--brand-500);
+  color: var(--text-on-brand);
+  cursor: pointer;
+  font: inherit;
+  font-weight: 600;
+}
+
+.retryButton:hover:not(:disabled) {
+  background: var(--brand-600);
+}
+
+.retryButton:disabled {
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.sectionHeader {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.sectionTitle {
+  composes: ui-section-title from global;
+}
+
+.sectionText {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: var(--font-size-body-sm);
+  line-height: var(--line-height-body-sm);
+}
+
+.cards {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-6);
+}
+
+.card {
+  composes: ui-card from global;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  min-height: calc(var(--space-16) + var(--space-12));
+}
+
+.cardLabel {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: var(--font-size-caption);
+  font-weight: 600;
+  letter-spacing: var(--letter-spacing-caption);
+  line-height: var(--line-height-caption);
+  text-transform: uppercase;
+}
+
+.cardValue {
+  margin: 0;
+  color: var(--text-primary);
+  font-size: var(--font-size-display);
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+  line-height: var(--line-height-display);
+}
+
+.cardState {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: var(--font-size-body);
+  font-weight: 600;
+  line-height: var(--line-height-body);
+}
+
+.card[data-status="gagal"] .cardState {
+  color: var(--status-danger-text);
+}
+
+.cardContext {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: var(--font-size-body-sm);
+  line-height: var(--line-height-body-sm);
+}
+
+.cardFootnote {
+  margin: auto 0 0;
+  padding-top: var(--space-3);
+  border-top: var(--border-width-default) solid var(--border-subtle);
+  color: var(--text-muted);
+  font-size: var(--font-size-caption);
+  line-height: var(--line-height-caption);
+}
+
+.notice {
+  margin: 0;
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-md);
+  background: var(--status-warning-bg);
+  color: var(--status-warning-text);
+  font-size: var(--font-size-body-sm);
+  line-height: var(--line-height-body-sm);
+}
+
+.flow {
+  composes: ui-clean-list from global;
+}
+
+.flowStep {
+  display: flex;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  border: var(--border-width-default) solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  background: var(--bg-surface);
+}
+
+.flowNumber {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: var(--space-8);
+  height: var(--space-8);
+  border-radius: var(--radius-full);
+  background: var(--brand-50);
+  color: var(--brand-700);
+  font-size: var(--font-size-body);
+  font-weight: 700;
+}
+
+.flowTitle {
+  composes: ui-body-title from global;
+}
+
+.flowText {
+  margin: var(--space-1) 0 0;
+  color: var(--text-secondary);
+  font-size: var(--font-size-body-sm);
+  line-height: var(--line-height-body-sm);
+}
+
+.note {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: var(--font-size-body-sm);
+  line-height: var(--line-height-body-sm);
+}
+
+.nomor,
+.waktu {
+  composes: ui-tabular from global;
+}
+
+.tableLink {
+  composes: ui-focus-ring from global;
+  color: var(--text-link);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.tableLink:hover {
+  text-decoration: underline;
+}
+
+@media (min-width: 1360px) {
+  .cards {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  .flow {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}

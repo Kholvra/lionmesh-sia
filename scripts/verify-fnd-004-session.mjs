@@ -1,8 +1,10 @@
 #!/usr/bin/env node
 // Proves that document actors come from the Supabase session, not request data.
 
-import { createServerClient } from "@supabase/ssr";
 import pg from "pg";
+import { buatLaporan } from "./lib/harness.mjs";
+import { validasiLokal } from "./lib/local-host.mjs";
+import { masukSesi } from "./lib/session-login.mjs";
 
 const api = process.env.FND004_TEST_API_URL;
 const app = process.env.FND004_TEST_APP_URL;
@@ -22,41 +24,33 @@ if (
 }
 
 for (const value of [api, app, dbUrl]) {
-  const url = new URL(value);
-  if (!["localhost", "127.0.0.1", "[::1]"].includes(url.hostname)) {
-    throw new Error("Only local endpoints are permitted.");
-  }
-  if (url.port === "54321" || url.port === "54322") {
+  validasiLokal(value, "Only local endpoints are permitted.");
+  if (new URL(value).port === "54321" || new URL(value).port === "54322") {
     throw new Error("Do not run against the shared default Supabase project.");
   }
 }
 
+
 const db = new pg.Client({ connectionString: dbUrl });
 await db.connect();
-const jar = new Map();
-const supabase = createServerClient(api, anon, {
-  cookies: {
-    getAll: () => Array.from(jar, ([name, value]) => ({ name, value })),
-    setAll: (cookies) => cookies.forEach(({ name, value }) => jar.set(name, value)),
-  },
-});
+const laporan = buatLaporan({ gaya: "polos", keluarSaatGagal: true });
+const { status: check } = laporan;
 
-function check(name, condition) {
-  console.log(`${condition ? "PASS" : "FAIL"} ${name}`);
-  if (!condition) process.exitCode = 1;
-}
 
 try {
   let response = await fetch(`${app}/fnd004-session-probe`);
   check("anonymous request denied", response.status === 403);
 
-  const login = await supabase.auth.signInWithPassword({
+  const login = await masukSesi({
+    url: api,
+    key: anon,
     email: "manajemen@lionmesh.test",
     password,
   });
-  if (login.error) throw login.error;
 
-  const cookieHeader = Array.from(jar, ([name, value]) => `${name}=${value}`).join("; ");
+
+  const cookieHeader = login.cookie;
+
   response = await fetch(`${app}/fnd004-session-probe`, {
     headers: { cookie: cookieHeader },
   });
@@ -65,7 +59,7 @@ try {
     "session context returns the authenticated actor",
     response.status === 200 &&
       context.ok === true &&
-      context.actorId === login.data.user.id &&
+      context.actorId === login.user.id &&
       context.peran === "Manajemen",
   );
 
@@ -91,8 +85,8 @@ try {
   );
   check(
     "forged request actor was ignored",
-    documentRows[0]?.pembuat_id === login.data.user.id &&
-      historyRows[0]?.actor_id === login.data.user.id &&
+      context.actorId === login.user.id &&
+      historyRows[0]?.actor_id === login.user.id &&
       historyRows[0]?.aksi === "BUAT",
   );
 } finally {

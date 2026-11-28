@@ -1,4 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { z } from "zod";
+
+import { parseRpcResult } from "@/lib/parse-rpc-result";
 import { fail, ok, type Result } from "@/lib/result";
 import { isDecimal } from "./decimal";
 import type {
@@ -12,6 +15,88 @@ import type {
   TransferStokResult,
 } from "./types";
 import { getKetersediaanProdukGudang } from "./queries";
+
+const skemaSaldo = z.object({
+  qty: z.string(),
+  nilai: z.string(),
+  harga_rata: z.string(),
+});
+
+const skemaCatatMutasi = z
+  .object({
+    mutasi_id: z.string(),
+    tipe: z.enum([
+      "MASUK",
+      "KELUAR",
+      "TRANSFER_KELUAR",
+      "TRANSFER_MASUK",
+      "PENYESUAIAN",
+    ]),
+    qty: z.string(),
+    harga_satuan: z.string(),
+    nilai: z.string(),
+    saldo: skemaSaldo,
+  })
+  .transform((data) => ({
+    mutasiId: data.mutasi_id,
+    tipe: data.tipe,
+    qty: data.qty,
+    hargaSatuan: data.harga_satuan,
+    nilai: data.nilai,
+    saldo: {
+      qty: data.saldo.qty,
+      nilai: data.saldo.nilai,
+      hargaRata: data.saldo.harga_rata,
+    },
+  }));
+
+const skemaTransferStok = z
+  .object({
+    transfer_id: z.string(),
+    mutasi_keluar_id: z.string(),
+    mutasi_masuk_id: z.string(),
+    nilai_transfer: z.string(),
+    saldo_asal: skemaSaldo,
+    saldo_tujuan: skemaSaldo,
+  })
+  .transform((data) => ({
+    transferId: data.transfer_id,
+    mutasiKeluarId: data.mutasi_keluar_id,
+    mutasiMasukId: data.mutasi_masuk_id,
+    nilaiTransfer: data.nilai_transfer,
+    saldoAsal: {
+      qty: data.saldo_asal.qty,
+      nilai: data.saldo_asal.nilai,
+      hargaRata: data.saldo_asal.harga_rata,
+    },
+    saldoTujuan: {
+      qty: data.saldo_tujuan.qty,
+      nilai: data.saldo_tujuan.nilai,
+      hargaRata: data.saldo_tujuan.harga_rata,
+    },
+  }));
+
+const skemaOpnameStok = z
+  .object({
+    opname_id: z.string(),
+    mutasi_id: z.string().nullable(),
+    selisih: z.string(),
+    nilai_penyesuaian: z.string(),
+    saldo: skemaSaldo,
+  })
+  .transform((data) => ({
+    opnameId: data.opname_id,
+    mutasiId: data.mutasi_id,
+    selisih: data.selisih,
+    nilaiPenyesuaian: data.nilai_penyesuaian,
+    saldo: {
+      qty: data.saldo.qty,
+      nilai: data.saldo.nilai,
+      hargaRata: data.saldo.harga_rata,
+    },
+  }));
+
+const PESAN_RESPONS_TIDAK_VALID = "Respons mutasi stok tidak valid.";
 
 /**
  * Mencatat mutasi stok dan memperbarui saldo stok dalam satu transaksi (ARCH-04).
@@ -59,18 +144,10 @@ export async function catatMutasi(
     return fail(error.message);
   }
 
-  return ok({
-    mutasiId: data.mutasi_id,
-    tipe: data.tipe,
-    qty: data.qty,
-    hargaSatuan: data.harga_satuan,
-    nilai: data.nilai,
-    saldo: {
-      qty: data.saldo.qty,
-      nilai: data.saldo.nilai,
-      hargaRata: data.saldo.harga_rata,
-    },
-  });
+  const hasil = parseRpcResult(skemaCatatMutasi, data);
+  if (!hasil) return fail(PESAN_RESPONS_TIDAK_VALID);
+
+  return ok(hasil);
 }
 
 /**
@@ -109,22 +186,10 @@ export async function transferStok(
     return fail(error.message);
   }
 
-  return ok({
-    transferId: data.transfer_id,
-    mutasiKeluarId: data.mutasi_keluar_id,
-    mutasiMasukId: data.mutasi_masuk_id,
-    nilaiTransfer: data.nilai_transfer,
-    saldoAsal: {
-      qty: data.saldo_asal.qty,
-      nilai: data.saldo_asal.nilai,
-      hargaRata: data.saldo_asal.harga_rata,
-    },
-    saldoTujuan: {
-      qty: data.saldo_tujuan.qty,
-      nilai: data.saldo_tujuan.nilai,
-      hargaRata: data.saldo_tujuan.harga_rata,
-    },
-  });
+  const hasil = parseRpcResult(skemaTransferStok, data);
+  if (!hasil) return fail(PESAN_RESPONS_TIDAK_VALID);
+
+  return ok(hasil);
 }
 
 /**
@@ -163,17 +228,10 @@ export async function opnameStok(
     return fail(error.message);
   }
 
-  return ok({
-    opnameId: data.opname_id,
-    mutasiId: data.mutasi_id,
-    selisih: data.selisih,
-    nilaiPenyesuaian: data.nilai_penyesuaian,
-    saldo: {
-      qty: data.saldo.qty,
-      nilai: data.saldo.nilai,
-      hargaRata: data.saldo.harga_rata,
-    },
-  });
+  const hasil = parseRpcResult(skemaOpnameStok, data);
+  if (!hasil) return fail(PESAN_RESPONS_TIDAK_VALID);
+
+  return ok(hasil);
 }
 
 /**

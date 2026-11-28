@@ -37,19 +37,66 @@ function getFieldLabel(control: FormControl) {
   );
 }
 
-function getMissingFieldErrors(form: HTMLFormElement) {
-  const requiredControls = Array.from(form.elements).filter(isFormControl);
-  const invalidControls = requiredControls.filter(
-    (control) => control.required && control.validity.valueMissing,
+function hasLengthLimits(
+  control: FormControl,
+): control is HTMLInputElement | HTMLTextAreaElement {
+  return control instanceof HTMLInputElement || control instanceof HTMLTextAreaElement;
+}
+
+function exceedsMaxLength(control: FormControl) {
+  return (
+    hasLengthLimits(control) &&
+    control.maxLength >= 0 &&
+    control.value.length > control.maxLength
+  );
+}
+
+/** Client feedback only; the server remains authoritative for every rule. */
+function getFieldError(control: FormControl): string | undefined {
+  const label = getFieldLabel(control);
+  if (!label) return undefined;
+  const { validity } = control;
+
+  if (validity.valueMissing) return `${label} wajib diisi.`;
+  if (validity.typeMismatch) {
+    const format =
+      control instanceof HTMLInputElement && control.type === "email"
+        ? "alamat email yang valid"
+        : control instanceof HTMLInputElement && control.type === "url"
+          ? "URL yang valid"
+          : "nilai yang valid";
+    return `${label} harus berupa ${format}.`;
+  }
+  if (validity.badInput) return `${label} tidak dikenali.`;
+  if (validity.patternMismatch) return `${label} tidak sesuai format yang diharapkan.`;
+  if (validity.tooShort) {
+    const min = hasLengthLimits(control) ? control.minLength : 0;
+    return `${label} terlalu pendek (minimal ${min} karakter).`;
+  }
+  if (validity.tooLong || exceedsMaxLength(control)) {
+    const max = hasLengthLimits(control) ? control.maxLength : 0;
+    return `${label} terlalu panjang (maksimal ${max} karakter).`;
+  }
+  if (control instanceof HTMLInputElement) {
+    if (validity.rangeUnderflow) return `${label} tidak boleh kurang dari ${control.min}.`;
+    if (validity.rangeOverflow) return `${label} tidak boleh lebih dari ${control.max}.`;
+    if (validity.stepMismatch) return `${label} tidak sesuai kelipatan yang diizinkan.`;
+  }
+  return validity.valid ? undefined : `${label} tidak valid.`;
+}
+
+function collectFieldErrors(form: HTMLFormElement) {
+  const controls = Array.from(form.elements).filter(isFormControl);
+  const invalidControls = controls.filter(
+    (control) => !control.validity.valid || exceedsMaxLength(control),
   );
   const errors = Object.fromEntries(
     invalidControls.flatMap((control) => {
       const key = getFieldKey(control);
-      const label = getFieldLabel(control);
-      return key && label ? [[key, `${label} wajib diisi.`]] : [];
+      const message = getFieldError(control);
+      return key && message ? [[key, message]] : [];
     }),
   );
-
   return { errors, invalidControls };
 }
 
@@ -63,7 +110,7 @@ export function Form({
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
-    const { errors: nextErrors, invalidControls } = getMissingFieldErrors(
+    const { errors: nextErrors, invalidControls } = collectFieldErrors(
       event.currentTarget,
     );
 
@@ -82,11 +129,13 @@ export function Form({
     const target = event.target;
     if (isFormControl(target)) {
       const key = getFieldKey(target);
-      if (key && !target.validity.valueMissing) {
+      if (key) {
+        const message = getFieldError(target);
         setErrors((current) => {
-          if (!(key in current)) return current;
+          if (message === current[key] || (!message && !(key in current))) return current;
           const next = { ...current };
-          delete next[key];
+          if (message) next[key] = message;
+          else delete next[key];
           return next;
         });
       }

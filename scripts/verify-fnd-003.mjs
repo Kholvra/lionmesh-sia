@@ -1,11 +1,16 @@
 import { createClient } from "@supabase/supabase-js";
 import pg from "pg";
 import { readFileSync } from "node:fs";
+import { DB_URL_DEFAULT } from "./lib/db-url.mjs";
+import { buatLaporan } from "./lib/harness.mjs";
+import { pasangPemuatTs } from "./lib/ts-loader.mjs";
 
-import { DAFTAR_PERAN } from "../src/lib/auth/types.ts";
-import { MATRIKS_IZIN, cekIzin } from "../src/lib/auth/permissions.ts";
+pasangPemuatTs();
+const { DAFTAR_PERAN } = await import("../src/lib/auth/types.ts");
+const { MATRIKS_IZIN, cekIzin } = await import("../src/lib/auth/permissions.ts");
 
 const { Client } = pg;
+
 
 const SUPABASE_URL = process.env.SUPABASE_TEST_URL ?? "http://127.0.0.1:54321";
 const SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -13,7 +18,8 @@ const ANON_KEY = process.env.SUPABASE_ANON_KEY;
 if (!SERVICE_ROLE_KEY || !ANON_KEY) {
   throw new Error("Set SUPABASE_SERVICE_ROLE_KEY and SUPABASE_ANON_KEY for the isolated local test project.");
 }
-const PG_CONN = process.env.SUPABASE_TEST_DB_URL ?? "postgresql://postgres:postgres@127.0.0.1:54322/postgres";
+const PG_CONN = process.env.SUPABASE_TEST_DB_URL ?? DB_URL_DEFAULT;
+
 
 const adminClient = createClient(SUPABASE_URL, SERVICE_ROLE_KEY, {
   auth: { autoRefreshToken: false, persistSession: false },
@@ -26,15 +32,9 @@ const anonClient = createClient(SUPABASE_URL, ANON_KEY, {
 const db = new Client({ connectionString: PG_CONN });
 await db.connect();
 
-const results = {};
+const laporan = buatLaporan({ gaya: "kurung", keluarSaatGagal: true });
+const { status: logAC } = laporan;
 
-function logAC(id, passed, detail) {
-  results[id] = { passed, detail };
-  console.log(`[${passed ? "PASS" : "FAIL"}] ${id}: ${detail}`);
-  if (!passed) {
-    process.exitCode = 1;
-  }
-}
 
 // -------------------------------------------------------------
 // AC-07: Tepat 13 nilai peran yang sah
@@ -503,8 +503,8 @@ console.log("[MANUAL] AC-01: protected route /pengaturan redirect check is recor
 
 await db.end();
 
-const total = Object.keys(results).length;
-const passedCount = Object.values(results).filter((r) => r.passed).length;
+const total = laporan.hasil.length;
+const passedCount = laporan.hasil.filter((r) => r.status === "PASS").length;
 console.log(`\nVerifikasi selesai: ${passedCount}/${total} pemeriksaan lulus; AC-01 tercatat sebagai uji manual dan AC-04 tertunda.`);
 if (passedCount < total) {
   process.exit(1);

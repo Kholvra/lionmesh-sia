@@ -9,9 +9,9 @@
 | 3 | Status dan transisi eksplisit; jalur gagal juga | lolos | `COCOK`, `SELISIH`, `TERCATAT` (D-46); `DIBATALKAN` (D-48). Jalur gagal: qty melebihi qty lulus ditolak, kurang tagih menjadi `SELISIH`, PPN tidak sesuai menjadi `SELISIH`, pembatalan setelah pembayaran ditolak. |
 | 4 | Validasi punya pesan yang bisa dibaca | lolos | Setiap kondisi punya isi informasi pesan yang tetap. Kalimat final adalah pekerjaan implementasi dan tidak mengubah perilaku. |
 | 5 | Acceptance criteria dapat dibuktikan | lolos | 21 AC dengan langkah UI atau pemeriksaan utang, jurnal, dan status. Nilai toleransi dan tarif PPN diambil dari data seed dan konfigurasi, bukan dari dokumen ini. |
-| 6 | Semua `depends on` berstatus `done` | belum | `PG-007` `specified`; `FND-006` `specified`. |
+| 6 | Semua `depends on` berstatus `done` | lolos | `PG-007` selesai di branch stack yang sama; `FND-006` `done` |
 | 7 | Tidak ada pertanyaan pemblokir terbuka | lolos | 13 pertanyaan: terjawab dengan D-xx, sumber, atau [USULAN-AGEN]. Tidak ada yang `Terbuka`. |
-| 8 | Gate fondasi terpenuhi | belum | `FND-002` sampai `FND-006` belum `done`; hanya `FND-001` yang `done`. |
+| 8 | Gate fondasi terpenuhi | lolos | `FND-001`-`FND-009` `done`; gate modul `D-54`/`D-67` terpenuhi |
 | 9 | Ukuran masuk akal untuk satu orang | lolos | Ukuran L (usulan). Satu track PG-D dan satu pemilik. Ukuran dipertahankan karena pencocokan, pengesahan, dan jurnal harus atomik dalam satu alur. Belum dipecah; pemecahan hanya boleh diputuskan koordinator. |
 
 Pemeriksaan bersyarat:
@@ -26,11 +26,9 @@ Pemeriksaan bersyarat:
 
 ## Verdict
 
-`Blocked`
+`Ready` (2026-11-27)
 
-Alasan: dependensi belum `done`. Daftar dependensi (backlog `depends on`): `PG-007` dan `FND-006`. Gate fondasi `FND-002` sampai `FND-006` juga belum `done`.
-
-Siap menjadi `Ready` begitu dependensi done; tidak ada pemblokir lain.
+Dependensi `PG-007` selesai di branch stack yang sama dan `FND-006` `done`; gate fondasi `FND-001`–`FND-009` `done`. Dua akun COA (`ppn_masukan` 113, `selisih_harga_pembelian` 603) memakai nomor placeholder yang perlu dikonfirmasi tech lead. Bukti implementasi di `05-evidence.md`; bukti database di `docs/tech-debt/pg-008-bukti-db.md`.
 
 ## Blockers / decisions needed
 

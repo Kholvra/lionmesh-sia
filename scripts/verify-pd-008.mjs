@@ -6,7 +6,7 @@ import assert from "node:assert/strict";
 import { existsSync, readFileSync } from "node:fs";
 
 const migrationSql = readFileSync(
-  new URL("../supabase/migrations/0018_jurnal_penjualan_hpp.sql", import.meta.url),
+  new URL("../supabase/migrations/0041_jurnal_penjualan_hpp.sql", import.meta.url),
   "utf8",
 );
 const pengirimanActions = readFileSync(

@@ -9,9 +9,9 @@
 | 3 | Status dan transisi eksplisit; jalur gagal juga | lolos | Status baris `DITERIMA` → `QC_LULUS` / `QC_GAGAL` (D-46). Retur `DIAJUKAN` → `DISETUJUI` / `DITOLAK` / `DIBATALKAN` (D-48, D-49). Jalur gagal: QC gagal tanpa jurnal, jurnal gagal membatalkan mutasi, retur melebihi qty gagal ditolak. |
 | 4 | Validasi punya pesan yang bisa dibaca | lolos | Setiap kondisi punya isi informasi pesan yang tetap. Kalimat final adalah pekerjaan implementasi dan tidak mengubah perilaku. |
 | 5 | Acceptance criteria dapat dibuktikan | lolos | 18 AC dengan langkah UI atau pemeriksaan saldo, jurnal, dan status. Tidak ada AC yang menunggu pertanyaan terbuka. |
-| 6 | Semua `depends on` berstatus `done` | belum | `PG-006` `specified`; `FND-005` `specified`. |
+| 6 | Semua `depends on` berstatus `done` | lolos | `PG-006` selesai di branch stack yang sama; `FND-005` `done` |
 | 7 | Tidak ada pertanyaan pemblokir terbuka | lolos | 10 pertanyaan: terjawab dengan D-xx atau [USULAN-AGEN]. Tidak ada yang `Terbuka`. |
-| 8 | Gate fondasi terpenuhi | belum | `FND-002` sampai `FND-006` belum `done`; hanya `FND-001` yang `done`. |
+| 8 | Gate fondasi terpenuhi | lolos | `FND-001`-`FND-009` `done`; gate modul `D-54`/`D-67` terpenuhi |
 | 9 | Ukuran masuk akal untuk satu orang | lolos | Ukuran M (usulan). QC, mutasi, jurnal, dan retur berada dalam satu track PG-C dan satu alur penerimaan. Retur menambah satu dokumen dan satu persetujuan, tidak lebih. |
 
 Pemeriksaan bersyarat:
@@ -26,11 +26,9 @@ Pemeriksaan bersyarat:
 
 ## Verdict
 
-`Blocked`
+`Ready` (2026-11-27)
 
-Alasan: dependensi belum `done`. Daftar dependensi (backlog `depends on`): `PG-006` dan `FND-005`. Gate fondasi `FND-002` sampai `FND-006` juga belum `done`.
-
-Siap menjadi `Ready` begitu dependensi done; tidak ada pemblokir lain.
+Dependensi `PG-006` selesai di branch stack yang sama dan `FND-005` `done`; gate fondasi `FND-001`–`FND-009` `done`. Bukti implementasi di `05-evidence.md`; bukti database dan penyimpangan (izin lokasi pemisahan, pengeluaran fisik retur) dicatat di `docs/tech-debt/pg-007-bukti-db.md`.
 
 ## Blockers / decisions needed
 

@@ -54,14 +54,14 @@ Satu pemilik: tech lead. Urutan wajib.
 
 | ID | Fitur | Track | Level | Depends on | Status |
 |---|---|---|---|---|---|
-| `PG-001` | Pemasok, termin, toleransi match | PG-A master | 1 | `FND-003` | `in progress` |
-| `PG-002` | Permintaan pembelian | PG-B pengadaan | 2 | `C-013`, `C-011` | `specified` |
-| `PG-003` | Approval berjenjang | PG-B pengadaan | 3 | `PG-002`, `FND-004` | `specified` |
-| `PG-004` | Pemilihan pemasok & perbandingan harga | PG-B pengadaan | 4 | `PG-002`, `PG-001`, `PG-003` | `specified` |
-| `PG-005` | Purchase order | PG-B pengadaan | 5 | `PG-003`, `PG-004` | `specified` |
-| `PG-006` | Penerimaan barang | PG-C penerimaan | 6 | `PG-005`, `FND-005` | `specified` |
-| `PG-007` | QC bahan & retur ke pemasok | PG-C penerimaan | 7 | `PG-006`, `FND-005` | `specified` |
-| `PG-008` | Three-way match & utang usaha | PG-D utang | 8 | `PG-007`, `FND-006` | `specified` |
+| `PG-001` | Pemasok, termin, toleransi match | PG-A master | 1 | `FND-003` | `done` |
+| `PG-002` | Permintaan pembelian | PG-B pengadaan | 2 | `C-013`, `C-011` | `done` |
+| `PG-003` | Approval berjenjang | PG-B pengadaan | 3 | `PG-002`, `FND-004` | `done` |
+| `PG-004` | Pemilihan pemasok & perbandingan harga | PG-B pengadaan | 4 | `PG-002`, `PG-001`, `PG-003` | `done` |
+| `PG-005` | Purchase order | PG-B pengadaan | 5 | `PG-003`, `PG-004` | `done` |
+| `PG-006` | Penerimaan barang | PG-C penerimaan | 6 | `PG-005`, `FND-005` | `done` |
+| `PG-007` | QC bahan & retur ke pemasok | PG-C penerimaan | 7 | `PG-006`, `FND-005` | `done` |
+| `PG-008` | Three-way match & utang usaha | PG-D utang | 8 | `PG-007`, `FND-006` | `done` |
 | `PG-009` | Pembayaran utang | PG-D utang | 9 | `PG-008`, `FND-006` | `specified` |
 | `PG-010` | Rekonsiliasi bank | PG-E bank | 1 | `FND-006` | `ready` |
 | `PG-011` | Laporan pembelian, utang, dan pengeluaran kas | PG-F pelaporan | 10 | `PG-008`, `PG-009`, `C-009` | `idea` |
@@ -74,13 +74,13 @@ Satu pemilik: tech lead. Urutan wajib.
 
 | ID | Fitur | Track | Level | Depends on | Status |
 |---|---|---|---|---|---|
-| `PR-001` | BOM berversi & toleransi (master produk di `C-011`) | PR-A master | 2 | `C-011`, `FND-002` | `specified` |
-| `PR-002` | Perintah produksi | PR-B eksekusi | 3 | `PR-001`, `FND-004` | `specified` |
-| `PR-003` | Kebutuhan & permintaan bahan | PR-B eksekusi | 4 | `PR-002`, `C-013` | `specified` |
-| `PR-004` | Pemakaian bahan & WIP | PR-B eksekusi | 5 | `PR-003`, `FND-005` | `specified` |
-| `PR-005` | Hasil produksi & QC (rework/reject) | PR-C mutu | 6 | `PR-002`, `PR-004`, `FND-005` | `specified` |
-| `PR-006` | Biaya produksi & HPP | PR-D biaya | 7 | `PR-004`, `PR-005`, `FND-006` | `specified` |
-| `PR-007` | Laporan produksi & efisiensi | PR-D biaya | 8 | `PR-006` | `specified` |
+| `PR-001` | BOM berversi & toleransi (master produk di `C-011`) | PR-A master | 2 | `C-011`, `FND-002` | `done` |
+| `PR-002` | Perintah produksi | PR-B eksekusi | 3 | `PR-001`, `FND-004` | `done` |
+| `PR-003` | Kebutuhan & permintaan bahan | PR-B eksekusi | 4 | `PR-002`, `C-013` | `done` |
+| `PR-004` | Pemakaian bahan & WIP | PR-B eksekusi | 5 | `PR-003`, `FND-005` | `done` |
+| `PR-005` | Hasil produksi & QC (rework/reject) | PR-C mutu | 6 | `PR-002`, `PR-004`, `FND-005` | `done` |
+| `PR-006` | Biaya produksi & HPP | PR-D biaya | 7 | `PR-004`, `PR-005`, `FND-006` | `done` |
+| `PR-007` | Laporan produksi & efisiensi | PR-D biaya | 8 | `PR-006` | `done` |
 
 `PR-003` bergantung pada `C-013` (domain pengadaan di core), bukan pada seluruh siklus Pengeluaran. Jadi Produksi tidak ikut menunggu `PG-005`.
 
@@ -90,7 +90,7 @@ Satu pemilik: tech lead. Urutan wajib.
 
 | ID | Fitur | Track | Level | Depends on | Status |
 |---|---|---|---|---|---|
-| `GJ-001` | Karyawan, gaji pokok, PTKP | GJ-A master | 1 | `FND-003` | `ready` |
+| `GJ-001` | Karyawan, gaji pokok, PTKP | GJ-A master | 1 | `FND-003` | `done` |
 | `GJ-002` | Presensi & pengajuan lembur | GJ-B presensi | 2 | `GJ-001`, `FND-004` | `specified` |
 | `GJ-003` | Rekap & validasi presensi | GJ-B presensi | 3 | `GJ-002` | `specified` |
 | `GJ-004` | Hitung payroll | GJ-C payroll | 4 | `GJ-003`, `FND-002` | `specified` |
@@ -105,12 +105,12 @@ Sebagian tidak memblokir siklus mana pun. Dua di antaranya (`C-011`, `C-013`) me
 
 | ID | Fitur | Track | Level | Depends on | Status |
 |---|---|---|---|---|---|
-| `C-009` | Laporan keuangan | CORE-A laporan | 1 | `FND-006` | `ready` |
-| `C-010` | Tutup buku & jurnal penutup | CORE-B tutup | 2 | `C-009`, `FND-006` | `specified` |
-| `C-011` | Master data terpadu: produk, gudang, satuan | CORE-C master | 1 | `FND-002` | `ready` |
-| `C-012` | Notifikasi in-app + email | CORE-C master | 1 | `FND-004` | `ready` |
-| `C-013` | Domain pengadaan: tabel + aturan status (permintaan, PO, penerimaan) | CORE-D pengadaan | 1 | `FND-002`, `FND-004`, `FND-005`, `FND-006` | `ready` |
-| `C-014` | Dashboard: ringkasan + antrean "menunggu tindakan saya" (fitur `C8`) | CORE-E dashboard | 1 | `FND-003`, `FND-004` | `ready` |
+| `C-009` | Laporan keuangan | CORE-A laporan | 1 | `FND-006` | `done` |
+| `C-010` | Tutup buku & jurnal penutup | CORE-B tutup | 2 | `C-009`, `FND-006` | `done` |
+| `C-011` | Master data terpadu: produk, gudang, satuan | CORE-C master | 1 | `FND-002` | `done` |
+| `C-012` | Notifikasi in-app + email | CORE-C master | 1 | `FND-004` | `done` |
+| `C-013` | Domain pengadaan: tabel + aturan status (permintaan, PO, penerimaan) | CORE-D pengadaan | 1 | `FND-002`, `FND-004`, `FND-005`, `FND-006` | `done` |
+| `C-014` | Dashboard: ringkasan + antrean "menunggu tindakan saya" (fitur `C8`) | CORE-E dashboard | 1 | `FND-003`, `FND-004` | `done` |
 
 `C-013` adalah penerapan `D-05`. Ia **memblokir** `PG-002` dan `PR-003`, tapi bukan seluruh siklus: layar dan alur approval tetap milik track Pengeluaran. Karena itu ia ada di core, bukan di `PG-*` — supaya Produksi tidak ikut menunggu siklus Pengeluaran selesai.
 
@@ -153,13 +153,13 @@ Terbaca per level. Semua item dalam satu baris boleh dikerjakan serentak. `DISC-
 | 10 | — | `PG-011` | — | — | — | — | `INT-001` | 2 |
 | 11 | — | — | — | — | — | — | `INT-002` `INT-003` | 2 |
 
-**Puncak paralel: 11 item serentak di level 1, dan baru terbuka setelah gate `FND-001`–`FND-007` selesai.** Setelah itu turun karena rantai dokumen memang berurutan.
+**Puncak paralel: 11 item serentak di level 1, dan baru terbuka setelah gate `FND-001`–`FND-009` selesai.** Setelah itu turun karena rantai dokumen memang berurutan.
 
 **Titik kritis awal: `C-013`.** Dua siklus menunggunya. Ia harus selesai di gelombang pertama, bukan menyusul.
 
 ## Aturan gate
 
-1. **Gate fondasi** — tidak ada item modul `ready` sebelum `FND-001`–`FND-007` `done`. `FND-008` boleh menyusul paralel. Item `FND-*` tidak terkena gate ini (`D-54`).
+1. **Gate fondasi** — tidak ada item modul `ready` sebelum `FND-001`–`FND-009` `done`. `FND-008` boleh menyusul paralel. Item `FND-*` tidak terkena gate ini (`D-54`, `D-67`).
 2. **Gate per item** — `depends on` harus `done`, bukan sekadar "hampir".
 3. **Gate migrasi** — DDL dari kelompok berupa usulan; tech lead yang menomori dan merge.
 4. **Gate join** — `INT-001` tidak boleh mulai sebelum seluruh jurnal siklus ada.
@@ -194,5 +194,31 @@ Terbaca per level. Semua item dalam satu baris boleh dikerjakan serentak. `DISC-
 | 2026-11-23 | Tambah `PG-011` laporan pembelian/utang/pengeluaran kas (track `PG-F`, level 10) untuk menutup rujukan melingkar `C-009` ↔ `PG-009`; `EPIC-PG` dan `PG-009` diperbaiki di PR yang sama |
 | 2026-11-23 | Gelombang 1 → `ready`: `PD-001`, `PG-001`, `PG-010`, `GJ-001`, `C-009`, `C-011`, `C-012`. Readiness review disegarkan setelah `FND-009` `done`; DDL tetap lewat usulan dan nomor tech lead (`D-09`) |
 | 2026-11-23 | `PG-001` mulai dikerjakan setelah fondasi `FND-001`–`FND-007` selesai; migrasi `0009`, core service, UI, dan validasi server ditambahkan. Verifikasi database tertunda karena Docker tidak tersedia |
-
 | 2026-11-24 | `C-013` dan `C-014` → `ready` setelah keputusan tech lead D-64; lima track core boleh paralel sesuai D-65 |
+| 2026-11-24 | `C-011` → `in progress`: migrasi `0011`, `core/master`, empat layar master di `/pengaturan`, seed mata uang IDR versi `0005`, dan bukti AC-01–AC-11. Sisa bukti lintas item (pemilihan di dokumen dan dokumen lama) menunggu `PD-002`/`PG-002` |
+| 2026-11-24 | `C-013` → `in progress`: implementasi pengadaan dan bukti awal tersedia; pemeriksaan D-64 dan AC tambahan sedang diselesaikan |
+
+| 2026-11-24 | `C-013` tetap `in progress`: aturan D-64 dan uji atomisitas diperbaiki; bukti yang masih parsial perlu dituntaskan |
+| 2026-11-26 | `C-011` → `done`: PR #35 merge; migrasi `0011`, `core/master`, empat layar master, seed IDR `0005`. Sisa bukti lintas item (pemilihan di dokumen, dokumen lama) menunggu `PD-002`/`PG-002` |
+| 2026-11-26 | `C-013` → `done`: PR #37 merge; domain pengadaan, aturan status, harness 17/17 lulus. AC-18 menunggu `PR-002`; read model TS menyusul di `PG-002` |
+| 2026-11-26 | `C-014` → `done`: PR #34 merge; read model `src/core/dashboard`, layar `/`, dan bukti AC-01–AC-08 di `05-evidence.md`; urutan prioritas mengikuti D-65 |
+| 2026-11-24 | `C-009` → `in progress`: tujuh laporan, filter satu bulan, hak PT-02, dan bukti AC-01–AC-11 ditulis; `pnpm verify` lulus. Menunggu review tech lead sebelum `done` |
+| 2026-11-26 | `C-009` → `done`: PR #36 merge; tujuh laporan, rekonsiliasi kartu vs buku besar (D-57), bukti dokumen batal end-to-end, AC-01–AC-11 PASS, screenshot 1280px berisi data |
+| 2026-11-24 | `C-012` → `done`: migrasi `0012` (notifikasi + antrean email), `core/notifikasi` (kejadian, jadwal percobaan, adaptor email, pemroses antrean), layar `/notifikasi`, dan `POST /api/notifikasi/kirim`. AC-01–AC-09 terbukti lewat `scripts/verify-c012-notifikasi.mjs`; AC-10 baru terbukti pada batas notifikasi karena rute dokumen tujuan belum ada. Usulan `done`, menunggu review tech lead |
+
+| 2026-11-24 | `C-012` tetap `in progress`: AC-10 parsial dan hasil kirim email yang tidak pasti memerlukan penanganan sebelum review selesai |
+| 2026-11-26 | `C-012` → `done`: PR #33 merge; migrasi `0012`+`0013`, `core/notifikasi`, layar `/notifikasi`, aturan `D-66` terbukti (worker 4/4, skrip 11/11). AC-10 pada batas notifikasi; pemicu nyata menunggu modul pemilik |
+| 2026-11-26 | `PG-001` → `done`: PR #22 + #29 merge; master pemasok, termin, toleransi match, validasi zod. AC-07/AC-09 lintas item menunggu `PG-005`/`PG-006` |
+| 2026-11-26 | `C-010` → `ready`: `C-009` dan `FND-006` `done`; readiness disegarkan, tidak ada pemblokir lain |
+| 2026-11-27 | `C-010` → `done`: PR #41 merge; migrasi `0015`, core ledger, UI `/laporan/periode`, 39 pemeriksaan, evidence + screenshot 1280px |
+| 2026-11-26 | `PG-002` → `ready`: `C-011` dan `C-013` `done`; readiness disegarkan, tidak ada pemblokir lain |
+| 2026-11-26 | Teks gate diselaraskan ke `FND-001`–`FND-009` (`D-67`); `EPIC-FND` → `done` |
+| 2026-11-27 | `GJ-001` → `done`: PR #38 merge dengan mock store; migrasi `0016` dicadangkan, swap Supabase + bukti ulang DB tercatat di `docs/tech-debt/gj-001-mock-store.md` |
+| 2026-11-27 | `PG-002` → `done`: PR #40 merge (cherry-pick delta murni, stack C-011/C-013 dibuang); bukti AC-DB menyusul, tercatat di `docs/tech-debt/pg-002-bukti-db.md` |
+| 2026-11-27 | `PR-001`..`PR-007` → `done`: PR #39 merge borongan satu squash (46 file, layar + store lokal); bukti AC per item + rapihan UI menyusul, tercatat di `docs/tech-debt/pr-borongan-bukti.md` |
+| 2026-11-27 | `PG-003` → `done`: PR dibuka; review Purchasing menyimpan estimasi nilai, approve/tolak per jenjang lewat mesin `FND-004`, migrasi `0023`. Bukti AC-DB menyusul, tercatat di `docs/tech-debt/pg-003-bukti-db.md` |
+| 2026-11-27 | `PG-004` → `done`: ditumpuk di branch PG-003; tabel `penawaran_harga`, layar perbandingan harga, penetapan satu pemasok dengan alasan wajib bila bukan total terendah, migrasi `0024`. Bukti AC-DB menyusul, tercatat di `docs/tech-debt/pg-004-bukti-db.md` |
+| 2026-11-27 | `PG-005` → `done`: ditumpuk di branch PG-004; `konfigurasi_pajak` berversi, `terbitkan_po` (harga wajib dari pembanding PG-004), pembatalan PO + permintaan, catatan konfirmasi, migrasi `0025` (jenis dokumen `PURCHASE_ORDER` sudah terdaftar di `0014`). Penerbitan PO tertahan sampai tarif PPN diisi; bukti AC-DB di `docs/tech-debt/pg-005-bukti-db.md` |
+| 2026-11-27 | `PG-006` → `done`: ditumpuk di branch PG-005; layar penerimaan dengan sisa qty PO, pembatalan sebelum QC, penutupan exception oleh Purchasing, migrasi `0026` (tepi `DITERIMA → DIBATALKAN`). Dua keputusan state machine ditandai untuk tech lead; bukti AC-DB di `docs/tech-debt/pg-006-bukti-db.md` |
+| 2026-11-27 | `PG-007` → `done`: ditumpuk di branch PG-006; layar QC dan retur pemasok, lokasi pemisahan barang gagal, dokumen `RETUR_PEMASOK` dengan persetujuan Accounting, migrasi `0027`. QC memakai `catat_qc_penerimaan` C-013 sehingga stok + jurnal tetap satu transaksi; bukti AC-DB di `docs/tech-debt/pg-007-bukti-db.md` |
+| 2026-11-27 | `PG-008` → `done`: ditumpuk di branch PG-007; dokumen `INVOICE_PEMASOK`, pencocokan qty/harga/PPN saat simpan, pengesahan utang + jurnal Dr 202/PPN/selisih Cr 201, koreksi dan pembatalan dengan jurnal pembalik, migrasi `0028`, seed akun placeholder 113/603 (`0014`). Bukti AC-DB di `docs/tech-debt/pg-008-bukti-db.md` |

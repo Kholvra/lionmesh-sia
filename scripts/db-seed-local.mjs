@@ -4,8 +4,7 @@
 // shared local value so an agent or a new teammate can run one command.
 
 import { spawnSync } from "node:child_process";
-
-const LOCAL_TEST_PASSWORD = "lionmesh-dev-2026";
+import { gagalVerifikasi } from "./lib/harness.mjs";
 
 const AKUN = [
   ["Penjualan", "penjualan@lionmesh.test"],
@@ -23,16 +22,27 @@ const AKUN = [
   ["Karyawan", "karyawan@lionmesh.test"],
 ];
 
+// AGENTS.md "Local Test Accounts": this is a documented Docker-local fake
+// credential, so `pnpm db:seed:local` needs no environment variable.
+const LOCAL_TEST_PASSWORD = "lionmesh-dev-2026";
 const password = process.env.FND_TEST_PASSWORD ?? LOCAL_TEST_PASSWORD;
+
 
 const result = spawnSync(process.execPath, ["scripts/db-seed.mjs"], {
   stdio: "inherit",
   env: { ...process.env, FND_TEST_PASSWORD: password },
 });
 
+if (result.error) {
+  gagalVerifikasi(
+    `Tidak bisa menjalankan seed: ${result.error.message}`,
+    "db:seed:local",
+  );
+}
 if (result.status !== 0) {
   process.exit(result.status ?? 1);
 }
+
 
 const lines = AKUN.map(([peran, email]) => `  ${peran.padEnd(20)} ${email}`);
 

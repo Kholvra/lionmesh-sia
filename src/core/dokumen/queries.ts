@@ -1,6 +1,8 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { z } from "zod";
 
 import { fail, ok, type Result } from "@/lib/result";
+import { isRecord } from "@/lib/validation";
 import type {
   AturanApproval,
   AturanApprovalSnapshot,
@@ -9,40 +11,135 @@ import type {
   RiwayatStatus,
 } from "./types";
 
-type Row = Record<string, unknown>;
+const RESPONS_TIDAK_VALID = "Respons layanan dokumen tidak valid.";
 
-function asString(value: unknown): string {
+function keTeks(value: unknown): string {
   return typeof value === "string" ? value : String(value ?? "");
 }
 
-function asNumber(value: unknown): number {
+function keAngka(value: unknown): number {
   return typeof value === "number" ? value : Number(value);
 }
 
-function asSnapshot(value: unknown): AturanApprovalSnapshot[] {
-  return Array.isArray(value) ? (value as AturanApprovalSnapshot[]) : [];
+function keBaris(value: unknown): Record<string, unknown> {
+  return isRecord(value) ? value : {};
 }
 
-function mapDokumen(row: Row): Dokumen {
-  return {
-    id: asString(row.id),
-    tipe: asString(row.tipe),
-    nomor: asString(row.nomor),
-    periode: asString(row.periode),
-    status: asString(row.status) as Dokumen["status"],
-    pembuat_id: asString(row.pembuat_id),
-    nominal: row.nominal === null ? null : asString(row.nominal),
-    approval_snapshot: asSnapshot(row.approval_snapshot),
-    siklus_approval: asNumber(row.siklus_approval),
-    diposting: row.diposting === true,
-    diposting_at: row.diposting_at === null ? null : asString(row.diposting_at),
-    versi: asNumber(row.versi),
-    created_by: row.created_by === null ? null : asString(row.created_by),
-    created_at: asString(row.created_at),
-    updated_by: row.updated_by === null ? null : asString(row.updated_by),
-    updated_at: asString(row.updated_at),
-  };
-}
+const teks = () => z.preprocess(keTeks, z.string());
+
+const teksNullable = () =>
+  z.preprocess(
+    (value) => (value === null ? null : keTeks(value)),
+    z.string().nullable(),
+  );
+
+const angka = () =>
+  z.preprocess(keAngka, z.custom<number>((value) => typeof value === "number"));
+
+const angkaNullable = () =>
+  z.preprocess(
+    (value) => (value === null ? null : keAngka(value)),
+    z.custom<number | null>((value) => value === null || typeof value === "number"),
+  );
+
+const bolean = () => z.preprocess((value) => value === true, z.boolean());
+
+const snapshot = () =>
+  z.preprocess(
+    (value) => (Array.isArray(value) ? value : []),
+    z.custom<AturanApprovalSnapshot[]>((value) => Array.isArray(value)),
+  );
+
+const status = () =>
+  z.preprocess(keTeks, z.custom<Dokumen["status"]>((value) => typeof value === "string"));
+
+const statusNullable = () =>
+  z.preprocess(
+    (value) => (value === null ? null : keTeks(value)),
+    z.custom<Dokumen["status"] | null>(
+      (value) => value === null || typeof value === "string",
+    ),
+  );
+
+const aksi = () =>
+  z.preprocess(keTeks, z.custom<RiwayatStatus["aksi"]>((value) => typeof value === "string"));
+
+const peran = () =>
+  z.preprocess(keTeks, z.custom<AturanApproval["peran"]>((value) => typeof value === "string"));
+
+const dokumenRowSchema = z.preprocess(
+  keBaris,
+  z.object({
+    id: teks(),
+    tipe: teks(),
+    nomor: teks(),
+    periode: teks(),
+    status: status(),
+    pembuat_id: teks(),
+    nominal: teksNullable(),
+    approval_snapshot: snapshot(),
+    siklus_approval: angka(),
+    diposting: bolean(),
+    diposting_at: teksNullable(),
+    versi: angka(),
+    created_by: teksNullable(),
+    created_at: teks(),
+    updated_by: teksNullable(),
+    updated_at: teks(),
+  }),
+);
+
+const riwayatStatusRowSchema = z.preprocess(
+  keBaris,
+  z.object({
+    id: teks(),
+    dokumen_id: teks(),
+    tipe_dokumen: teks(),
+    aksi: aksi(),
+    status_asal: statusNullable(),
+    status_tujuan: status(),
+    level: angkaNullable(),
+    alasan: teksNullable(),
+    siklus_approval: angka(),
+    actor_id: teks(),
+    created_by: teksNullable(),
+    created_at: teks(),
+    updated_by: teksNullable(),
+    updated_at: teks(),
+  }),
+);
+
+const jenisDokumenRowSchema = z.preprocess(
+  keBaris,
+  z.object({
+    tipe: teks(),
+    nama: teks(),
+    status_awal: status(),
+    perlu_approval: bolean(),
+    status_menunggu_approval: statusNullable(),
+    created_by: teksNullable(),
+    created_at: teks(),
+    updated_by: teksNullable(),
+    updated_at: teks(),
+  }),
+);
+
+const aturanApprovalRowSchema = z.preprocess(
+  keBaris,
+  z.object({
+    id: teks(),
+    tipe: teks(),
+    level: angka(),
+    peran: peran(),
+    batas_bawah: teks(),
+    batas_atas: teksNullable(),
+    aktif: bolean(),
+    created_by: teksNullable(),
+    created_at: teks(),
+    updated_by: teksNullable(),
+    updated_at: teks(),
+  }),
+);
 
 const DOKUMEN_COLUMNS =
   "id,tipe,nomor,periode,status,pembuat_id,nominal::text,approval_snapshot," +
@@ -59,7 +156,11 @@ export async function getDokumen(
     .maybeSingle();
 
   if (error) return fail(error.message);
-  return ok(data ? mapDokumen(data as unknown as Row) : null);
+  if (!data) return ok(null);
+
+  const parsed = dokumenRowSchema.safeParse(data);
+  if (!parsed.success) return fail(RESPONS_TIDAK_VALID);
+  return ok(parsed.data);
 }
 
 export async function listRiwayatStatus(
@@ -78,25 +179,9 @@ export async function listRiwayatStatus(
 
   if (error) return fail(error.message);
 
-  return ok(
-    ((data ?? []) as unknown as Row[]).map((row) => ({
-      id: asString(row.id),
-      dokumen_id: asString(row.dokumen_id),
-      tipe_dokumen: asString(row.tipe_dokumen),
-      aksi: asString(row.aksi) as RiwayatStatus["aksi"],
-      status_asal:
-        row.status_asal === null ? null : (asString(row.status_asal) as RiwayatStatus["status_asal"]),
-      status_tujuan: asString(row.status_tujuan) as RiwayatStatus["status_tujuan"],
-      level: row.level === null ? null : asNumber(row.level),
-      alasan: row.alasan === null ? null : asString(row.alasan),
-      siklus_approval: asNumber(row.siklus_approval),
-      actor_id: asString(row.actor_id),
-      created_by: row.created_by === null ? null : asString(row.created_by),
-      created_at: asString(row.created_at),
-      updated_by: row.updated_by === null ? null : asString(row.updated_by),
-      updated_at: asString(row.updated_at),
-    })),
-  );
+  const parsed = z.array(riwayatStatusRowSchema).safeParse(data ?? []);
+  if (!parsed.success) return fail(RESPONS_TIDAK_VALID);
+  return ok(parsed.data);
 }
 
 export async function getJenisDokumen(
@@ -115,21 +200,9 @@ export async function getJenisDokumen(
   if (error) return fail(error.message);
   if (!data) return ok(null);
 
-  const row = data as unknown as Row;
-  return ok({
-    tipe: asString(row.tipe),
-    nama: asString(row.nama),
-    status_awal: asString(row.status_awal) as JenisDokumen["status_awal"],
-    perlu_approval: row.perlu_approval === true,
-    status_menunggu_approval:
-      row.status_menunggu_approval === null
-        ? null
-        : (asString(row.status_menunggu_approval) as JenisDokumen["status_menunggu_approval"]),
-    created_by: row.created_by === null ? null : asString(row.created_by),
-    created_at: asString(row.created_at),
-    updated_by: row.updated_by === null ? null : asString(row.updated_by),
-    updated_at: asString(row.updated_at),
-  });
+  const parsed = jenisDokumenRowSchema.safeParse(data);
+  if (!parsed.success) return fail(RESPONS_TIDAK_VALID);
+  return ok(parsed.data);
 }
 
 export async function listAturanApproval(
@@ -147,19 +220,7 @@ export async function listAturanApproval(
 
   if (error) return fail(error.message);
 
-  return ok(
-    ((data ?? []) as unknown as Row[]).map((row) => ({
-      id: asString(row.id),
-      tipe: asString(row.tipe),
-      level: asNumber(row.level),
-      peran: asString(row.peran) as AturanApproval["peran"],
-      batas_bawah: asString(row.batas_bawah),
-      batas_atas: row.batas_atas === null ? null : asString(row.batas_atas),
-      aktif: row.aktif === true,
-      created_by: row.created_by === null ? null : asString(row.created_by),
-      created_at: asString(row.created_at),
-      updated_by: row.updated_by === null ? null : asString(row.updated_by),
-      updated_at: asString(row.updated_at),
-    })),
-  );
+  const parsed = z.array(aturanApprovalRowSchema).safeParse(data ?? []);
+  if (!parsed.success) return fail(RESPONS_TIDAK_VALID);
+  return ok(parsed.data);
 }

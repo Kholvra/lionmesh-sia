@@ -4,27 +4,12 @@
 // - `reset` and `seed` require a local database target (PRE-04).
 
 import { spawnSync } from "node:child_process";
+import { gagal as gagalHarness } from "./lib/harness.mjs";
+import { hostDari, hostLokal } from "./lib/local-host.mjs";
+
+const fail = (message) => gagalHarness(message, "db-guard");
 
 const mode = process.argv[2];
-
-function fail(message) {
-  console.error(`\n[db-guard] ${message}\n`);
-  process.exit(1);
-}
-
-function isLocalHost(host) {
-  return ["localhost", "127.0.0.1", "::1", "0.0.0.0", "host.docker.internal"].includes(
-    host,
-  );
-}
-
-function getHost(value) {
-  try {
-    return new URL(value).hostname;
-  } catch {
-    return value;
-  }
-}
 
 if (mode === "setup") {
   const result = spawnSync("docker", ["info"], { stdio: "ignore" });
@@ -38,8 +23,8 @@ if (mode === "setup") {
   for (const key of ["SUPABASE_DB_URL", "DATABASE_URL", "PGHOST"]) {
     const value = process.env[key];
     if (!value) continue;
-    const host = getHost(value);
-    if (!isLocalHost(host)) {
+    const host = hostDari(value);
+    if (!hostLokal(host)) {
       if (mode === "seed") {
         fail("Seed hanya boleh dijalankan di lingkungan lokal.");
       }

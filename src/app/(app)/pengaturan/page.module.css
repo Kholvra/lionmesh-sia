@@ -5,31 +5,19 @@
 }
 
 .header {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: var(--space-6);
-  margin-bottom: var(--space-8);
+  composes: ui-page-header ui-page-header-spaced from global;
 }
 
 .breadcrumb {
-  margin: 0 0 var(--space-2);
-  color: var(--text-muted);
-  font-size: var(--font-size-caption);
-  line-height: var(--line-height-caption);
+  composes: ui-page-breadcrumb ui-page-breadcrumb-gap from global;
 }
 
 .title {
-  margin: 0;
-  color: var(--text-primary);
-  font-size: var(--font-size-title);
-  font-weight: 700;
-  line-height: var(--line-height-title);
+  composes: ui-page-title from global;
 }
 
 .description {
-  margin: var(--space-2) 0 0;
-  color: var(--text-secondary);
+  composes: ui-page-description ui-page-description-gap from global;
 }
 
 .card {
@@ -64,4 +52,37 @@
 .detail dd {
   margin: var(--space-1) 0 0;
   color: var(--text-primary);
+}
+
+.masterGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-4);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.masterLink {
+  composes: ui-focus-ring from global;
+  display: grid;
+  gap: var(--space-1);
+  padding: var(--space-4);
+  border: var(--border-width-default) solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  color: var(--text-primary);
+  text-decoration: none;
+}
+
+.masterLink:hover {
+  border-color: var(--border-strong);
+  background: var(--bg-subtle);
+}
+
+.masterLinkTitle {
+  font-weight: 600;
+}
+
+.masterLinkMeta {
+  composes: ui-meta-label from global;
 }

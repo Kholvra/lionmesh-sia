@@ -44,7 +44,7 @@ const constants = loadTs("../src/modules/pendapatan/pembayaran/constants.ts");
 const calc = loadTs("../src/modules/pendapatan/pembayaran/calc.ts");
 
 const migrationSql = readFileSync(
-  new URL("../supabase/migrations/0016_penerimaan_pembayaran.sql", import.meta.url),
+  new URL("../supabase/migrations/0039_penerimaan_pembayaran.sql", import.meta.url),
   "utf8",
 );
 const actionsSrc = readFileSync(

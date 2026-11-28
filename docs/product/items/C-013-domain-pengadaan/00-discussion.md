@@ -128,3 +128,7 @@ Tidak ada pertanyaan terbuka. Item ini menunggu dependensi `FND-002`, `FND-004`,
 ## Klarifikasi tech lead 2026-11-23
 
 D-57 menyelesaikan pembatalan PR; D-58 mengesahkan usulan konsisten dan memisahkan status PO/penerimaan. D-64 menetapkan pembatalan PO oleh Purchasing pembuat sebelum penerimaan, referensi Produksi dan atomisitas QC. Catatan lama di atas dipertahankan sebagai riwayat, bukan keputusan terkini. Gate FND telah selesai; lihat 03 untuk verdict terbaru.
+
+## Keputusan tech lead — nilai jurnal nol
+
+Pada QC lulus, jika jumlah nilai setelah pembulatan menjadi nol, transaksi ditolak tanpa perubahan stok atau jurnal. Ini menjaga kewajiban jurnal D-44; perlakuan khusus barang gratis belum ditetapkan.

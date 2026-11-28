@@ -9,7 +9,7 @@
     "lint": "eslint",
     "typecheck": "tsc --noEmit",
     "verify:pg001": "node scripts/verify-pg001-nominal.mjs",
-    "test": "node --test --experimental-strip-types \"src/**/*.test.ts\"",
+    "test": "node --test --experimental-strip-types \"src/**/*.test.ts\" && node --experimental-strip-types scripts/verify-c012-worker.mjs",
     "arch:check": "depcruise src --config .dependency-cruiser.cjs",
     "check:migrations": "node scripts/check-migrations.mjs",
     "db:setup": "pnpm check:migrations && node scripts/db-guard.mjs setup && supabase start && supabase db reset",
@@ -22,6 +22,7 @@
   "dependencies": {
     "@supabase/ssr": "^0.12.7",
     "@supabase/supabase-js": "^2.118.0",
+    "lucide-react": "1.82.0",
     "next": "16.4.6",
     "react": "19.3.0",
     "react-dom": "19.3.0",

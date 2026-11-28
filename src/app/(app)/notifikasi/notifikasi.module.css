@@ -1,0 +1,119 @@
+/* The shell owns page padding and height (FND-009); this file adds no offset. */
+.page {
+  composes: ui-page from global;
+}
+
+.header {
+  composes: ui-page-header ui-page-header-spaced from global;
+}
+
+.breadcrumb {
+  composes: ui-page-breadcrumb ui-page-breadcrumb-gap from global;
+}
+
+.title {
+  composes: ui-page-title from global;
+}
+
+.description {
+  composes: ui-page-description ui-page-description-gap ui-page-description-bounded from global;
+}
+
+.meta {
+  flex: 0 0 auto;
+  margin: 0;
+  padding: var(--space-3) var(--space-4);
+  border: var(--border-width-default) solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  background: var(--bg-surface);
+  color: var(--text-secondary);
+  font-size: var(--font-size-body-sm);
+  line-height: var(--line-height-body-sm);
+}
+
+.metaAngka {
+  composes: ui-tabular from global;
+  color: var(--text-primary);
+  font-size: var(--font-size-section);
+}
+
+.panelCard {
+  composes: ui-card from global;
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.cellStack {
+  display: flex;
+  max-width: 24rem;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-1);
+}
+
+.cellEmail {
+  max-width: 18rem;
+}
+
+.cellTitle {
+  color: var(--text-primary);
+  font-weight: 600;
+  white-space: normal;
+}
+
+.cellMeta {
+  composes: ui-meta-label from global;
+  white-space: normal;
+}
+
+.messageError {
+  composes: ui-message ui-message-error from global;
+}
+
+.primaryButton,
+.secondaryButton {
+  composes: ui-button-sm ui-focus-ring from global;
+}
+
+.primaryButton {
+  composes: ui-button-primary from global;
+}
+
+.secondaryButton {
+  composes: ui-button-secondary from global;
+}
+
+.loadingPage,
+.errorPage {
+  composes: ui-state-page from global;
+}
+
+.loadingCard,
+.errorCard {
+  composes: ui-state-card from global;
+}
+
+.loadingTitle,
+.errorTitle {
+  composes: ui-section-title from global;
+}
+
+.loadingText,
+.errorText {
+  composes: ui-state-text from global;
+}
+
+.errorActions {
+  composes: ui-error-actions from global;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .primaryButton,
+  .secondaryButton {
+    transition-duration: var(--motion-none);
+  }
+}

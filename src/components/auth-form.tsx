@@ -4,8 +4,11 @@ import type { FormEvent } from "react";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 
+import { ArrowIcon } from "@/components/ui/arrow-icon";
+import { Notice } from "@/components/ui/notice";
+import { SubmitButton } from "@/components/ui/submit-button";
 import styles from "@/components/auth.module.css";
-import { createClient } from "@/lib/supabase/client";
+import { signInAction } from "@/lib/auth/server";
 
 function MailIcon() {
   return (
@@ -53,15 +56,10 @@ export function AuthForm() {
     setIsLoading(true);
 
     try {
-      const supabase = createClient();
-      const result = await supabase.auth.signInWithPassword({ email: email.trim(), password });
-      if (result.error || !result.data.user) throw new Error();
-
-      const { data: profile, error: profileError } = await supabase
-        .from("profiles").select("aktif").eq("id", result.data.user.id).single();
-      if (profileError || !profile?.aktif) {
-        await supabase.auth.signOut();
-        throw new Error();
+      const result = await signInAction(email, password);
+      if (!result.ok) {
+        setError(result.message);
+        return;
       }
       router.push("/pengaturan");
       router.refresh();
@@ -95,11 +93,14 @@ export function AuthForm() {
         </div>
       </div>
 
-      {error && <p className={styles.error} role="alert">{error}</p>}
-      <button className="flex min-h-[var(--button-lg-height)] cursor-pointer items-center justify-center gap-[var(--space-2)] rounded-[var(--radius-md)] border-0 bg-[var(--brand-500)] px-[var(--space-4)] text-[length:var(--font-size-body)] font-semibold text-[color:var(--text-on-brand)] transition-colors duration-[var(--motion-fast)] hover:bg-[var(--brand-600)] focus-visible:outline-[length:var(--focus-ring-width)] focus-visible:outline-[var(--border-focus)] focus-visible:outline-offset-[var(--focus-ring-offset)] disabled:cursor-wait disabled:opacity-70" disabled={isLoading} type="submit">
-        {isLoading ? "Memproses..." : "Masuk ke SIA"}
-        {!isLoading && <svg aria-hidden="true" className="h-[var(--space-4)] w-[var(--space-4)]" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.75" viewBox="0 0 24 24"><path d="M5 12h14m-7-7 7 7-7 7" /></svg>}
-      </button>
+      {error && <Notice className={styles.error} tone="danger">{error}</Notice>}
+      <SubmitButton
+        busy={isLoading}
+        size="lg"
+        trailingIcon={<ArrowIcon className="h-[var(--space-4)] w-[var(--space-4)]" />}
+      >
+        Masuk ke SIA
+      </SubmitButton>
     </form>
   );
 }

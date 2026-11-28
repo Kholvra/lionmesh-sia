@@ -1,7 +1,7 @@
-import { getSesiUser } from "@/lib/auth/server";
-import { cekIzin, type AksiDomain } from "@/lib/auth/permissions";
+import "server-only";
+
 import { fail, type Result } from "@/lib/result";
-import { createAdminClient } from "@/lib/supabase/admin";
+import { withAdminAction } from "@/lib/with-admin-action";
 import {
   hasOnlyKeys,
   isIsoDate,
@@ -16,8 +16,6 @@ import type {
 } from "./types";
 import { isDecimal } from "./decimal";
 import { catatMutasi, opnameStok, transferStok } from "./service";
-
-type InventorySession = NonNullable<Awaited<ReturnType<typeof getSesiUser>>>;
 
 function parseTransferInput(value: unknown) {
   if (!isRecord(value) || !hasOnlyKeys(value, ["produkId", "gudangAsalId", "gudangTujuanId", "qty", "tanggal"])) {
@@ -85,69 +83,55 @@ function parseAdjustmentInput(value: unknown) {
   };
 }
 
-async function requireInventoryPermission(aksi: AksiDomain): Promise<Result<InventorySession>> {
-  const session = await getSesiUser();
-  if (!session) {
-    return fail("Sesi Anda sudah berakhir. Silakan masuk lagi.");
-  }
-  if (!cekIzin(session.profile.peran, aksi)) {
-    return fail("Peran Anda tidak berwenang melakukan tindakan ini.");
-  }
-  return { ok: true, data: session };
-}
-
 /**
  * Jalur internal server untuk transfer manual. Pemanggil harus mencegah retry
  * otomatis dan tidak boleh meneruskan payload sumber dokumen atau actor.
  */
 export async function transferStokUntukSesi(input: unknown): Promise<Result<TransferStokResult>> {
-  const session = await requireInventoryPermission("transfer_antar_gudang");
-  if (!session.ok) return session;
+  return withAdminAction({ service: "stok", aksi: "transfer_antar_gudang" }, ({ actorId, getAdmin }) => {
+    const parsed = parseTransferInput(input);
+    if (!parsed) return fail("Data transfer stok tidak valid.");
 
-  const parsed = parseTransferInput(input);
-  if (!parsed) return fail("Data transfer stok tidak valid.");
+    const admin = getAdmin();
+    if (!admin.ok) return admin;
 
-  const admin = createAdminClient();
-  if (!admin) return fail("Layanan stok belum tersedia. Hubungi administrator.");
-
-  return transferStok(admin, {
-    ...parsed,
-    actorId: session.data.user.id,
+    return transferStok(admin.data, {
+      ...parsed,
+      actorId,
+    });
   });
 }
 
 /** Jalur internal server untuk opname manual oleh peran Gudang. */
 export async function opnameStokUntukSesi(input: unknown): Promise<Result<OpnameStokResult>> {
-  const session = await requireInventoryPermission("opname_stok");
-  if (!session.ok) return session;
+  return withAdminAction({ service: "stok", aksi: "opname_stok" }, ({ actorId, getAdmin }) => {
+    const parsed = parseOpnameInput(input);
+    if (!parsed) return fail("Data opname stok tidak valid.");
 
-  const parsed = parseOpnameInput(input);
-  if (!parsed) return fail("Data opname stok tidak valid.");
+    const admin = getAdmin();
+    if (!admin.ok) return admin;
 
-  const admin = createAdminClient();
-  if (!admin) return fail("Layanan stok belum tersedia. Hubungi administrator.");
-
-  return opnameStok(admin, {
-    ...parsed,
-    actorId: session.data.user.id,
+    return opnameStok(admin.data, {
+      ...parsed,
+      actorId,
+    });
   });
 }
 
 /** Jalur internal server untuk mutasi penyesuaian manual oleh peran Gudang. */
 export async function catatPenyesuaianUntukSesi(input: unknown): Promise<Result<CatatMutasiResult>> {
-  const session = await requireInventoryPermission("penyesuaian_stok");
-  if (!session.ok) return session;
+  return withAdminAction({ service: "stok", aksi: "penyesuaian_stok" }, ({ actorId, getAdmin }) => {
+    const parsed = parseAdjustmentInput(input);
+    if (!parsed) return fail("Data penyesuaian stok tidak valid.");
 
-  const parsed = parseAdjustmentInput(input);
-  if (!parsed) return fail("Data penyesuaian stok tidak valid.");
+    const admin = getAdmin();
+    if (!admin.ok) return admin;
 
-  const admin = createAdminClient();
-  if (!admin) return fail("Layanan stok belum tersedia. Hubungi administrator.");
-
-  return catatMutasi(admin, {
-    ...parsed,
-    tanggal: parsed.tanggal ?? new Date().toISOString(),
-    tipe: "PENYESUAIAN",
-    actorId: session.data.user.id,
+    return catatMutasi(admin.data, {
+      ...parsed,
+      tanggal: parsed.tanggal ?? new Date().toISOString(),
+      tipe: "PENYESUAIAN",
+      actorId,
+    });
   });
 }

@@ -5,21 +5,22 @@
 // Needs the local stack (`pnpm db:reset` + `pnpm db:seed`) and uses a fresh name
 // each run, so it can be repeated without cleaning up (suppliers are never deleted).
 
+import { gagalVerifikasi } from "./lib/harness.mjs";
 const AUTH_URL = process.env.SUPABASE_AUTH_URL ?? "http://127.0.0.1:54321";
 const REST_URL = process.env.SUPABASE_REST_URL ?? "http://127.0.0.1:54321/rest/v1";
-const KEY =
-  process.env.SUPABASE_PUBLISHABLE_KEY ??
-  "sb_publishable_ACJWlzQHlZjBrEguHvfOxg_3BJgxAaH";
+const KEY = process.env.SUPABASE_PUBLISHABLE_KEY;
 const EMAIL = process.env.FND_TEST_EMAIL ?? "purchasing@lionmesh.test";
-const PASSWORD = process.env.FND_TEST_PASSWORD ?? "lionmesh-dev-2026";
+const PASSWORD = process.env.FND_TEST_PASSWORD;
 
-const NOMINAL = "9007199254740993";
-const NAMA = `PT Presisi ${Date.now()}`;
+const fail = (pesan) => gagalVerifikasi(pesan, "verify-pg001");
 
-function fail(pesan) {
-  console.error(`\n[verify-pg001] GAGAL: ${pesan}\n`);
-  process.exit(1);
+if (!KEY) {
+  fail("Atur SUPABASE_PUBLISHABLE_KEY di lingkungan sebelum menjalankan verifikasi.");
 }
+if (!PASSWORD) {
+  fail("Atur FND_TEST_PASSWORD di lingkungan sebelum menjalankan verifikasi.");
+}
+
 
 const login = await fetch(`${AUTH_URL}/auth/v1/token?grant_type=password`, {
   method: "POST",

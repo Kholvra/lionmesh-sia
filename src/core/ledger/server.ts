@@ -1,6 +1,7 @@
-import { getSesiUser } from "@/lib/auth/server";
+import "server-only";
+
 import { fail, type Result } from "@/lib/result";
-import { createAdminClient } from "@/lib/supabase/admin";
+import { withAdminAction } from "@/lib/with-admin-action";
 import {
   hasOnlyKeys,
   isIsoDate,
@@ -9,6 +10,12 @@ import {
   isUuid,
 } from "@/lib/validation";
 import { postJournal, reverseJournal } from "./service";
+import {
+  tutupBukuTahunan,
+  tutupPeriode,
+  type HasilTutupPeriode,
+  type HasilTutupTahun,
+} from "./tutup-buku";
 import {
   AKUN_PERAN_PATTERN,
   SUMBER_TIPE_PATTERN,
@@ -122,39 +129,92 @@ function parseReverseInput(
 export async function postJournalUntukSesi(
   input: unknown,
 ): Promise<Result<PostJournalResult>> {
-  const session = await getSesiUser();
-  if (!session) return fail("Sesi Anda sudah berakhir. Silakan masuk lagi.");
+  return withAdminAction({ service: "jurnal" }, async ({ session, getAdmin }) => {
+    const parsed = parsePostInput(input);
+    if (!parsed) return fail("Data jurnal tidak valid.");
 
-  const parsed = parsePostInput(input);
-  if (!parsed) return fail("Data jurnal tidak valid.");
+    const admin = getAdmin();
+    if (!admin.ok) return fail(admin.message);
 
-  const admin = createAdminClient();
-  if (!admin) {
-    return fail("Layanan jurnal belum tersedia. Hubungi administrator.");
-  }
-
-  return postJournal(admin, {
-    ...parsed,
-    actorId: session.user.id,
+    return postJournal(admin.data, {
+      ...parsed,
+      actorId: session.user.id,
+    });
   });
 }
 
 export async function reverseJournalUntukSesi(
   input: unknown,
 ): Promise<Result<PostJournalResult>> {
-  const session = await getSesiUser();
-  if (!session) return fail("Sesi Anda sudah berakhir. Silakan masuk lagi.");
+  return withAdminAction({ service: "jurnal" }, async ({ session, getAdmin }) => {
+    const parsed = parseReverseInput(input);
+    if (!parsed) return fail("Data jurnal pembalik tidak valid.");
 
-  const parsed = parseReverseInput(input);
-  if (!parsed) return fail("Data jurnal pembalik tidak valid.");
+    const admin = getAdmin();
+    if (!admin.ok) return fail(admin.message);
 
-  const admin = createAdminClient();
-  if (!admin) {
-    return fail("Layanan jurnal belum tersedia. Hubungi administrator.");
-  }
-
-  return reverseJournal(admin, {
-    ...parsed,
-    actorId: session.user.id,
+    return reverseJournal(admin.data, {
+      ...parsed,
+      actorId: session.user.id,
+    });
   });
+}
+
+function parseTutupPeriodeInput(
+  value: unknown,
+): { tahun: number; bulan: number } | null {
+  if (!isRecord(value) || !hasOnlyKeys(value, ["tahun", "bulan"])) {
+    return null;
+  }
+  if (
+    typeof value.tahun !== "number" ||
+    !Number.isInteger(value.tahun) ||
+    typeof value.bulan !== "number" ||
+    !Number.isInteger(value.bulan)
+  ) {
+    return null;
+  }
+  return { tahun: value.tahun, bulan: value.bulan };
+}
+
+function parseTutupTahunInput(value: unknown): { tahun: number } | null {
+  if (!isRecord(value) || !hasOnlyKeys(value, ["tahun"])) return null;
+  if (typeof value.tahun !== "number" || !Number.isInteger(value.tahun)) {
+    return null;
+  }
+  return { tahun: value.tahun };
+}
+
+export async function tutupPeriodeUntukSesi(
+  input: unknown,
+): Promise<Result<HasilTutupPeriode>> {
+  return withAdminAction(
+    { service: "tutup buku", assertAksi: "tutup_periode" },
+    async ({ actorId, getAdmin }) => {
+      const parsed = parseTutupPeriodeInput(input);
+      if (!parsed) return fail("Data periode tidak valid.");
+
+      const admin = getAdmin();
+      if (!admin.ok) return fail(admin.message);
+
+      return tutupPeriode(admin.data, { ...parsed, actorId });
+    },
+  );
+}
+
+export async function tutupTahunUntukSesi(
+  input: unknown,
+): Promise<Result<HasilTutupTahun>> {
+  return withAdminAction(
+    { service: "tutup buku", assertAksi: "tutup_tahun_buku" },
+    async ({ actorId, getAdmin }) => {
+      const parsed = parseTutupTahunInput(input);
+      if (!parsed) return fail("Data tahun buku tidak valid.");
+
+      const admin = getAdmin();
+      if (!admin.ok) return fail(admin.message);
+
+      return tutupBukuTahunan(admin.data, { ...parsed, actorId });
+    },
+  );
 }

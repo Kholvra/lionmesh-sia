@@ -1,0 +1,272 @@
+.page {
+  composes: ui-page from global;
+  min-height: 100vh;
+  padding: var(--space-8);
+}
+
+.header {
+  composes: ui-page-header ui-page-header-spaced from global;
+}
+
+.title {
+  composes: ui-page-title from global;
+}
+
+.description {
+  composes: ui-page-description ui-page-description-gap ui-page-description-bounded from global;
+}
+
+.layout {
+  composes: ui-layout-12 from global;
+}
+
+.listPanel,
+.panel {
+  composes: ui-panel-half from global;
+}
+
+.panelCard {
+  composes: ui-card from global;
+}
+
+.panelHeader {
+  composes: ui-panel-header from global;
+}
+
+.panelTitle {
+  composes: ui-section-title from global;
+}
+
+.panelMeta {
+  composes: ui-panel-meta from global;
+}
+
+.primaryButton,
+.dangerButton {
+  composes: ui-button ui-button-color-transition ui-focus-ring from global;
+}
+
+.primaryButton {
+  composes: ui-button-primary from global;
+}
+
+.dangerButton {
+  composes: ui-button-danger from global;
+}
+
+.form {
+  composes: ui-form from global;
+}
+
+.formGrid {
+  composes: ui-form-grid from global;
+}
+
+.fieldFull {
+  composes: ui-field-full from global;
+}
+
+.formActions {
+  composes: ui-form-actions from global;
+}
+
+.messageSuccess {
+  composes: ui-message ui-message-success from global;
+}
+
+.messageError {
+  composes: ui-message ui-message-error from global;
+}
+
+.emptyState {
+  composes: ui-empty-state from global;
+}
+
+.detailHeader {
+  composes: ui-detail-header from global;
+}
+
+.detailNumber {
+  composes: ui-section-title from global;
+  overflow-wrap: anywhere;
+  font-variant-numeric: tabular-nums;
+}
+
+.detailSubtitle {
+  composes: ui-panel-meta from global;
+}
+
+.details {
+  composes: ui-details from global;
+}
+
+.detailItem {
+  composes: ui-detail-item from global;
+}
+
+.detailLabel {
+  composes: ui-detail-label from global;
+}
+
+.detailValue {
+  composes: ui-detail-value from global;
+}
+
+.itemList {
+  display: grid;
+  gap: var(--space-2);
+  margin: var(--space-4) 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.itemRow {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  gap: var(--space-3);
+  align-items: center;
+  padding: var(--space-3);
+  border: var(--border-width-default) solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  background: var(--bg-subtle);
+  font-size: var(--font-size-body-sm);
+  line-height: var(--line-height-body-sm);
+}
+
+.itemName {
+  overflow-wrap: anywhere;
+  font-weight: 600;
+}
+
+.itemQty {
+  composes: ui-tabular from global;
+  color: var(--text-secondary);
+}
+
+.lineGrid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr) minmax(0, 0.8fr) auto;
+  gap: var(--space-3);
+  align-items: end;
+  margin-bottom: var(--space-3);
+}
+
+.select,
+.textarea {
+  composes: ui-focus-ring from global;
+  width: 100%;
+  border: var(--border-width-default) solid var(--border-input);
+  border-radius: var(--radius-md);
+  background: var(--bg-surface);
+  color: var(--text-primary);
+  font-size: var(--font-size-body);
+  line-height: var(--line-height-body);
+}
+
+.select {
+  height: var(--control-height);
+  padding-inline: var(--space-3);
+}
+
+.textarea {
+  min-height: calc(var(--control-height) * 2);
+  padding: var(--space-3);
+  resize: vertical;
+}
+
+.select:focus-visible,
+.textarea:focus-visible {
+  border-color: var(--border-focus);
+}
+
+.lineError {
+  margin: calc(-1 * var(--space-2)) 0 var(--space-2);
+  color: var(--status-danger-text);
+  font-size: var(--font-size-label);
+  line-height: var(--line-height-label);
+}
+
+.actionForm {
+  display: grid;
+  gap: var(--space-2);
+  margin-top: var(--space-3);
+}
+
+.actionButtons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  margin-top: var(--space-4);
+}
+
+.reasonInput {
+  width: 100%;
+  height: var(--control-height);
+  padding-inline: var(--space-3);
+  border: var(--border-width-default) solid var(--border-input);
+  border-radius: var(--radius-md);
+  background: var(--bg-surface);
+  color: var(--text-primary);
+  font-size: var(--font-size-body);
+}
+
+.historyList {
+  display: grid;
+  gap: var(--space-2);
+  margin: var(--space-3) 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.historyItem {
+  composes: ui-history-item from global;
+}
+
+.historyAction {
+  composes: ui-history-action from global;
+}
+
+.historyMeta {
+  composes: ui-meta-label from global;
+}
+
+.sectionDivider {
+  composes: ui-section-divider from global;
+}
+
+.tableLink {
+  composes: ui-table-link ui-focus-ring from global;
+}
+
+.tableLinkActive {
+  composes: ui-table-link-active from global;
+}
+
+.statusCell {
+  composes: ui-status-cell from global;
+}
+
+.loadingPage,
+.errorPage {
+  composes: ui-state-page from global;
+}
+
+.loadingCard,
+.errorCard {
+  composes: ui-state-card from global;
+}
+
+.loadingTitle {
+  composes: ui-section-title from global;
+}
+
+.loadingText {
+  composes: ui-state-text from global;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .primaryButton,
+  .dangerButton {
+    transition-duration: var(--motion-none);
+  }
+}

@@ -1,5 +1,7 @@
 import Link from "next/link";
 
+import { Notice } from "@/components/ui/notice";
+import { PageHeader } from "@/components/ui/page-header";
 import type { Profile } from "@/lib/auth/types";
 import { cekIzin } from "@/lib/auth/permissions";
 import { PemasokDetail } from "./components/pemasok-detail";
@@ -49,16 +51,10 @@ export async function PemasokScreen({
 
   return (
     <section aria-label="Master pemasok" className={styles.page}>
-      <header className={styles.header}>
-        <div>
-          <p className={styles.breadcrumb}>Siklus Pengeluaran / Pemasok</p>
-          <h1 className={styles.title}>Pemasok</h1>
-          <p className={styles.description}>
-            Kelola master pemasok, termin pembayaran, dan toleransi pencocokan
-            tiga dokumen. Perubahan master hanya berlaku untuk dokumen baru.
-          </p>
-        </div>
-      </header>
+      <PageHeader
+        description="Kelola master pemasok, termin pembayaran, dan toleransi pencocokan tiga dokumen. Perubahan master hanya berlaku untuk dokumen baru."
+        title="Pemasok"
+      />
 
       <div className={styles.layout}>
         <section className={styles.listPanel} aria-labelledby="daftar-pemasok">
@@ -117,15 +113,9 @@ export async function PemasokScreen({
                 <h2 className={styles.panelTitle} id="panel-pemasok">
                   Detail pemasok
                 </h2>
-                <p className={styles.messageError} role="alert">
+                <Notice tone="danger">
                   Detail pemasok gagal dimuat: {data.terpilihError}
-                </p>
-                <Link
-                  className={styles.secondaryButton}
-                  href={PATH_PEMASOK}
-                >
-                  Kembali ke daftar
-                </Link>
+                </Notice>
               </div>
             ) : pemasokId ? (
               <div>
@@ -136,12 +126,6 @@ export async function PemasokScreen({
                   Pemasok yang dipilih tidak tersedia atau sudah tidak dapat
                   diakses oleh peran Anda.
                 </p>
-                <Link
-                  className={styles.secondaryButton}
-                  href={PATH_PEMASOK}
-                >
-                  Kembali ke daftar
-                </Link>
               </div>
             ) : canManage ? (
               <>

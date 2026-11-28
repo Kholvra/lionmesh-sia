@@ -1,0 +1,323 @@
+/* The shell already pads the page and owns the height (FND-009); extra padding
+   here would start content at x=284 instead of x=252. */
+.page {
+  composes: ui-page from global;
+}
+
+.header {
+  composes: ui-page-header ui-page-header-spaced from global;
+}
+
+.title {
+  composes: ui-page-title from global;
+}
+
+.description {
+  composes: ui-page-description ui-page-description-gap ui-page-description-bounded from global;
+}
+
+.layout {
+  composes: ui-layout-12 from global;
+}
+
+.panel,
+.listPanel {
+  composes: ui-panel-half from global;
+}
+
+/* Produk: the list carries six columns, so it takes the wider side (LAYOUTS §2). */
+.panelSempit {
+  grid-column: span 5;
+}
+
+.panelLuas {
+  grid-column: span 7;
+}
+
+.panelCard {
+  composes: ui-card from global;
+}
+
+.panelHeader {
+  composes: ui-panel-header from global;
+}
+
+.panelTitle {
+  composes: ui-section-title from global;
+}
+
+.panelMeta {
+  composes: ui-panel-meta from global;
+}
+
+.panelAction {
+  flex: 0 0 auto;
+}
+
+.section {
+  margin-top: var(--space-6);
+}
+
+.sectionHeader {
+  composes: ui-panel-header from global;
+}
+
+.primaryButton,
+.secondaryButton,
+.dangerButton {
+  composes: ui-button ui-button-transition ui-focus-ring from global;
+}
+
+.primaryButton {
+  composes: ui-button-primary from global;
+}
+
+.secondaryButton {
+  composes: ui-button-secondary from global;
+}
+
+.dangerButton {
+  composes: ui-button-danger from global;
+}
+
+.buttonRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.detailActions {
+  margin-top: var(--space-4);
+}
+
+/* The status action keeps its message under its own button, full width, instead
+   of squeezing it beside the button in the shared row. */
+.statusAction {
+  display: grid;
+  flex: 1 1 260px;
+  gap: var(--space-2);
+  justify-items: start;
+  min-width: 0;
+}
+
+.statusAction > p {
+  width: 100%;
+}
+
+.form {
+  composes: ui-form from global;
+}
+
+.formGrid {
+  composes: ui-form-grid from global;
+}
+
+.formGridTiga {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  align-items: end;
+  gap: var(--space-4);
+}
+
+.fieldFull {
+  composes: ui-field-full from global;
+}
+
+.formActions {
+  composes: ui-form-actions from global;
+}
+
+.select {
+  composes: ui-focus-ring from global;
+  width: 100%;
+  min-height: var(--control-height);
+  padding-inline: var(--space-3);
+  border: var(--border-width-default) solid var(--border-input);
+  border-radius: var(--radius-md);
+  background: var(--bg-surface);
+  color: var(--text-primary);
+  font: inherit;
+}
+
+.select[aria-invalid="true"] {
+  border-color: var(--status-danger-text);
+}
+
+.messageSuccess {
+  composes: ui-message ui-message-success from global;
+}
+
+.messageError {
+  composes: ui-message ui-message-error from global;
+}
+
+.detailHeader {
+  composes: ui-detail-header from global;
+}
+
+.detailName {
+  composes: ui-section-title from global;
+  overflow-wrap: anywhere;
+}
+
+.detailSubtitle {
+  composes: ui-panel-meta from global;
+}
+
+.details {
+  composes: ui-details from global;
+}
+
+.detailItem {
+  composes: ui-detail-item from global;
+}
+
+.detailLabel {
+  composes: ui-detail-label from global;
+}
+
+.detailValue {
+  composes: ui-detail-value from global;
+}
+
+.sectionDivider {
+  composes: ui-section-divider from global;
+}
+
+.historyHeader {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-3);
+  margin-bottom: var(--space-3);
+}
+
+.historyTitle {
+  composes: ui-body-title from global;
+}
+
+.historyList {
+  composes: ui-clean-list from global;
+}
+
+.historyItem {
+  composes: ui-history-item from global;
+}
+
+.historyAction {
+  composes: ui-history-action from global;
+}
+
+.historyMeta {
+  composes: ui-meta-label from global;
+}
+
+.emptyState {
+  composes: ui-empty-state from global;
+}
+
+.tableLink {
+  composes: ui-table-link ui-focus-ring from global;
+}
+
+.tableLinkActive {
+  composes: ui-table-link-active from global;
+}
+
+.statusCell {
+  composes: ui-status-cell from global;
+}
+
+.numericCell {
+  composes: ui-tabular from global;
+}
+
+.hubLink {
+  composes: ui-focus-ring from global;
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-4);
+  padding: var(--space-3) var(--space-4);
+  border: var(--border-width-default) solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  color: var(--text-primary);
+  text-decoration: none;
+}
+
+.hubLink:hover {
+  border-color: var(--border-strong);
+  background: var(--bg-subtle);
+}
+
+.loadingPage,
+.errorPage {
+  composes: ui-state-page from global;
+}
+
+.loadingCard,
+.errorCard {
+  composes: ui-state-card from global;
+}
+
+.loadingTitle,
+.errorTitle {
+  composes: ui-section-title from global;
+}
+
+.loadingText,
+.errorText {
+  composes: ui-state-text from global;
+}
+
+.errorActions {
+  composes: ui-error-actions from global;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .primaryButton,
+  .secondaryButton,
+  .dangerButton,
+  .hubLink {
+    transition: none;
+  }
+}
+
+.tabelMini {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--font-size-body-sm);
+  line-height: var(--line-height-body-sm);
+}
+
+.tabelMini th {
+  padding: var(--space-2) var(--space-3);
+  border-bottom: var(--border-width-default) solid var(--border-subtle);
+  color: var(--text-muted);
+  font-size: var(--font-size-label);
+  font-weight: 600;
+  line-height: var(--line-height-label);
+  text-align: left;
+}
+
+.tabelMini td {
+  padding: var(--space-2) var(--space-3);
+  border-bottom: var(--border-width-default) solid var(--border-subtle);
+  color: var(--text-primary);
+}
+
+.tabelMini tr:last-child td {
+  border-bottom: 0;
+}
+
+.tabelMiniAngka {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.tabelMiniStatus {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}

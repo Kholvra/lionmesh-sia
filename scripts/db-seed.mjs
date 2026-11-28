@@ -6,17 +6,13 @@ import { readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { spawnSync } from "node:child_process";
 import { Client } from "pg";
+import { DB_URL } from "./lib/db-url.mjs";
+import { gagal as gagalHarness } from "./lib/harness.mjs";
 
-const DB_URL =
-  process.env.SUPABASE_DB_URL ??
-  "postgresql://postgres:postgres@127.0.0.1:54322/postgres";
+const fail = (message) => gagalHarness(message, "db:seed");
 const SEED_DIRECTORY = "supabase/seeds";
 const SEED_FILE_PATTERN = /^(\d{4})_[a-z0-9_-]+\.sql$/;
 
-function fail(message) {
-  console.error(`\n[db:seed] ${message}\n`);
-  process.exit(1);
-}
 
 function listSeedFiles() {
   const fileNames = readdirSync(SEED_DIRECTORY)

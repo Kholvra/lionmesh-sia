@@ -1,10 +1,17 @@
+import { moneyToCents, parseDecimal, roundToWholeRupiah, type DecimalOptions } from "../ledger/money.ts";
 import type { ValuationStrategy } from "./types";
 
-function units(value: string, scale: number): bigint {
-  if (!/^(?:0|[1-9]\d*)(?:\.\d+)?$/.test(value)) throw new Error("Nilai desimal tidak valid.");
-  const [whole, fraction = ""] = value.split(".");
-  if (whole.length > 18 - scale || fraction.length > scale) throw new Error("Nilai desimal tidak valid.");
-  return BigInt(whole) * BigInt(10) ** BigInt(scale) + BigInt(fraction.padEnd(scale, "0"));
+const PILIHAN_QTY: DecimalOptions = {
+  scale: 4,
+  allowNegative: false,
+  rejectExcessPrecision: true,
+  maxWholeDigits: 14,
+};
+
+function units(value: string, options: DecimalOptions): bigint {
+  const hasil = parseDecimal(value, options);
+  if (hasil === null) throw new Error("Nilai desimal tidak valid.");
+  return hasil;
 }
 
 function decimal(value: bigint, scale: number): string {
@@ -21,13 +28,13 @@ function divideRounded(numerator: bigint, denominator: bigint): bigint {
 
 export class MovingAverageValuation implements ValuationStrategy {
   calculateIncoming(currentQty: string, currentNilai: string, currentHargaRata: string, incomingQty: string, incomingHarga: string) {
-    const qty = units(currentQty, 4);
-    const nilai = units(currentNilai, 2);
-    const oldPrice = units(currentHargaRata, 4);
-    const incoming = units(incomingQty, 4);
-    const price = units(incomingHarga, 4);
+    const qty = units(currentQty, PILIHAN_QTY);
+    const nilai = moneyToCents(currentNilai);
+    const oldPrice = units(currentHargaRata, PILIHAN_QTY);
+    const incoming = units(incomingQty, PILIHAN_QTY);
+    const price = units(incomingHarga, PILIHAN_QTY);
     if (incoming === BigInt(0)) throw new Error("Qty masuk harus lebih dari nol.");
-    const nilaiMasuk = divideRounded(incoming * (price || oldPrice), BigInt(1000000));
+    const nilaiMasuk = roundToWholeRupiah(divideRounded(incoming * (price || oldPrice), BigInt(1000000)));
     const qtyBaru = qty + incoming;
     const nilaiBaru = nilai + nilaiMasuk;
     const hargaRataBaru = divideRounded(nilaiBaru * BigInt(1000000), qtyBaru);
@@ -35,13 +42,13 @@ export class MovingAverageValuation implements ValuationStrategy {
   }
 
   calculateOutgoing(currentQty: string, currentNilai: string, currentHargaRata: string, outgoingQty: string) {
-    const qty = units(currentQty, 4);
-    const nilai = units(currentNilai, 2);
-    const price = units(currentHargaRata, 4);
-    const outgoing = units(outgoingQty, 4);
+    const qty = units(currentQty, PILIHAN_QTY);
+    const nilai = moneyToCents(currentNilai);
+    const price = units(currentHargaRata, PILIHAN_QTY);
+    const outgoing = units(outgoingQty, PILIHAN_QTY);
     if (outgoing === BigInt(0)) throw new Error("Qty keluar harus lebih dari nol.");
     if (outgoing > qty) throw new Error(`Qty keluar ${outgoingQty} melebihi stok tersedia ${currentQty}.`);
-    const nilaiKeluar = outgoing === qty ? nilai : divideRounded(outgoing * price, BigInt(1000000));
+    const nilaiKeluar = outgoing === qty ? nilai : roundToWholeRupiah(divideRounded(outgoing * price, BigInt(1000000)));
     return { qtyBaru: decimal(qty - outgoing, 4), nilaiBaru: decimal(nilai - nilaiKeluar, 2), hargaRataBaru: decimal(price, 4), nilaiKeluar: decimal(nilaiKeluar, 2) };
   }
 }

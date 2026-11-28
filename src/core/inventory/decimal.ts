@@ -1,7 +1,17 @@
+import { parseDecimal, type DecimalOptions } from "../ledger/money.ts";
+
+// Quantity and harga rates keep four-decimal precision; money fields use
+// isMoney/moneyToCents from the ledger, which require whole rupiah.
 // PostgreSQL numeric(18,4) values cross the JavaScript boundary as decimal strings.
+const PILIHAN_DESIMAL: DecimalOptions = {
+  scale: 4,
+  allowNegative: true,
+  rejectExcessPrecision: true,
+  maxWholeDigits: 14,
+};
+const PILIHAN_POSITIF: DecimalOptions = { ...PILIHAN_DESIMAL, allowNegative: false };
+
 export function isDecimal(value: unknown, allowZero: boolean, allowNegative = true): value is string {
-  if (typeof value !== "string" || !/^-?(?:0|[1-9]\d{0,13})(?:\.\d{1,4})?$/.test(value)) return false;
-  if (!allowNegative && value.startsWith("-")) return false;
-  if (!allowZero && /^-?0(?:\.0+)?$/.test(value)) return false;
-  return true;
+  const hasil = parseDecimal(value, allowNegative ? PILIHAN_DESIMAL : PILIHAN_POSITIF);
+  return hasil !== null && (allowZero || hasil !== BigInt(0));
 }
