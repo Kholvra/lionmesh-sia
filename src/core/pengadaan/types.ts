@@ -608,3 +608,82 @@ export interface BatalkanPembayaranInput {
   alasan: string;
   actorId: string;
 }
+
+export interface MutasiBankView {
+  id: string;
+  imporId: string;
+  rekeningBankId: string;
+  tanggal: string;
+  arah: "MASUK" | "KELUAR";
+  nominal: string;
+  referensi: string | null;
+  status: "BELUM_COCOK" | "COCOK" | "SELISIH";
+  alasanSelisih: string | null;
+  jurnalDetailId: string | null;
+  createdAt: string;
+}
+
+export interface ImporMutasiView {
+  id: string;
+  periode: string;
+  namaBerkas: string;
+  jumlahBaris: number;
+  createdAt: string;
+}
+
+export interface ProfilPemetaanBankView {
+  id: string;
+  nama: string;
+  rekeningBankId: string | null;
+  pemetaan: {
+    tanggal: number;
+    nominal: number;
+    referensi: number | null;
+    arah: number | null;
+  };
+}
+
+export interface BarisMutasiImpor {
+  tanggal: string;
+  arah: "MASUK" | "KELUAR";
+  nominal: string;
+  referensi: string | null;
+}
+
+export interface ImporMutasiInput {
+  rekeningBankId: string;
+  periode: string;
+  hash: string;
+  namaBerkas: string;
+  baris: readonly BarisMutasiImpor[];
+  actorId: string;
+}
+
+export interface CocokkanMutasiInput {
+  mutasiId: string;
+  actorId: string;
+}
+
+export interface PasangkanMutasiInput {
+  mutasiId: string;
+  jurnalDetailId: string;
+  actorId: string;
+}
+
+export interface TandaiSelisihInput {
+  mutasiId: string;
+  alasan: string;
+  actorId: string;
+}
+
+export interface SimpanProfilPemetaanInput {
+  nama: string;
+  rekeningBankId?: string;
+  pemetaan: {
+    tanggal: number;
+    nominal: number;
+    referensi?: number | null;
+    arah?: number | null;
+  };
+  actorId: string;
+}

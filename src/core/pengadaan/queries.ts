@@ -4,8 +4,10 @@ import { listRiwayatStatus, type RiwayatStatus } from "@/core/dokumen";
 import { fail, ok, type Result } from "@/lib/result";
 import type {
   ExceptionPengadaanView,
+  ImporMutasiView,
   InvoicePemasokDetail,
   InvoicePemasokView,
+  MutasiBankView,
   PembayaranPemasokDetail,
   PembayaranPemasokView,
   PemilihanPemasokView,
@@ -17,6 +19,7 @@ import type {
   PermintaanPembelianItem,
   PermintaanPembelianView,
   PoSiapTerima,
+  ProfilPemetaanBankView,
   PurchaseOrderDetail,
   PurchaseOrderView,
   RekeningBank,
@@ -1387,5 +1390,105 @@ async function ambilRekening(
       asString(row.id),
       { namaBank: asString(row.nama_bank), nomor: asString(row.nomor) },
     ]),
+  );
+}
+
+export async function listMutasiBank(
+  client: SupabaseClient,
+  options: { periode?: string; rekeningBankId?: string } = {},
+): Promise<Result<MutasiBankView[]>> {
+  let query = client
+    .from("mutasi_bank")
+    .select(
+      "id,impor_id,rekening_bank_id,tanggal,arah,nominal::text,referensi,status," +
+        "alasan_selisih,jurnal_detail_id,created_at",
+    )
+    .order("tanggal", { ascending: true });
+
+  if (options.rekeningBankId) {
+    query = query.eq("rekening_bank_id", options.rekeningBankId);
+  }
+  if (options.periode) {
+    const mulai = `${options.periode}-01`;
+    const akhir = new Date(`${mulai}T00:00:00Z`);
+    akhir.setUTCMonth(akhir.getUTCMonth() + 1);
+    query = query.gte("tanggal", mulai).lt("tanggal", akhir.toISOString().slice(0, 10));
+  }
+
+  const { data, error } = await query;
+  if (error) return fail(error.message);
+
+  return ok(
+    ((data ?? []) as unknown as Row[]).map((row) => ({
+      id: asString(row.id),
+      imporId: asString(row.impor_id),
+      rekeningBankId: asString(row.rekening_bank_id),
+      tanggal: asString(row.tanggal),
+      arah: asString(row.arah) as MutasiBankView["arah"],
+      nominal: asString(row.nominal),
+      referensi: row.referensi === null ? null : asString(row.referensi),
+      status: asString(row.status) as MutasiBankView["status"],
+      alasanSelisih:
+        row.alasan_selisih === null ? null : asString(row.alasan_selisih),
+      jurnalDetailId:
+        row.jurnal_detail_id === null ? null : asString(row.jurnal_detail_id),
+      createdAt: asString(row.created_at),
+    })),
+  );
+}
+
+export async function listImporMutasiBank(
+  client: SupabaseClient,
+): Promise<Result<ImporMutasiView[]>> {
+  const { data, error } = await client
+    .from("impor_mutasi_bank")
+    .select("id,periode,nama_berkas,jumlah_baris,created_at")
+    .order("created_at", { ascending: false })
+    .limit(50);
+  if (error) return fail(error.message);
+
+  return ok(
+    ((data ?? []) as unknown as Row[]).map((row) => ({
+      id: asString(row.id),
+      periode: asString(row.periode),
+      namaBerkas: asString(row.nama_berkas),
+      jumlahBaris: asNumber(row.jumlah_baris),
+      createdAt: asString(row.created_at),
+    })),
+  );
+}
+
+export async function listProfilPemetaanBank(
+  client: SupabaseClient,
+): Promise<Result<ProfilPemetaanBankView[]>> {
+  const { data, error } = await client
+    .from("profil_pemetaan_bank")
+    .select("id,nama,rekening_bank_id,pemetaan")
+    .eq("aktif", true)
+    .order("nama", { ascending: true });
+  if (error) return fail(error.message);
+
+  return ok(
+    ((data ?? []) as unknown as Row[]).map((row) => {
+      const pemetaan = (row.pemetaan ?? {}) as Record<string, unknown>;
+      return {
+        id: asString(row.id),
+        nama: asString(row.nama),
+        rekeningBankId:
+          row.rekening_bank_id === null ? null : asString(row.rekening_bank_id),
+        pemetaan: {
+          tanggal: asNumber(pemetaan.tanggal),
+          nominal: asNumber(pemetaan.nominal),
+          referensi:
+            pemetaan.referensi === null || pemetaan.referensi === undefined
+              ? null
+              : asNumber(pemetaan.referensi),
+          arah:
+            pemetaan.arah === null || pemetaan.arah === undefined
+              ? null
+              : asNumber(pemetaan.arah),
+        },
+      };
+    }),
   );
 }
