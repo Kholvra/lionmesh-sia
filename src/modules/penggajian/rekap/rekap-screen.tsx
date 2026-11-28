@@ -6,7 +6,7 @@ import { StatusBadge } from "@/components/ui";
 import type { StatusOption } from "@/components/ui";
 import { sesiPenggajian } from "@/modules/penggajian/akun/akun";
 import { formatWaktu } from "@/modules/penggajian/karyawan/format";
-import { labelStatusPeriode, rentangPeriode } from "@/modules/penggajian/periode/rules";
+import { labelStatusPeriode, rentangPeriode, sudahTervalidasi } from "@/modules/penggajian/periode/rules";
 import type { PeriodeGaji } from "@/modules/penggajian/periode/types";
 import { PilihPeriode } from "@/modules/penggajian/presensi/components/pilih-periode";
 import { getPeriodeDipilih, listPeriode } from "@/modules/penggajian/presensi/queries";
@@ -44,7 +44,7 @@ const PESAN: Record<string, string> = {
 };
 
 function statusValidasi(periode: PeriodeGaji, dep: RekapDepartemen) {
-  if (periode.status === "TERVALIDASI" || dep.validasi) return "tervalidasi";
+  if (sudahTervalidasi(periode.status) || dep.validasi) return "tervalidasi";
   if (periode.status === "REKAP") return "menunggu";
   return periode.pengembalian ? "dikembalikan" : "belum";
 }
@@ -77,7 +77,7 @@ function KontenHr({ departemen, periode, pesan }: { departemen: RekapDepartemen[
       {periode.status === "REKAP" ? (
         <Notice title={tervalidasi.length > 0 ? `${tervalidasi.map((d) => d.nama).join(" dan ")} tervalidasi. Departemen lain masih menunggu validasi Supervisor.` : "Rekap tersimpan. Menunggu validasi Supervisor setiap departemen."} tone="warning" />
       ) : null}
-      {periode.status === "TERVALIDASI" ? (
+      {sudahTervalidasi(periode.status) ? (
         <Notice title="Semua departemen tervalidasi. Siap dihitung di draft payroll; perubahan berikutnya hanya lewat buka ulang periode dengan otorisasi Manajemen." tone="success" />
       ) : null}
       {periode.status === "TERBUKA" && kosong.length > 0 ? (

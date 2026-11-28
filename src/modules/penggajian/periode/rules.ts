@@ -5,6 +5,13 @@ const LABEL_STATUS: Record<PeriodeGaji["status"], string> = {
   TERBUKA: "Terbuka",
   REKAP: "Rekap",
   TERVALIDASI: "Tervalidasi",
+  DRAFT_TERHITUNG: "Draft terhitung",
+  DIPERIKSA: "Diperiksa Accounting",
+  REVISI: "Revisi",
+  DISETUJUI: "Disetujui Direksi",
+  DIBAYAR: "Dibayar",
+  GAGAL_TRANSFER: "Gagal transfer",
+  DIPOSTING: "Diposting",
 };
 
 export function rentangPeriode(periode: PeriodeGaji): string {
@@ -25,4 +32,9 @@ export function cekPeriodeTerbuka(tanggal: string, periode: PeriodeGaji | undefi
 
 export function labelStatusPeriode(status: PeriodeGaji["status"]): string {
   return LABEL_STATUS[status];
+}
+
+/** Validated, or already further along in payroll (GJ-004 onwards). */
+export function sudahTervalidasi(status: PeriodeGaji["status"]): boolean {
+  return status !== "TERBUKA" && status !== "REKAP";
 }

@@ -128,7 +128,11 @@ export async function getDraft(sesi: SesiPenggajian, periodeId: string): Promise
     versiTarif: d.data.versi_tarif,
     ditandai: d.data.ditandai as KaryawanDitandai[],
     riwayat: mulai >= 0 ? p.riwayat.slice(mulai) : [],
-    pengembalian: null,
+    // GJ-005: the latest return note, shown until the draft is recalculated.
+    pengembalian: (() => {
+      const kembali = p.status === "REVISI" ? [...p.riwayat].reverse().find((x) => x.dari === "DIPERIKSA" && x.ke === "REVISI") : undefined;
+      return kembali ? { oleh: kembali.oleh, alasan: kembali.alasan ?? "", pada: kembali.pada } : null;
+    })(),
     ringkasan: {
       jumlahKaryawan: r.data?.jumlah_karyawan ?? 0,
       totalBruto: Number(r.data?.total_tambah ?? 0),

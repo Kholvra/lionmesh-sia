@@ -1,6 +1,17 @@
 import type { RiwayatStatus } from "@/modules/penggajian/shared/riwayat";
 
-export type StatusPeriode = "TERBUKA" | "REKAP" | "TERVALIDASI";
+export type StatusPeriode =
+  | "TERBUKA"
+  | "REKAP"
+  | "TERVALIDASI"
+  // From GJ-004 on, the period document carries the payroll status as well.
+  | "DRAFT_TERHITUNG"
+  | "DIPERIKSA"
+  | "REVISI"
+  | "DISETUJUI"
+  | "DIBAYAR"
+  | "GAGAL_TRANSFER"
+  | "DIPOSTING";
 
 /** Manajemen's authorization to reopen a closed period (P-07, PRE-07). */
 export type OtorisasiKoreksi = {
