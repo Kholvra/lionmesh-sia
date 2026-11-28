@@ -29,9 +29,12 @@ import type {
   HasilPermintaanPembelian,
   HasilPurchaseOrder,
   HasilQC,
+  BatalkanPoInput,
+  CatatKonfirmasiPoInput,
   PeriksaPRDenganNilaiInput,
   PeriksaPRInput,
   SimpanPenawaranHargaInput,
+  TerbitkanPoInput,
   TetapkanPemasokDenganAlasanInput,
   TetapkanPemasokPRInput,
 } from "./types";
@@ -405,4 +408,81 @@ export async function tetapkanPemasokDenganAlasan(
   if (error) return fail(pesanKesalahan(error, "Gagal menetapkan pemasok."));
   const hasil = parseDokumen(data);
   return hasil ? ok(hasil) : fail("Respons penetapan pemasok tidak valid.");
+}
+
+export async function terbitkanPurchaseOrder(
+  supabase: SupabaseClient,
+  input: TerbitkanPoInput,
+): Promise<Result<HasilDokumenPengadaan>> {
+  if (
+    !isUuid(input.actorId) ||
+    !isUuid(input.permintaanId) ||
+    validasiVersi(input.versi) ||
+    !/^\d{4}-\d{2}-\d{2}$/.test(input.tanggal) ||
+    input.baris.length === 0
+  ) {
+    return fail("Data purchase order tidak valid.");
+  }
+
+  const baris = input.baris.map((row) => ({
+    item_id: row.itemId,
+    qty: row.qty,
+    harga_satuan: row.hargaSatuan ?? "",
+  }));
+
+  const { data, error } = await supabase.rpc("terbitkan_po", {
+    p_dokumen_id: input.permintaanId,
+    p_versi: input.versi,
+    p_baris: baris,
+    p_tanggal: input.tanggal,
+    p_aktor_id: input.actorId,
+  });
+
+  if (error) return fail(pesanKesalahan(error, "Gagal menerbitkan purchase order."));
+  const hasil = parseDokumen(data);
+  return hasil ? ok(hasil) : fail("Respons penerbitan purchase order tidak valid.");
+}
+
+export async function batalkanPurchaseOrder(
+  supabase: SupabaseClient,
+  input: BatalkanPoInput,
+): Promise<Result<HasilDokumenPengadaan>> {
+  if (!isUuid(input.actorId) || !isUuid(input.dokumenId) || validasiVersi(input.versi)) {
+    return fail("Data pembatalan purchase order tidak valid.");
+  }
+  if (input.alasan.trim().length === 0) {
+    return fail("Alasan pembatalan wajib diisi");
+  }
+
+  const { data, error } = await supabase.rpc("batalkan_po_dengan_permintaan", {
+    p_dokumen_id: input.dokumenId,
+    p_versi: input.versi,
+    p_alasan: input.alasan.trim(),
+    p_aktor_id: input.actorId,
+  });
+
+  if (error) return fail(pesanKesalahan(error, "Gagal membatalkan purchase order."));
+  const hasil = parseDokumen(data);
+  return hasil ? ok(hasil) : fail("Respons pembatalan purchase order tidak valid.");
+}
+
+export async function catatKonfirmasiPo(
+  supabase: SupabaseClient,
+  input: CatatKonfirmasiPoInput,
+): Promise<Result<{ dokumenId: string }>> {
+  if (!isUuid(input.actorId) || !isUuid(input.dokumenId)) {
+    return fail("Data konfirmasi purchase order tidak valid.");
+  }
+  if (input.catatan.trim().length === 0) {
+    return fail("Catatan konfirmasi wajib diisi");
+  }
+
+  const { error } = await supabase.rpc("catat_konfirmasi_po", {
+    p_dokumen_id: input.dokumenId,
+    p_catatan: input.catatan.trim(),
+    p_aktor_id: input.actorId,
+  });
+
+  if (error) return fail(pesanKesalahan(error, "Gagal mencatat konfirmasi pemasok."));
+  return ok({ dokumenId: input.dokumenId });
 }

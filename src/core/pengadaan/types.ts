@@ -234,6 +234,7 @@ export interface PemilihanPemasokView {
   items: PermintaanPembelianItem[];
   penawaran: PenawaranHarga[];
   pemasokTerpilihId: string | null;
+  pemasokTerpilihNama: string | null;
   alasanPemilihan: string | null;
   riwayat: RiwayatStatus[];
 }
@@ -245,4 +246,60 @@ export interface RiwayatHarga {
   pemasokNama: string;
   harga: string;
   tanggal: string;
+}
+
+export interface KonfigurasiPajak {
+  id: string;
+  nama: string;
+  ppnPersen: string;
+  berlakuMulai: string;
+  aktif: boolean;
+}
+
+export interface PurchaseOrderView {
+  dokumenId: string;
+  nomor: string;
+  status: StatusDokumen;
+  versi: number;
+  tanggal: string;
+  pemasokId: string;
+  pemasokNama: string;
+  permintaanId: string;
+  permintaanNomor: string | null;
+  nominal: string | null;
+  catatanKonfirmasi: string | null;
+  createdAt: string;
+}
+
+export interface PurchaseOrderDetail {
+  header: PurchaseOrderView;
+  items: PurchaseOrderItem[];
+  riwayat: RiwayatStatus[];
+}
+
+export interface BarisTerbitkanPo {
+  itemId: string;
+  qty: string;
+  hargaSatuan?: string;
+}
+
+export interface TerbitkanPoInput {
+  permintaanId: string;
+  versi: number;
+  tanggal: string;
+  baris: BarisTerbitkanPo[];
+  actorId: string;
+}
+
+export interface BatalkanPoInput {
+  dokumenId: string;
+  versi: number;
+  alasan: string;
+  actorId: string;
+}
+
+export interface CatatKonfirmasiPoInput {
+  dokumenId: string;
+  catatan: string;
+  actorId: string;
 }

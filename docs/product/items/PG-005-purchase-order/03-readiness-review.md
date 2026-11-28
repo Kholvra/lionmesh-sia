@@ -9,18 +9,16 @@
 | 3 | Status dan transisi eksplisit; jalur gagal juga | lolos | `D-46` untuk jalur PO; pembatalan `D-48` ditandai `[USULAN-AGEN]` dengan pemicu dan siapa. Jalur gagal (setelah penerimaan, permintaan ditolak atau dibatalkan, edit setelah terbit) ada |
 | 4 | Validasi punya pesan yang bisa dibaca | lolos | tabel Validasi memuat pesan untuk setiap kondisi gagal. Pesan dari sumber ditandai `[SUMBER]`, sisanya `[USULAN]` dan ikut kunci koordinator |
 | 5 | Acceptance criteria bisa dibuktikan | lolos | AC-01 sampai AC-13 punya langkah uji. AC-14 lintas item (`PG-006`) dan disebut eksplisit. Uji PPN memakai seed uji dua versi |
-| 6 | Semua `depends on` berstatus `done` | belum | `PG-003` dan `PG-004` masih `specified`, belum `done` |
+| 6 | Semua `depends on` berstatus `done` | lolos | `PG-003` dan `PG-004` selesai di branch stack yang sama; PR menunggu merge |
 | 7 | Tidak ada pertanyaan pemblokir terbuka | lolos | 11 pertanyaan: 8 terjawab `D-xx` (dua di antaranya juga punya detail `[USULAN-AGEN]`), 3 terjawab `[USULAN-AGEN]`. Terbuka: 0 |
-| 8 | Gate fondasi terpenuhi | belum | `FND-001` `done`; `FND-002` sampai `FND-006` masih `specified`. `FND-007` juga belum (lihat Dependensi) |
+| 8 | Gate fondasi terpenuhi | lolos | `FND-001`-`FND-009` `done`; gate modul `D-54`/`D-67` terpenuhi |
 | 9 | Ukuran masuk akal untuk satu orang dalam satu track | lolos | usulan `M` (agen). Penerbitan, PPN per baris, riwayat, dan pembatalan satu track |
 
 ## Verdict
 
-`Blocked`
+`Ready` (2026-11-27)
 
-Alasan (dependensi belum `done`): `PG-003` dan `PG-004` (`depends on` di `backlog.md`), beserta gate fondasi `FND-002` sampai `FND-006` yang menjadi prasyarat keduanya; serta `FND-007` karena tabel PO dan form baris memakai primitive UI.
-
-Siap menjadi Ready begitu dependensi done; tidak ada pemblokir lain.
+Dependensi `PG-003` dan `PG-004` selesai di branch stack yang sama; gate fondasi `FND-001`–`FND-009` `done`. Satu data masih kosong: `konfigurasi_pajak` belum berisi tarif, sehingga penerbitan PO ditolak sampai tech lead mengisinya (`D-51`(a)). Bukti implementasi di `05-evidence.md`; bukti database di `docs/tech-debt/pg-005-bukti-db.md`.
 
 ## Pertanyaan terbuka (2026-11-22)
 

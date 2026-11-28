@@ -7,6 +7,8 @@ import type {
   PermintaanPembelian,
   PermintaanPembelianItem,
   PermintaanPembelianView,
+  PurchaseOrderDetail,
+  PurchaseOrderView,
   RiwayatHarga,
 } from "./types";
 
@@ -196,6 +198,11 @@ export async function getPemilihanPemasok(
   if (penawaranError) return fail(penawaranError.message);
 
   const header = pr as unknown as Row;
+  const pemasokTerpilihId =
+    header.pemasok_id === null ? null : asString(header.pemasok_id);
+  const namaPemasok = pemasokTerpilihId
+    ? await ambilPemasokNama(client, [pemasokTerpilihId])
+    : new Map<string, string>();
 
   return ok({
     header: detail.data.header,
@@ -209,7 +216,11 @@ export async function getPemilihanPemasok(
       tanggal: asString(row.tanggal),
       createdAt: asString(row.created_at),
     })),
-    pemasokTerpilihId: header.pemasok_id === null ? null : asString(header.pemasok_id),
+    pemasokTerpilihId,
+    pemasokTerpilihNama:
+      pemasokTerpilihId === null
+        ? null
+        : (namaPemasok.get(pemasokTerpilihId) ?? pemasokTerpilihId),
     alasanPemilihan: header.alasan_pemilihan === null ? null : asString(header.alasan_pemilihan),
     riwayat: detail.data.riwayat,
   });
@@ -269,5 +280,151 @@ export async function listRiwayatHarga(
       harga: asString(row.harga),
       tanggal: asString(row.tanggal),
     })),
+  );
+}
+
+export async function listPurchaseOrder(
+  client: SupabaseClient,
+): Promise<Result<PurchaseOrderView[]>> {
+  const { data, error } = await client
+    .from("po")
+    .select("dokumen_id,permintaan_id,pemasok_id,tanggal,catatan_konfirmasi")
+    .order("tanggal", { ascending: false });
+  if (error) return fail(error.message);
+
+  const rows = (data ?? []) as unknown as Row[];
+  if (rows.length === 0) return ok([]);
+
+  try {
+    const docs = await ambilDokumen(
+      client,
+      rows.map((row) => asString(row.dokumen_id)),
+    );
+    const prDocs = await ambilDokumen(
+      client,
+      rows.map((row) => asString(row.permintaan_id)),
+    );
+    const pemasok = await ambilPemasokNama(
+      client,
+      rows.map((row) => asString(row.pemasok_id)),
+    );
+
+    return ok(
+      rows
+        .map((row) => {
+          const doc = docs.get(asString(row.dokumen_id));
+          if (!doc) return null;
+          return mapPurchaseOrder(
+            row,
+            doc,
+            prDocs.get(asString(row.permintaan_id)) ?? null,
+            pemasok.get(asString(row.pemasok_id)) ?? "Pemasok",
+          );
+        })
+        .filter((view): view is PurchaseOrderView => view !== null),
+    );
+  } catch (error) {
+    return fail(error instanceof Error ? error.message : "Gagal membaca purchase order.");
+  }
+}
+
+export async function getPurchaseOrder(
+  client: SupabaseClient,
+  dokumenId: string,
+): Promise<Result<PurchaseOrderDetail | null>> {
+  const { data, error } = await client
+    .from("po")
+    .select("dokumen_id,permintaan_id,pemasok_id,tanggal,catatan_konfirmasi")
+    .eq("dokumen_id", dokumenId)
+    .maybeSingle();
+  if (error) return fail(error.message);
+  if (!data) return ok(null);
+
+  const row = data as unknown as Row;
+  const docs = await ambilDokumen(client, [dokumenId, asString(row.permintaan_id)]);
+  const doc = docs.get(dokumenId);
+  if (!doc) return fail("Dokumen purchase order tidak ditemukan.");
+
+  const pemasok = await ambilPemasokNama(client, [asString(row.pemasok_id)]);
+
+  const { data: items, error: itemError } = await client
+    .from("po_item")
+    .select("id,po_id,produk_id,qty::text,harga_satuan::text,ppn_persen::text,urutan")
+    .eq("po_id", dokumenId)
+    .order("urutan", { ascending: true });
+  if (itemError) return fail(itemError.message);
+
+  const riwayat = await listRiwayatStatus(client, dokumenId);
+  if (!riwayat.ok) return riwayat;
+
+  return ok({
+    header: mapPurchaseOrder(
+      row,
+      doc,
+      docs.get(asString(row.permintaan_id)) ?? null,
+      pemasok.get(asString(row.pemasok_id)) ?? "Pemasok",
+    ),
+    items: ((items ?? []) as unknown as Row[]).map((item) => ({
+      id: asString(item.id),
+      po_id: asString(item.po_id),
+      produk_id: asString(item.produk_id),
+      qty: asString(item.qty),
+      harga_satuan: asString(item.harga_satuan),
+      ppn_persen: asString(item.ppn_persen),
+      urutan: asNumber(item.urutan),
+    })),
+    riwayat: riwayat.data,
+  });
+}
+
+export async function getTarifPpn(
+  client: SupabaseClient,
+  tanggal: string,
+): Promise<Result<string | null>> {
+  const { data, error } = await client.rpc("tarif_ppn_untuk", {
+    p_tanggal: tanggal,
+  });
+  if (error) return fail(error.message);
+  return ok(data === null || data === undefined ? null : asString(data));
+}
+
+function mapPurchaseOrder(
+  row: Row,
+  dokumen: Row,
+  permintaan: Row | null,
+  pemasokNama: string,
+): PurchaseOrderView {
+  return {
+    dokumenId: asString(row.dokumen_id),
+    nomor: asString(dokumen.nomor),
+    status: asString(dokumen.status) as PurchaseOrderView["status"],
+    versi: asNumber(dokumen.versi),
+    tanggal: asString(row.tanggal),
+    pemasokId: asString(row.pemasok_id),
+    pemasokNama,
+    permintaanId: asString(row.permintaan_id),
+    permintaanNomor: permintaan === null ? null : asString(permintaan.nomor),
+    nominal: dokumen.nominal === null ? null : asString(dokumen.nominal),
+    catatanKonfirmasi:
+      row.catatan_konfirmasi === null ? null : asString(row.catatan_konfirmasi),
+    createdAt: asString(dokumen.created_at),
+  };
+}
+
+async function ambilPemasokNama(
+  client: SupabaseClient,
+  ids: string[],
+): Promise<Map<string, string>> {
+  if (ids.length === 0) return new Map();
+  const { data, error } = await client
+    .from("pemasok")
+    .select("id,nama")
+    .in("id", [...new Set(ids)]);
+  if (error) throw new Error(error.message);
+  return new Map(
+    ((data ?? []) as unknown as Row[]).map((row) => [
+      asString(row.id),
+      asString(row.nama),
+    ]),
   );
 }
