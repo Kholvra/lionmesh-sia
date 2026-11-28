@@ -252,19 +252,6 @@ begin
             p_nominal, v_total_sisa;
     end if;
 
-    -- Separation of duty: the requester of the underlying PR cannot pay it (R-11).
-    select d.pembuat_id into v_pemohon
-    from public.invoice_pemasok i
-    join public.penerimaan pn on pn.dokumen_id = i.penerimaan_id
-    join public.po po on po.dokumen_id = pn.po_id
-    join public.dokumen d on d.id = po.permintaan_id
-    where i.pemasok_id = p_pemasok_id
-      and d.status <> 'DIBATALKAN'
-    limit 1;
-    if v_pemohon = v_aktor then
-        raise exception 'Pemohon permintaan pembelian tidak boleh membayar invoice dari permintaannya sendiri';
-    end if;
-
     v_hasil := public.buat_dokumen('PEMBAYARAN_PEMASOK', v_aktor, p_nominal, v_tanggal);
     v_bayar_id := (v_hasil->'dokumen'->>'id')::uuid;
 
@@ -292,6 +279,18 @@ begin
             v_aktor,
             v_aktor
         );
+
+        -- Separation of duty per allocated invoice (R-11, D-42): trace
+        -- invoice -> receipt -> PO -> request and reject the PR requester.
+        select d.pembuat_id into v_pemohon
+        from public.invoice_pemasok i
+        join public.penerimaan pn on pn.dokumen_id = i.penerimaan_id
+        join public.po po on po.dokumen_id = pn.po_id
+        join public.dokumen d on d.id = po.permintaan_id
+        where i.dokumen_id = v_invoice.invoice_id;
+        if v_pemohon = v_aktor then
+            raise exception 'Pemohon permintaan pembelian tidak boleh membayar invoice dari permintaannya sendiri';
+        end if;
 
         v_alokasi := v_alokasi - least(v_sisa, v_alokasi);
     end loop;
