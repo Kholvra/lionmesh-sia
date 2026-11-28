@@ -4,9 +4,12 @@ import { listRiwayatStatus, type RiwayatStatus } from "@/core/dokumen";
 import { fail, ok, type Result } from "@/lib/result";
 import type {
   ExceptionPengadaanView,
+  InvoicePemasokDetail,
+  InvoicePemasokView,
   PemilihanPemasokView,
   PenerimaanDetail,
   PenerimaanQcView,
+  PenerimaanSiapInvoice,
   PenerimaanView,
   PermintaanPembelian,
   PermintaanPembelianItem,
@@ -935,4 +938,234 @@ export async function getReturPemasok(
     }),
     riwayat: riwayat.data,
   });
+}
+
+export async function listInvoicePemasok(
+  client: SupabaseClient,
+): Promise<Result<InvoicePemasokView[]>> {
+  const { data, error } = await client
+    .from("invoice_pemasok")
+    .select(
+      "dokumen_id,penerimaan_id,pemasok_id,nomor_invoice,tanggal,termin_hari,jatuh_tempo," +
+        "nomor_faktur_pajak,dpp_total::text,ppn_nilai::text,total::text,catatan",
+    )
+    .order("tanggal", { ascending: false });
+  if (error) return fail(error.message);
+
+  const rows = (data ?? []) as unknown as Row[];
+  if (rows.length === 0) return ok([]);
+
+  const docs = await ambilDokumen(
+    client,
+    rows.map((row) => asString(row.dokumen_id)),
+  );
+  const penerimaanDocs = await ambilDokumen(
+    client,
+    rows.map((row) => asString(row.penerimaan_id)),
+  );
+  const pemasok = await ambilPemasokNama(
+    client,
+    rows.map((row) => asString(row.pemasok_id)),
+  );
+
+  return ok(
+    rows
+      .map((row) => {
+        const doc = docs.get(asString(row.dokumen_id));
+        if (!doc) return null;
+        const penerimaan = penerimaanDocs.get(asString(row.penerimaan_id));
+        return {
+          dokumenId: asString(row.dokumen_id),
+          nomor: asString(doc.nomor),
+          status: asString(doc.status) as InvoicePemasokView["status"],
+          versi: asNumber(doc.versi),
+          nomorInvoice: asString(row.nomor_invoice),
+          tanggal: asString(row.tanggal),
+          terminHari: asNumber(row.termin_hari),
+          jatuhTempo: asString(row.jatuh_tempo),
+          nomorFakturPajak:
+            row.nomor_faktur_pajak === null ? null : asString(row.nomor_faktur_pajak),
+          dppTotal: asString(row.dpp_total),
+          ppnNilai: asString(row.ppn_nilai),
+          total: asString(row.total),
+          catatan: row.catatan === null ? null : asString(row.catatan),
+          penerimaanId: asString(row.penerimaan_id),
+          penerimaanNomor: penerimaan ? asString(penerimaan.nomor) : null,
+          pemasokNama: pemasok.get(asString(row.pemasok_id)) ?? "Pemasok",
+          createdAt: asString(doc.created_at),
+        };
+      })
+      .filter((view): view is InvoicePemasokView => view !== null),
+  );
+}
+
+export async function getInvoicePemasok(
+  client: SupabaseClient,
+  dokumenId: string,
+): Promise<Result<InvoicePemasokDetail | null>> {
+  const daftar = await listInvoicePemasok(client);
+  if (!daftar.ok) return daftar;
+  const header = daftar.data.find((row) => row.dokumenId === dokumenId);
+  if (!header) return ok(null);
+
+  const { data: items, error } = await client
+    .from("invoice_pemasok_item")
+    .select("id,penerimaan_item_id,qty::text,harga_satuan_dpp::text,urutan")
+    .eq("invoice_id", dokumenId)
+    .order("urutan", { ascending: true });
+  if (error) return fail(error.message);
+
+  const itemRows = (items ?? []) as unknown as Row[];
+  const terimaIds = itemRows.map((row) => asString(row.penerimaan_item_id));
+  const { data: terimaItems, error: terimaError } = terimaIds.length
+    ? await client
+        .from("penerimaan_item")
+        .select("id,po_item_id,qty_lulus::text")
+        .in("id", terimaIds)
+    : { data: [], error: null };
+  if (terimaError) return fail(terimaError.message);
+
+  const terimaById = new Map(
+    ((terimaItems ?? []) as unknown as Row[]).map((row) => [asString(row.id), row]),
+  );
+  const poItemIds = [
+    ...new Set(
+      ((terimaItems ?? []) as unknown as Row[]).map((row) => asString(row.po_item_id)),
+    ),
+  ];
+  const { data: poItems, error: poError } = poItemIds.length
+    ? await client
+        .from("po_item")
+        .select("id,produk_id,harga_satuan::text")
+        .in("id", poItemIds)
+    : { data: [], error: null };
+  if (poError) return fail(poError.message);
+  const poById = new Map(
+    ((poItems ?? []) as unknown as Row[]).map((row) => [asString(row.id), row]),
+  );
+
+  const riwayat = await listRiwayatStatus(client, dokumenId);
+  if (!riwayat.ok) return riwayat;
+
+  return ok({
+    header,
+    items: itemRows.map((row) => {
+      const terima = terimaById.get(asString(row.penerimaan_item_id));
+      const poItem = terima ? poById.get(asString(terima.po_item_id)) : undefined;
+      return {
+        id: asString(row.id),
+        penerimaanItemId: asString(row.penerimaan_item_id),
+        produkId: poItem ? asString(poItem.produk_id) : "",
+        qty: asString(row.qty),
+        hargaSatuanDpp: asString(row.harga_satuan_dpp),
+        qtyLulus: terima ? asString(terima.qty_lulus) : "0",
+        hargaPo: poItem ? asString(poItem.harga_satuan) : "0",
+      };
+    }),
+    riwayat: riwayat.data,
+  });
+}
+
+/** Receipts that are fully QC'd and not yet invoiced. */
+export async function listPenerimaanSiapInvoice(
+  client: SupabaseClient,
+): Promise<Result<PenerimaanSiapInvoice[]>> {
+  const { data, error } = await client
+    .from("penerimaan")
+    .select("dokumen_id,po_id,gudang_id,jenis,tanggal");
+  if (error) return fail(error.message);
+
+  const rows = (data ?? []) as unknown as Row[];
+  if (rows.length === 0) return ok([]);
+
+  const docs = await ambilDokumen(
+    client,
+    rows.map((row) => asString(row.dokumen_id)),
+  );
+  const invoice = await client
+    .from("invoice_pemasok")
+    .select("penerimaan_id,dokumen_id");
+  if (invoice.error) return fail(invoice.error.message);
+  const invoiceDocs = await ambilDokumen(
+    client,
+    ((invoice.data ?? []) as unknown as Row[]).map((row) => asString(row.dokumen_id)),
+  );
+  const sudahAda = new Set(
+    ((invoice.data ?? []) as unknown as Row[])
+      .filter((row) => {
+        const doc = invoiceDocs.get(asString(row.dokumen_id));
+        return doc !== undefined && asString(doc.status) !== "DIBATALKAN";
+      })
+      .map((row) => asString(row.penerimaan_id)),
+  );
+
+  const kandidat = rows
+    .map((row) => {
+      const doc = docs.get(asString(row.dokumen_id));
+      if (!doc) return null;
+      const status = asString(doc.status);
+      if (status !== "QC_LULUS" && status !== "QC_GAGAL") return null;
+      if (sudahAda.has(asString(row.dokumen_id))) return null;
+      return {
+        row,
+        doc,
+      };
+    })
+    .filter((item): item is { row: Row; doc: Row } => item !== null);
+
+  if (kandidat.length === 0) return ok([]);
+
+  const ids = kandidat.map((item) => asString(item.row.dokumen_id));
+  const { data: items, error: itemError } = await client
+    .from("penerimaan_item")
+    .select("id,penerimaan_id,po_item_id,qty_lulus::text")
+    .in("penerimaan_id", ids);
+  if (itemError) return fail(itemError.message);
+
+  const itemRows = (items ?? []) as unknown as Row[];
+  const poItemIds = [...new Set(itemRows.map((row) => asString(row.po_item_id)))];
+  const { data: poItems, error: poError } = poItemIds.length
+    ? await client
+        .from("po_item")
+        .select("id,produk_id,harga_satuan::text")
+        .in("id", poItemIds)
+    : { data: [], error: null };
+  if (poError) return fail(poError.message);
+  const poById = new Map(
+    ((poItems ?? []) as unknown as Row[]).map((row) => [asString(row.id), row]),
+  );
+
+  const gudang = await ambilGudangNama(
+    client,
+    kandidat.map((item) => asString(item.row.gudang_id)),
+  );
+
+  return ok(
+    kandidat.map((item) => ({
+      header: {
+        dokumenId: asString(item.row.dokumen_id),
+        nomor: asString(item.doc.nomor),
+        status: asString(item.doc.status) as PenerimaanView["status"],
+        versi: asNumber(item.doc.versi),
+        jenis: asString(item.row.jenis) as PenerimaanView["jenis"],
+        tanggal: asString(item.row.tanggal),
+        poId: asString(item.row.po_id),
+        poNomor: null,
+        gudangId: asString(item.row.gudang_id),
+        gudangNama: gudang.get(asString(item.row.gudang_id)) ?? "Gudang",
+        createdAt: asString(item.doc.created_at),
+      },
+      items: itemRows
+        .filter((row) => asString(row.penerimaan_id) === asString(item.row.dokumen_id))
+        .map((row) => {
+          const poItem = poById.get(asString(row.po_item_id));
+          return {
+            penerimaanItemId: asString(row.id),
+            produkId: poItem ? asString(poItem.produk_id) : "",
+            qtyLulus: asString(row.qty_lulus),
+            hargaPo: poItem ? asString(poItem.harga_satuan) : "0",
+          };
+        }),
+    })),
+  );
 }
