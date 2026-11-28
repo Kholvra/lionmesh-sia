@@ -140,3 +140,45 @@ export interface ValuationStrategy {
     nilaiKeluar: string;
   };
 }
+
+export type StatusAlokasiStok = "teralokasi" | "dilepas";
+
+export interface AlokasiStok {
+  id: string;
+  pesanan_id: string;
+  pesanan_item_id: string;
+  produk_id: string;
+  gudang_id: string;
+  qty: string;
+  status: StatusAlokasiStok;
+  created_by?: string | null;
+  created_at: string;
+  updated_by?: string | null;
+  updated_at: string;
+}
+
+export interface GudangRingkas {
+  id: string;
+  kode: string;
+  nama: string;
+}
+
+export interface KetersediaanProdukGudang {
+  produkId: string;
+  gudangId: string;
+  saldoQty: number;
+  alokasiAktifQty: number;
+  tersediaQty: number;
+}
+
+export interface AlokasiStokItemInput {
+  pesananId: string;
+  pesananItemId: string;
+  produkId: string;
+  gudangId: string;
+  qtyDimintaBaris: number;
+  qtyTerkirimBaris?: number;
+  qtyAlokasi: number;
+  actorId: string;
+}
+
