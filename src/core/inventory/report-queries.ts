@@ -7,14 +7,9 @@ import { parseRpcResult } from "@/lib/parse-rpc-result";
 import { fail, ok, type Result } from "@/lib/result";
 import { isRecord } from "@/lib/validation";
 import type { MutasiKartu } from "./report";
+import type { GudangRingkas } from "./types";
 
 export interface ProdukRingkas {
-  id: string;
-  kode: string;
-  nama: string;
-}
-
-export interface GudangRingkas {
   id: string;
   kode: string;
   nama: string;
