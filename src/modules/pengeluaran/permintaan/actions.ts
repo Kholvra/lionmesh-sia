@@ -3,17 +3,22 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
-import { ajukanDokumen, revisiDokumen } from "@/core/dokumen";
+import { ajukanDokumen, revisiDokumen, setujuiDokumen, tolakDokumen } from "@/core/dokumen";
 import {
   ajukanPR,
   batalkanPR,
   getPengadaanExecutionContext,
-  periksaPR,
+  periksaPRDenganNilai,
 } from "@/core/pengadaan";
 import { cekIzin } from "@/lib/auth/permissions";
 import { PATH_PERMINTAAN } from "./constants";
 import type { PermintaanActionState } from "./form-state";
-import { parsePermintaanForm } from "./schema";
+import {
+  parseEstimasiNilai,
+  parseKeputusanApproval,
+  parsePenolakan,
+  parsePermintaanForm,
+} from "./schema";
 
 const PESAN_SESI = "Sesi Anda sudah berakhir. Silakan masuk lagi.";
 
@@ -71,16 +76,20 @@ export async function periksaPermintaanAction(
     return { status: "error", message: pesanIzin("periksa") };
   }
 
-  const permintaanId = String(formData.get("id") ?? "");
-  const versi = Number(formData.get("versi"));
-  if (!permintaanId || !Number.isInteger(versi)) {
-    return { status: "error", message: "Data permintaan tidak valid." };
+  const keputusan = parseKeputusanApproval(formData);
+  const estimasi = parseEstimasiNilai(formData);
+  if (!keputusan.input || !estimasi.nilai) {
+    return {
+      status: "error",
+      message: keputusan.message ?? estimasi.message ?? "Data permintaan tidak valid.",
+    };
   }
 
-  const hasil = await periksaPR(context.data.supabase, {
-    permintaanId,
-    versi,
+  const hasil = await periksaPRDenganNilai(context.data.supabase, {
+    permintaanId: keputusan.input.dokumenId,
+    versi: keputusan.input.versi,
     actorId: context.data.actorId,
+    nilai: estimasi.nilai,
   });
   if (!hasil.ok) return { status: "error", message: hasil.message };
 
@@ -180,4 +189,59 @@ export async function batalkanPermintaanAction(
 
   revalidatePath(PATH_PERMINTAAN);
   return { status: "success", message: "Permintaan dibatalkan." };
+}
+
+export async function setujuiPermintaanAction(
+  prevState: PermintaanActionState,
+  formData: FormData,
+): Promise<PermintaanActionState> {
+  void prevState;
+  const context = await getPengadaanExecutionContext();
+  if (!context.ok) return { status: "error", message: PESAN_SESI };
+  if (!cekIzin(context.data.peran, "setujui_pr")) {
+    return { status: "error", message: "Anda tidak berwenang menyetujui permintaan ini" };
+  }
+
+  const keputusan = parseKeputusanApproval(formData);
+  if (!keputusan.input) {
+    return { status: "error", message: keputusan.message ?? "Data permintaan tidak valid." };
+  }
+
+  const hasil = await setujuiDokumen(context.data.supabase, {
+    dokumenId: keputusan.input.dokumenId,
+    versi: keputusan.input.versi,
+    actorId: context.data.actorId,
+  });
+  if (!hasil.ok) return { status: "error", message: hasil.message };
+
+  revalidatePath(PATH_PERMINTAAN);
+  return { status: "success", message: "Persetujuan jenjang tercatat." };
+}
+
+export async function tolakPermintaanAction(
+  prevState: PermintaanActionState,
+  formData: FormData,
+): Promise<PermintaanActionState> {
+  void prevState;
+  const context = await getPengadaanExecutionContext();
+  if (!context.ok) return { status: "error", message: PESAN_SESI };
+  if (!cekIzin(context.data.peran, "setujui_pr")) {
+    return { status: "error", message: "Anda tidak berwenang menolak permintaan ini" };
+  }
+
+  const keputusan = parsePenolakan(formData);
+  if (!keputusan.input) {
+    return { status: "error", message: keputusan.message ?? "Data penolakan tidak valid." };
+  }
+
+  const hasil = await tolakDokumen(context.data.supabase, {
+    dokumenId: keputusan.input.dokumenId,
+    versi: keputusan.input.versi,
+    actorId: context.data.actorId,
+    alasan: keputusan.input.alasan,
+  });
+  if (!hasil.ok) return { status: "error", message: hasil.message };
+
+  revalidatePath(PATH_PERMINTAAN);
+  return { status: "success", message: "Permintaan ditolak." };
 }

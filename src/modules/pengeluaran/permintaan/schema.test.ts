@@ -1,7 +1,12 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { parsePermintaanForm } from "./schema.ts";
+import {
+  parseEstimasiNilai,
+  parseKeputusanApproval,
+  parsePenolakan,
+  parsePermintaanForm,
+} from "./schema.ts";
 
 const GUDANG = "33333333-3333-4333-8333-333333333333";
 const PRODUK = "11111111-1111-4111-8111-111111111111";
@@ -70,4 +75,38 @@ test("tanggal butuh wajib", () => {
   );
   assert.equal(parsed.input, null);
   assert.equal(parsed.fieldErrors.tanggal_butuh, "Tanggal butuh wajib diisi");
+});
+
+test("estimasi nilai kosong dibaca sebagai nol", () => {
+  const parsed = parseEstimasiNilai(form({ nilai: "" }));
+  assert.equal(parsed.nilai, "0");
+  assert.equal(parsed.message, null);
+});
+
+test("estimasi nilai menerima koma desimal dan spasi", () => {
+  const parsed = parseEstimasiNilai(form({ nilai: " 1500000,5 " }));
+  assert.equal(parsed.nilai, "1500000.5");
+});
+
+test("estimasi nilai menolak angka negatif, notasi eksponen, dan lebih dari 2 desimal", () => {
+  for (const nilai of ["-5", "1e3", "1.234", "abc"]) {
+    const parsed = parseEstimasiNilai(form({ nilai }));
+    assert.equal(parsed.nilai, null, `nilai ${nilai} should be rejected`);
+    assert.ok(parsed.message);
+  }
+});
+
+test("keputusan approval butuh id dan versi yang sah", () => {
+  const valid = parseKeputusanApproval(form({ id: PRODUK, versi: "3" }));
+  assert.deepEqual(valid.input, { dokumenId: PRODUK, versi: 3 });
+
+  const tanpaVersi = parseKeputusanApproval(form({ id: PRODUK }));
+  assert.equal(tanpaVersi.input, null);
+  assert.equal(tanpaVersi.message, "Data permintaan tidak valid");
+});
+
+test("penolakan tanpa alasan ditolak", () => {
+  const parsed = parsePenolakan(form({ id: PRODUK, versi: "1", alasan: "   " }));
+  assert.equal(parsed.input, null);
+  assert.equal(parsed.message, "Alasan penolakan wajib diisi");
 });
