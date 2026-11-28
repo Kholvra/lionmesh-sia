@@ -1,19 +1,7 @@
 import assert from "node:assert/strict";
-import { registerHooks } from "node:module";
-import { existsSync } from "node:fs";
-import { pathToFileURL } from "node:url";
-import { resolve as resolvePath } from "node:path";
+import { pasangPemuatTs } from "./lib/ts-loader.mjs";
 
-registerHooks({ resolve(specifier, context, nextResolve) {
-  if (specifier.startsWith("@/")) {
-    return nextResolve(pathToFileURL(resolvePath("src", `${specifier.slice(2)}.ts`)).href, context);
-  }
-  if (specifier.startsWith(".") && !specifier.endsWith(".ts") && context.parentURL?.endsWith(".ts")) {
-    const candidate = new URL(`${specifier}.ts`, context.parentURL);
-    if (existsSync(candidate)) return nextResolve(candidate.href, context);
-  }
-  return nextResolve(specifier, context);
-}});
+pasangPemuatTs();
 
 const { prosesAntreanEmail } = await import("../src/core/notifikasi/service.ts");
 function clientFor(row, failCompletion = false) {

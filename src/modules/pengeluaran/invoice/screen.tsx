@@ -3,7 +3,8 @@ import Link from "next/link";
 import { StatusBadge } from "@/components/ui";
 import { cekIzin } from "@/lib/auth/permissions";
 import type { Profile } from "@/lib/auth/types";
-import { formatRupiah } from "@/lib/format/number";
+import { formatRupiah } from "@/lib/format/money";
+import { rupiahKeCents } from "@/modules/pengeluaran/pemasok/format";
 import {
   formatTanggal,
   formatTanggalSingkat,
@@ -100,7 +101,7 @@ export async function InvoiceScreen({ invoiceId, penerimaanId, profile }: Props)
                           </th>
                           <td>{row.nomorInvoice}</td>
                           <td>{row.pemasokNama}</td>
-                          <td className={table.nominal}>{formatRupiah(row.total)}</td>
+                          <td className={table.nominal}>{formatRupiah(rupiahKeCents(row.total))}</td>
                           <td>
                             <StatusBadge status={row.status} statuses={STATUS_INVOICE} />
                           </td>
@@ -219,19 +220,19 @@ export async function InvoiceScreen({ invoiceId, penerimaanId, profile }: Props)
                   <div className={common.detailItem}>
                     <dt className={common.detailLabel}>DPP</dt>
                     <dd className={common.detailValue}>
-                      {formatRupiah(terpilih.header.dppTotal)}
+                      {formatRupiah(rupiahKeCents(terpilih.header.dppTotal))}
                     </dd>
                   </div>
                   <div className={common.detailItem}>
                     <dt className={common.detailLabel}>PPN</dt>
                     <dd className={common.detailValue}>
-                      {formatRupiah(terpilih.header.ppnNilai)}
+                      {formatRupiah(rupiahKeCents(terpilih.header.ppnNilai))}
                     </dd>
                   </div>
                   <div className={common.detailItem}>
                     <dt className={common.detailLabel}>Total</dt>
                     <dd className={common.detailValue}>
-                      {formatRupiah(terpilih.header.total)}
+                      {formatRupiah(rupiahKeCents(terpilih.header.total))}
                     </dd>
                   </div>
                   <div className={common.detailItem}>
@@ -270,9 +271,9 @@ export async function InvoiceScreen({ invoiceId, penerimaanId, profile }: Props)
                           <td className={table.nominal}>{item.qty}</td>
                           <td className={table.nominal}>{item.qtyLulus}</td>
                           <td className={table.nominal}>
-                            {formatRupiah(item.hargaSatuanDpp)}
+                            {formatRupiah(rupiahKeCents(item.hargaSatuanDpp))}
                           </td>
-                          <td className={table.nominal}>{formatRupiah(item.hargaPo)}</td>
+                          <td className={table.nominal}>{formatRupiah(rupiahKeCents(item.hargaPo))}</td>
                         </tr>
                       ))}
                     </tbody>

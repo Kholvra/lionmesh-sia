@@ -1,14 +1,14 @@
 import Link from "next/link";
 import { Suspense } from "react";
 
-import { BelumAdaKaryawan, TidakBerwenang } from "@/modules/penggajian/karyawan/components/states";
+import { PageHeader } from "@/components/ui/page-header";
+import { EmptyState, ErrorState } from "@/components/ui/states";
 import { KaryawanTable, KaryawanTableLoading } from "@/modules/penggajian/karyawan/components/karyawan-table";
+import { PATH_KARYAWAN_TAMBAH } from "@/modules/penggajian/karyawan/constants";
 import { listKaryawan } from "@/modules/penggajian/karyawan/queries";
 import { aksesSesi } from "@/modules/penggajian/karyawan/sesi";
-import { PageHeader } from "@/modules/penggajian/ui/page-header";
 import { ui } from "@/modules/penggajian/ui/kelas";
 
-const ITEM = "GJ-001 Mengelola data karyawan";
 const JUDUL = "Data karyawan";
 const DESKRIPSI = "Kelola identitas, informasi penggajian, dan status hubungan kerja.";
 
@@ -17,8 +17,12 @@ async function DaftarKaryawan() {
   if (!akses.bolehMembaca) {
     return (
       <>
-        <PageHeader item={ITEM} title={JUDUL} />
-        <TidakBerwenang />
+        <PageHeader title={JUDUL} />
+        <ErrorState
+          judul="Anda tidak punya akses ke data karyawan"
+          teks="Data karyawan hanya bisa dibuka oleh HR, Accounting, dan Finance. Hubungi HR bila Anda membutuhkannya."
+          variant="compact"
+        />
       </>
     );
   }
@@ -29,19 +33,24 @@ async function DaftarKaryawan() {
       <PageHeader
         actions={
           akses.bolehMengubah ? (
-            <Link className={ui.buttonPrimary} href="/penggajian/karyawan/tambah">
+            <Link className={ui.buttonPrimary} href={PATH_KARYAWAN_TAMBAH}>
               Tambah karyawan
             </Link>
           ) : null
         }
         description={DESKRIPSI}
-        item={ITEM}
         title={JUDUL}
       />
       <section className={ui.card}>
         <h2 className={ui.cardTitle}>Direktori karyawan</h2>
         {rows.length === 0 ? (
-          <BelumAdaKaryawan bolehTambah={akses.bolehMengubah} />
+          <EmptyState
+            actionHref={PATH_KARYAWAN_TAMBAH}
+            actionLabel={akses.bolehMengubah ? "Tambah karyawan" : undefined}
+            judul="Belum ada data karyawan"
+            teks="Tambahkan karyawan pertama agar presensi dan penggajian bisa dicatat."
+            variant="compact"
+          />
         ) : (
           <KaryawanTable rows={rows} tampilIdentitas={akses.identitas} tampilRekening={akses.rekening} />
         )}
@@ -55,7 +64,7 @@ export function KaryawanListScreen() {
     <Suspense
       fallback={
         <>
-          <PageHeader description={DESKRIPSI} item={ITEM} title={JUDUL} />
+          <PageHeader description={DESKRIPSI} title={JUDUL} />
           <section aria-busy="true" className={ui.card}>
             <h2 className={ui.cardTitle}>Direktori karyawan</h2>
             <KaryawanTableLoading />

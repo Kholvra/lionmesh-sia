@@ -3,12 +3,14 @@
 import { useActionState } from "react";
 
 import { FormField, Input } from "@/components/ui";
+import { Notice } from "@/components/ui/notice";
+import { Select } from "@/components/ui/select";
+import { SubmitButton } from "@/components/ui/submit-button";
 import type { MataUang } from "@/core/master/types";
 
 import { simpanKursAction } from "../actions";
 import { INITIAL_MASTER_ACTION_STATE } from "../form-state";
 import styles from "../master.module.css";
-import { Select } from "./select";
 
 type KursFormProps = {
   mataUangAktif: readonly MataUang[];
@@ -26,15 +28,15 @@ export function KursForm({ mataUangAktif, mataUangTerpilih }: KursFormProps) {
   return (
     <form action={formAction} className={styles.form} noValidate>
       {state.status === "error" && state.message ? (
-        <p className={styles.messageError} role="alert">
+        <Notice className={styles.messageError} tone="danger">
           {state.message}
-        </p>
+        </Notice>
       ) : null}
 
       {state.status === "success" && state.message ? (
-        <p className={styles.messageSuccess} role="status">
+        <Notice className={styles.messageSuccess} tone="success">
           {state.message}
-        </p>
+        </Notice>
       ) : null}
 
       <div className={styles.formGridTiga}>
@@ -44,7 +46,7 @@ export function KursForm({ mataUangAktif, mataUangTerpilih }: KursFormProps) {
           name="mata_uang"
           required
         >
-          <Select defaultValue={mataUangTerpilih ?? ""} name="mata_uang">
+          <Select className={styles.select} defaultValue={mataUangTerpilih ?? ""} name="mata_uang">
             <option value="">Pilih mata uang</option>
             {mataUangAktif.map((item) => (
               <option key={item.id} value={item.id}>
@@ -80,9 +82,9 @@ export function KursForm({ mataUangAktif, mataUangTerpilih }: KursFormProps) {
       </div>
 
       <div className={styles.formActions}>
-        <button className={styles.primaryButton} disabled={pending} type="submit">
-          {pending ? "Menyimpan..." : "Tambah kurs"}
-        </button>
+        <SubmitButton busy={pending} busyLabel="Menyimpan..." size="lg">
+          Tambah kurs
+        </SubmitButton>
       </div>
     </form>
   );

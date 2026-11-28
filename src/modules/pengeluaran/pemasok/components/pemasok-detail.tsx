@@ -1,13 +1,15 @@
 import Link from "next/link";
 
 import { StatusBadge } from "@/components/ui";
+import { Notice } from "@/components/ui/notice";
 import type { Pemasok, RiwayatStatusPemasok } from "@/core/pemasok";
+import { formatRupiah } from "@/lib/format/money";
 import { PATH_PEMASOK } from "../constants";
 import {
   formatPersen,
-  formatRupiah,
   formatTanggal,
   labelAksi,
+  rupiahKeCents,
   STATUS_PEMASOK,
   statusPemasok,
 } from "../format";
@@ -113,7 +115,7 @@ export function PemasokDetail({
         <DetailItem
           label="Toleransi nominal"
           numeric
-          value={formatRupiah(pemasok.toleransi_nominal)}
+          value={formatRupiah(rupiahKeCents(pemasok.toleransi_nominal))}
         />
         <DetailItem label="NPWP" value={pemasok.npwp ?? "—"} />
         <DetailItem label="Alamat" value={pemasok.alamat ?? "—"} />
@@ -148,9 +150,7 @@ export function PemasokDetail({
         </div>
 
         {riwayatError ? (
-          <p className={styles.messageError} role="alert">
-            Riwayat status gagal dimuat: {riwayatError}
-          </p>
+          <Notice tone="danger">Riwayat status gagal dimuat: {riwayatError}</Notice>
         ) : riwayat.length === 0 ? (
           <p className={styles.emptyState}>
             Belum ada riwayat status untuk pemasok ini.

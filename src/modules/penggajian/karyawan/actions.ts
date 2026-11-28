@@ -7,6 +7,7 @@ import { assertIzin } from "@/lib/auth";
 import type { Profile } from "@/lib/auth";
 import type { Result } from "@/lib/result";
 import { createClient } from "@/lib/supabase/server";
+import { PATH_KARYAWAN, pathKaryawanDetail } from "@/modules/penggajian/karyawan/constants";
 import { getDaftarAktif, muatKaryawan, nikTerpakai } from "@/modules/penggajian/karyawan/queries";
 import {
   parseNominal,
@@ -22,8 +23,6 @@ import type { DataKaryawanInput } from "@/modules/penggajian/karyawan/types";
 export type AksiState =
   | (Result<{ id: string }> & { fieldErrors?: FieldErrors })
   | null;
-
-const BASE_PATH = "/penggajian/karyawan";
 
 function teks(formData: FormData, name: string): string {
   const value = formData.get(name);
@@ -97,8 +96,8 @@ export async function createKaryawan(_prev: AksiState, formData: FormData): Prom
     p_tanggal_berlaku: input.tanggalBerlaku,
   });
   if (error) return gagalDb(error);
-  revalidatePath(BASE_PATH);
-  redirect(`${BASE_PATH}/${id}?pesan=dibuat`);
+  revalidatePath(PATH_KARYAWAN);
+  redirect(`${pathKaryawanDetail(id)}?pesan=dibuat`);
 }
 
 export async function updateKaryawan(
@@ -119,8 +118,8 @@ export async function updateKaryawan(
 
   const { error } = await supabase.rpc("update_karyawan", { p_id: id, ...dataKeRpc(data) });
   if (error) return gagalDb(error);
-  revalidatePath(BASE_PATH);
-  redirect(`${BASE_PATH}/${id}?pesan=diubah`);
+  revalidatePath(PATH_KARYAWAN);
+  redirect(`${pathKaryawanDetail(id)}?pesan=diubah`);
 }
 
 export async function addGajiPokok(
@@ -145,8 +144,8 @@ export async function addGajiPokok(
     p_tanggal_berlaku: input.tanggalBerlaku,
   });
   if (error) return gagalDb(error);
-  revalidatePath(BASE_PATH);
-  redirect(`${BASE_PATH}/${id}?pesan=gaji`);
+  revalidatePath(PATH_KARYAWAN);
+  redirect(`${pathKaryawanDetail(id)}?pesan=gaji`);
 }
 
 export async function deactivateKaryawan(
@@ -170,6 +169,6 @@ export async function deactivateKaryawan(
 
   const { error } = await supabase.rpc("nonaktifkan_karyawan", { p_id: id, p_tanggal_keluar: tanggalKeluar });
   if (error) return gagalDb(error);
-  revalidatePath(BASE_PATH);
-  redirect(`${BASE_PATH}/${id}?pesan=nonaktif`);
+  revalidatePath(PATH_KARYAWAN);
+  redirect(`${pathKaryawanDetail(id)}?pesan=nonaktif`);
 }

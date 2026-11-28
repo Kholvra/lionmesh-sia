@@ -1,5 +1,7 @@
 import Link from "next/link";
 
+import { PageHeader } from "@/components/ui/page-header";
+import { submitButtonClassName } from "@/components/ui/submit-button";
 import { StatusBadge } from "@/components/ui";
 import { cekIzin } from "@/lib/auth/permissions";
 import type { Profile } from "@/lib/auth/types";
@@ -35,28 +37,21 @@ export async function GudangScreen({ gudangId, mode, profile }: GudangScreenProp
 
   return (
     <section aria-label="Master gudang" className={styles.page}>
-      <header className={styles.header}>
-        <div>
-          <p className={styles.breadcrumb}>Pengaturan / Master data</p>
-          <h1 className={styles.title}>Gudang</h1>
-          <p className={styles.description}>
-            Daftar gudang yang dipakai lintas siklus. Gudang nonaktif tidak bisa
-            dipilih untuk dokumen baru, tetapi dokumen lama tetap terbaca.
-          </p>
-        </div>
-      </header>
+      <PageHeader
+        description="Daftar gudang yang dipakai lintas siklus. Gudang nonaktif tidak bisa dipilih untuk dokumen baru, tetapi dokumen lama tetap terbaca."
+        title="Gudang"
+      />
 
       <div className={styles.layout}>
         <section className={styles.panel} aria-label="Detail gudang">
           <div className={styles.panelCard}>
             {terpilih && tampilkanFormUbah ? (
               <>
-                <div className={styles.panelHeader}>
-                  <div>
-                    <h2 className={styles.panelTitle}>Ubah gudang</h2>
-                    <p className={styles.panelMeta}>{terpilih.kode}</p>
-                  </div>
-                </div>
+                <PageHeader
+                  description={terpilih.kode}
+                  title="Ubah gudang"
+                  variant="section"
+                />
                 <GudangForm key={terpilih.id} gudang={terpilih} />
               </>
             ) : terpilih ? (
@@ -75,7 +70,11 @@ export async function GudangScreen({ gudangId, mode, profile }: GudangScreenProp
                 {canManage ? (
                   <div className={`${styles.buttonRow} ${styles.detailActions}`}>
                     <Link
-                      className={styles.secondaryButton}
+                      className={submitButtonClassName({
+                        className: styles.secondaryButton,
+                        size: "lg",
+                        variant: "secondary",
+                      })}
                       href={`${PATH_MASTER_GUDANG}?id=${terpilih.id}&mode=edit`}
                     >
                       Ubah data
@@ -102,27 +101,23 @@ export async function GudangScreen({ gudangId, mode, profile }: GudangScreenProp
               </div>
             ) : gudangId ? (
               <div>
-                <h2 className={styles.panelTitle}>Gudang tidak ditemukan</h2>
+                <PageHeader title="Gudang tidak ditemukan" variant="section" />
                 <p className={styles.emptyState}>
                   Gudang yang dipilih tidak tersedia.
                 </p>
-                <Link className={styles.secondaryButton} href={PATH_MASTER_GUDANG}>
-                  Kembali ke daftar
-                </Link>
               </div>
             ) : canManage ? (
               <>
-                <div className={styles.panelHeader}>
-                  <div>
-                    <h2 className={styles.panelTitle}>Tambah gudang</h2>
-                    <p className={styles.panelMeta}>Kode dan nama wajib diisi.</p>
-                  </div>
-                </div>
+                <PageHeader
+                  description="Kode dan nama wajib diisi."
+                  title="Tambah gudang"
+                  variant="section"
+                />
                 <GudangForm />
               </>
             ) : (
               <div>
-                <h2 className={styles.panelTitle}>Detail gudang</h2>
+                <PageHeader title="Detail gudang" variant="section" />
                 <p className={styles.emptyState}>
                   Pilih gudang dari daftar untuk melihat detail. Peran Anda tidak
                   dapat mengubah master gudang.
@@ -132,26 +127,26 @@ export async function GudangScreen({ gudangId, mode, profile }: GudangScreenProp
           </div>
         </section>
 
-        <section className={styles.listPanel} aria-labelledby="daftar-gudang">
+        <section className={styles.listPanel} aria-label="Daftar gudang">
           <div className={styles.panelCard}>
-            <div className={styles.panelHeader}>
-              <div>
-                <h2 className={styles.panelTitle} id="daftar-gudang">
-                  Daftar gudang
-                </h2>
-                <p className={styles.panelMeta}>
-                  {data.daftar.length} gudang · Aktor: {profile.peran ?? "—"}
-                </p>
-              </div>
-              {canManage ? (
-                <Link
-                  className={`${styles.primaryButton} ${styles.panelAction}`}
-                  href={PATH_MASTER_GUDANG}
-                >
-                  Tambah gudang
-                </Link>
-              ) : null}
-            </div>
+            <PageHeader
+              actions={
+                canManage ? (
+                  <Link
+                    className={submitButtonClassName({
+                      className: `${styles.primaryButton} ${styles.panelAction}`,
+                      size: "lg",
+                    })}
+                    href={PATH_MASTER_GUDANG}
+                  >
+                    Tambah gudang
+                  </Link>
+                ) : null
+              }
+              description={`${data.daftar.length} gudang · Aktor: ${profile.peran ?? "—"}`}
+              title="Daftar gudang"
+              variant="section"
+            />
 
             <MasterTable
               caption="Daftar gudang"

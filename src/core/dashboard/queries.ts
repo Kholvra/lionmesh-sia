@@ -1,6 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 
-import { getDokumenExecutionContext } from "@/core/dokumen";
+import { listRiwayatStatus } from "@/core/dokumen/queries";
+import { getDokumenExecutionContext } from "@/core/dokumen/server";
 import { DAFTAR_PERAN, type Peran } from "@/lib/auth/types";
 import { isRecord } from "@/lib/validation";
 import { readAllPages } from "./pagination";
@@ -163,31 +164,23 @@ async function ambilPersetujuan(
     return { daftar: [], error: null };
   }
 
-  const data: unknown[] = [];
-  for (let index = 0; index < dokumenIds.length; index += 100) {
-    const ids = dokumenIds.slice(index, index + 100);
-    const result = await readAllPages((from, to) => supabase
-      .from("riwayat_status")
-      .select("dokumen_id,level,actor_id,siklus_approval")
-      .in("dokumen_id", [...ids])
-      .eq("aksi", "SETUJUI")
-      .order("id", { ascending: true })
-      .range(from, to));
-    if (result.error) return { daftar: [], error: result.error };
-    data.push(...result.data);
-  }
+  const hasil = await Promise.all(
+    dokumenIds.map((dokumenId) => listRiwayatStatus(supabase, dokumenId)),
+  );
 
   const daftar: PersetujuanTercatat[] = [];
-  for (const row of (data ?? []) as unknown[]) {
-    if (!isRecord(row)) continue;
-    if (typeof row.level !== "number") continue;
-    daftar.push({
-      dokumenId: asString(row.dokumen_id),
-      level: row.level,
-      actorId: asString(row.actor_id),
-      siklusApproval:
-        typeof row.siklus_approval === "number" ? row.siklus_approval : 0,
-    });
+  for (const result of hasil) {
+    if (!result.ok) return { daftar: [], error: result.message };
+    for (const row of result.data) {
+      if (row.aksi !== "SETUJUI" || typeof row.level !== "number") continue;
+      daftar.push({
+        dokumenId: row.dokumen_id,
+        level: row.level,
+        actorId: row.actor_id,
+        siklusApproval:
+          typeof row.siklus_approval === "number" ? row.siklus_approval : 0,
+      });
+    }
   }
 
   return { daftar, error: null };

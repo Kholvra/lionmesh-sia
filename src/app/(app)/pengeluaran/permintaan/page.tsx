@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 
 import { requireSesi } from "@/lib/auth/server";
+import { firstParam } from "@/lib/first-param";
 import { PermintaanScreen } from "@/modules/pengeluaran/permintaan/screen";
 
 export const instant = false;
@@ -19,8 +20,8 @@ type Props = {
 export default async function PermintaanPage({ searchParams }: Props) {
   const params = await searchParams;
   const { profile } = await requireSesi();
-  const rawId = Array.isArray(params.permintaan) ? params.permintaan[0] : params.permintaan;
-  const rawMode = Array.isArray(params.mode) ? params.mode[0] : params.mode;
+  const rawId = firstParam(params.permintaan);
+  const rawMode = firstParam(params.mode);
 
   return (
     <PermintaanScreen

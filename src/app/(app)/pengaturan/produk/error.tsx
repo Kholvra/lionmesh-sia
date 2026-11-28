@@ -1,14 +1,11 @@
 "use client";
 
-import { MasterError } from "@/modules/core/master/components/master-error";
+import { ErrorState } from "@/components/ui/states";
+import type { RouteErrorProps } from "@/lib/route-error-props";
 
-type MasterErrorProps = {
-  reset: () => void;
-};
-
-export default function Error({ reset }: MasterErrorProps) {
+export default function Error({ reset }: RouteErrorProps) {
   return (
-    <MasterError
+    <ErrorState
       judul="Master gagal dimuat"
       reset={reset}
       teks="Terjadi kesalahan saat memuat data master. Coba muat ulang halaman ini."

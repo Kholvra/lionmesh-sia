@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 
 import { requireSesi } from "@/lib/auth/server";
+import { firstParam } from "@/lib/first-param";
 import { PemasokScreen } from "@/modules/pengeluaran/pemasok/screen";
 import { isValidPemasokId } from "@/modules/pengeluaran/pemasok/schema";
 
@@ -21,10 +22,8 @@ export default async function PemasokPage({ searchParams }: PemasokPageProps) {
   const params = await searchParams;
   const { profile } = await requireSesi();
 
-  const rawPemasokId = Array.isArray(params.pemasok)
-    ? params.pemasok[0]
-    : params.pemasok;
-  const rawMode = Array.isArray(params.mode) ? params.mode[0] : params.mode;
+  const rawPemasokId = firstParam(params.pemasok);
+  const rawMode = firstParam(params.mode);
 
   return (
     <PemasokScreen

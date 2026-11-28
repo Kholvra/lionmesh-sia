@@ -2,6 +2,8 @@
 
 import { useActionState } from "react";
 
+import { Notice } from "@/components/ui/notice";
+import { SubmitButton } from "@/components/ui/submit-button";
 import type { PermintaanPembelianView } from "@/core/pengadaan";
 import {
   ajukanUlangPermintaanAction,
@@ -21,22 +23,6 @@ type Props = {
   canAjukan: boolean;
   canSetujui: boolean;
 };
-
-function Pesan({
-  state,
-}: {
-  state: { status: "idle" | "error" | "success"; message?: string };
-}) {
-  if (!state.message) return null;
-  return (
-    <p
-      className={state.status === "success" ? styles.messageSuccess : styles.messageError}
-      role={state.status === "success" ? "status" : "alert"}
-    >
-      {state.message}
-    </p>
-  );
-}
 
 function PeriksaForm({ permintaan }: { permintaan: PermintaanPembelianView }) {
   const [state, action, pending] = useActionState(
@@ -58,10 +44,14 @@ function PeriksaForm({ permintaan }: { permintaan: PermintaanPembelianView }) {
         name="nilai"
         placeholder="0"
       />
-      <Pesan state={state} />
-      <button className={styles.primaryButton} disabled={pending} type="submit">
-        {pending ? "Memproses..." : "Periksa dan teruskan"}
-      </button>
+      {state.message ? (
+        <Notice tone={state.status === "success" ? "success" : "danger"}>
+          {state.message}
+        </Notice>
+      ) : null}
+      <SubmitButton busy={pending} size="lg">
+        Periksa dan teruskan
+      </SubmitButton>
     </form>
   );
 }
@@ -84,10 +74,14 @@ function KembalikanForm({ permintaan }: { permintaan: PermintaanPembelianView })
         name="alasan"
         placeholder="Contoh: qty belum sesuai kebutuhan"
       />
-      <Pesan state={state} />
-      <button className={styles.secondaryButton} disabled={pending} type="submit">
-        {pending ? "Memproses..." : "Kembalikan untuk revisi"}
-      </button>
+      {state.message ? (
+        <Notice tone={state.status === "success" ? "success" : "danger"}>
+          {state.message}
+        </Notice>
+      ) : null}
+      <SubmitButton busy={pending} size="lg" variant="secondary">
+        Kembalikan untuk revisi
+      </SubmitButton>
     </form>
   );
 }
@@ -101,10 +95,14 @@ function AjukanUlangForm({ permintaan }: { permintaan: PermintaanPembelianView }
     <form action={action} className={styles.actionForm}>
       <input name="id" type="hidden" value={permintaan.dokumenId} />
       <input name="versi" type="hidden" value={permintaan.versi} />
-      <Pesan state={state} />
-      <button className={styles.primaryButton} disabled={pending} type="submit">
-        {pending ? "Memproses..." : "Ajukan ulang"}
-      </button>
+      {state.message ? (
+        <Notice tone={state.status === "success" ? "success" : "danger"}>
+          {state.message}
+        </Notice>
+      ) : null}
+      <SubmitButton busy={pending} size="lg">
+        Ajukan ulang
+      </SubmitButton>
     </form>
   );
 }
@@ -118,10 +116,14 @@ function SetujuiForm({ permintaan }: { permintaan: PermintaanPembelianView }) {
     <form action={action} className={styles.actionForm}>
       <input name="id" type="hidden" value={permintaan.dokumenId} />
       <input name="versi" type="hidden" value={permintaan.versi} />
-      <Pesan state={state} />
-      <button className={styles.primaryButton} disabled={pending} type="submit">
-        {pending ? "Memproses..." : "Setujui jenjang ini"}
-      </button>
+      {state.message ? (
+        <Notice tone={state.status === "success" ? "success" : "danger"}>
+          {state.message}
+        </Notice>
+      ) : null}
+      <SubmitButton busy={pending} size="lg">
+        Setujui jenjang ini
+      </SubmitButton>
     </form>
   );
 }
@@ -144,10 +146,14 @@ function TolakForm({ permintaan }: { permintaan: PermintaanPembelianView }) {
         name="alasan"
         placeholder="Contoh: anggaran tidak tersedia"
       />
-      <Pesan state={state} />
-      <button className={styles.dangerButton} disabled={pending} type="submit">
-        {pending ? "Memproses..." : "Tolak permintaan"}
-      </button>
+      {state.message ? (
+        <Notice tone={state.status === "success" ? "success" : "danger"}>
+          {state.message}
+        </Notice>
+      ) : null}
+      <SubmitButton busy={pending} size="lg" variant="danger">
+        Tolak permintaan
+      </SubmitButton>
     </form>
   );
 }
@@ -170,10 +176,14 @@ function BatalkanForm({ permintaan }: { permintaan: PermintaanPembelianView }) {
         name="alasan"
         placeholder="Contoh: salah input"
       />
-      <Pesan state={state} />
-      <button className={styles.dangerButton} disabled={pending} type="submit">
-        {pending ? "Memproses..." : "Batalkan permintaan"}
-      </button>
+      {state.message ? (
+        <Notice tone={state.status === "success" ? "success" : "danger"}>
+          {state.message}
+        </Notice>
+      ) : null}
+      <SubmitButton busy={pending} size="lg" variant="danger">
+        Batalkan permintaan
+      </SubmitButton>
     </form>
   );
 }
@@ -220,7 +230,7 @@ export function PermintaanActions({
         <AjukanUlangForm permintaan={permintaan} />
       ) : null}
 
-      {bisaBatal ? <BatalkanForm permintaan={permintaan} /> : null}
+      {canAjukan && bisaBatal ? <BatalkanForm permintaan={permintaan} /> : null}
     </div>
   );
 }

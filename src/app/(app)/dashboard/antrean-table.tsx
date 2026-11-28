@@ -2,39 +2,14 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 
-import {
-  DataTable,
-  ROWS_PER_PAGE,
-  type DataTableColumn,
-  type TableSort,
-} from "@/components/ui";
+import { DataTable, type DataTableColumn } from "@/components/ui";
+import { useTableState } from "@/components/ui/use-table-state";
 import type { TindakanAntrean } from "@/core/dashboard";
 
 import { formatWaktu } from "./format";
 import styles from "./dashboard.module.css";
-
-function sortRows(
-  rows: readonly TindakanAntrean[],
-  columns: readonly DataTableColumn<TindakanAntrean>[],
-  sort: TableSort | null,
-): TindakanAntrean[] {
-  if (!sort) return [...rows];
-
-  const column = columns.find((item) => item.id === sort.columnId);
-  if (!column?.sortValue) return [...rows];
-
-  const factor = sort.direction === "ascending" ? 1 : -1;
-  return [...rows].sort((kiri, kanan) => {
-    const a = column.sortValue?.(kiri) ?? "";
-    const b = column.sortValue?.(kanan) ?? "";
-    if (typeof a === "number" && typeof b === "number") {
-      return (a - b) * factor;
-    }
-    return String(a).localeCompare(String(b), "id") * factor;
-  });
-}
 
 export function AntreanTable({
   errorMessage,
@@ -44,12 +19,6 @@ export function AntreanTable({
   rows: readonly TindakanAntrean[];
 }) {
   const router = useRouter();
-  const [page, setPage] = useState(1);
-  const [sort, setSort] = useState<TableSort | null>({
-    columnId: "menunggu",
-    direction: "ascending",
-  });
-
   const columns = useMemo<DataTableColumn<TindakanAntrean>[]>(
     () => [
       {
@@ -99,14 +68,19 @@ export function AntreanTable({
     [],
   );
 
-  const sortedRows = useMemo(
-    () => sortRows(rows, columns, sort),
-    [columns, rows, sort],
-  );
-  const visibleRows = useMemo(
-    () => sortedRows.slice((page - 1) * ROWS_PER_PAGE, page * ROWS_PER_PAGE),
-    [page, sortedRows],
-  );
+  const {
+    onPageChange,
+    onSortChange,
+    page,
+    sort,
+    totalItems,
+    visibleRows,
+  } = useTableState(rows, {
+    columns,
+    emptyMessage: "Tidak ada tindakan yang menunggu",
+    initialSort: { columnId: "menunggu", direction: "ascending" },
+  });
+
 
   return (
     <DataTable
@@ -114,17 +88,14 @@ export function AntreanTable({
       columns={columns}
       emptyMessage="Tidak ada tindakan yang menunggu"
       errorMessage={errorMessage}
-      onPageChange={setPage}
+      onPageChange={onPageChange}
       onRetry={() => router.refresh()}
-      onSortChange={(nextSort) => {
-        setSort(nextSort);
-        setPage(1);
-      }}
+      onSortChange={onSortChange}
       page={page}
       rowKey={(row) => row.dokumenId}
       rows={visibleRows}
       sort={sort}
-      totalItems={sortedRows.length}
+      totalItems={totalItems}
     />
   );
 }

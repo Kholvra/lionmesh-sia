@@ -1,5 +1,6 @@
 import type { RiwayatHarga } from "@/core/pengadaan";
-import { formatRupiah } from "@/lib/format/number";
+import { formatRupiah } from "@/lib/format/money";
+import { rupiahKeCents } from "@/modules/pengeluaran/pemasok/format";
 import { formatTanggalSingkat } from "../../permintaan/format";
 import common from "../../permintaan/permintaan.module.css";
 import styles from "../pemilihan.module.css";
@@ -38,7 +39,7 @@ export function RiwayatHargaTable({ namaBarang, riwayat }: Props) {
               <td>{formatTanggalSingkat(baris.tanggal)}</td>
               <td>{namaBarang(baris.produkId)}</td>
               <td>{baris.pemasokNama}</td>
-              <td className={styles.nominal}>{formatRupiah(baris.harga)}</td>
+              <td className={styles.nominal}>{formatRupiah(rupiahKeCents(baris.harga))}</td>
             </tr>
           ))}
         </tbody>

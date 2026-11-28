@@ -3,9 +3,10 @@
 import { useActionState, useRef, useState } from "react";
 
 import { ConfirmDialog } from "@/components/ui";
+import { Notice } from "@/components/ui/notice";
+import { SubmitButton } from "@/components/ui/submit-button";
 import { ubahStatusPemasokAction } from "../actions";
 import { INITIAL_PEMASOK_ACTION_STATE } from "../form-state";
-import styles from "../pemasok.module.css";
 
 type PemasokStatusButtonProps = {
   pemasokId: string;
@@ -36,26 +37,22 @@ export function PemasokStatusButton({
       <form action={formAction} ref={formRef}>
         <input name="id" type="hidden" value={pemasokId} />
         <input name="aktif" type="hidden" value={aktif ? "false" : "true"} />
-        <button
-          className={aktif ? styles.dangerButton : styles.secondaryButton}
-          disabled={pending}
+        <SubmitButton
           onClick={() => setOpen(true)}
+          size="lg"
           type="button"
+          variant={aktif ? "danger" : "secondary"}
         >
-          {pending ? "Memproses..." : label}
-        </button>
+          {label}
+        </SubmitButton>
       </form>
 
       {state.status === "error" && state.message ? (
-        <p className={styles.messageError} role="alert">
-          {state.message}
-        </p>
+        <Notice tone="danger">{state.message}</Notice>
       ) : null}
 
       {state.status === "success" && state.message ? (
-        <p className={styles.messageSuccess} role="status">
-          {state.message}
-        </p>
+        <Notice tone="success">{state.message}</Notice>
       ) : null}
 
       <ConfirmDialog

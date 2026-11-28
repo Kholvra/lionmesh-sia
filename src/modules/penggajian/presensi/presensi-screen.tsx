@@ -14,8 +14,8 @@ import { getPeriodeDipilih, getPresensiHariIni, listPeriode, listPresensi } from
 import type { PresensiView } from "@/modules/penggajian/presensi/queries";
 import { LABEL_KEHADIRAN, LABEL_SUMBER, STATUS_ENTRI } from "@/modules/penggajian/presensi/status";
 import type { Presensi } from "@/modules/penggajian/presensi/types";
-import { Notice } from "@/modules/penggajian/ui/notice";
-import { PageHeader } from "@/modules/penggajian/ui/page-header";
+import { Notice } from "@/components/ui/notice";
+import { PageHeader } from "@/components/ui/page-header";
 import { ui } from "@/modules/penggajian/ui/kelas";
 import { Keadaan, TidakBerwenang } from "@/modules/penggajian/shared/states";
 import { TabelData, TabelMemuat } from "@/modules/penggajian/shared/tabel-data";
@@ -181,7 +181,8 @@ export function PresensiScreen({ periodeId, pesan }: { periodeId?: string; pesan
     <>
       <PageHeader
         description="Presensi harian terpisah dari pengajuan lembur. Identitas diambil dari akun."
-        item={ITEM}
+        breadcrumb={[{ label: "Siklus Penggajian", accent: true }, ITEM]}
+        variant="page"
         title="Presensi & lembur"
       />
       <Suspense fallback={<TabelMemuat caption="Memuat presensi" kolom={KOLOM} />}>

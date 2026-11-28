@@ -22,6 +22,7 @@ const PESAN_PERSEN_DESIMAL = "Toleransi persen maksimal 2 angka desimal";
 const PESAN_NOMINAL_ANGKA = "Toleransi nominal harus berupa angka";
 const PESAN_NOMINAL_RENTANG = "Toleransi nominal tidak boleh negatif";
 const PESAN_NOMINAL_DESIMAL = "Toleransi nominal maksimal 2 angka desimal";
+const PESAN_NOMINAL_BULAT = "Toleransi nominal harus bulat tanpa sen";
 
 /** Reads a text field, keeping an empty input distinct from a missing one. */
 function teks(formData: FormData, field: PemasokField): string {
@@ -96,6 +97,7 @@ const MAKS_DIGIT_BULAT_UANG = 16;
 function uang(aturan: {
   pesanBukanAngka: string;
   pesanDesimal: string;
+  pesanBulat: string;
   pesanBesar: string;
   pesanNegatif: string;
 }) {
@@ -118,6 +120,10 @@ function uang(aturan: {
     const [bulat, desimal = ""] = normal.split(".");
     if (desimal.length > 2) {
       ctx.addIssue({ code: "custom", message: aturan.pesanDesimal });
+      return z.NEVER;
+    }
+    if (/[1-9]/.test(desimal)) {
+      ctx.addIssue({ code: "custom", message: aturan.pesanBulat });
       return z.NEVER;
     }
     if (bulat.length > MAKS_DIGIT_BULAT_UANG) {
@@ -161,6 +167,7 @@ const pemasokFormSchema = z.object({
     pesanDesimal: PESAN_NOMINAL_DESIMAL,
     pesanBesar: PESAN_NOMINAL_BESAR,
     pesanNegatif: PESAN_NOMINAL_RENTANG,
+    pesanBulat: PESAN_NOMINAL_BULAT,
   }),
 });
 

@@ -1,9 +1,11 @@
 "use client";
 
-import Link from "next/link";
 import { useActionState } from "react";
 
 import { FormField, Input } from "@/components/ui";
+import { FormFooter } from "@/components/ui/form-footer";
+import { Notice } from "@/components/ui/notice";
+import { Select } from "@/components/ui/select";
 import type { KategoriProduk, Produk, Satuan } from "@/core/master/types";
 
 import { simpanProdukAction } from "../actions";
@@ -11,7 +13,6 @@ import { PATH_MASTER_PRODUK } from "../constants";
 import { INITIAL_MASTER_ACTION_STATE } from "../form-state";
 import { PILIHAN_TIPE_PRODUK } from "../format";
 import styles from "../master.module.css";
-import { Select } from "./select";
 
 type ProdukFormProps = {
   produk?: Produk;
@@ -51,15 +52,15 @@ export function ProdukForm({ kategori, produk, satuanAktif }: ProdukFormProps) {
       {produk ? <input name="id" type="hidden" value={produk.id} /> : null}
 
       {state.status === "error" && state.message ? (
-        <p className={styles.messageError} role="alert">
+        <Notice className={styles.messageError} tone="danger">
           {state.message}
-        </p>
+        </Notice>
       ) : null}
 
       {state.status === "success" && state.message ? (
-        <p className={styles.messageSuccess} role="status">
+        <Notice className={styles.messageSuccess} tone="success">
           {state.message}
-        </p>
+        </Notice>
       ) : null}
 
       <div className={styles.formGrid}>
@@ -79,7 +80,7 @@ export function ProdukForm({ kategori, produk, satuanAktif }: ProdukFormProps) {
           name="tipe"
           required
         >
-          <Select defaultValue={produk?.tipe ?? ""} name="tipe">
+          <Select className={styles.select} defaultValue={produk?.tipe ?? ""} name="tipe">
             <option value="">Pilih tipe</option>
             {PILIHAN_TIPE_PRODUK.map((item) => (
               <option key={item.value} value={item.value}>
@@ -108,6 +109,7 @@ export function ProdukForm({ kategori, produk, satuanAktif }: ProdukFormProps) {
           required
         >
           <Select
+            className={styles.select}
             defaultValue={produk?.satuan_dasar_id ?? ""}
             name="satuan_dasar"
           >
@@ -126,7 +128,7 @@ export function ProdukForm({ kategori, produk, satuanAktif }: ProdukFormProps) {
           label="Kategori produk"
           name="kategori"
         >
-          <Select defaultValue={produk?.kategori_id ?? ""} name="kategori">
+          <Select className={styles.select} defaultValue={produk?.kategori_id ?? ""} name="kategori">
             <option value="">Tanpa kategori</option>
             {kategoriPilihan.map((item) => (
               <option key={item.id} value={item.id}>
@@ -137,18 +139,12 @@ export function ProdukForm({ kategori, produk, satuanAktif }: ProdukFormProps) {
         </FormField>
       </div>
 
-      <div className={styles.formActions}>
-        <button className={styles.primaryButton} disabled={pending} type="submit">
-          {pending
-            ? "Menyimpan..."
-            : produk
-              ? "Simpan perubahan"
-              : "Simpan produk"}
-        </button>
-        <Link className={styles.secondaryButton} href={cancelHref}>
-          Batal
-        </Link>
-      </div>
+      <FormFooter
+        busy={pending}
+        busyLabel="Menyimpan..."
+        cancelHref={cancelHref}
+        submitLabel={produk ? "Simpan perubahan" : "Simpan produk"}
+      />
     </form>
   );
 }

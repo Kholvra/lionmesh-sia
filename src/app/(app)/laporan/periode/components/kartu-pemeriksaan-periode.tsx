@@ -1,4 +1,5 @@
-import { StatusBadge } from "@/components/ui";
+import { PageHeader } from "@/components/ui/page-header";
+import { StatusBadge } from "@/components/ui/status-badge";
 import type { PemeriksaanTutupPeriode } from "@/core/ledger";
 import { formatRupiah } from "@/lib/format/money";
 
@@ -14,9 +15,9 @@ export function KartuPemeriksaanPeriode({
 
   return (
     <section className={styles.panel} aria-labelledby="pemeriksaan-title">
-      <h2 className={styles.sectionTitle} id="pemeriksaan-title">
-        Pemeriksaan
-      </h2>
+      <div id="pemeriksaan-title">
+        <PageHeader title="Pemeriksaan" variant="section" />
+      </div>
 
       <dl className={styles.pemeriksaanGrid}>
         <div className={styles.pemeriksaanItem}>

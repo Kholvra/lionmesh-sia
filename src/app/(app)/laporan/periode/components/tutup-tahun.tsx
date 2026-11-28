@@ -3,7 +3,11 @@
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 
-import { ConfirmDialog, StatusBadge } from "@/components/ui";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { Notice } from "@/components/ui/notice";
+import { PageHeader } from "@/components/ui/page-header";
+import { StatusBadge } from "@/components/ui/status-badge";
+import { SubmitButton } from "@/components/ui/submit-button";
 import type { PemeriksaanTutupTahun } from "@/core/ledger";
 import { formatRupiah } from "@/lib/format/money";
 
@@ -50,14 +54,12 @@ export function TutupTahun({ pemeriksaan }: TutupTahunProps) {
       id="tutup-tahun"
     >
       <div className={styles.yearHeader}>
-        <div>
-          <h2 className={styles.sectionTitle} id="tutup-tahun-title">
-            Tutup buku tahunan {pemeriksaan.tahun}
-          </h2>
-          <p className={styles.sectionMeta}>
-            Jan–Nov harus terkunci; Desember dikunci oleh prosedur ini setelah
-            jurnal penutup.
-          </p>
+        <div id="tutup-tahun-title">
+          <PageHeader
+            title={`Tutup buku tahunan ${pemeriksaan.tahun}`}
+            description="Jan–Nov harus terkunci; Desember dikunci oleh prosedur ini setelah jurnal penutup."
+            variant="section"
+          />
         </div>
         <StatusBadge
           status={pemeriksaan.status}
@@ -125,14 +127,9 @@ export function TutupTahun({ pemeriksaan }: TutupTahunProps) {
       </dl>
 
       {pesan ? (
-        <p
-          className={
-            pesan.tone === "success" ? styles.alertSuccess : styles.alertDanger
-          }
-          role={pesan.tone === "danger" ? "alert" : "status"}
-        >
+        <Notice tone={pesan.tone === "danger" ? "danger" : "success"} variant="bordered">
           {pesan.text}
-        </p>
+        </Notice>
       ) : null}
 
       {!bisa ? (
@@ -144,14 +141,16 @@ export function TutupTahun({ pemeriksaan }: TutupTahunProps) {
       ) : null}
 
       <div className={styles.actions}>
-        <button
+        <SubmitButton
           className={styles.primaryButton}
-          disabled={!bisa || pending}
+          busyLabel="Menutup…"
+          disabled={!bisa}
           onClick={() => setOpen(true)}
+          pending={pending}
           type="button"
         >
-          {pending ? "Menutup…" : "Tutup buku tahunan"}
-        </button>
+          Tutup buku tahunan
+        </SubmitButton>
       </div>
 
       <ConfirmDialog

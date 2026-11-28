@@ -1,25 +1,24 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useTransition } from "react";
+import { SubmitButton } from "@/components/ui/submit-button";
 
 import styles from "./dashboard.module.css";
 
 export function RefreshButton({ label }: { label: string }) {
   const router = useRouter();
-  const [memuat, setMemuat] = useState(false);
+  const [memuat, startTransition] = useTransition();
 
   return (
-    <button
+    <SubmitButton
       className={styles.retryButton}
       disabled={memuat}
-      onClick={() => {
-        setMemuat(true);
-        router.refresh();
-      }}
+      onClick={() => startTransition(() => router.refresh())}
+      size="md"
       type="button"
     >
-      {memuat ? "Memuat…" : label}
-    </button>
+      {memuat ? "Muat…" : label}
+    </SubmitButton>
   );
 }

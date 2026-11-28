@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 
 import { cekIzin } from "@/lib/auth/permissions";
 import { requireSesi } from "@/lib/auth/server";
+import { firstParam } from "@/lib/first-param";
 import { AksesDitolak } from "../components/laporan-shell";
 import { isLaporanSlug } from "../daftar-laporan";
 import { LaporanScreen } from "../screen";
@@ -15,7 +16,7 @@ interface PageProps {
 }
 
 export default async function LaporanPage({ params, searchParams }: PageProps) {
-  const { laporan } = await params;
+  const laporan = firstParam((await params).laporan) ?? "";
   if (!isLaporanSlug(laporan)) notFound();
 
   const { profile } = await requireSesi();

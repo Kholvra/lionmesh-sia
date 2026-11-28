@@ -1,12 +1,13 @@
 import { Suspense } from "react";
 
 import { sesiPenggajian } from "@/modules/penggajian/akun/akun";
-import { formatRupiah, formatWaktu } from "@/modules/penggajian/karyawan/format";
+import { formatRupiah } from "@/lib/format/money";
+import { formatWaktu } from "@/modules/penggajian/karyawan/format";
 import { overrideKomponen } from "@/modules/penggajian/payroll/actions";
 import { getDraft } from "@/modules/penggajian/payroll/queries";
 import type { Komponen } from "@/modules/penggajian/payroll/types";
-import { Notice } from "@/modules/penggajian/ui/notice";
-import { PageHeader } from "@/modules/penggajian/ui/page-header";
+import { Notice } from "@/components/ui/notice";
+import { PageHeader } from "@/components/ui/page-header";
 import { ui } from "@/modules/penggajian/ui/kelas";
 import { FormAksi } from "@/modules/penggajian/shared/form-aksi";
 import { Keadaan } from "@/modules/penggajian/shared/states";
@@ -16,11 +17,11 @@ function Baris({ k }: { k: Komponen }) {
     <tr>
       <td>
         {k.label}
-        {k.koreksi ? <div className={ui.timelineMeta}>Dikoreksi {k.koreksi.oleh} · {formatWaktu(k.koreksi.pada)} · semula {formatRupiah(k.koreksi.nilaiSemula)} · {k.koreksi.alasan}</div> : null}
+        {k.koreksi ? <div className={ui.timelineMeta}>Dikoreksi {k.koreksi.oleh} · {formatWaktu(k.koreksi.pada)} · semula {formatRupiah(BigInt(k.koreksi.nilaiSemula) * BigInt(100))} · {k.koreksi.alasan}</div> : null}
       </td>
       <td>{k.dasar}</td>
       <td>{k.versiTarif ?? "Histori gaji pokok"}</td>
-      <td className={`${ui.right} ${ui.numeric}`}>{k.jenis === "kurang" ? "−" : ""}{formatRupiah(k.nilai)}</td>
+      <td className={`${ui.right} ${ui.numeric}`}>{k.jenis === "kurang" ? "−" : ""}{formatRupiah(BigInt(k.nilai) * BigInt(100))}</td>
     </tr>
   );
 }
@@ -48,7 +49,7 @@ async function Konten({ periodeId, karyawanId, pesan }: { periodeId: string; kar
           </thead>
           <tbody>
             {baris.komponen.map((k) => <Baris k={k} key={k.kode} />)}
-            <tr><td><strong>Gaji bersih</strong></td><td>Penambah {formatRupiah(baris.totalTambah)} − potongan {formatRupiah(baris.totalKurang)}</td><td>—</td><td className={`${ui.right} ${ui.numeric}`}><strong>{formatRupiah(baris.neto)}</strong></td></tr>
+            <tr><td><strong>Gaji bersih</strong></td><td>Penambah {formatRupiah(BigInt(baris.totalTambah) * BigInt(100))} − potongan {formatRupiah(BigInt(baris.totalKurang) * BigInt(100))}</td><td>—</td><td className={`${ui.right} ${ui.numeric}`}><strong>{formatRupiah(BigInt(baris.neto) * BigInt(100))}</strong></td></tr>
             <tr><td>Selisih pembulatan</td><td>Hitungan mentah dikurangi hasil pembulatan per komponen</td><td>—</td><td className={`${ui.right} ${ui.numeric}`}>{baris.selisihPembulatan.toLocaleString("id-ID")}</td></tr>
           </tbody>
         </table>
@@ -72,7 +73,7 @@ async function Konten({ periodeId, karyawanId, pesan }: { periodeId: string; kar
 export function RincianGajiScreen({ periodeId, karyawanId, pesan }: { periodeId: string; karyawanId: string; pesan?: string }) {
   return (
     <>
-      <PageHeader back={{ href: `/penggajian/payroll?periode=${periodeId}`, label: "Draft payroll" }} item="GJ-004 Menghitung payroll" title="Rincian gaji karyawan" />
+      <PageHeader back={{ href: `/penggajian/payroll?periode=${periodeId}`, label: "Draft payroll" }} breadcrumb={[{ label: "Siklus Penggajian", accent: true }, "GJ-004 Menghitung payroll"]} title="Rincian gaji karyawan" variant="page" />
       <Suspense fallback={null}>
         <Konten karyawanId={karyawanId} periodeId={periodeId} pesan={pesan} />
       </Suspense>

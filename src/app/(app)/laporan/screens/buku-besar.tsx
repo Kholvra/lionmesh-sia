@@ -11,19 +11,17 @@ import { formatTanggal } from "@/lib/format/date";
 import { formatRupiah } from "@/lib/format/money";
 import type { Profile } from "@/lib/auth/types";
 import { createClient } from "@/lib/supabase/server";
+import { Notice } from "@/components/ui/notice";
+import { PageHeader } from "@/components/ui/page-header";
+import { Ringkasan } from "@/components/ui/metric-card";
+import { EmptyState, ErrorState } from "@/components/ui/states";
 import { LaporanFilter } from "../components/laporan-filter";
-import {
-  LaporanShell,
-  Pesan,
-  PilihPeriode,
-  Ringkasan,
-  SectionHeader,
-} from "../components/laporan-shell";
+import { LaporanShell } from "../components/laporan-shell";
 import { ReportTable, type ReportRow } from "../components/report-table";
 import {
-  GagalMemuat,
   muatOpsiPeriode,
   parameterTunggal,
+  TEKS_PILIH_PERIODE,
   type LaporanParams,
 } from "./shared";
 
@@ -45,8 +43,8 @@ export async function BukuBesarScreen({ profil, params }: Props) {
     </LaporanShell>
   );
 
-  if (!opsi.ok) return bingkai(<GagalMemuat pesan={opsi.message} />);
-  if (!akun.ok) return bingkai(<GagalMemuat pesan={akun.message} />);
+  if (!opsi.ok) return bingkai(<ErrorState judul="Laporan gagal dimuat" teks={opsi.message} variant="inline" />);
+  if (!akun.ok) return bingkai(<ErrorState judul="Laporan gagal dimuat" teks={akun.message} variant="inline" />);
 
   const periode = parsePeriode(params.periode);
   if (!periode.ok) {
@@ -56,7 +54,7 @@ export async function BukuBesarScreen({ profil, params }: Props) {
           action="/laporan/buku-besar"
           periodeOptions={opsi.data}
         />
-        <PilihPeriode pesan={periode.message} />
+        <EmptyState judul="Pilih periode laporan" teks={periode.message ?? TEKS_PILIH_PERIODE} variant="compact" />
       </>,
     );
   }
@@ -69,7 +67,7 @@ export async function BukuBesarScreen({ profil, params }: Props) {
           periodeOptions={opsi.data}
           periodeValue={periode.data.kunci}
         />
-        <Pesan>Belum ada akun aktif. Laporan tidak dapat disusun.</Pesan>
+        <Notice variant="bordered">Belum ada akun aktif. Laporan tidak dapat disusun.</Notice>
       </>,
       periode.data.kunci,
     );
@@ -92,10 +90,10 @@ export async function BukuBesarScreen({ profil, params }: Props) {
   ]);
 
   if (!barisPeriode.ok) {
-    return bingkai(<GagalMemuat pesan={barisPeriode.message} />, periode.data.kunci);
+    return bingkai(<ErrorState judul="Laporan gagal dimuat" teks={barisPeriode.message} variant="inline" />, periode.data.kunci);
   }
   if (!barisSebelum.ok) {
-    return bingkai(<GagalMemuat pesan={barisSebelum.message} />, periode.data.kunci);
+    return bingkai(<ErrorState judul="Laporan gagal dimuat" teks={barisSebelum.message} variant="inline" />, periode.data.kunci);
   }
 
   const laporan = hitungBukuBesar(
@@ -145,9 +143,10 @@ export async function BukuBesarScreen({ profil, params }: Props) {
       />
 
       <section>
-        <SectionHeader
-          judul={`Buku besar ${laporan.akun.nomor} · ${laporan.akun.nama}`}
-          meta={`${periode.data.label} · ${laporan.baris.length} baris`}
+        <PageHeader
+          title={`Buku besar ${laporan.akun.nomor} · ${laporan.akun.nama}`}
+          description={`${periode.data.label} · ${laporan.baris.length} baris`}
+          variant="section"
         />
         <ReportTable
           caption={`Buku besar akun ${laporan.akun.nomor} ${laporan.akun.nama}`}

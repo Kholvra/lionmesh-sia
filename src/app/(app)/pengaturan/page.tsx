@@ -1,5 +1,6 @@
 import Link from "next/link";
 
+import { PageHeader } from "@/components/ui/page-header";
 import { requireSesi } from "@/lib/auth/server";
 import { cekIzin } from "@/lib/auth/permissions";
 import {
@@ -45,20 +46,14 @@ export default async function PengaturanPage() {
 
   return (
     <main className={styles.page}>
-      <header className={styles.header}>
-        <div>
-          <p className={styles.breadcrumb}>Pengaturan</p>
-          <h1 className={styles.title}>Akun saya</h1>
-          <p className={styles.description}>
-            Informasi akun dan peran yang digunakan untuk mengakses SIA.
-          </p>
-        </div>
-      </header>
+      <PageHeader
+        breadcrumb={["Pengaturan"]}
+        description="Informasi akun dan peran yang digunakan untuk mengakses SIA."
+        title="Akun saya"
+      />
 
-      <section className={styles.card} aria-labelledby="account-title">
-        <h2 className={styles.sectionTitle} id="account-title">
-          Informasi akun
-        </h2>
+      <section aria-label="Informasi akun" className={styles.card}>
+        <PageHeader title="Informasi akun" variant="section" />
         <dl className={styles.details}>
           <div className={styles.detail}>
             <dt>Email akun</dt>
@@ -75,10 +70,8 @@ export default async function PengaturanPage() {
         </dl>
       </section>
 
-      <section className={styles.card} aria-labelledby="master-title">
-        <h2 className={styles.sectionTitle} id="master-title">
-          Master data
-        </h2>
+      <section aria-label="Master data" className={styles.card}>
+        <PageHeader title="Master data" variant="section" />
         <ul className={styles.masterGrid}>
           {MASTER.map((item) => (
             <li key={item.href}>

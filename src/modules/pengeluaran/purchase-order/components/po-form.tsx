@@ -3,7 +3,8 @@
 import { useActionState, useState } from "react";
 
 import { FormField, Input } from "@/components/ui";
-import { formatRupiah } from "@/lib/format/number";
+import { formatRupiah } from "@/lib/format/money";
+import { rupiahKeCents } from "@/modules/pengeluaran/pemasok/format";
 import { terbitkanPoAction } from "../actions";
 import { hitungTotalPo } from "../baris";
 import { INITIAL_PO_ACTION_STATE } from "../form-state";
@@ -131,13 +132,15 @@ export function PoForm({
                     />
                     <span className={styles.satuan}>{item.satuan}</span>
                   </td>
-                  <td className={styles.nominal}>{formatRupiah(item.harga)}</td>
+                  <td className={styles.nominal}>{formatRupiah(rupiahKeCents(item.harga))}</td>
                   <td className={styles.nominal}>
                     {formatRupiah(
-                      hitungTotalPo(
-                        [{ qty: qty[index] ?? item.qty, harga: item.harga }],
-                        "0",
-                      ).total,
+                      rupiahKeCents(
+                        hitungTotalPo(
+                          [{ qty: qty[index] ?? item.qty, harga: item.harga }],
+                          "0",
+                        ).total,
+                      ),
                     )}
                   </td>
                 </tr>
@@ -149,8 +152,8 @@ export function PoForm({
                   Net / PPN / Total
                 </th>
                 <td className={styles.nominal}>
-                  {formatRupiah(total.net)} / {formatRupiah(total.ppn)} /{" "}
-                  {formatRupiah(total.total)}
+                  {formatRupiah(rupiahKeCents(total.net))} / {formatRupiah(rupiahKeCents(total.ppn))} /{" "}
+                  {formatRupiah(rupiahKeCents(total.total))}
                 </td>
               </tr>
             </tfoot>

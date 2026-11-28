@@ -1,19 +1,17 @@
 "use client";
 
 import Link from "next/link";
-import { useParams, useRouter } from "next/navigation";
-import { Suspense, useMemo, useState } from "react";
-import { ArrowIcon } from "@/components/ui/arrow-icon";
+import { useRouter } from "next/navigation";
+import { Suspense, useEffect, useMemo, useState, useTransition } from "react";
 import { CustomSelect } from "@/components/ui/custom-select";
-import { ProduksiSubnav } from "../components/produksi-subnav";
-import { INITIAL_SPK_LIST, SpkItem } from "../perintah-produksi/types";
-import {
-  HasilProduksiSpkItem,
-  INITIAL_HASIL_PRODUKSI_LIST,
-} from "./types";
-
-const HASIL_PRODUKSI_STORAGE_KEY = "lionmesh_hasil_produksi_list_v1";
-const SPK_STORAGE_KEY = "lionmesh_spk_list_v1";
+import { Notice } from "@/components/ui/notice";
+import { PageHeader } from "@/components/ui/page-header";
+import { SpkStepper } from "@/components/ui/spk-stepper";
+import { EmptyState, ErrorState, LoadingState } from "@/components/ui/states";
+import { catatHasil, catatQc, konfirmasiPemakaianBahan, terimaBarangJadiDariQc } from "@/modules/produksi/actions";
+import { muatHasilDetail } from "@/modules/produksi/queries";
+import type { HasilDetailData } from "./types";
+import { useProduksiActor } from "@/modules/produksi/context/actor-context";
 
 const KENDALA_OPTIONS = [
   "Mesin berhenti",
@@ -22,20 +20,6 @@ const KENDALA_OPTIONS = [
   "Lainnya",
 ];
 
-interface StepDefinition {
-  step: number;
-  title: string;
-  actor: string;
-}
-
-const SPK_STEPS: StepDefinition[] = [
-  { step: 1, title: "Direncanakan", actor: "Produksi" },
-  { step: 2, title: "Cek bahan", actor: "Gudang" },
-  { step: 3, title: "Berjalan", actor: "Gudang · Produksi" },
-  { step: 4, title: "Hasil dicatat", actor: "Produksi" },
-  { step: 5, title: "QC lulus", actor: "QC" },
-  { step: 6, title: "Selesai", actor: "Gudang" },
-];
 
 function parseLembarInput(val: string): number {
   const cleaned = val
@@ -63,81 +47,55 @@ function formatTonId(num: number): string {
 
 function CatatHasilSpkContent({ initialNomorSpk }: { initialNomorSpk?: string }) {
   const router = useRouter();
-  const params = useParams<{ nomorSpk: string }>();
+  const { can } = useProduksiActor();
+  const peranBisaQc = can("inspect_qc");
+  const peranBisaTerima = can("receive_finish_goods");
+  const [data, setData] = useState<HasilDetailData | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [serverError, setServerError] = useState<string | null>(null);
+  const [pending, startTransition] = useTransition();
 
-  const slug = (initialNomorSpk ?? params?.nomorSpk ?? "spk-2611-013").toLowerCase();
-
-  const [hasilList] = useState<HasilProduksiSpkItem[]>(() => {
-    if (typeof window !== "undefined") {
-      try {
-        const savedHasil = sessionStorage.getItem(HASIL_PRODUKSI_STORAGE_KEY);
-        if (savedHasil) {
-          const parsed = JSON.parse(savedHasil) as HasilProduksiSpkItem[];
-          if (Array.isArray(parsed) && parsed.length > 0) return parsed;
-        }
-      } catch {
-        // Abaikan jika sessionStorage tidak tersedia
-      }
-    }
-    return INITIAL_HASIL_PRODUKSI_LIST;
-  });
-
-  const [spkList] = useState<SpkItem[]>(() => {
-    if (typeof window !== "undefined") {
-      try {
-        const savedSpk = sessionStorage.getItem(SPK_STORAGE_KEY);
-        if (savedSpk) {
-          const parsed = JSON.parse(savedSpk) as SpkItem[];
-          if (Array.isArray(parsed) && parsed.length > 0) return parsed;
-        }
-      } catch {
-        // Abaikan jika sessionStorage tidak tersedia
-      }
-    }
-    return INITIAL_SPK_LIST;
-  });
-
-  const currentSpk = useMemo<HasilProduksiSpkItem>(() => {
-    const found = hasilList.find(
-      (item) => item.nomorSpk.toLowerCase() === slug
-    );
-    if (found) return found;
-
-    return {
-      id: "spk-2611-013",
-      nomorSpk: "SPK-2611-013",
-      jadwalText: "27–28 Nov",
-      produkNama: "Wiremesh M6",
-      produkKode: "WM-M6",
-      targetLembar: 120,
-      bahanDiterimaText: "4,3 ton · 27 Nov 06.40",
-      status: "DIPROSES",
+  useEffect(() => {
+    if (!initialNomorSpk) return;
+    let aktif = true;
+    muatHasilDetail(initialNomorSpk).then((hasil) => {
+      if (!aktif) return;
+      if (!hasil.ok) setError(hasil.message);
+      else setData(hasil.data);
+    });
+    return () => {
+      aktif = false;
     };
-  }, [hasilList, slug]);
+  }, [initialNomorSpk]);
 
-  const targetLembar = currentSpk.targetLembar;
-  const dikeluarkanTon = 4.3;
-
-  // Form states
-  const [jumlahJadiInput, setJumlahJadiInput] = useState<string>(
-    `${targetLembar} lembar`
-  );
-  const [selesaiPadaInput, setSelesaiPadaInput] = useState<string>(
-    "28 November 2026 · 15.30"
-  );
-  const [terpakaiInput, setTerpakaiInput] = useState<string>("4,22 ton");
-  const [scrapInput, setScrapInput] = useState<string>("0,08 ton");
-
-  // Kendala & Jadwal Ulang states
-  const [kendala, setKendala] = useState<string>("Mesin berhenti");
-  const [keteranganKendala, setKeteranganKendala] = useState<string>(
-    "Elektroda mesin las 1 diganti, berhenti 3 jam."
-  );
-  const [jadwalUlang, setJadwalUlang] = useState<string>(
-    "29 November 2026 · Mesin las 2"
-  );
-
+  const currentSpk = data?.spk ?? null;
+  const belumDikonfirmasi = (data?.pengeluaran ?? []).filter((item) => !item.sudahDikonfirmasi);
+  const [selectedIssueId, setSelectedIssueId] = useState("");
+  const pengeluaranTerpilih =
+    belumDikonfirmasi.find((item) => item.id === selectedIssueId) ?? belumDikonfirmasi[0] ?? null;
+  const targetLembar = currentSpk?.targetLembar ?? 0;
+  const dikeluarkanTon = pengeluaranTerpilih ? Number(pengeluaranTerpilih.qtyKeluar) : 0;
+  const hasilTerakhir = data?.hasil[data.hasil.length - 1] ?? null;
+  const [jumlahJadiInput, setJumlahJadiInput] = useState("");
+  const [selesaiPadaInput, setSelesaiPadaInput] = useState("");
+  const [terpakaiInput, setTerpakaiInput] = useState("");
+  const [scrapInput, setScrapInput] = useState("");
+  const [kendala, setKendala] = useState("");
+  const [keteranganKendala, setKeteranganKendala] = useState("");
+  const [jadwalUlang, setJadwalUlang] = useState("");
   const [errorBanner, setErrorBanner] = useState<string | null>(null);
+  const [qtyLulusInput, setQtyLulusInput] = useState("");
+  const [qtyReworkInput, setQtyReworkInput] = useState("0");
+  const [qtyRejectInput, setQtyRejectInput] = useState("0");
+  const [qcCatatan, setQcCatatan] = useState("");
+  const [qtyTerimaInput, setQtyTerimaInput] = useState("");
+
+  const bisaCatat =
+    currentSpk?.statusInti === "BERJALAN" || currentSpk?.statusInti === "REWORK";
+  const tampilQc =
+    currentSpk?.statusInti === "HASIL_DICATAT" && peranBisaQc && hasilTerakhir && !hasilTerakhir.qc;
+  const tampilTerima =
+    currentSpk?.statusInti === "QC_PASSED" && peranBisaTerima && hasilTerakhir?.kunciQc;
 
   const parsedJumlahJadi = parseLembarInput(jumlahJadiInput);
   const validJumlahJadi =
@@ -154,43 +112,54 @@ function CatatHasilSpkContent({ initialNomorSpk }: { initialNomorSpk?: string })
   const sisaDikembalikanText = useMemo(() => {
     const terpakai = parseTonValue(terpakaiInput);
     const scrap = parseTonValue(scrapInput);
-    if (!Number.isFinite(terpakai) || !Number.isFinite(scrap)) return "0 ton";
+    if (!Number.isFinite(terpakai) || !Number.isFinite(scrap)) return "—";
     const sisa = Number((dikeluarkanTon - (terpakai + scrap)).toFixed(2));
     if (sisa <= 0) return "0 ton";
     return formatTonId(sisa);
-  }, [terpakaiInput, scrapInput]);
+  }, [terpakaiInput, scrapInput, dikeluarkanTon]);
 
   const scrapInfoText = useMemo(() => {
-    const terpakai = parseTonValue(terpakaiInput);
     const scrap = parseTonValue(scrapInput);
-    const totalDipakai =
-      (Number.isFinite(terpakai) ? terpakai : 0) +
-      (Number.isFinite(scrap) ? scrap : 0);
-    const isOverTolerance =
-      Number.isFinite(scrap) && totalDipakai > 0 && scrap / totalDipakai > 0.025;
+    return Number.isFinite(scrap) && scrap > 0
+      ? "Potongan ujung dan cacat las. Scrap dicatat untuk perhitungan biaya."
+      : "Potongan ujung dan cacat las. Belum ada scrap yang dicatat.";
+  }, [scrapInput]);
 
-    if (isOverTolerance) {
-      return `Potongan ujung dan cacat las. Selisih terhadap standar BOM v2 (4,24 t untuk ${targetLembar} lembar) di luar toleransi scrap (1,5%) — perlu investigasi.`;
-    }
-    return `Potongan ujung dan cacat las. Selisih terhadap standar BOM v2 (4,24 t untuk ${targetLembar} lembar): 1,5%, masih dalam toleransi scrap.`;
-  }, [terpakaiInput, scrapInput, targetLembar]);
+  if (error) {
+    return (
+      <div className="w-full text-[#172335] animate-fade-in">
+        <ErrorState judul="Data SPK tidak dapat dimuat." teks={error} variant="compact" />
+      </div>
+    );
+  }
 
-  const handleContohKurangDariTarget = () => {
-    setErrorBanner(null);
-    setJumlahJadiInput("96 lembar");
-    setKendala("Mesin berhenti");
-    setKeteranganKendala("Elektroda mesin las 1 diganti, berhenti 3 jam.");
-    setJadwalUlang("29 November 2026 · Mesin las 2");
-  };
+  if (!data) {
+    return (
+      <div className="w-full text-[#172335] animate-fade-in">
+        <LoadingState judul="Memuat formulir..." variant="inline" />
+      </div>
+    );
+  }
+
+  if (!currentSpk || (bisaCatat && pengeluaranTerpilih === null)) {
+    return (
+      <div className="w-full text-[#172335] animate-fade-in">
+        <EmptyState
+          judul="SPK yang sedang diproses atau bahan yang dikeluarkan tidak ditemukan."
+          variant="inline"
+        />
+      </div>
+    );
+  }
+
 
   const handleSimpan = (e: React.FormEvent) => {
     e.preventDefault();
+    if (serverError) setServerError(null);
 
     const qty = parseLembarInput(jumlahJadiInput);
     if (Number.isNaN(qty) || qty <= 0 || qty > targetLembar) {
-      setErrorBanner(
-        `Jumlah jadi harus antara 1 sampai ${targetLembar} lembar.`
-      );
+      setErrorBanner(`Jumlah jadi harus antara 1 sampai ${targetLembar} lembar.`);
       return;
     }
 
@@ -203,169 +172,180 @@ function CatatHasilSpkContent({ initialNomorSpk }: { initialNomorSpk?: string })
       scrap < 0
     ) {
       setErrorBanner(
-        "Pemakaian bahan aktual (terpakai pada produk dan scrap) wajib diisi dengan angka yang valid."
+        "Pemakaian bahan aktual (terpakai pada produk dan scrap) wajib diisi dengan angka yang valid.",
       );
       return;
     }
 
     if (terpakai + scrap > dikeluarkanTon + 0.001) {
       setErrorBanner(
-        `Total pemakaian (${formatTonId(terpakai + scrap)}) tidak boleh melebihi bahan yang dikeluarkan Gudang (${formatTonId(dikeluarkanTon)}).`
+        `Total pemakaian (${formatTonId(terpakai + scrap)}) tidak boleh melebihi bahan yang dikeluarkan Gudang (${formatTonId(dikeluarkanTon)}).`,
       );
       return;
     }
 
-    if (qty < targetLembar) {
-      if (!kendala.trim() || !keteranganKendala.trim() || !jadwalUlang.trim()) {
-        setErrorBanner(
-          "Karena hasil kurang dari target, kendala, keterangan kendala, dan jadwal ulang sisa lembar wajib diisi."
-        );
-        return;
-      }
+    if (qty < targetLembar && (
+      !kendala.trim() || !keteranganKendala.trim() || !jadwalUlang.trim()
+    )) {
+      setErrorBanner(
+        "Karena hasil kurang dari target, kendala, keterangan kendala, dan jadwal ulang sisa lembar wajib diisi.",
+      );
+      return;
     }
 
     setErrorBanner(null);
-
-    const updatedSpkList = spkList.map((item) =>
-      item.nomorSpk.toLowerCase() === currentSpk.nomorSpk.toLowerCase()
-        ? {
-            ...item,
-            status: "MENUNGGU_QC" as const,
-            filterCategory: "hasil_dicatat" as const,
-          }
-        : item
-    );
-
-    const recordedPayload = {
-      nomorSpk: currentSpk.nomorSpk,
-      produkNama: currentSpk.produkNama,
-      jumlahJadi: qty,
-      scrapText: formatTonId(scrap),
-      selesaiPada: selesaiPadaInput.trim() || "28 Nov 15.30",
-    };
-
-    try {
-      sessionStorage.setItem(SPK_STORAGE_KEY, JSON.stringify(updatedSpkList));
-      sessionStorage.setItem(
-        `lionmesh_hasil_recorded_${currentSpk.nomorSpk.toLowerCase()}`,
-        JSON.stringify(recordedPayload)
-      );
-    } catch {
-      // Abaikan jika sessionStorage tidak tersedia
+    const waktu = selesaiPadaInput.trim() || new Date().toISOString();
+    const keterangan = [
+      kendala.trim(),
+      keteranganKendala.trim(),
+      jadwalUlang.trim(),
+    ].filter(Boolean).join(" · ");
+    const sisa = Number((dikeluarkanTon - (terpakai + scrap)).toFixed(4));
+    const pengeluaran = pengeluaranTerpilih;
+    if (!pengeluaran) {
+      setErrorBanner("Pilih pengeluaran bahan yang belum dikonfirmasi.");
+      return;
     }
+    const bahanForm = new FormData();
+    bahanForm.set("wo_id", currentSpk.woId);
+    bahanForm.set("pengeluaran_id", pengeluaran.id);
+    bahanForm.set("qty_terpakai", String(terpakai));
+    bahanForm.set("qty_sisa", String(Math.max(0, sisa)));
+    bahanForm.set("qty_scrap", String(scrap));
+    bahanForm.set("tanggal", waktu);
+    bahanForm.set("keterangan", keterangan);
 
-    router.push(
-      `/produksi/hasil-produksi/${currentSpk.nomorSpk.toLowerCase()}/riwayat`
-    );
+    const hasilForm = new FormData();
+    hasilForm.set("wo_id", currentSpk.woId);
+    hasilForm.set("percobaan", String(data.hasil.length + 1));
+    hasilForm.set("qty_diproses", String(qty));
+    hasilForm.set("tanggal", waktu);
+    hasilForm.set("keterangan", keterangan);
+
+    startTransition(async () => {
+      const pemakaian = await konfirmasiPemakaianBahan(bahanForm);
+      if (!pemakaian.ok) {
+        setServerError(pemakaian.message);
+        return;
+      }
+      const hasilDicatat = await catatHasil(hasilForm);
+      if (!hasilDicatat.ok) {
+        setServerError(hasilDicatat.message);
+        return;
+      }
+      router.push(
+        `/produksi/hasil-produksi/${currentSpk.nomorSpk.toLowerCase()}/riwayat`,
+      );
+    });
+  };
+
+  const muatUlang = async () => {
+    if (!initialNomorSpk) return;
+    const hasil = await muatHasilDetail(initialNomorSpk);
+    if (hasil.ok) setData(hasil.data);
+  };
+
+  const handleQc = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!hasilTerakhir || !currentSpk) return;
+    const lulus = Number(qtyLulusInput);
+    const rework = Number(qtyReworkInput);
+    const reject = Number(qtyRejectInput);
+    const keputusan = rework > 0 ? "REWORK" : lulus > 0 ? "QC_PASSED" : "REJECTED";
+    const formData = new FormData();
+    formData.set("wo_id", currentSpk.woId);
+    formData.set("hasil_produksi_id", hasilTerakhir.id);
+    formData.set("qty_lulus", String(lulus));
+    formData.set("qty_rework", String(rework));
+    formData.set("qty_reject", String(reject));
+    formData.set("keputusan", keputusan);
+    formData.set("catatan", qcCatatan);
+    startTransition(async () => {
+      const hasil = await catatQc(formData);
+      if (!hasil.ok) {
+        setServerError(hasil.message);
+        return;
+      }
+      setServerError(null);
+      await muatUlang();
+    });
+  };
+
+  const handleTerima = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!currentSpk || !hasilTerakhir?.kunciQc) return;
+    const formData = new FormData();
+    formData.set("wo_id", currentSpk.woId);
+    formData.set("gudang_id", currentSpk.gudangId);
+    formData.set("qty", qtyTerimaInput || hasilTerakhir.qc?.qtyLulus || "");
+    formData.set("tanggal", new Date().toISOString());
+    formData.set("kunci_qc", hasilTerakhir.kunciQc);
+    startTransition(async () => {
+      const hasil = await terimaBarangJadiDariQc(formData);
+      if (!hasil.ok) {
+        setServerError(hasil.message);
+        return;
+      }
+      setServerError(null);
+      await muatUlang();
+    });
   };
 
   return (
     <div className="w-full text-[#172335] animate-fade-in">
-      <ProduksiSubnav />
+      <PageHeader
+        title={`Catat hasil ${currentSpk.nomorSpk}`}
+        variant="cycle"
+      />
 
-      {/* Back Link */}
-      <Link
-        href="/produksi/hasil-produksi"
-        className="group inline-flex items-center gap-1.5 text-xs font-semibold text-[#C96A00] hover:text-[#E88A06]"
-      >
-        <ArrowIcon
-          direction="left"
-          className="transition-transform duration-150 group-hover:-translate-x-0.5"
-        />
-        <span>Hasil produksi</span>
-      </Link>
-
-      {/* Breadcrumb */}
-      <nav className="mt-2 text-xs font-medium text-[#526174]">
-        <Link
-          href="/produksi"
-          className="text-[#C96A00] underline decoration-[#C96A00]/60 underline-offset-2 hover:text-[#E88A06]"
+      {(errorBanner || serverError) && (
+        <Notice
+          title="Hasil produksi belum bisa disimpan"
+          tone="error"
+          variant="card"
         >
-          Siklus Produksi
-        </Link>
-        <span className="mx-1.5">/</span>
-        <span>PR-004 Mencatat hasil dan pemakaian bahan</span>
-      </nav>
-
-      {/* Page Title */}
-      <h1 className="mt-1.5 text-[28px] leading-tight font-bold tracking-tight text-[#172335]">
-        Catat hasil {currentSpk.nomorSpk}
-      </h1>
-
-      {/* Banner Error Validasi jika ada */}
-      {errorBanner && (
-        <div className="shadow-card mt-4 rounded-[10px] border border-transparent bg-[#FEE2E2]/85 px-5 py-3 text-[#B91C1C] animate-slide-down">
-          <p className="text-[13px] font-semibold">
-            Hasil produksi belum bisa disimpan
-          </p>
-          <p className="mt-0.5 text-[12px]">{errorBanner}</p>
-        </div>
+          <p className="mt-0.5 text-[12px]">{errorBanner ?? serverError}</p>
+        </Notice>
       )}
 
-      {/* Callout Banner Kuning saat Hasil Kurang dari Target */}
       {isKurangDariTarget ? (
-        <div className="shadow-card mt-4 rounded-[10px] border border-transparent bg-[#FEF3C7]/85 px-5 py-3.5 animate-slide-down">
-          <p className="text-[13px] font-semibold text-[#92400E]">
-            Hasil {validJumlahJadi} dari {targetLembar} lembar
-          </p>
+        <Notice
+          title={`Hasil ${validJumlahJadi} dari ${targetLembar} lembar`}
+          tone="warning"
+          variant="card"
+        >
           <p className="mt-0.5 text-[12px] text-[#B45309]">
             Catat kendalanya. {validJumlahJadi} lembar dikirim ke QC;{" "}
             {barangDalamProses} lembar sisanya dijadwalkan ulang.
           </p>
-        </div>
+        </Notice>
       ) : (
-        <section className="shadow-card mt-4 rounded-[10px] border border-transparent bg-white px-5 py-3.5">
-          <div className="flex flex-wrap items-center justify-between gap-2">
-            {SPK_STEPS.map((item, idx) => {
-              const activeStep = 3;
-              const isCurrent = item.step === activeStep;
-              const isCompleted = item.step < activeStep;
-              return (
-                <div key={item.step} className="contents">
-                  <div className="flex shrink-0 items-center gap-2.5">
-                    <span
-                      className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-[11px] font-semibold ${
-                        isCurrent
-                          ? "bg-[#E88A06] text-white"
-                          : isCompleted
-                            ? "bg-[#DCFCE7] text-[#15803D]"
-                            : "border border-[#94A3B8] bg-white text-[#526174]"
-                      }`}
-                    >
-                      {isCompleted ? "✓" : item.step}
-                    </span>
-                    <div className="leading-tight whitespace-nowrap">
-                      <p
-                        className={`text-[12px] ${
-                          isCurrent
-                            ? "font-semibold text-[#172335]"
-                            : "font-medium text-[#526174]"
-                        }`}
-                      >
-                        {item.title}
-                      </p>
-                      <p className="mt-0.5 text-[10px] text-[#94A3B8]">
-                        {item.actor}
-                      </p>
-                    </div>
-                  </div>
-
-                  {idx < SPK_STEPS.length - 1 && (
-                    <div
-                      className={`hidden h-[2px] w-[56px] shrink-0 lg:block xl:w-[80px] ${
-                        isCompleted ? "bg-[#86EFAC]" : "bg-[#CBD5E1]"
-                      }`}
-                    />
-                  )}
-                </div>
-              );
-            })}
-          </div>
-        </section>
+        <SpkStepper activeStep={3} />
       )}
 
+      {bisaCatat && (
       <form onSubmit={handleSimpan}>
-        {/* Card 1: Hasil */}
+        <section className="shadow-card mt-4 rounded-[10px] border border-transparent bg-white p-5">
+          <h2 className="text-[15px] leading-none font-semibold text-[#172335]">Pengeluaran bahan belum dikonfirmasi</h2>
+          <div className="mt-3 overflow-x-auto">
+            <table className="w-full border-collapse text-left">
+              <thead><tr className="bg-[#F3F4F6] text-[12px] font-semibold text-[#526174]"><th className="px-[12px] py-2">Pengeluaran</th><th className="px-[12px] py-2">Qty keluar</th></tr></thead>
+              <tbody className="divide-y divide-[#E5E7EB]/80">
+                {belumDikonfirmasi.map((item) => (
+                  <tr key={item.id} className="hover:bg-slate-50/70">
+                    <td className="px-[12px] py-2.5 text-[13px]">
+                      <label className="flex items-center gap-2">
+                        <input type="radio" name="pengeluaran" checked={pengeluaranTerpilih?.id === item.id} onChange={() => setSelectedIssueId(item.id)} />
+                        {item.id}
+                      </label>
+                    </td>
+                    <td className="px-[12px] py-2.5 text-[13px] tabular-nums">{formatTonId(Number(item.qtyKeluar))}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </section>
         <section className="shadow-card mt-4 rounded-[10px] border border-transparent bg-white p-5">
           <h2 className="text-[15px] font-semibold text-[#172335]">
             Hasil
@@ -423,7 +403,7 @@ function CatatHasilSpkContent({ initialNomorSpk }: { initialNomorSpk?: string })
               <input
                 type="text"
                 readOnly
-                value="Produksi · Bayu, Agus, Siti"
+                value="—"
                 className="mt-1.5 w-full cursor-default rounded-[8px] border border-[#E5E7EB] bg-[#F1F3F6] px-3.5 py-2 text-[13px] text-[#172335] outline-none"
               />
             </div>
@@ -444,7 +424,7 @@ function CatatHasilSpkContent({ initialNomorSpk }: { initialNomorSpk?: string })
               <input
                 type="text"
                 readOnly
-                value="4,30 ton"
+                value={formatTonId(dikeluarkanTon)}
                 className="mt-1.5 w-full cursor-default rounded-[8px] border border-[#E5E7EB] bg-[#F1F3F6] px-3.5 py-2 text-[13px] text-[#172335] outline-none"
               />
             </div>
@@ -553,6 +533,7 @@ function CatatHasilSpkContent({ initialNomorSpk }: { initialNomorSpk?: string })
         <div className="mt-5 flex flex-wrap items-center gap-3">
           <button
             type="submit"
+            disabled={pending}
             className="rounded-[8px] bg-[#E88A06] px-4 py-2 text-[13px] font-semibold text-white shadow-2xs transition-all duration-150 ease-out hover:bg-[#D17B05] active:scale-[0.98]"
           >
             {isKurangDariTarget
@@ -567,25 +548,38 @@ function CatatHasilSpkContent({ initialNomorSpk }: { initialNomorSpk?: string })
             Batal
           </Link>
 
-          {!isKurangDariTarget && (
-            <button
-              type="button"
-              onClick={handleContohKurangDariTarget}
-              className="group inline-flex items-center gap-1.5 text-[12px] font-semibold text-[#C96A00] transition-all duration-150 hover:text-[#E88A06] hover:underline"
-            >
-              <span>Contoh hasil kurang dari target</span>
-              <ArrowIcon className="transition-transform duration-150 group-hover:translate-x-0.5" />
-            </button>
-          )}
+
         </div>
       </form>
+      )}
+      {tampilQc && hasilTerakhir && (
+        <form onSubmit={handleQc} className="shadow-card mt-4 rounded-[10px] border border-transparent bg-white p-5">
+          <h2 className="text-[15px] font-semibold text-[#172335]">Keputusan QC</h2>
+          <p className="mt-1 text-xs text-[#526174]">Jumlah diproses: {formatTonId(Number(hasilTerakhir.qtyDiproses))}.</p>
+          <div className="mt-3 grid grid-cols-1 gap-3 md:grid-cols-3">
+            <label className="text-xs font-medium">Lulus<input className="mt-1 w-full rounded-[8px] border border-[#E5E7EB] px-3 py-1.5 text-[13px]" value={qtyLulusInput} onChange={(e) => setQtyLulusInput(e.target.value)} /></label>
+            <label className="text-xs font-medium">Rework<input className="mt-1 w-full rounded-[8px] border border-[#E5E7EB] px-3 py-1.5 text-[13px]" value={qtyReworkInput} onChange={(e) => setQtyReworkInput(e.target.value)} /></label>
+            <label className="text-xs font-medium">Reject<input className="mt-1 w-full rounded-[8px] border border-[#E5E7EB] px-3 py-1.5 text-[13px]" value={qtyRejectInput} onChange={(e) => setQtyRejectInput(e.target.value)} /></label>
+          </div>
+          <label className="mt-3 block text-xs font-medium">Catatan<input className="mt-1 w-full rounded-[8px] border border-[#E5E7EB] px-3 py-1.5 text-[13px]" value={qcCatatan} onChange={(e) => setQcCatatan(e.target.value)} /></label>
+          <button type="submit" disabled={pending} className="mt-4 rounded-[8px] bg-[#E88A06] px-4 py-2 text-[13px] font-semibold text-white">Simpan keputusan QC</button>
+        </form>
+      )}
+      {tampilTerima && (
+        <form onSubmit={handleTerima} className="shadow-card mt-4 rounded-[10px] border border-transparent bg-white p-5">
+          <h2 className="text-[15px] font-semibold text-[#172335]">Terima barang jadi</h2>
+          <p className="mt-1 text-xs text-[#526174]">Kunci QC: {hasilTerakhir?.kunciQc}</p>
+          <label className="mt-3 block text-xs font-medium">Jumlah diterima<input className="mt-1 w-full rounded-[8px] border border-[#E5E7EB] px-3 py-1.5 text-[13px]" value={qtyTerimaInput} onChange={(e) => setQtyTerimaInput(e.target.value)} placeholder={hasilTerakhir?.qc?.qtyLulus ?? ""} /></label>
+          <button type="submit" disabled={pending} className="mt-4 rounded-[8px] bg-[#E88A06] px-4 py-2 text-[13px] font-semibold text-white">Terima barang jadi</button>
+        </form>
+      )}
     </div>
   );
 }
 
 export function CatatHasilSpkScreen({ nomorSpk }: { nomorSpk?: string }) {
   return (
-    <Suspense fallback={<div className="h-40 flex items-center justify-center text-sm text-[#526174]">Memuat formulir...</div>}>
+    <Suspense fallback={<LoadingState judul="Memuat formulir..." variant="inline" />}>
       <CatatHasilSpkContent initialNomorSpk={nomorSpk} />
     </Suspense>
   );

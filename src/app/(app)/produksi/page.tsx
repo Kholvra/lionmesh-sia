@@ -1,10 +1,5 @@
-import type { Metadata } from "next";
-import { ProduksiHubScreen } from "@/modules/produksi/hub/screen";
-
-export const metadata: Metadata = {
-  title: "Siklus Produksi — Lionmesh SIA",
-};
+import { redirect } from "next/navigation";
 
 export default function ProduksiPage() {
-  return <ProduksiHubScreen />;
+  redirect("/produksi/bom-produk");
 }

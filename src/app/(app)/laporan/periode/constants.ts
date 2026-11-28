@@ -1,4 +1,4 @@
-import type { StatusOption } from "@/components/ui";
+import type { StatusOption } from "@/components/ui/status-badge";
 
 export const STATUS_PERIODE: readonly StatusOption[] = [
   { value: "buka", label: "Terbuka", tone: "warning" },

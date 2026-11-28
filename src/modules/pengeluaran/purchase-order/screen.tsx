@@ -3,7 +3,8 @@ import Link from "next/link";
 import { StatusBadge } from "@/components/ui";
 import { cekIzin } from "@/lib/auth/permissions";
 import type { Profile } from "@/lib/auth/types";
-import { formatRupiah } from "@/lib/format/number";
+import { formatRupiah } from "@/lib/format/money";
+import { rupiahKeCents } from "@/modules/pengeluaran/pemasok/format";
 import {
   formatQty,
   formatTanggal,
@@ -213,7 +214,7 @@ export async function PoScreen({ permintaanId, poId, profile }: Props) {
                     <dd className={common.detailValue}>
                       {terpilih.header.nominal === null
                         ? "—"
-                        : formatRupiah(terpilih.header.nominal)}
+                        : formatRupiah(rupiahKeCents(terpilih.header.nominal))}
                     </dd>
                   </div>
                   <div className={common.detailItem}>
@@ -249,13 +250,13 @@ export async function PoScreen({ permintaanId, poId, profile }: Props) {
                             <th scope="row">{namaProduk(item.produk_id)}</th>
                             <td className={styles.nominal}>{formatQty(item.qty)}</td>
                             <td className={styles.nominal}>
-                              {formatRupiah(item.harga_satuan)}
+                              {formatRupiah(rupiahKeCents(item.harga_satuan))}
                             </td>
                             <td className={styles.nominal}>
                               {item.ppn_persen}%
                             </td>
                             <td className={styles.nominal}>
-                              {formatRupiah(total.total)}
+                              {formatRupiah(rupiahKeCents(total.total))}
                             </td>
                           </tr>
                         );

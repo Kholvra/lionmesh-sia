@@ -1,18 +1,21 @@
 "use client";
 
-import Link from "next/link";
-import { useState } from "react";
-import { ArrowIcon } from "@/components/ui/arrow-icon";
-import { useProduksiActor } from "@/modules/produksi/context/actor-context";
-import { ProduksiSubnav } from "@/modules/produksi/components/produksi-subnav";
+import { useEffect, useState, useTransition } from "react";
+import { Notice } from "@/components/ui/notice";
+import { PageHeader } from "@/components/ui/page-header";
+import { SegmentedTabs } from "@/components/ui/segmented-tabs";
 import {
-  HppSpkSummary,
-  INITIAL_HPP_LIST,
-  INITIAL_KARTU_JAM_KERJA,
-  KartuJamKerjaItem,
-} from "./types";
-
-const KJK_STORAGE_KEY = "lionmesh_kjk_list_v1";
+  STATUS_KARTU_JAM_KERJA,
+  STATUS_POSTING_HPP,
+  StatusBadge,
+} from "@/components/ui/status-badge";
+import { EmptyState, ErrorState, LoadingState } from "@/components/ui/states";
+import { TableActionLink } from "@/components/ui/table-action-link";
+import { useTableState } from "@/components/ui/use-table-state";
+import { useProduksiActor } from "@/modules/produksi/context/actor-context";
+import { bebankanTklKeSpk, catatJamKerja } from "@/modules/produksi/actions";
+import { muatKartuData } from "@/modules/produksi/queries-lanjutan";
+import type { KartuData } from "./types";
 
 type ActiveTab = "jam_kerja" | "kalkulasi_hpp";
 
@@ -20,41 +23,70 @@ export function KartuJamKerjaScreen() {
   const [activeTab, setActiveTab] = useState<ActiveTab>("jam_kerja");
   const { can, activeRole } = useProduksiActor();
   const canRecordKjk = can("record_kartu_jam_kerja");
-  const [kjkList, setKjkList] = useState<KartuJamKerjaItem[]>(() => {
-    if (typeof window !== "undefined") {
-      try {
-        const saved = sessionStorage.getItem(KJK_STORAGE_KEY);
-        if (saved) {
-          const parsed = JSON.parse(saved) as KartuJamKerjaItem[];
-          if (Array.isArray(parsed) && parsed.length > 0) return parsed;
-        }
-      } catch {
-        // Fallback default
-      }
-    }
-    return INITIAL_KARTU_JAM_KERJA;
+  const [data, setData] = useState<KartuData | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [pending, startTransition] = useTransition();
+
+  useEffect(() => {
+    let aktif = true;
+    muatKartuData().then((hasil) => {
+      if (!aktif) return;
+      if (hasil.ok) setData(hasil.data);
+      else setError(hasil.message);
+    });
+    return () => {
+      aktif = false;
+    };
+  }, []);
+
+  const kjkList = data?.kjk ?? [];
+  const hppList = data?.hpp ?? [];
+  const tabelKjk = useTableState(kjkList, {
+    pageSize: kjkList.length || 1,
+  });
+  const tabelHpp = useTableState(hppList, {
+    pageSize: hppList.length || 1,
   });
 
-  const [hppList] = useState<HppSpkSummary[]>(INITIAL_HPP_LIST);
-
-  // Form modal tambah jam kerja
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [formSpk, setFormSpk] = useState("SPK-2611-013");
-  const [formKaryawan, setFormKaryawan] = useState("Budi Santoso");
-  const [formNik, setFormNik] = useState("K-042");
-  const [formTanggal, setFormTanggal] = useState("2026-11-28");
-  const [formJamReguler, setFormJamReguler] = useState("7");
-  const [formJamLembur, setFormJamLembur] = useState("0");
-  const [formKegiatan, setFormKegiatan] = useState("Operator Mesin Las 1");
+  const [formSpk, setFormSpk] = useState("");
+  const [formKaryawan, setFormKaryawan] = useState("");
+  const [formTanggal, setFormTanggal] = useState("");
+  const [formJamReguler, setFormJamReguler] = useState("");
+  const [formJamLembur, setFormJamLembur] = useState("");
+  const [formTarif, setFormTarif] = useState("");
+  const [formKegiatan, setFormKegiatan] = useState("");
   const [formError, setFormError] = useState<string | null>(null);
 
-  const totalJamKeseluruhan = kjkList.reduce((acc, c) => acc + c.totalJam, 0);
-  const totalTklKeseluruhan = kjkList.reduce((acc, c) => acc + c.totalTkl, 0);
+  const [selectedKartuIds, setSelectedKartuIds] = useState<string[]>([]);
+  const [biayaNotifikasi, setBiayaNotifikasi] = useState<string | null>(null);
+  const bisaBebankan = can("post_final_hpp");
+
+  const bebankanTkl = () => {
+    if (selectedKartuIds.length === 0) {
+      setBiayaNotifikasi("Pilih minimal satu kartu jam kerja.");
+      return;
+    }
+    const woId = kjkList.find((item) => item.id === selectedKartuIds[0])?.woId;
+    if (!woId) return;
+    const formData = new FormData();
+    formData.set("wo_id", woId);
+    selectedKartuIds.forEach((id) => formData.append("kartu_ids", id));
+    formData.set("tanggal", new Date().toISOString());
+    startTransition(async () => {
+      const hasil = await bebankanTklKeSpk(formData);
+      setBiayaNotifikasi(
+        hasil.ok ? `TKL ${selectedKartuIds.length} kartu dibebankan ke WIP.` : hasil.message,
+      );
+      if (hasil.ok) setSelectedKartuIds([]);
+    });
+  };
 
   const handleSimpanKjk = (e: React.FormEvent) => {
     e.preventDefault();
     const reg = parseFloat(formJamReguler);
-    const lem = parseFloat(formJamLembur);
+    const lem = formJamLembur.trim() === "" ? 0 : parseFloat(formJamLembur);
+    const tarif = parseFloat(formTarif);
 
     if (Number.isNaN(reg) || reg < 0 || Number.isNaN(lem) || lem < 0) {
       setFormError("Jam kerja reguler dan lembur harus berupa angka positif.");
@@ -64,106 +96,153 @@ export function KartuJamKerjaScreen() {
       setFormError("Total jam kerja harus lebih dari 0 jam.");
       return;
     }
-
-    const totalJam = reg + lem;
-    const tarif = 35000;
-    const totalTkl = totalJam * tarif;
-
-    const newItem: KartuJamKerjaItem = {
-      id: `kjk-${Date.now()}`,
-      nomorSpk: formSpk,
-      namaKaryawan: formKaryawan,
-      nik: formNik,
-      tanggal: "28 Nov 2026",
-      tanggalISO: formTanggal,
-      jamReguler: reg,
-      jamLembur: lem,
-      totalJam,
-      tarifPerJam: tarif,
-      totalTkl,
-      kegiatan: formKegiatan,
-      status: "TERCATAT",
-    };
-
-    const nextList = [newItem, ...kjkList];
-    setKjkList(nextList);
-    try {
-      sessionStorage.setItem(KJK_STORAGE_KEY, JSON.stringify(nextList));
-    } catch {
-      // Abaikan
+    if (Number.isNaN(tarif) || tarif < 0) {
+      setFormError("Tarif per jam wajib diisi dengan angka yang valid.");
+      return;
     }
 
-    setIsModalOpen(false);
-    setFormError(null);
+    const formData = new FormData();
+    formData.set("wo_id", formSpk);
+    formData.set("karyawan_id", formKaryawan);
+    formData.set("tanggal", formTanggal);
+    formData.set("jam_kerja", String(reg + lem));
+    formData.set("tarif_per_jam", String(tarif));
+    formData.set("keterangan", formKegiatan);
+
+    startTransition(async () => {
+      const hasil = await catatJamKerja(formData);
+      if (!hasil.ok) {
+        setFormError(hasil.message);
+        return;
+      }
+      setIsModalOpen(false);
+      setFormError(null);
+      setData((sebelumnya) =>
+        sebelumnya
+          ? {
+              ...sebelumnya,
+              kjk: [
+                {
+                  id: hasil.data.kartuId,
+                  woId: formSpk,
+                  karyawanId: formKaryawan,
+                  nomorSpk:
+                    sebelumnya.spkOptions.find((item) => item.woId === formSpk)
+                      ?.nomorSpk ?? "—",
+                  namaKaryawan:
+                    sebelumnya.karyawanOptions.find((item) => item.id === formKaryawan)
+                      ?.nama ?? "—",
+                  nik:
+                    sebelumnya.karyawanOptions.find((item) => item.id === formKaryawan)
+                      ?.nik ?? "—",
+                  tanggal: formTanggal,
+                  tanggalISO: formTanggal,
+                  jamReguler: reg,
+                  jamLembur: lem,
+                  totalJam: reg + lem,
+                  tarifPerJam: tarif,
+                  totalTkl: (reg + lem) * tarif,
+                  kegiatan: formKegiatan || "—",
+                  status: "TERCATAT",
+                },
+                ...sebelumnya.kjk,
+              ],
+            }
+          : sebelumnya,
+      );
+    });
   };
+
+
+  const totalJamKeseluruhan = kjkList.reduce((acc, c) => acc + c.totalJam, 0);
+  const totalTklKeseluruhan = kjkList.reduce((acc, c) => acc + c.totalTkl, 0);
+
+  if (error) {
+    return (
+      <div className="mx-auto max-w-[1156px] text-[#172335] animate-fade-in">
+        <ErrorState judul="Data biaya produksi tidak dapat dimuat." teks={error} variant="compact" />
+      </div>
+    );
+  }
+
+  if (!data) {
+    return (
+      <div className="mx-auto max-w-[1156px] text-[#172335] animate-fade-in">
+        <LoadingState judul="Memuat kartu jam kerja..." variant="inline" />
+      </div>
+    );
+  }
 
   return (
     <div className="mx-auto max-w-[1156px] text-[#172335] animate-fade-in">
-      <ProduksiSubnav />
+      <PageHeader
+        description="Pencatatan kartu jam kerja tenaga kerja langsung (TKL) per SPK dan perhitungan HPP produk selesai menggunakan rumus mengikat (Bahan + TKL + Overhead + Rework − Reject abnormal)."
+        title="Biaya produksi & HPP"
+        variant="cycle"
+      />
 
-      {/* Breadcrumb */}
-      <nav className="text-xs font-medium text-[#526174]">
-        <Link
-          href="/produksi"
-          className="text-[#C96A00] underline decoration-[#C96A00]/60 underline-offset-2 hover:text-[#E88A06]"
-        >
-          Siklus Produksi
-        </Link>
-        <span className="mx-1.5">/</span>
-        <span>PR-006 Biaya produksi dan HPP</span>
-      </nav>
-
-      {/* Header */}
-      <h1 className="mt-1.5 text-[28px] leading-tight font-bold tracking-tight text-[#172335]">
-        Biaya produksi & HPP
-      </h1>
-      <p className="mt-1.5 text-[13px] text-[#526174]">
-        Pencatatan kartu jam kerja tenaga kerja langsung (TKL) per SPK dan
-        perhitungan HPP produk selesai menggunakan rumus mengikat (Bahan + TKL +
-        Overhead + Rework − Reject abnormal).
-      </p>
-
-      {/* Callout Info Tarif & Formula */}
-      <div className="shadow-card mt-5 rounded-[10px] border border-transparent bg-[#FEF3C7]/85 px-5 py-3.5">
-        <p className="text-[13px] font-semibold text-[#92400E]">
-          Tarif Overhead Predeterminasi Periode Nov 2026: Rp 45.000 / DLH
-        </p>
+      <Notice
+        className="mt-5"
+        title={
+          data.tarifOverheadPerDlh === null
+            ? "Tarif overhead belum ditetapkan"
+            : `Tarif Overhead Predeterminasi: Rp ${data.tarifOverheadPerDlh.toLocaleString("id-ID")} / DLH`
+        }
+        tone="warning"
+        variant="card"
+      >
         <p className="mt-0.5 text-[12px] text-[#B45309]">
           Pembebanan TKL dan overhead otomatis dialokasikan ke akun WIP (Barang
           Dalam Proses) saat hasil dicatat. Jurnal HPP final diposting oleh
           Accounting saat SPK selesai.
         </p>
-      </div>
+      </Notice>
+
+      {biayaNotifikasi && <Notice className="mt-3" tone="info" variant="card">{biayaNotifikasi}</Notice>}
+      {bisaBebankan && activeTab === "jam_kerja" && kjkList.length > 0 && (
+        <section className="shadow-card mt-4 rounded-[10px] border border-transparent bg-white p-[20px]">
+          <h2 className="text-[15px] font-semibold text-[#172335]">Bebankan TKL ke WIP</h2>
+          <div className="mt-3 flex flex-wrap gap-3">
+            {kjkList.map((item) => (
+              <label key={item.id} className="flex items-center gap-1.5 text-[12px]">
+                <input
+                  type="checkbox"
+                  checked={selectedKartuIds.includes(item.id)}
+                  onChange={(e) =>
+                    setSelectedKartuIds((sebelumnya) =>
+                      e.target.checked
+                        ? [...sebelumnya, item.id]
+                        : sebelumnya.filter((id) => id !== item.id),
+                    )
+                  }
+                />
+                {item.nomorSpk} · {item.namaKaryawan}
+              </label>
+            ))}
+          </div>
+          <button type="button" disabled={pending} onClick={bebankanTkl} className="mt-4 rounded-[8px] bg-[#E88A06] px-4 py-2 text-[13px] font-semibold text-white">Bebankan TKL terpilih</button>
+        </section>
+      )}
 
       {/* Action Bar & Tab Switcher */}
       <div className="mt-5 flex flex-wrap items-center justify-between gap-3">
-        <div className="inline-flex items-center gap-1 rounded-[8px] bg-[#F1F5F9] p-1">
-          <button
-            type="button"
-            onClick={() => setActiveTab("jam_kerja")}
-            className={`rounded-[6px] border px-3 py-1.5 text-[12px] transition-all duration-150 active:scale-[0.98] ${
-              activeTab === "jam_kerja"
-                ? "border-[#E5E7EB] bg-white font-semibold text-[#172335] shadow-2xs"
-                : "border-transparent font-medium text-[#526174] hover:text-[#172335]"
-            }`}
-          >
-            Kartu Jam Kerja TKL ({kjkList.length})
-          </button>
-          <button
-            type="button"
-            onClick={() => setActiveTab("kalkulasi_hpp")}
-            className={`rounded-[6px] border px-3 py-1.5 text-[12px] transition-all duration-150 active:scale-[0.98] ${
-              activeTab === "kalkulasi_hpp"
-                ? "border-[#E5E7EB] bg-white font-semibold text-[#172335] shadow-2xs"
-                : "border-transparent font-medium text-[#526174] hover:text-[#172335]"
-            }`}
-          >
-            Kalkulasi HPP Perintah ({hppList.length})
-          </button>
-        </div>
+        <SegmentedTabs
+          items={[
+            {
+              key: "jam_kerja",
+              label: `Kartu Jam Kerja TKL (${kjkList.length})`,
+            },
+            {
+              key: "kalkulasi_hpp",
+              label: `Kalkulasi HPP Perintah (${hppList.length})`,
+            },
+          ]}
+          onValueChange={(key) => setActiveTab(key as ActiveTab)}
+          value={activeTab}
+        />
 
-        {activeTab === "jam_kerja" && (
-          canRecordKjk ? (
+        {activeTab === "jam_kerja" &&
+          (canRecordKjk ? (
             <button
               type="button"
               onClick={() => setIsModalOpen(true)}
@@ -175,8 +254,7 @@ export function KartuJamKerjaScreen() {
             <span className="inline-flex items-center rounded-[6px] border border-slate-200 bg-slate-100 px-3 py-1.5 text-[11px] font-medium text-slate-500">
               Pencatatan jam kerja: Wewenang Produksi (Aktor: {activeRole})
             </span>
-          )
-        )}
+          ))}
       </div>
 
       {/* TAB 1: KARTU JAM KERJA */}
@@ -214,7 +292,7 @@ export function KartuJamKerjaScreen() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-[#E5E7EB]/80">
-                {kjkList.map((item) => (
+                {tabelKjk.visibleRows.map((item) => (
                   <tr
                     key={item.id}
                     className="transition-colors hover:bg-slate-50/70"
@@ -246,21 +324,29 @@ export function KartuJamKerjaScreen() {
                       Rp {item.totalTkl.toLocaleString("id-ID")}
                     </td>
                     <td className="px-[12px] py-3.5">
-                      {item.status === "DIBEBANKAN" ? (
-                        <span className="inline-flex items-center rounded-[6px] bg-[#DCFCE7] px-2 py-0.5 text-[11px] font-semibold text-[#15803D]">
-                          Dibebankan
-                        </span>
-                      ) : (
-                        <span className="inline-flex items-center rounded-[6px] bg-[#FEF3C7] px-2 py-0.5 text-[11px] font-semibold text-[#B45309]">
-                          Tercatat
-                        </span>
-                      )}
+                      <StatusBadge
+                        status={item.status}
+                        statuses={STATUS_KARTU_JAM_KERJA}
+                        variant="compact"
+                      />
                     </td>
                     <td className="px-[12px] py-3.5 text-[12px] text-[#526174]">
                       {item.kegiatan}
                     </td>
                   </tr>
                 ))}
+                {tabelKjk.isEmpty && (
+                  <tr>
+                    <td colSpan={9}>
+                      <div className="py-8 text-center">
+                        <EmptyState
+                          judul="Belum ada kartu jam kerja yang dicatat."
+                          variant="inline"
+                        />
+                      </div>
+                    </td>
+                  </tr>
+                )}
               </tbody>
             </table>
           </div>
@@ -291,7 +377,7 @@ export function KartuJamKerjaScreen() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-[#E5E7EB]/80">
-                {hppList.map((item) => (
+                {tabelHpp.visibleRows.map((item) => (
                   <tr
                     key={item.nomorSpk}
                     className="transition-colors hover:bg-slate-50/70"
@@ -326,27 +412,33 @@ export function KartuJamKerjaScreen() {
                       Rp {item.hppPerUnitRp.toLocaleString("id-ID")}
                     </td>
                     <td className="px-[12px] py-3.5">
-                      {item.statusPostingHpp === "FINAL_DIPOSTING" ? (
-                        <span className="inline-flex items-center rounded-[6px] bg-[#DCFCE7] px-2.5 py-1 text-[11px] font-semibold text-[#15803D]">
-                          Final Diposting
-                        </span>
-                      ) : (
-                        <span className="inline-flex items-center rounded-[6px] bg-[#FEF3C7] px-2.5 py-1 text-[11px] font-semibold text-[#B45309]">
-                          WIP Dibebankan
-                        </span>
-                      )}
+                      <StatusBadge
+                        status={item.statusPostingHpp}
+                        statuses={STATUS_POSTING_HPP}
+                        variant="compact"
+                      />
                     </td>
                     <td className="px-[12px] py-3.5 text-right">
-                      <Link
+                      <TableActionLink
                         href={`/produksi/biaya-hpp/${item.nomorSpk.toLowerCase()}`}
-                        className="group inline-flex items-center gap-1.5 text-[12px] font-semibold text-[#C96A00] hover:text-[#E88A06]"
                       >
-                        <span>Lihat HPP</span>
-                        <ArrowIcon className="transition-transform duration-150 group-hover:translate-x-0.5" />
-                      </Link>
+                        Lihat HPP
+                      </TableActionLink>
                     </td>
                   </tr>
                 ))}
+                {tabelHpp.isEmpty && (
+                  <tr>
+                    <td colSpan={10}>
+                      <div className="py-8 text-center">
+                        <EmptyState
+                          judul="Belum ada perhitungan HPP yang tersedia."
+                          variant="inline"
+                        />
+                      </div>
+                    </td>
+                  </tr>
+                )}
               </tbody>
             </table>
           </div>
@@ -364,11 +456,9 @@ export function KartuJamKerjaScreen() {
               Data jam kerja akan dibebankan ke biaya WIP perintah produksi.
             </p>
 
-            {formError && (
-              <div className="mt-3 rounded-[6px] bg-[#FEE2E2] px-3 py-2 text-[12px] font-medium text-[#B91C1C] animate-slide-down">
-                {formError}
-              </div>
-            )}
+            <Notice className="mt-3" tone="error" variant="plain">
+              {formError}
+            </Notice>
 
             <form onSubmit={handleSimpanKjk} className="mt-4 space-y-3">
               <div>
@@ -380,15 +470,12 @@ export function KartuJamKerjaScreen() {
                   onChange={(e) => setFormSpk(e.target.value)}
                   className="mt-1 w-full rounded-[8px] border border-[#E5E7EB] bg-white px-3 py-2 text-[13px] outline-none focus:border-[#E88A06]"
                 >
-                  <option value="SPK-2611-013">
-                    SPK-2611-013 (Wiremesh M6)
-                  </option>
-                  <option value="SPK-2611-012">
-                    SPK-2611-012 (Wiremesh M8)
-                  </option>
-                  <option value="SPK-2611-011">
-                    SPK-2611-011 (Wiremesh M6)
-                  </option>
+                  <option value="">Pilih perintah produksi...</option>
+                  {data.spkOptions.map((item) => (
+                    <option key={item.woId} value={item.woId}>
+                      {item.nomorSpk} ({item.produkNama})
+                    </option>
+                  ))}
                 </select>
               </div>
 
@@ -397,12 +484,18 @@ export function KartuJamKerjaScreen() {
                   <label className="block text-xs font-medium text-[#172335]">
                     Nama Karyawan
                   </label>
-                  <input
-                    type="text"
+                  <select
                     value={formKaryawan}
                     onChange={(e) => setFormKaryawan(e.target.value)}
-                    className="mt-1 w-full rounded-[8px] border border-[#E5E7EB] px-3 py-1.5 text-[13px] outline-none focus:border-[#E88A06]"
-                  />
+                    className="mt-1 w-full rounded-[8px] border border-[#E5E7EB] bg-white px-3 py-1.5 text-[13px] outline-none focus:border-[#E88A06]"
+                  >
+                    <option value="">Pilih karyawan...</option>
+                    {data.karyawanOptions.map((item) => (
+                      <option key={item.id} value={item.id}>
+                        {item.nama}
+                      </option>
+                    ))}
+                  </select>
                 </div>
                 <div>
                   <label className="block text-xs font-medium text-[#172335]">
@@ -410,9 +503,12 @@ export function KartuJamKerjaScreen() {
                   </label>
                   <input
                     type="text"
-                    value={formNik}
-                    onChange={(e) => setFormNik(e.target.value)}
-                    className="mt-1 w-full rounded-[8px] border border-[#E5E7EB] px-3 py-1.5 text-[13px] outline-none focus:border-[#E88A06]"
+                    readOnly
+                    value={
+                      data.karyawanOptions.find((item) => item.id === formKaryawan)
+                        ?.nik ?? "—"
+                    }
+                    className="mt-1 w-full rounded-[8px] border border-[#E5E7EB] bg-[#F1F3F6] px-3 py-1.5 text-[13px] outline-none"
                   />
                 </div>
               </div>
@@ -457,6 +553,20 @@ export function KartuJamKerjaScreen() {
 
               <div>
                 <label className="block text-xs font-medium text-[#172335]">
+                  Tarif per jam *
+                </label>
+                <input
+                  type="number"
+                  min="0"
+                  step="1"
+                  value={formTarif}
+                  onChange={(e) => setFormTarif(e.target.value)}
+                  className="mt-1 w-full rounded-[8px] border border-[#E5E7EB] px-3 py-1.5 text-[13px] outline-none focus:border-[#E88A06]"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-medium text-[#172335]">
                   Kegiatan / Mesin
                 </label>
                 <input
@@ -481,6 +591,7 @@ export function KartuJamKerjaScreen() {
                 </button>
                 <button
                   type="submit"
+                  disabled={pending}
                   className="rounded-[8px] bg-[#E88A06] px-4 py-1.5 text-[13px] font-semibold text-white transition-all duration-150 hover:bg-[#D17B05] active:scale-[0.98]"
                 >
                   Simpan Catatan

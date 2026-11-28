@@ -19,7 +19,6 @@ export default async function LaporanIndexPage() {
     <section aria-labelledby="laporan-title" className={styles.page}>
       <header className={styles.header}>
         <div>
-          <p className={styles.breadcrumb}>Laporan</p>
           <h1 className={styles.title} id="laporan-title">
             Laporan keuangan
           </h1>

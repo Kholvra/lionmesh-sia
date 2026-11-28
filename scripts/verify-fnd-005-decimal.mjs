@@ -1,22 +1,20 @@
-import { readFileSync } from "node:fs";
-import vm from "node:vm";
-import ts from "typescript";
+import { muatTs } from "./lib/ts-loader.mjs";
 
-function load(path, resolve = () => { throw new Error("Unexpected dependency"); }) {
-  const source = readFileSync(new URL(path, import.meta.url), "utf8");
-  const code = ts.transpileModule(source, { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2020 } }).outputText;
-  const loadedModule = { exports: {} };
-  vm.runInNewContext(code, { module: loadedModule, exports: loadedModule.exports, require: resolve, Date });
-  return loadedModule.exports;
-}
-
-const decimal = load("../src/core/inventory/decimal.ts");
-const service = load("../src/core/inventory/service.ts", (name) => {
-  if (name === "./decimal") return decimal;
-  if (name === "@/lib/result") return { fail: (message) => ({ ok: false, message }), ok: (data) => ({ ok: true, data }) };
-  throw new Error(`Unexpected dependency: ${name}`);
-});
-const { defaultValuationStrategy: valuation } = load("../src/core/inventory/valuation.ts");
+const decimal = muatTs("../src/core/inventory/decimal.ts", undefined, import.meta.url);
+const service = muatTs(
+  "../src/core/inventory/service.ts",
+  (name) => {
+    if (name === "./decimal") return decimal;
+    if (name === "@/lib/result") return { fail: (message) => ({ ok: false, message }), ok: (data) => ({ ok: true, data }) };
+    throw new Error(`Unexpected dependency: ${name}`);
+  },
+  import.meta.url,
+);
+const { defaultValuationStrategy: valuation } = muatTs(
+  "../src/core/inventory/valuation.ts",
+  undefined,
+  import.meta.url,
+);
 let calls = 0;
 const client = { rpc: async () => { calls++; return { data: {}, error: null }; } };
 for (const hargaSatuan of ["1.00009", 1.5, "-1"]) {

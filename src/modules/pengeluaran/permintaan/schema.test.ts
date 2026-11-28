@@ -6,6 +6,7 @@ import {
   parseKeputusanApproval,
   parsePenolakan,
   parsePermintaanForm,
+  PESAN_WO_WAJIB,
 } from "./schema.ts";
 
 const GUDANG = "33333333-3333-4333-8333-333333333333";
@@ -109,4 +110,53 @@ test("penolakan tanpa alasan ditolak", () => {
   const parsed = parsePenolakan(form({ id: PRODUK, versi: "1", alasan: "   " }));
   assert.equal(parsed.input, null);
   assert.equal(parsed.message, "Alasan penolakan wajib diisi");
+});
+test("pemohon Produksi wajib mengisi referensi perintah produksi", () => {
+  const parsed = parsePermintaanForm(
+    form({
+      gudang_id: GUDANG,
+      tanggal_butuh: "2026-12-01",
+      produk_id: [PRODUK],
+      satuan_id: [SATUAN],
+      qty: ["2"],
+    }),
+    { requireWo: true },
+  );
+
+  assert.equal(parsed.input, null);
+  assert.equal(parsed.fieldErrors.wo_id, PESAN_WO_WAJIB);
+});
+
+test("referensi perintah produksi malformed memakai pesan lama", () => {
+  const parsed = parsePermintaanForm(
+    form({
+      gudang_id: GUDANG,
+      wo_id: "bukan-uuid",
+      tanggal_butuh: "2026-12-01",
+      produk_id: [PRODUK],
+      satuan_id: [SATUAN],
+      qty: ["2"],
+    }),
+    { requireWo: true },
+  );
+
+  assert.equal(parsed.input, null);
+  assert.equal(parsed.fieldErrors.wo_id, "Referensi perintah produksi tidak valid");
+});
+
+test("pemohon selain Produksi boleh tanpa referensi perintah produksi", () => {
+  const parsed = parsePermintaanForm(
+    form({
+      gudang_id: GUDANG,
+      tanggal_butuh: "2026-12-01",
+      produk_id: [PRODUK],
+      satuan_id: [SATUAN],
+      qty: ["2"],
+    }),
+    { requireWo: false },
+  );
+
+  assert.ok(parsed.input);
+  assert.equal(parsed.input.woId, null);
+  assert.equal(parsed.fieldErrors.wo_id, undefined);
 });

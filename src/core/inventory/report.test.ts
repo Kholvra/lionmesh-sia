@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
+import { isoWaktuJakarta } from "../../lib/format/date.ts";
 
 import {
   hitungKartuPersediaan,
@@ -9,6 +10,8 @@ import {
   uangMentahKeCents,
   type MutasiKartu,
 } from "./report.ts";
+import { isDecimal } from "./decimal.ts";
+import { defaultValuationStrategy } from "./valuation.ts";
 
 let urutan = 0;
 
@@ -21,7 +24,7 @@ function mutasi(
   urutan += 1;
   return {
     id: overrides.id ?? `mutasi-${urutan}`,
-    tanggal: overrides.tanggal ?? "2026-11-02T09:00:00+07:00",
+    tanggal: overrides.tanggal ?? isoWaktuJakarta("2026-11-02T09:00:00"),
     tipe,
     qty,
     nilai,
@@ -34,8 +37,8 @@ function mutasi(
 
 test("kartu persediaan: saldo berjalan qty dan nilai mengikuti mutasi", () => {
   const rows = [
-    mutasi("MASUK", "5", "60", { tanggal: "2026-11-02T09:00:00+07:00" }),
-    mutasi("KELUAR", "-3", "30", { tanggal: "2026-11-03T09:00:00+07:00" }),
+    mutasi("MASUK", "5", "60", { tanggal: isoWaktuJakarta("2026-11-02T09:00:00") }),
+    mutasi("KELUAR", "-3", "30", { tanggal: isoWaktuJakarta("2026-11-03T09:00:00") }),
   ];
 
   const laporan = hitungKartuPersediaan(rows, { qty: "10", nilai: "100" });
@@ -62,15 +65,15 @@ test("penyesuaian negatif mengurangi qty dan nilai", () => {
 
 test("kartu persediaan mengurutkan mutasi menurut tanggal", () => {
   const rows = [
-    mutasi("KELUAR", "-1", "5", { tanggal: "2026-11-05T09:00:00+07:00" }),
-    mutasi("MASUK", "2", "10", { tanggal: "2026-11-01T09:00:00+07:00" }),
+    mutasi("KELUAR", "-1", "5", { tanggal: isoWaktuJakarta("2026-11-05T09:00:00") }),
+    mutasi("MASUK", "2", "10", { tanggal: isoWaktuJakarta("2026-11-01T09:00:00") }),
   ];
 
   const laporan = hitungKartuPersediaan(rows, { qty: "0", nilai: "0" });
 
   assert.deepEqual(
     laporan.baris.map((item) => item.tanggal),
-    ["2026-11-01T09:00:00+07:00", "2026-11-05T09:00:00+07:00"],
+    [isoWaktuJakarta("2026-11-01T09:00:00"), isoWaktuJakarta("2026-11-05T09:00:00")],
   );
   assert.deepEqual(
     laporan.baris.map((item) => item.saldoQty),
@@ -89,7 +92,8 @@ test("saldo kartu menjumlahkan mutasi menjadi nilai mentah", () => {
 
 test("nilai rupiah mentah dikonversi ke sen untuk tampilan", () => {
   assert.equal(uangMentahKeCents("1000000"), "100000000");
-  assert.equal(uangMentahKeCents("1083333.33"), "108333333");
+  assert.equal(uangMentahKeCents("1083333.00"), "108333300");
+  assert.throws(() => uangMentahKeCents("1083333.33"), /bulat/i);
 });
 
 test("kartu persediaan tanpa mutasi menampilkan saldo awal", () => {
@@ -122,4 +126,58 @@ test("rekonsiliasi cocok saat selisih nol dan menandai selisih", () => {
   assert.equal(selisih.nilaiMutasiCents, "8333333");
   assert.equal(selisih.nilaiJurnalCents, "-150000000");
   assert.equal(selisih.selisihCents, "158333333");
+});
+
+test("desimal inventory menolak kosong, negatif saat dilarang, dan presisi lebih", () => {
+  assert.equal(isDecimal("", true), false);
+  assert.equal(isDecimal("0", false), false);
+  assert.equal(isDecimal("-0.01", true), true);
+  assert.equal(isDecimal("-0.01", true, false), false);
+  assert.equal(isDecimal("1.00001", true), false);
+  assert.equal(isDecimal("0.0000", true), true);
+});
+
+test("uang mentah menolak pecahan sen, kosong, dan presisi lebih", () => {
+  assert.equal(uangMentahKeCents("0"), "0");
+  assert.throws(() => uangMentahKeCents(""), /uang/i);
+  assert.throws(() => uangMentahKeCents("0.50"), /bulat/i);
+  assert.throws(() => uangMentahKeCents("1.001"), /uang/i);
+});
+
+test("qty nol tetap memakai tanda nilai negatif", () => {
+  const baris = mutasi("PENYESUAIAN", "0", "5");
+  const laporan = hitungKartuPersediaan([baris], { qty: "2", nilai: "200" });
+
+  assert.equal(laporan.baris[0].qtyMasuk, "0");
+  assert.equal(laporan.baris[0].qtyKeluar, "0");
+  assert.equal(laporan.baris[0].nilaiKeluarCents, "500");
+  assert.equal(laporan.saldoAkhirNilaiCents, "19500");
+  assert.equal(hitungTotalNilaiMutasiCents([baris]), "-500");
+});
+
+test("valuasi membulatkan nilai ke rupiah penuh, bukan ke sen", () => {
+  const masuk = defaultValuationStrategy.calculateIncoming(
+    "0", "0", "0", "0.0001", "5000",
+  );
+
+  assert.equal(masuk.nilaiMasuk, "1.00");
+  assert.equal(masuk.nilaiBaru, "1.00");
+  assert.equal(masuk.hargaRataBaru, "10000.0000");
+
+  const keluar = defaultValuationStrategy.calculateOutgoing(
+    "1", "5000", "5000", "0.0001",
+  );
+
+  assert.equal(keluar.nilaiKeluar, "1.00");
+  assert.equal(keluar.nilaiBaru, "4999.00");
+  assert.equal(keluar.hargaRataBaru, "5000.0000");
+
+  assert.throws(
+    () => defaultValuationStrategy.calculateIncoming("0", "0", "0", "0.00001", "1"),
+    /desimal/i,
+  );
+  assert.throws(
+    () => defaultValuationStrategy.calculateIncoming("0", "0.50", "0", "1", "10"),
+    /bulat/i,
+  );
 });

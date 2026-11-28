@@ -3,12 +3,11 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
+import { parsePeriode, type HasilTutupTahun } from "@/core/ledger";
 import {
-  parsePeriode,
   tutupPeriodeUntukSesi,
   tutupTahunUntukSesi,
-  type HasilTutupTahun,
-} from "@/core/ledger";
+} from "@/core/ledger/server";
 import { fail, ok, type Result } from "@/lib/result";
 
 import { tutupPeriodeSchema, tutupTahunSchema } from "./schema";

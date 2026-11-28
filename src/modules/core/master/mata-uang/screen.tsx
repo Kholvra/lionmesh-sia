@@ -1,5 +1,8 @@
 import Link from "next/link";
 
+import { Notice } from "@/components/ui/notice";
+import { PageHeader } from "@/components/ui/page-header";
+import { submitButtonClassName } from "@/components/ui/submit-button";
 import { StatusBadge } from "@/components/ui";
 import { cekIzin } from "@/lib/auth/permissions";
 import type { Profile } from "@/lib/auth/types";
@@ -43,28 +46,21 @@ export async function MataUangScreen({
 
   return (
     <section aria-label="Master mata uang" className={styles.page}>
-      <header className={styles.header}>
-        <div>
-          <p className={styles.breadcrumb}>Pengaturan / Master data</p>
-          <h1 className={styles.title}>Mata uang dan kurs</h1>
-          <p className={styles.description}>
-            Mata uang dan kurs disimpan sebagai master. Dokumen dan jurnal baru
-            tetap dalam IDR (D-38).
-          </p>
-        </div>
-      </header>
+      <PageHeader
+        description="Mata uang dan kurs disimpan sebagai master. Dokumen dan jurnal baru tetap dalam IDR (D-38)."
+        title="Mata uang dan kurs"
+      />
 
       <div className={styles.layout}>
         <section className={styles.panel} aria-label="Detail mata uang">
           <div className={styles.panelCard}>
             {terpilih && tampilkanFormUbah ? (
               <>
-                <div className={styles.panelHeader}>
-                  <div>
-                    <h2 className={styles.panelTitle}>Ubah mata uang</h2>
-                    <p className={styles.panelMeta}>{terpilih.kode}</p>
-                  </div>
-                </div>
+                <PageHeader
+                  description={terpilih.kode}
+                  title="Ubah mata uang"
+                  variant="section"
+                />
                 <MataUangForm key={terpilih.id} mataUang={terpilih} />
               </>
             ) : terpilih ? (
@@ -86,7 +82,11 @@ export async function MataUangScreen({
                 {canManage ? (
                   <div className={`${styles.buttonRow} ${styles.detailActions}`}>
                     <Link
-                      className={styles.secondaryButton}
+                      className={submitButtonClassName({
+                        className: styles.secondaryButton,
+                        size: "lg",
+                        variant: "secondary",
+                      })}
                       href={`${PATH_MASTER_MATA_UANG}?id=${terpilih.id}&mode=edit`}
                     >
                       Ubah data
@@ -113,32 +113,23 @@ export async function MataUangScreen({
               </div>
             ) : mataUangId ? (
               <div>
-                <h2 className={styles.panelTitle}>Mata uang tidak ditemukan</h2>
+                <PageHeader title="Mata uang tidak ditemukan" variant="section" />
                 <p className={styles.emptyState}>
                   Mata uang yang dipilih tidak tersedia.
                 </p>
-                <Link
-                  className={styles.secondaryButton}
-                  href={PATH_MASTER_MATA_UANG}
-                >
-                  Kembali ke daftar
-                </Link>
               </div>
             ) : canManage ? (
               <>
-                <div className={styles.panelHeader}>
-                  <div>
-                    <h2 className={styles.panelTitle}>Tambah mata uang</h2>
-                    <p className={styles.panelMeta}>
-                      Kode tiga huruf dan nama wajib diisi.
-                    </p>
-                  </div>
-                </div>
+                <PageHeader
+                  description="Kode tiga huruf dan nama wajib diisi."
+                  title="Tambah mata uang"
+                  variant="section"
+                />
                 <MataUangForm />
               </>
             ) : (
               <div>
-                <h2 className={styles.panelTitle}>Detail mata uang</h2>
+                <PageHeader title="Detail mata uang" variant="section" />
                 <p className={styles.emptyState}>
                   Pilih mata uang dari daftar untuk melihat detail. Peran Anda
                   tidak dapat mengubah master mata uang.
@@ -148,26 +139,26 @@ export async function MataUangScreen({
           </div>
         </section>
 
-        <section className={styles.listPanel} aria-labelledby="daftar-mata-uang">
+        <section className={styles.listPanel} aria-label="Daftar mata uang">
           <div className={styles.panelCard}>
-            <div className={styles.panelHeader}>
-              <div>
-                <h2 className={styles.panelTitle} id="daftar-mata-uang">
-                  Daftar mata uang
-                </h2>
-                <p className={styles.panelMeta}>
-                  {data.daftar.length} mata uang · Aktor: {profile.peran ?? "—"}
-                </p>
-              </div>
-              {canManage ? (
-                <Link
-                  className={`${styles.primaryButton} ${styles.panelAction}`}
-                  href={PATH_MASTER_MATA_UANG}
-                >
-                  Tambah mata uang
-                </Link>
-              ) : null}
-            </div>
+            <PageHeader
+              actions={
+                canManage ? (
+                  <Link
+                    className={submitButtonClassName({
+                      className: `${styles.primaryButton} ${styles.panelAction}`,
+                      size: "lg",
+                    })}
+                    href={PATH_MASTER_MATA_UANG}
+                  >
+                    Tambah mata uang
+                  </Link>
+                ) : null
+              }
+              description={`${data.daftar.length} mata uang · Aktor: ${profile.peran ?? "—"}`}
+              title="Daftar mata uang"
+              variant="section"
+            />
 
             <MasterTable
               caption="Daftar mata uang"
@@ -182,19 +173,13 @@ export async function MataUangScreen({
         </section>
       </div>
 
-      <section className={styles.section} aria-labelledby="daftar-kurs">
+      <section className={styles.section} aria-label="Kurs">
         <div className={styles.panelCard}>
-          <div className={styles.sectionHeader}>
-            <div>
-              <h2 className={styles.panelTitle} id="daftar-kurs">
-                Kurs
-              </h2>
-              <p className={styles.panelMeta}>
-                Satu kurs per mata uang per tanggal. Hanya mata uang aktif yang
-                bisa dipilih.
-              </p>
-            </div>
-          </div>
+          <PageHeader
+            description="Satu kurs per mata uang per tanggal. Hanya mata uang aktif yang bisa dipilih."
+            title="Kurs"
+            variant="section"
+          />
 
           {canManage ? (
             <KursForm
@@ -204,9 +189,9 @@ export async function MataUangScreen({
           ) : null}
 
           {data.kursError ? (
-            <p className={styles.messageError} role="alert">
+            <Notice className={styles.messageError} tone="danger">
               Daftar kurs gagal dimuat: {data.kursError}
-            </p>
+            </Notice>
           ) : data.kurs.length === 0 ? (
             <p className={styles.emptyState}>Belum ada kurs.</p>
           ) : (

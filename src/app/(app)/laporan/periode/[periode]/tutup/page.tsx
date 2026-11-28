@@ -4,9 +4,10 @@ import { notFound } from "next/navigation";
 import { getPemeriksaanTutupPeriode, parsePeriode } from "@/core/ledger";
 import { cekIzin } from "@/lib/auth/permissions";
 import { requireSesi } from "@/lib/auth/server";
+import { firstParam } from "@/lib/first-param";
 import { createClient } from "@/lib/supabase/server";
+import { Notice } from "@/components/ui/notice";
 
-import laporanStyles from "../../../laporan.module.css";
 import { FormTutupPeriode } from "../../components/form-tutup-periode";
 import { KartuPemeriksaanPeriode } from "../../components/kartu-pemeriksaan-periode";
 import { AksesDitolak, PeriodeShell } from "../../components/periode-shell";
@@ -28,7 +29,7 @@ export default async function TutupPeriodePage({ params }: PageProps) {
     return <AksesDitolak />;
   }
 
-  const { periode: kunci } = await params;
+  const kunci = firstParam((await params).periode);
   const periode = parsePeriode(kunci);
   if (!periode.ok) notFound();
 
@@ -40,15 +41,9 @@ export default async function TutupPeriodePage({ params }: PageProps) {
       <PeriodeShell
         deskripsi="Periksa prasyarat sebelum mengunci jurnal periode ini."
         judul={`Tutup periode ${periode.data.label}`}
-        kembali={{ href: "/laporan/periode", label: "Periode akuntansi" }}
         profil={profile}
       >
-        <p
-          className={`${laporanStyles.alert} ${laporanStyles.alertDanger}`}
-          role="alert"
-        >
-          {hasil.message}
-        </p>
+        <Notice nada="bahaya" variant="bordered">{hasil.message}</Notice>
       </PeriodeShell>
     );
   }
@@ -57,10 +52,8 @@ export default async function TutupPeriodePage({ params }: PageProps) {
 
   return (
     <PeriodeShell
-      breadcrumb="Umum / C-010 Menutup periode"
       deskripsi="Periksa prasyarat sebelum mengunci jurnal periode ini. Setelah ditutup, periode tidak bisa dibuka kembali."
       judul={`Tutup periode ${data.periode.label}`}
-      kembali={{ href: "/laporan/periode", label: "Periode akuntansi" }}
       profil={profile}
     >
       <KartuPemeriksaanPeriode data={data} />

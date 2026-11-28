@@ -69,6 +69,16 @@ test("lebih dari dua angka desimal ditolak, bukan dibulatkan", () => {
   );
 });
 
+test("toleransi nominal pecahan sen ditolak, bukan dibulatkan", () => {
+  for (const nilai of ["1500,5", "1500.50", "0,01"]) {
+    assert.equal(
+      pesan({ nama: "PT A", termin_hari: "30", toleransi_nominal: nilai })
+        .toleransi_nominal,
+      "Toleransi nominal harus bulat tanpa sen",
+    );
+  }
+});
+
 test("toleransi nominal negatif dan notasi aneh ditolak", () => {
   assert.equal(
     pesan({ nama: "PT A", termin_hari: "30", toleransi_nominal: "-1" })
@@ -99,6 +109,10 @@ test("koma desimal diterima dan dikonversi", () => {
   assert.equal(hasil.input.toleransiPersen, 0.75);
   assert.equal(hasil.input.toleransiNominal, "1500");
   assert.equal(hasil.input.npwp, null);
+  const padding = parsePemasokForm(
+    formData({ nama: "PT A", termin_hari: "30", toleransi_nominal: "1500,00" }),
+  );
+  assert.equal(padding.input?.toleransiNominal, "1500.00");
 });
 
 test("nominal besar tidak kehilangan presisi", () => {

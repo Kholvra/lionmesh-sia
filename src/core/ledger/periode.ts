@@ -1,3 +1,4 @@
+import { isoWaktuJakarta } from "../../lib/format/date.ts";
 import type { Result } from "@/lib/result";
 
 export const NAMA_BULAN = [
@@ -38,8 +39,8 @@ export function buatPeriode(tahun: number, bulan: number): PeriodeLaporan {
     tahun,
     bulan,
     kunci: `${tahun}-${duaDigit(bulan)}`,
-    mulai: `${tahun}-${duaDigit(bulan)}-01T00:00:00+07:00`,
-    selesai: `${tahunBerikut}-${duaDigit(bulanBerikut)}-01T00:00:00+07:00`,
+    mulai: isoWaktuJakarta(`${tahun}-${duaDigit(bulan)}-01T00:00:00`),
+    selesai: isoWaktuJakarta(`${tahunBerikut}-${duaDigit(bulanBerikut)}-01T00:00:00`),
     label: `${NAMA_BULAN[bulan - 1]} ${tahun}`,
   };
 }

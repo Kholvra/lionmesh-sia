@@ -1,12 +1,9 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { z } from "zod";
 
+import { parseRpcResult } from "@/lib/parse-rpc-result";
 import { fail, ok, type Result } from "@/lib/result";
-import {
-  isIsoDate,
-  isNonBlankString,
-  isRecord,
-  isUuid,
-} from "@/lib/validation";
+import { isIsoDate, isNonBlankString, isUuid } from "@/lib/validation";
 import { formatCents, isMoney, moneyToCents } from "./money";
 import {
   PEMBALIKAN,
@@ -22,22 +19,17 @@ function toTanggalString(value: string | Date): string | null {
   return isIsoDate(text) ? text : null;
 }
 
-function parsePostJournalResult(value: unknown): PostJournalResult | null {
-  if (
-    !isRecord(value) ||
-    typeof value.jurnal_id !== "string" ||
-    typeof value.total_debit !== "string" ||
-    typeof value.total_kredit !== "string"
-  ) {
-    return null;
-  }
-
-  return {
-    jurnalId: value.jurnal_id,
-    totalDebit: value.total_debit,
-    totalKredit: value.total_kredit,
-  };
-}
+const skemaHasilJurnal = z
+  .object({
+    jurnal_id: z.string(),
+    total_debit: z.string(),
+    total_kredit: z.string(),
+  })
+  .transform((data) => ({
+    jurnalId: data.jurnal_id,
+    totalDebit: data.total_debit,
+    totalKredit: data.total_kredit,
+  }));
 
 function validateHeader(input: {
   tanggal: string | Date;
@@ -77,7 +69,7 @@ function validateBaris(baris: readonly { akunPeran: string; debit: string; kredi
       return { message: "Data jurnal tidak valid." } as const;
     }
     if (!isMoney(item.debit) || !isMoney(item.kredit)) {
-      return { message: "Nilai jurnal tidak valid." } as const;
+      return { message: "Nilai jurnal tidak valid: nominal harus bulat tanpa sen." } as const;
     }
 
     const debit = moneyToCents(item.debit);
@@ -148,7 +140,7 @@ export async function postJournal(
 
   if (error) return fail(error.message);
 
-  const result = parsePostJournalResult(data);
+  const result = parseRpcResult(skemaHasilJurnal, data);
   if (!result) return fail("Respons jurnal tidak valid.");
   return ok(result);
 }
@@ -181,7 +173,7 @@ export async function reverseJournal(
 
   if (error) return fail(error.message);
 
-  const result = parsePostJournalResult(data);
+  const result = parseRpcResult(skemaHasilJurnal, data);
   if (!result) return fail("Respons jurnal tidak valid.");
   return ok(result);
 }

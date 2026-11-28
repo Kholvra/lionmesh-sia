@@ -1,5 +1,8 @@
 import Link from "next/link";
 
+import { Notice } from "@/components/ui/notice";
+import { PageHeader } from "@/components/ui/page-header";
+import { submitButtonClassName } from "@/components/ui/submit-button";
 import { StatusBadge } from "@/components/ui";
 import { cekIzin } from "@/lib/auth/permissions";
 import type { Profile } from "@/lib/auth/types";
@@ -40,28 +43,21 @@ export async function ProdukScreen({ mode, produkId, profile }: ProdukScreenProp
 
   return (
     <section aria-label="Master produk" className={styles.page}>
-      <header className={styles.header}>
-        <div>
-          <p className={styles.breadcrumb}>Pengaturan / Master data</p>
-          <h1 className={styles.title}>Produk</h1>
-          <p className={styles.description}>
-            Satu daftar produk untuk semua siklus. Produk yang tidak dipakai lagi
-            dinonaktifkan, bukan dihapus; dokumen lama tetap terbaca.
-          </p>
-        </div>
-      </header>
+      <PageHeader
+        description="Satu daftar produk untuk semua siklus. Produk yang tidak dipakai lagi dinonaktifkan, bukan dihapus; dokumen lama tetap terbaca."
+        title="Produk"
+      />
 
       <div className={styles.layout}>
         <section className={`${styles.panel} ${styles.panelSempit}`} aria-label="Detail produk">
           <div className={styles.panelCard}>
             {terpilih && tampilkanFormUbah ? (
               <>
-                <div className={styles.panelHeader}>
-                  <div>
-                    <h2 className={styles.panelTitle}>Ubah produk</h2>
-                    <p className={styles.panelMeta}>{terpilih.kode}</p>
-                  </div>
-                </div>
+                <PageHeader
+                  description={terpilih.kode}
+                  title="Ubah produk"
+                  variant="section"
+                />
                 <ProdukForm
                   kategori={data.kategori}
                   key={terpilih.id}
@@ -103,10 +99,7 @@ export async function ProdukScreen({ mode, produkId, profile }: ProdukScreenProp
 
                 {canManage ? (
                   <div className={`${styles.buttonRow} ${styles.detailActions}`}>
-                    <Link
-                      className={styles.secondaryButton}
-                      href={`${PATH_MASTER_PRODUK}?id=${terpilih.id}&mode=edit`}
-                    >
+                    <Link className={submitButtonClassName({ className: styles.secondaryButton, size: "lg", variant: "secondary" })} href={`${PATH_MASTER_PRODUK}?id=${terpilih.id}&mode=edit`}>
                       Ubah data
                     </Link>
                     <MasterStatusButton
@@ -131,25 +124,19 @@ export async function ProdukScreen({ mode, produkId, profile }: ProdukScreenProp
               </div>
             ) : produkId ? (
               <div>
-                <h2 className={styles.panelTitle}>Produk tidak ditemukan</h2>
+                <PageHeader title="Produk tidak ditemukan" variant="section" />
                 <p className={styles.emptyState}>
                   Produk yang dipilih tidak tersedia atau sudah tidak dapat
                   diakses oleh peran Anda.
                 </p>
-                <Link className={styles.secondaryButton} href={PATH_MASTER_PRODUK}>
-                  Kembali ke daftar
-                </Link>
               </div>
             ) : canManage ? (
               <>
-                <div className={styles.panelHeader}>
-                  <div>
-                    <h2 className={styles.panelTitle}>Tambah produk</h2>
-                    <p className={styles.panelMeta}>
-                      Kode, nama, tipe, dan satuan dasar wajib diisi.
-                    </p>
-                  </div>
-                </div>
+                <PageHeader
+                  description="Kode, nama, tipe, dan satuan dasar wajib diisi."
+                  title="Tambah produk"
+                  variant="section"
+                />
                 <ProdukForm
                   kategori={data.kategori}
                   satuanAktif={data.satuanAktif}
@@ -157,7 +144,7 @@ export async function ProdukScreen({ mode, produkId, profile }: ProdukScreenProp
               </>
             ) : (
               <div>
-                <h2 className={styles.panelTitle}>Detail produk</h2>
+                <PageHeader title="Detail produk" variant="section" />
                 <p className={styles.emptyState}>
                   Pilih produk dari daftar untuk melihat detail. Peran Anda tidak
                   dapat mengubah master produk.
@@ -169,27 +156,27 @@ export async function ProdukScreen({ mode, produkId, profile }: ProdukScreenProp
 
         <section
           className={`${styles.listPanel} ${styles.panelLuas}`}
-          aria-labelledby="daftar-produk"
+          aria-label="Daftar produk"
         >
           <div className={styles.panelCard}>
-            <div className={styles.panelHeader}>
-              <div>
-                <h2 className={styles.panelTitle} id="daftar-produk">
-                  Daftar produk
-                </h2>
-                <p className={styles.panelMeta}>
-                  {data.daftar.length} produk · Aktor: {profile.peran ?? "—"}
-                </p>
-              </div>
-              {canManage ? (
-                <Link
-                  className={`${styles.primaryButton} ${styles.panelAction}`}
-                  href={PATH_MASTER_PRODUK}
-                >
-                  Tambah produk
-                </Link>
-              ) : null}
-            </div>
+            <PageHeader
+              actions={
+                canManage ? (
+                  <Link
+                    className={submitButtonClassName({
+                      className: `${styles.primaryButton} ${styles.panelAction}`,
+                      size: "lg",
+                    })}
+                    href={PATH_MASTER_PRODUK}
+                  >
+                    Tambah produk
+                  </Link>
+                ) : null
+              }
+              description={`${data.daftar.length} produk · Aktor: ${profile.peran ?? "—"}`}
+              title="Daftar produk"
+              variant="section"
+            />
 
             <MasterTable
               caption="Daftar produk"
@@ -209,26 +196,20 @@ export async function ProdukScreen({ mode, produkId, profile }: ProdukScreenProp
 
       </div>
 
-      <section className={styles.section} aria-labelledby="kategori-produk">
+      <section className={styles.section} aria-label="Kategori produk">
         <div className={styles.panelCard}>
-          <div className={styles.sectionHeader}>
-            <div>
-              <h2 className={styles.panelTitle} id="kategori-produk">
-                Kategori produk
-              </h2>
-              <p className={styles.panelMeta}>
-                Pengelompokan produk (D-38). Kategori nonaktif tidak bisa dipasang
-                ke produk baru.
-              </p>
-            </div>
-          </div>
+          <PageHeader
+            description="Pengelompokan produk (D-38). Kategori nonaktif tidak bisa dipasang ke produk baru."
+            title="Kategori produk"
+            variant="section"
+          />
 
           {canManageKategori ? <KategoriProdukForm /> : null}
 
           {data.pilihanError ? (
-            <p className={styles.messageError} role="alert">
+            <Notice className={styles.messageError} tone="danger">
               Daftar kategori gagal dimuat: {data.pilihanError}
-            </p>
+            </Notice>
           ) : data.kategori.length === 0 ? (
             <p className={styles.emptyState}>Belum ada kategori produk.</p>
           ) : (

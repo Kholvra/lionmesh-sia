@@ -3,7 +3,8 @@ import Link from "next/link";
 import { StatusBadge } from "@/components/ui";
 import { cekIzin } from "@/lib/auth/permissions";
 import type { Profile } from "@/lib/auth/types";
-import { formatRupiah } from "@/lib/format/number";
+import { formatRupiah } from "@/lib/format/money";
+import { rupiahKeCents } from "@/modules/pengeluaran/pemasok/format";
 import {
   formatQty,
   formatTanggal,
@@ -128,7 +129,7 @@ export async function PemilihanScreen({ permintaanId, profile }: Props) {
                     <dd className={common.detailValue}>
                       {terpilih.header.nominal === null
                         ? "Belum diisi"
-                        : formatRupiah(terpilih.header.nominal)}
+                        : formatRupiah(rupiahKeCents(terpilih.header.nominal))}
                     </dd>
                   </div>
                   <div className={common.detailItem}>

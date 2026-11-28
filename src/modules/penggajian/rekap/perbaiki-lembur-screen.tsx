@@ -4,8 +4,8 @@ import { sesiPenggajian } from "@/modules/penggajian/akun/akun";
 import { formatTanggal } from "@/modules/penggajian/karyawan/format";
 import { getLembur } from "@/modules/penggajian/presensi/queries";
 import { fixLembur } from "@/modules/penggajian/rekap/actions";
-import { Notice } from "@/modules/penggajian/ui/notice";
-import { PageHeader } from "@/modules/penggajian/ui/page-header";
+import { Notice } from "@/components/ui/notice";
+import { PageHeader } from "@/components/ui/page-header";
 import { ui } from "@/modules/penggajian/ui/kelas";
 import { KartuBaca } from "@/modules/penggajian/shared/bidang-baca";
 import { FormAksi } from "@/modules/penggajian/shared/form-aksi";
@@ -17,7 +17,7 @@ const ITEM = "GJ-003 Merekap presensi dan lembur";
 
 async function Konten({ id }: { id: string }) {
   const sesi = await sesiPenggajian();
-  const judul = <PageHeader item={ITEM} title="Perbaiki lembur" />;
+  const judul = <PageHeader breadcrumb={[{ label: "Siklus Penggajian", accent: true }, ITEM]} title="Perbaiki lembur" variant="page" />;
   if (sesi.peran !== "HR") return <>{judul}<TidakBerwenang pesan="Hanya HR yang memperbaiki lembur atas nama karyawan." /></>;
   const lembur = await getLembur(sesi, id);
   if (!lembur) return <>{judul}<Keadaan judul="Pengajuan lembur tidak ditemukan" pesan="Tautannya mungkin salah." /></>;
@@ -27,7 +27,8 @@ async function Konten({ id }: { id: string }) {
       <PageHeader
         back={{ href: `/penggajian/lembur/${id}`, label: "Detail lembur" }}
         description="Periode Terbuka setelah rekap dikembalikan, jadi HR bisa memperbaiki entri atas nama karyawan."
-        item={ITEM}
+        breadcrumb={[{ label: "Siklus Penggajian", accent: true }, ITEM]}
+        variant="page"
         title={`Perbaiki lembur ${lembur.orang.nama}`}
       />
       <div className={ui.stack}>
@@ -62,7 +63,7 @@ async function Konten({ id }: { id: string }) {
 
 export function PerbaikiLemburScreen({ id }: { id: string }) {
   return (
-    <Suspense fallback={<PageHeader item={ITEM} title="Perbaiki lembur" />}>
+    <Suspense fallback={<PageHeader breadcrumb={[{ label: "Siklus Penggajian", accent: true }, ITEM]} title="Perbaiki lembur" variant="page" />}>
       <Konten id={id} />
     </Suspense>
   );

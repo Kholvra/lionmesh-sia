@@ -1,252 +1,115 @@
 .page {
+  composes: ui-page from global;
   min-height: 100vh;
-  width: 100%;
-  max-width: var(--layout-content-max);
-  margin-inline: auto;
   padding: var(--space-8);
 }
 
 .header {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: var(--space-6);
-  margin-bottom: var(--space-8);
-}
-
-.breadcrumb {
-  margin: 0 0 var(--space-2);
-  color: var(--text-muted);
-  font-size: var(--font-size-caption);
-  line-height: var(--line-height-caption);
+  composes: ui-page-header ui-page-header-spaced from global;
 }
 
 .title {
-  margin: 0;
-  color: var(--text-primary);
-  font-size: var(--font-size-title);
-  font-weight: 700;
-  line-height: var(--line-height-title);
+  composes: ui-page-title from global;
 }
 
 .description {
-  max-width: var(--dialog-form-width);
-  margin: var(--space-2) 0 0;
-  color: var(--text-secondary);
+  composes: ui-page-description ui-page-description-gap ui-page-description-bounded from global;
 }
 
 .layout {
-  display: grid;
-  grid-template-columns: repeat(12, minmax(0, 1fr));
-  align-items: start;
-  gap: var(--space-6);
+  composes: ui-layout-12 from global;
 }
 
 .listPanel,
 .panel {
-  min-width: 0;
-  grid-column: span 6;
+  composes: ui-panel-half from global;
 }
 
 .panelCard {
-  padding: var(--space-5);
-  border: var(--border-width-default) solid var(--border-subtle);
-  border-radius: var(--radius-lg);
-  background: var(--bg-surface);
-  box-shadow: var(--shadow-sm);
+  composes: ui-card from global;
 }
 
 .panelHeader {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: var(--space-4);
-  margin-bottom: var(--space-4);
+  composes: ui-panel-header from global;
 }
 
 .panelTitle {
-  margin: 0;
-  color: var(--text-primary);
-  font-size: var(--font-size-section);
-  font-weight: 600;
-  line-height: var(--line-height-section);
+  composes: ui-section-title from global;
 }
 
 .panelMeta {
-  margin: var(--space-1) 0 0;
-  color: var(--text-muted);
-  font-size: var(--font-size-label);
-  line-height: var(--line-height-label);
+  composes: ui-panel-meta from global;
 }
 
 .primaryButton,
-.secondaryButton,
 .dangerButton {
-  display: inline-flex;
-  min-height: var(--button-lg-height);
-  align-items: center;
-  justify-content: center;
-  gap: var(--space-2);
-  padding-inline: var(--space-4);
-  border-radius: var(--radius-md);
-  cursor: pointer;
-  font-size: var(--font-size-body);
-  font-weight: 600;
-  line-height: var(--line-height-body);
-  text-decoration: none;
-  transition: background-color var(--motion-fast) ease-out;
+  composes: ui-button ui-button-color-transition ui-focus-ring from global;
 }
 
 .primaryButton {
-  border: 0;
-  background: var(--brand-500);
-  color: var(--text-on-brand);
-}
-
-.primaryButton:hover:not(:disabled) {
-  background: var(--brand-600);
-}
-
-.secondaryButton {
-  border: var(--border-width-default) solid var(--border-input);
-  background: var(--bg-surface);
-  color: var(--text-primary);
-}
-
-.secondaryButton:hover:not(:disabled) {
-  background: var(--bg-subtle);
+  composes: ui-button-primary from global;
 }
 
 .dangerButton {
-  border: var(--border-width-default) solid var(--status-danger-bg);
-  background: var(--bg-surface);
-  color: var(--status-danger-text);
-}
-
-.dangerButton:hover:not(:disabled) {
-  background: var(--status-danger-bg);
-}
-
-.primaryButton:disabled,
-.secondaryButton:disabled,
-.dangerButton:disabled {
-  cursor: wait;
-  opacity: 0.7;
-}
-
-.primaryButton:focus-visible,
-.secondaryButton:focus-visible,
-.dangerButton:focus-visible {
-  outline: var(--focus-ring-width) solid var(--border-focus);
-  outline-offset: var(--focus-ring-offset);
+  composes: ui-button-danger from global;
 }
 
 .form {
-  display: grid;
-  gap: var(--space-4);
+  composes: ui-form from global;
 }
 
 .formGrid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: var(--space-4);
+  composes: ui-form-grid from global;
 }
 
 .fieldFull {
-  grid-column: 1 / -1;
+  composes: ui-field-full from global;
 }
 
 .formActions {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: var(--space-3);
-  padding-top: var(--space-2);
-}
-
-.messageSuccess,
-.messageError {
-  margin: 0;
-  padding: var(--space-3) var(--space-4);
-  border: var(--border-width-default) solid;
-  border-radius: var(--radius-md);
-  font-size: var(--font-size-body-sm);
-  line-height: var(--line-height-body-sm);
+  composes: ui-form-actions from global;
 }
 
 .messageSuccess {
-  border-color: var(--status-success-bg);
-  background: var(--status-success-bg);
-  color: var(--status-success-text);
+  composes: ui-message ui-message-success from global;
 }
 
 .messageError {
-  border-color: var(--status-danger-bg);
-  background: var(--status-danger-bg);
-  color: var(--status-danger-text);
+  composes: ui-message ui-message-error from global;
 }
 
 .emptyState {
-  margin: 0;
-  padding: var(--space-8) var(--space-4);
-  border: var(--border-width-default) dashed var(--border-strong);
-  border-radius: var(--radius-lg);
-  background: var(--bg-subtle);
-  color: var(--text-secondary);
-  font-size: var(--font-size-body-sm);
-  line-height: var(--line-height-body-sm);
-  text-align: center;
+  composes: ui-empty-state from global;
 }
 
 .detailHeader {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: var(--space-4);
-  margin-bottom: var(--space-5);
+  composes: ui-detail-header from global;
 }
 
 .detailNumber {
-  margin: 0;
+  composes: ui-section-title from global;
   overflow-wrap: anywhere;
-  color: var(--text-primary);
-  font-size: var(--font-size-section);
-  font-weight: 600;
-  line-height: var(--line-height-section);
   font-variant-numeric: tabular-nums;
 }
 
 .detailSubtitle {
-  margin: var(--space-1) 0 0;
-  color: var(--text-muted);
-  font-size: var(--font-size-label);
-  line-height: var(--line-height-label);
+  composes: ui-panel-meta from global;
 }
 
 .details {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: var(--space-4);
-  margin: 0;
+  composes: ui-details from global;
 }
 
 .detailItem {
-  min-width: 0;
+  composes: ui-detail-item from global;
 }
 
 .detailLabel {
-  color: var(--text-muted);
-  font-size: var(--font-size-label);
-  font-weight: 600;
-  line-height: var(--line-height-label);
+  composes: ui-detail-label from global;
 }
 
 .detailValue {
-  margin: var(--space-1) 0 0;
-  overflow-wrap: anywhere;
-  color: var(--text-primary);
-  font-size: var(--font-size-body-sm);
-  line-height: var(--line-height-body-sm);
+  composes: ui-detail-value from global;
 }
 
 .itemList {
@@ -276,7 +139,7 @@
 }
 
 .itemQty {
-  font-variant-numeric: tabular-nums;
+  composes: ui-tabular from global;
   color: var(--text-secondary);
 }
 
@@ -290,6 +153,7 @@
 
 .select,
 .textarea {
+  composes: ui-focus-ring from global;
   width: 100%;
   border: var(--border-width-default) solid var(--border-input);
   border-radius: var(--radius-md);
@@ -313,8 +177,6 @@
 .select:focus-visible,
 .textarea:focus-visible {
   border-color: var(--border-focus);
-  outline: var(--focus-ring-width) solid var(--border-focus);
-  outline-offset: var(--focus-ring-offset);
 }
 
 .lineError {
@@ -357,95 +219,53 @@
 }
 
 .historyItem {
-  display: grid;
-  gap: var(--space-1);
-  padding: var(--space-3);
-  border: var(--border-width-default) solid var(--border-subtle);
-  border-radius: var(--radius-md);
-  background: var(--bg-subtle);
+  composes: ui-history-item from global;
 }
 
 .historyAction {
-  color: var(--text-primary);
-  font-size: var(--font-size-body-sm);
-  font-weight: 600;
-  line-height: var(--line-height-body-sm);
+  composes: ui-history-action from global;
 }
 
 .historyMeta {
-  color: var(--text-muted);
-  font-size: var(--font-size-label);
-  line-height: var(--line-height-label);
+  composes: ui-meta-label from global;
 }
 
 .sectionDivider {
-  margin: var(--space-6) 0 var(--space-4);
-  border: 0;
-  border-top: var(--border-width-default) solid var(--border-subtle);
+  composes: ui-section-divider from global;
 }
 
 .tableLink {
-  color: var(--text-primary);
-  font-weight: 600;
-  text-decoration: none;
-}
-
-.tableLink:hover {
-  color: var(--brand-700);
-  text-decoration: underline;
-}
-
-.tableLink:focus-visible {
-  outline: var(--focus-ring-width) solid var(--border-focus);
-  outline-offset: var(--focus-ring-offset);
+  composes: ui-table-link ui-focus-ring from global;
 }
 
 .tableLinkActive {
-  color: var(--brand-700);
+  composes: ui-table-link-active from global;
 }
 
 .statusCell {
-  display: flex;
-  align-items: center;
+  composes: ui-status-cell from global;
 }
 
 .loadingPage,
 .errorPage {
-  display: grid;
-  min-height: 100vh;
-  place-items: center;
-  padding: var(--space-8);
+  composes: ui-state-page from global;
 }
 
 .loadingCard,
 .errorCard {
-  width: 100%;
-  max-width: var(--dialog-form-width);
-  padding: var(--space-6);
-  border: var(--border-width-default) solid var(--border-subtle);
-  border-radius: var(--radius-lg);
-  background: var(--bg-surface);
-  box-shadow: var(--shadow-sm);
+  composes: ui-state-card from global;
 }
 
 .loadingTitle {
-  margin: 0;
-  color: var(--text-primary);
-  font-size: var(--font-size-section);
-  font-weight: 600;
-  line-height: var(--line-height-section);
+  composes: ui-section-title from global;
 }
 
 .loadingText {
-  margin: var(--space-2) 0 var(--space-5);
-  color: var(--text-secondary);
-  font-size: var(--font-size-body-sm);
-  line-height: var(--line-height-body-sm);
+  composes: ui-state-text from global;
 }
 
 @media (prefers-reduced-motion: reduce) {
   .primaryButton,
-  .secondaryButton,
   .dangerButton {
     transition-duration: var(--motion-none);
   }

@@ -5,10 +5,7 @@
 }
 
 .header {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: var(--space-6);
+  composes: ui-page-header from global;
 }
 
 .header > div {
@@ -18,23 +15,17 @@
 }
 
 .breadcrumb {
+  composes: ui-page-breadcrumb from global;
   margin: 0;
-  color: var(--text-muted);
-  font-size: var(--font-size-caption);
-  line-height: var(--line-height-caption);
 }
 
 .title {
-  margin: 0;
-  color: var(--text-primary);
-  font-size: var(--font-size-title);
-  font-weight: 700;
-  line-height: var(--line-height-title);
+  composes: ui-page-title from global;
 }
 
 .description {
+  composes: ui-page-description from global;
   margin: 0;
-  color: var(--text-secondary);
   font-size: var(--font-size-body);
   line-height: var(--line-height-body);
 }
@@ -74,6 +65,7 @@
 }
 
 .retryButton {
+  composes: ui-focus-ring from global;
   flex: none;
   min-height: var(--control-height);
   padding-inline: var(--space-4);
@@ -88,11 +80,6 @@
 
 .retryButton:hover:not(:disabled) {
   background: var(--brand-600);
-}
-
-.retryButton:focus-visible {
-  outline: var(--focus-ring-width) solid var(--border-focus);
-  outline-offset: var(--focus-ring-offset);
 }
 
 .retryButton:disabled {
@@ -113,11 +100,7 @@
 }
 
 .sectionTitle {
-  margin: 0;
-  color: var(--text-primary);
-  font-size: var(--font-size-section);
-  font-weight: 600;
-  line-height: var(--line-height-section);
+  composes: ui-section-title from global;
 }
 
 .sectionText {
@@ -134,15 +117,11 @@
 }
 
 .card {
+  composes: ui-card from global;
   display: flex;
   flex-direction: column;
   gap: var(--space-2);
   min-height: calc(var(--space-16) + var(--space-12));
-  padding: var(--space-5);
-  border: var(--border-width-default) solid var(--border-subtle);
-  border-radius: var(--radius-lg);
-  background: var(--bg-surface);
-  box-shadow: var(--shadow-sm);
 }
 
 .cardLabel {
@@ -203,11 +182,7 @@
 }
 
 .flow {
-  display: grid;
-  gap: var(--space-3);
-  margin: 0;
-  padding: 0;
-  list-style: none;
+  composes: ui-clean-list from global;
 }
 
 .flowStep {
@@ -234,11 +209,7 @@
 }
 
 .flowTitle {
-  margin: 0;
-  color: var(--text-primary);
-  font-size: var(--font-size-body);
-  font-weight: 600;
-  line-height: var(--line-height-body);
+  composes: ui-body-title from global;
 }
 
 .flowText {
@@ -257,10 +228,11 @@
 
 .nomor,
 .waktu {
-  font-variant-numeric: tabular-nums;
+  composes: ui-tabular from global;
 }
 
 .tableLink {
+  composes: ui-focus-ring from global;
   color: var(--text-link);
   font-weight: 600;
   text-decoration: none;
@@ -268,11 +240,6 @@
 
 .tableLink:hover {
   text-decoration: underline;
-}
-
-.tableLink:focus-visible {
-  outline: var(--focus-ring-width) solid var(--border-focus);
-  outline-offset: var(--focus-ring-offset);
 }
 
 @media (min-width: 1360px) {

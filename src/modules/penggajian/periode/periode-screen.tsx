@@ -9,8 +9,8 @@ import { listPeriodeTerbaru } from "@/modules/penggajian/periode/queries";
 import { labelStatusPeriode, rentangPeriode } from "@/modules/penggajian/periode/rules";
 import { STATUS_PERIODE } from "@/modules/penggajian/periode/status";
 import type { PeriodeGaji } from "@/modules/penggajian/periode/types";
-import { Notice } from "@/modules/penggajian/ui/notice";
-import { PageHeader } from "@/modules/penggajian/ui/page-header";
+import { Notice } from "@/components/ui/notice";
+import { PageHeader } from "@/components/ui/page-header";
 import { ui } from "@/modules/penggajian/ui/kelas";
 import { FormAksi } from "@/modules/penggajian/shared/form-aksi";
 import { TidakBerwenang } from "@/modules/penggajian/shared/states";
@@ -83,7 +83,8 @@ export function PeriodeScreen({ pesan }: { pesan?: string }) {
     <>
       <PageHeader
         description="Periode tertutup hanya bisa dibuka kembali oleh HR dengan otorisasi Manajemen dan alasan."
-        item="GJ-002 Mencatat presensi dan lembur"
+        breadcrumb={[{ label: "Siklus Penggajian", accent: true }, "GJ-002 Mencatat presensi dan lembur"]}
+        variant="page"
         title="Periode penggajian"
       />
       <Suspense fallback={null}>

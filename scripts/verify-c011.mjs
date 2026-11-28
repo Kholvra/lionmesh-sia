@@ -6,10 +6,12 @@
 // Run after `pnpm db:reset && pnpm db:seed:local`: node scripts/verify-c011.mjs
 import { randomBytes, randomUUID } from "node:crypto";
 import { Client } from "pg";
+import { DB_URL } from "./lib/db-url.mjs";
+import { buatLaporan } from "./lib/harness.mjs";
+import { validasiLokal } from "./lib/local-host.mjs";
 
-const DB_URL =
-  process.env.SUPABASE_DB_URL ??
-  "postgresql://postgres:postgres@127.0.0.1:54322/postgres";
+validasiLokal(DB_URL, "C-011 verification only permits a local database endpoint.");
+
 
 const akhiran = randomBytes(2).toString("hex").toUpperCase();
 const kodeGudang = `GD-DUP-${akhiran}`;
@@ -23,24 +25,9 @@ const kodeUang = Array.from({ length: 3 }, () =>
 const client = new Client({ connectionString: DB_URL });
 await client.connect();
 
-let gagal = 0;
+const laporan = buatLaporan({ gaya: "polos" });
+const { pass: lulus, fail: salah, sama } = laporan;
 
-function lulus(nama, detail = "") {
-  console.log(`PASS ${nama}${detail ? ` — ${detail}` : ""}`);
-}
-
-function salah(nama, detail = "") {
-  gagal += 1;
-  console.log(`FAIL ${nama}${detail ? ` — ${detail}` : ""}`);
-}
-
-function sama(nama, kiri, kanan) {
-  if (JSON.stringify(kiri) === JSON.stringify(kanan)) {
-    lulus(nama, JSON.stringify(kiri));
-  } else {
-    salah(nama, `${JSON.stringify(kiri)} != ${JSON.stringify(kanan)}`);
-  }
-}
 
 async function mulai(nama) {
   await client.query("begin");
@@ -378,12 +365,13 @@ try {
   sama("dua pembacaan identik", baca1.rows, baca2.rows);
   await selesai();
 } catch (error) {
-  gagal += 1;
-  console.log(`FAIL skenario berhenti — ${error.message}`);
+
+  salah("skenario berhenti", error.message);
+
   await client.query("rollback").catch(() => {});
 } finally {
   await client.end();
 }
 
-console.log(`\n${gagal === 0 ? "Semua pemeriksaan lulus" : `${gagal} pemeriksaan gagal`}`);
-process.exit(gagal === 0 ? 0 : 1);
+console.log(`\n${laporan.jumlahGagal === 0 ? "Semua pemeriksaan lulus" : `${laporan.jumlahGagal} pemeriksaan gagal`}`);
+process.exit(laporan.jumlahGagal === 0 ? 0 : 1);

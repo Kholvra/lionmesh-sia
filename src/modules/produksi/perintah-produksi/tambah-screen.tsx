@@ -2,20 +2,15 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useMemo, useRef, useState } from "react";
-import { ArrowIcon } from "@/components/ui/arrow-icon";
+import { useEffect, useMemo, useRef, useState, useTransition } from "react";
 import { CustomSelect } from "@/components/ui/custom-select";
-import { BomItem, INITIAL_BOM_LIST } from "../bom-produk/types";
-import { ProduksiSubnav } from "../components/produksi-subnav";
-import {
-  INITIAL_SPK_LIST,
-  MESIN_OPTIONS,
-  SpkItem,
-  STOK_BAHAN_TERSEDIA_TON,
-} from "./types";
-
-const BOM_STORAGE_KEY = "lionmesh_bom_list_v1";
-const SPK_STORAGE_KEY = "lionmesh_spk_list_v1";
+import { Notice } from "@/components/ui/notice";
+import { PageHeader } from "@/components/ui/page-header";
+import { EmptyState, ErrorState, LoadingState } from "@/components/ui/states";
+import { buatSpk } from "@/modules/produksi/actions";
+import { hitungKebutuhanBahan } from "@/modules/produksi/kebutuhan-bahan";
+import { muatSpkForm, muatStokBahan } from "@/modules/produksi/queries";
+import type { SpkFormData } from "./types";
 
 const BULAN_ID = [
   "Jan",
@@ -38,11 +33,6 @@ function parseLembar(val: string): number {
   return Number.isFinite(num) ? Math.floor(num) : NaN;
 }
 
-function parsePercent(val: string): number {
-  const num = parseFloat(val.replace("%", "").replace(",", ".").trim());
-  return Number.isFinite(num) ? num : 0;
-}
-
 function formatJadwalRange(mulaiISO: string, selesaiISO: string): string {
   if (!mulaiISO || !selesaiISO) return "-";
   const [, m1, d1] = mulaiISO.split("-").map(Number);
@@ -57,8 +47,7 @@ function formatJadwalRange(mulaiISO: string, selesaiISO: string): string {
 interface FormErrors {
   produk?: string;
   jumlah?: string;
-  versiBom?: string;
-  mesin?: string;
+  gudang?: string;
   mulai?: string;
   selesai?: string;
 }
@@ -67,97 +56,72 @@ export function TambahPerintahProduksiScreen() {
   const router = useRouter();
   const mulaiRef = useRef<HTMLInputElement>(null);
   const selesaiRef = useRef<HTMLInputElement>(null);
+  const [data, setData] = useState<SpkFormData | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [serverError, setServerError] = useState<string | null>(null);
+  const [stokTon, setStokTon] = useState<number | null>(null);
+  const [pending, startTransition] = useTransition();
 
-  const [bomList] = useState<BomItem[]>(() => {
-    if (typeof window !== "undefined") {
-      try {
-        const savedBom = sessionStorage.getItem(BOM_STORAGE_KEY);
-        if (savedBom) {
-          const parsed = JSON.parse(savedBom) as BomItem[];
-          if (Array.isArray(parsed) && parsed.length > 0) return parsed;
-        }
-      } catch {
-        // Abaikan
-      }
-    }
-    return INITIAL_BOM_LIST;
-  });
-
-  const [spkList] = useState<SpkItem[]>(() => {
-    if (typeof window !== "undefined") {
-      try {
-        const savedSpk = sessionStorage.getItem(SPK_STORAGE_KEY);
-        if (savedSpk) {
-          const parsed = JSON.parse(savedSpk) as SpkItem[];
-          if (Array.isArray(parsed) && parsed.length > 0) return parsed;
-        }
-      } catch {
-        // Abaikan
-      }
-    }
-    return INITIAL_SPK_LIST;
-  });
-
-  // Hanya produk yang memiliki versi BOM berlaku
-  const produkOptions = useMemo(
-    () => bomList.map((b) => `${b.produkNama} · ${b.produkKode}`),
-    [bomList]
-  );
-
-  // Default awal sesuai desain Figma PRD-02b (Wiremesh M6 · WM-M6, 120 lembar)
-  const [selectedProdukLabel, setSelectedProdukLabel] = useState<string>(
-    "Wiremesh M6 · WM-M6"
-  );
-  const [jumlahInput, setJumlahInput] = useState<string>("120 lembar");
-  const [selectedMesin, setSelectedMesin] = useState<string>("Mesin las 1");
-  const [mulaiISO, setMulaiISO] = useState<string>("2026-11-27");
-  const [selesaiISO, setSelesaiISO] = useState<string>("2026-11-28");
+  const [selectedProdukLabel, setSelectedProdukLabel] = useState("");
+  const [jumlahInput, setJumlahInput] = useState("");
+  const [selectedGudang, setSelectedGudang] = useState("");
+  const [mulaiISO, setMulaiISO] = useState("");
+  const [selesaiISO, setSelesaiISO] = useState("");
   const [fieldErrors, setFieldErrors] = useState<FormErrors>({});
 
-  const activeBom = useMemo(() => {
-    const kode = selectedProdukLabel.split(" · ")[1] || "WM-M6";
-    return (
-      bomList.find((b) => b.produkKode === kode) ??
-      bomList[0] ??
-      INITIAL_BOM_LIST[0]
-    );
-  }, [bomList, selectedProdukLabel]);
+  useEffect(() => {
+    let aktif = true;
+    muatSpkForm().then((hasil) => {
+      if (!aktif) return;
+      if (!hasil.ok) {
+        setError(hasil.message);
+        return;
+      }
+      setData(hasil.data);
+      setSelectedProdukLabel(
+        hasil.data.bomList[0]
+          ? `${hasil.data.bomList[0].produkNama} · ${hasil.data.bomList[0].produkKode}`
+          : "",
+      );
+      setSelectedGudang(hasil.data.gudangOptions[0]?.id ?? "");
+    });
+    return () => {
+      aktif = false;
+    };
+  }, []);
 
-  const versiBomLabel = useMemo(() => {
-    if (!activeBom) return "Tidak ada versi BOM berlaku";
-    return `v${activeBom.versiNumber} · berlaku sejak ${activeBom.berlakuDari}`;
-  }, [activeBom]);
+  const produkOptions = useMemo(
+    () => (data?.bomList ?? []).map((b) => `${b.produkNama} · ${b.produkKode}`),
+    [data],
+  );
+  const activeBom = useMemo(
+    () =>
+      (data?.bomList ?? []).find(
+        (b) => `${b.produkNama} · ${b.produkKode}` === selectedProdukLabel,
+      ) ?? null,
+    [data, selectedProdukLabel],
+  );
 
-  const [customVersiBom, setCustomVersiBom] = useState<string | null>(null);
-  const selectedVersiBom = customVersiBom ?? versiBomLabel;
+  useEffect(() => {
+    if (!activeBom || !selectedGudang) return;
+    let aktif = true;
+    muatStokBahan(activeBom.komponenProdukId, selectedGudang).then((hasil) => {
+      if (!aktif) return;
+      setStokTon(hasil.ok ? hasil.data : null);
+    });
+    return () => {
+      aktif = false;
+    };
+  }, [activeBom, selectedGudang]);
 
-  // Perhitungan kebutuhan bahan otomatis
+  const versiBomLabel = activeBom
+    ? `v${activeBom.versiNumber} · berlaku sejak ${activeBom.berlakuDari}`
+    : "Tidak ada versi BOM berlaku";
   const kebutuhanKalkulasi = useMemo(() => {
     const qty = parseLembar(jumlahInput);
     const validQty = Number.isFinite(qty) && qty > 0 ? qty : 0;
-    const perLembarKg = activeBom?.jumlahPerLembarKg ?? 35.3;
-    const scrapPct = parsePercent(activeBom?.toleransiScrap ?? "1,5%");
-
-    const totalKg = validQty * perLembarKg * (1 + scrapPct / 100);
-    const totalTon = totalKg / 1000;
-    const stokTersediaTon =
-      STOK_BAHAN_TERSEDIA_TON[activeBom?.komponenKode ?? "BB-WR06"] ?? 3.2;
-
-    return {
-      perLembarText: `${perLembarKg.toLocaleString("id-ID", {
-        minimumFractionDigits: 1,
-      })} kg + scrap ${activeBom?.toleransiScrap ?? "1,5%"}`,
-      totalTonText: `${totalTon.toLocaleString("id-ID", {
-        minimumFractionDigits: 1,
-        maximumFractionDigits: 1,
-      })} ton`,
-      tersediaTonText: `${stokTersediaTon.toLocaleString("id-ID", {
-        minimumFractionDigits: 1,
-        maximumFractionDigits: 1,
-      })} ton`,
-      isKurang: totalTon > stokTersediaTon,
-    };
-  }, [jumlahInput, activeBom]);
+    return activeBom ? hitungKebutuhanBahan(validQty, activeBom, stokTon) : null;
+  }, [jumlahInput, activeBom, stokTon]);
 
   const openPickerSafe = (input: HTMLInputElement | null) => {
     if (!input) return;
@@ -185,12 +149,8 @@ export function TambahPerintahProduksiScreen() {
       nextErrors.jumlah = "Jumlah produksi harus lebih dari 0 lembar.";
     }
 
-    if (!selectedVersiBom) {
-      nextErrors.versiBom = "Versi BOM wajib dipilih.";
-    }
-
-    if (!selectedMesin) {
-      nextErrors.mesin = "Mesin produksi wajib dipilih.";
+    if (!selectedGudang) {
+      nextErrors.gudang = "Gudang wajib dipilih.";
     }
 
     if (!mulaiISO) {
@@ -203,86 +163,88 @@ export function TambahPerintahProduksiScreen() {
       nextErrors.selesai = "Tanggal selesai tidak boleh sebelum tanggal mulai SPK.";
     }
 
-    if (Object.keys(nextErrors).length > 0) {
+    if (Object.keys(nextErrors).length > 0 || !activeBom) {
       setFieldErrors(nextErrors);
       return;
     }
 
     setFieldErrors({});
+    setServerError(null);
+    const formData = new FormData();
+    formData.set("produk_id", activeBom.produkId);
+    formData.set("bom_versi_id", activeBom.id);
+    formData.set("gudang_id", selectedGudang);
+    formData.set("tanggal_perintah", mulaiISO);
+    formData.set("tgl_target_selesai", selesaiISO);
+    formData.set("target_qty", String(qty));
 
-    const nextSeq = 13 + Math.max(0, spkList.length - INITIAL_SPK_LIST.length);
-    const nomorSpkBaru = `SPK-2611-${String(nextSeq).padStart(3, "0")}`;
-
-    const newSpk: SpkItem = {
-      id: nomorSpkBaru.toLowerCase(),
-      nomorSpk: nomorSpkBaru,
-      sumberInfo: "dari SO-2611-015",
-      produkNama: activeBom.produkNama,
-      produkKode: activeBom.produkKode,
-      versiBom: `v${activeBom.versiNumber}`,
-      mesin: selectedMesin,
-      jumlahLembar: qty,
-      jadwalText: formatJadwalRange(mulaiISO, selesaiISO),
-      tanggalMulaiISO: mulaiISO,
-      tanggalSelesaiISO: selesaiISO,
-      status: "DIRENCANAKAN",
-      filterCategory: "direncanakan",
-    };
-
-    const updatedSpkList = [newSpk, ...spkList];
-    try {
-      sessionStorage.setItem(SPK_STORAGE_KEY, JSON.stringify(updatedSpkList));
-    } catch {
-      // Abaikan
-    }
-
-    router.push(`/produksi/perintah-produksi/${nomorSpkBaru.toLowerCase()}?saved=1`);
+    startTransition(async () => {
+      const hasil = await buatSpk(formData);
+      if (!hasil.ok) {
+        setServerError(hasil.message);
+        return;
+      }
+      router.push(
+        `/produksi/perintah-produksi/${hasil.data.dokumen.nomor.toLowerCase()}?saved=1`,
+      );
+    });
   };
 
-  const errorMessages = Object.values(fieldErrors).filter(Boolean) as string[];
+  const errorMessages = [
+    ...Object.values(fieldErrors).filter(Boolean),
+    ...(serverError ? [serverError] : []),
+  ] as string[];
   const hasErrors = errorMessages.length > 0;
+
+  if (error) {
+    return (
+      <div className="w-full text-[#172335] animate-fade-in">
+        <PageHeader title="Tambah perintah produksi" variant="cycle" />
+        <ErrorState judul="Data BOM tidak dapat dimuat." teks={error} variant="compact" />
+      </div>
+    );
+  }
+
+  if (!data) {
+    return (
+      <div className="w-full text-[#172335] animate-fade-in">
+        <PageHeader title="Tambah perintah produksi" variant="cycle" />
+        <LoadingState judul="Memuat formulir..." variant="inline" />
+      </div>
+    );
+  }
+
+  if (!activeBom || !kebutuhanKalkulasi) {
+    return (
+      <div className="w-full text-[#172335] animate-fade-in">
+        <PageHeader
+          title="Tambah perintah produksi"
+          variant="cycle"
+        />
+        <EmptyState
+          judul="Belum ada versi BOM yang berlaku untuk dibuatkan perintah produksi."
+          variant="inline"
+        />
+      </div>
+    );
+  }
 
   return (
     <div className="w-full text-[#172335] animate-fade-in">
-      <ProduksiSubnav />
+      <PageHeader
+        title="Tambah perintah produksi"
+        variant="cycle"
+      />
 
-      {/* Back Link */}
-      <Link
-        href="/produksi/perintah-produksi"
-        className="group inline-flex items-center gap-1.5 text-xs font-semibold text-[#C96A00] hover:text-[#E88A06]"
-      >
-        <ArrowIcon
-          direction="left"
-          className="transition-transform duration-150 group-hover:-translate-x-0.5"
-        />
-        <span>Perintah produksi</span>
-      </Link>
-
-      {/* Breadcrumb */}
-      <nav className="mt-1.5 text-xs font-medium text-[#526174]">
-        <Link
-          href="/produksi"
-          className="text-[#C96A00] underline decoration-[#C96A00]/60 underline-offset-2 hover:text-[#E88A06]"
-        >
-          Siklus Produksi
-        </Link>
-        <span className="mx-1.5">/</span>
-        <span>PR-002 Membuat perintah produksi</span>
-      </nav>
-
-      {/* Page Title */}
-      <h1 className="mt-1 text-[26px] leading-tight font-bold tracking-tight text-[#172335]">
-        Tambah perintah produksi
-      </h1>
-
-      {/* Error Banner */}
       {hasErrors && (
-        <div className="mt-2.5 flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 rounded-[10px] border border-[#FECACA] bg-[#FEE2E2]/80 px-4 py-2 text-[#B91C1C] animate-slide-down">
-          <p className="text-[12px] font-semibold">
-            Perintah produksi belum bisa disimpan:
-          </p>
-          <p className="text-[12px]">{errorMessages.join(" • ")}</p>
-        </div>
+        <Notice className="mt-2.5" tone="error" variant="card">
+          <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 text-[12px]">
+            <p className="font-semibold">
+              Perintah produksi belum bisa disimpan:
+            </p>
+            <p>{errorMessages.join(" • ")}</p>
+          </div>
+        </Notice>
       )}
 
       <form onSubmit={handleSimpan}>
@@ -348,29 +310,34 @@ export function TambahPerintahProduksiScreen() {
                 Versi BOM *
               </label>
               <CustomSelect
-                value={selectedVersiBom}
-                onChange={(val) => setCustomVersiBom(val)}
+                value={versiBomLabel}
+                onChange={() => undefined}
                 options={[versiBomLabel]}
-                placeholder="Pilih versi BOM..."
               />
             </div>
 
-            {/* Baris 2 Kanan: Mesin * */}
+            {/* Baris 2 Kanan: Gudang * */}
             <div>
               <label className="block text-xs font-medium text-[#172335]">
-                Mesin *
+                Gudang *
               </label>
               <CustomSelect
-                value={selectedMesin}
-                onChange={(val) => {
-                  setSelectedMesin(val);
-                  if (fieldErrors.mesin) {
-                    setFieldErrors((prev) => ({ ...prev, mesin: undefined }));
+                value={data.gudangOptions.find((item) => item.id === selectedGudang)?.nama ?? ""}
+                onChange={(nama) => {
+                  const gudang = data.gudangOptions.find((item) => item.nama === nama);
+                  if (gudang) setSelectedGudang(gudang.id);
+                  if (fieldErrors.gudang) {
+                    setFieldErrors((prev) => ({ ...prev, gudang: undefined }));
                   }
                 }}
-                options={MESIN_OPTIONS}
-                placeholder="Pilih mesin..."
+                options={data.gudangOptions.map((item) => item.nama)}
+                placeholder="Pilih gudang..."
               />
+              {fieldErrors.gudang && (
+                <p className="mt-0.5 text-[11px] font-medium text-[#DC2626]">
+                  {fieldErrors.gudang}
+                </p>
+              )}
             </div>
 
             {/* Baris 3 Kiri: Mulai * */}
@@ -473,6 +440,7 @@ export function TambahPerintahProduksiScreen() {
         <div className="mt-3 flex flex-wrap items-center gap-3">
           <button
             type="submit"
+            disabled={pending}
             className="rounded-[8px] bg-[#E88A06] px-4 py-2 text-[13px] font-semibold text-white shadow-2xs transition-all duration-150 ease-out hover:bg-[#D17B05] active:scale-[0.98]"
           >
             Simpan

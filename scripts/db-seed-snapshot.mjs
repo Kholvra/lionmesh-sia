@@ -3,10 +3,7 @@
 
 import { spawnSync } from "node:child_process";
 import { Client } from "pg";
-
-const DB_URL =
-  process.env.SUPABASE_DB_URL ??
-  "postgresql://postgres:postgres@127.0.0.1:54322/postgres";
+import { DB_URL } from "./lib/db-url.mjs";
 
 const guardResult = spawnSync(process.execPath, ["scripts/db-guard.mjs", "seed"], {
   stdio: "inherit",

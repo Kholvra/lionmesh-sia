@@ -1,191 +1,83 @@
 "use client";
 
-import Link from "next/link";
-import { useParams } from "next/navigation";
-import { Suspense, useMemo, useState } from "react";
-import { ArrowIcon } from "@/components/ui/arrow-icon";
-import { ProduksiSubnav } from "../components/produksi-subnav";
+import { Suspense, useEffect, useMemo, useState } from "react";
+import { Notice } from "@/components/ui/notice";
+import { PageHeader } from "@/components/ui/page-header";
+import { SpkStepper } from "@/components/ui/spk-stepper";
+import { EmptyState, ErrorState, LoadingState } from "@/components/ui/states";
+import { useTableState } from "@/components/ui/use-table-state";
+import { muatRiwayatHasil } from "@/modules/produksi/queries";
+import type { RiwayatHasilData } from "./types";
 
-interface RecordedSummary {
-  nomorSpk: string;
-  produkNama: string;
-  jumlahJadi: number;
-  scrapText: string;
-  selesaiPada: string;
-}
-
-interface StepDefinition {
-  step: number;
-  title: string;
-  actor: string;
-}
-
-const SPK_STEPS: StepDefinition[] = [
-  { step: 1, title: "Direncanakan", actor: "Produksi" },
-  { step: 2, title: "Cek bahan", actor: "Gudang" },
-  { step: 3, title: "Berjalan", actor: "Gudang · Produksi" },
-  { step: 4, title: "Hasil dicatat", actor: "Produksi" },
-  { step: 5, title: "QC lulus", actor: "QC" },
-  { step: 6, title: "Selesai", actor: "Gudang" },
-];
 
 function RiwayatHasilSpkContent({ initialNomorSpk }: { initialNomorSpk?: string }) {
-  const params = useParams<{ nomorSpk: string }>();
+  const [data, setData] = useState<RiwayatHasilData | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [dimuat, setDimuat] = useState(false);
 
-  const nomorSpkSlug = useMemo(() => {
-    return (initialNomorSpk ?? params?.nomorSpk ?? "spk-2611-013").toLowerCase();
-  }, [initialNomorSpk, params?.nomorSpk]);
-
-  const [summary] = useState<RecordedSummary>(() => {
-    if (typeof window !== "undefined") {
-      try {
-        const saved = sessionStorage.getItem(
-          `lionmesh_hasil_recorded_${nomorSpkSlug}`
-        );
-        if (saved) {
-          const parsed = JSON.parse(saved) as RecordedSummary;
-          if (parsed && parsed.nomorSpk) {
-            return {
-              ...parsed,
-              selesaiPada: parsed.selesaiPada
-                .replace("November 2026 · ", "Nov ")
-                .replace("November 2026 ", "Nov "),
-            };
-          }
-        }
-      } catch {
-        // Abaikan
-      }
-    }
-    return {
-      nomorSpk: nomorSpkSlug.toUpperCase(),
-      produkNama: "Wiremesh M6",
-      jumlahJadi: 120,
-      scrapText: "0,08 ton",
-      selesaiPada: "28 Nov 15.30",
+  useEffect(() => {
+    if (!initialNomorSpk) return;
+    let aktif = true;
+    muatRiwayatHasil(initialNomorSpk).then((hasil) => {
+      if (!aktif) return;
+      if (!hasil.ok) setError(hasil.message);
+      else setData(hasil.data);
+      setDimuat(true);
+    });
+    return () => {
+      aktif = false;
     };
-  });
+  }, [initialNomorSpk]);
+
+  const summary = data;
 
   const riwayatRows = useMemo(
-    () => [
-      {
-        waktu: summary.selesaiPada,
-        kejadian: `Hasil ${summary.jumlahJadi} lembar dicatat`,
-        oleh: "Produksi · Bayu",
-      },
-      {
-        waktu: "27 Nov 06.40",
-        kejadian: "Bahan 4,3 ton diterima dari Gudang",
-        oleh: "Gudang · Sari",
-      },
-      {
-        waktu: "21 Nov 09.10",
-        kejadian: "Cek bahan: kurang 1,1 ton; PR-2611-010 diajukan",
-        oleh: "Produksi · Bayu",
-      },
-      {
-        waktu: "21 Nov 08.00",
-        kejadian: "SPK dibuat",
-        oleh: "Produksi · Bayu",
-      },
-    ],
-    [summary.jumlahJadi, summary.selesaiPada]
+    () => summary?.kejadian ?? [],
+    [summary],
   );
+  const tabel = useTableState(riwayatRows, {
+    pageSize: riwayatRows.length || 1,
+  });
+
+
+  if (error) {
+    return (
+      <div className="w-full text-[#172335] animate-fade-in">
+        <ErrorState judul="Riwayat tidak dapat dimuat." teks={error} variant="compact" />
+      </div>
+    );
+  }
+
+  if (!dimuat) {
+    return (
+      <div className="w-full text-[#172335] animate-fade-in">
+        <LoadingState judul="Memuat riwayat..." variant="inline" />
+      </div>
+    );
+  }
 
   return (
     <div className="w-full text-[#172335] animate-fade-in">
-      <ProduksiSubnav />
+      <PageHeader
+        title={summary?.nomorSpk ?? initialNomorSpk?.toUpperCase() ?? "Riwayat hasil"}
+        variant="cycle"
+      />
 
-      {/* Back Link */}
-      <Link
-        href="/produksi/hasil-produksi"
-        className="group inline-flex items-center gap-1.5 text-xs font-semibold text-[#C96A00] hover:text-[#E88A06]"
-      >
-        <ArrowIcon
-          direction="left"
-          className="transition-transform duration-150 group-hover:-translate-x-0.5"
-        />
-        <span>Hasil produksi</span>
-      </Link>
-
-      {/* Breadcrumb */}
-      <nav className="mt-2 text-xs font-medium text-[#526174]">
-        <Link
-          href="/produksi"
-          className="text-[#C96A00] underline decoration-[#C96A00]/60 underline-offset-2 hover:text-[#E88A06]"
+      {summary && (
+        <Notice
+          title={`Hasil ${summary.nomorSpk} tercatat`}
+          tone="success"
+          variant="card"
         >
-          Siklus Produksi
-        </Link>
-        <span className="mx-1.5">/</span>
-        <span>PR-004 Mencatat hasil dan pemakaian bahan</span>
-      </nav>
+          <p className="mt-0.5 text-[12px]">
+            {summary.jumlahJadi} lembar {summary.produkNama} menunggu
+            pemeriksaan QC. Scrap {summary.scrapText} dicatat untuk
+            perhitungan biaya.
+          </p>
+        </Notice>
+      )}
 
-      {/* Page Title */}
-      <h1 className="mt-1.5 text-[28px] leading-tight font-bold tracking-tight text-[#172335]">
-        {summary.nomorSpk}
-      </h1>
-
-      {/* Banner Sukses Hasil Tercatat */}
-      <div className="shadow-card mt-4 rounded-[10px] border border-transparent bg-[#DCFCE7]/85 px-5 py-3.5 text-[#15803D] animate-slide-down">
-        <p className="text-[13px] font-semibold">
-          Hasil {summary.nomorSpk} tercatat
-        </p>
-        <p className="mt-0.5 text-[12px]">
-          {summary.jumlahJadi} lembar {summary.produkNama} menunggu
-          pemeriksaan QC. Scrap {summary.scrapText} dicatat untuk
-          perhitungan biaya.
-        </p>
-      </div>
-
-      {/* Stepper Card */}
-      <section className="shadow-card mt-4 rounded-[10px] border border-transparent bg-white px-5 py-3.5">
-        <div className="flex flex-wrap items-center justify-between gap-2">
-          {SPK_STEPS.map((item, idx) => {
-            const activeStep = 4;
-            const isCurrent = item.step === activeStep;
-            const isCompleted = item.step < activeStep;
-            return (
-              <div key={item.step} className="contents">
-                <div className="flex shrink-0 items-center gap-2.5">
-                  <span
-                    className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-[11px] font-semibold ${
-                      isCurrent
-                        ? "bg-[#E88A06] text-white"
-                        : isCompleted
-                          ? "bg-[#DCFCE7] text-[#15803D]"
-                          : "border border-[#94A3B8] bg-white text-[#526174]"
-                    }`}
-                  >
-                    {isCompleted ? "✓" : item.step}
-                  </span>
-                  <div className="leading-tight whitespace-nowrap">
-                    <p
-                      className={`text-[12px] ${
-                        isCurrent
-                          ? "font-semibold text-[#172335]"
-                          : "font-medium text-[#526174]"
-                      }`}
-                    >
-                      {item.title}
-                    </p>
-                    <p className="mt-0.5 text-[10px] text-[#94A3B8]">
-                      {item.actor}
-                    </p>
-                  </div>
-                </div>
-
-                {idx < SPK_STEPS.length - 1 && (
-                  <div
-                    className={`hidden h-[2px] w-[56px] shrink-0 lg:block xl:w-[80px] ${
-                      isCompleted ? "bg-[#86EFAC]" : "bg-[#CBD5E1]"
-                    }`}
-                  />
-                )}
-              </div>
-            );
-          })}
-        </div>
-      </section>
+      <SpkStepper activeStep={4} />
 
       {/* Card Riwayat */}
       <section className="shadow-card mt-4 flex flex-col gap-[14px] rounded-[10px] border border-transparent bg-white p-[20px]">
@@ -207,7 +99,7 @@ function RiwayatHasilSpkContent({ initialNomorSpk }: { initialNomorSpk?: string 
               </tr>
             </thead>
             <tbody className="divide-y divide-[#E5E7EB]/80">
-              {riwayatRows.map((row, index) => (
+                {tabel.visibleRows.map((row, index) => (
                 <tr
                   key={index}
                   className="transition-colors hover:bg-slate-50/70"
@@ -223,6 +115,18 @@ function RiwayatHasilSpkContent({ initialNomorSpk }: { initialNomorSpk?: string 
                   </td>
                 </tr>
               ))}
+              {tabel.isEmpty && (
+                <tr>
+                  <td colSpan={3}>
+                    <div className="py-8 text-center">
+                      <EmptyState
+                        judul="Belum ada hasil produksi yang dicatat untuk perintah ini."
+                        variant="inline"
+                      />
+                    </div>
+                  </td>
+                </tr>
+              )}
             </tbody>
           </table>
         </div>
@@ -233,7 +137,7 @@ function RiwayatHasilSpkContent({ initialNomorSpk }: { initialNomorSpk?: string 
 
 export function RiwayatHasilSpkScreen({ nomorSpk }: { nomorSpk?: string }) {
   return (
-    <Suspense fallback={<div className="h-40 flex items-center justify-center text-sm text-[#526174]">Memuat riwayat...</div>}>
+    <Suspense fallback={<LoadingState judul="Memuat riwayat..." variant="inline" />}>
       <RiwayatHasilSpkContent initialNomorSpk={nomorSpk} />
     </Suspense>
   );

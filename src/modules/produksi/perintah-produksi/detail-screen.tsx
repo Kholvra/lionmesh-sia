@@ -1,20 +1,17 @@
 "use client";
 
 import Link from "next/link";
-import { useParams, useSearchParams } from "next/navigation";
-import { Suspense, useMemo, useState } from "react";
-import { ArrowIcon } from "@/components/ui/arrow-icon";
-import { BomItem, INITIAL_BOM_LIST } from "../bom-produk/types";
-import { ProduksiSubnav } from "../components/produksi-subnav";
-import {
-  INITIAL_SPK_LIST,
-  SpkItem,
-  SpkStatusType,
-  STOK_BAHAN_TERSEDIA_TON,
-} from "./types";
-
-const SPK_STORAGE_KEY = "lionmesh_spk_list_v1";
-const BOM_STORAGE_KEY = "lionmesh_bom_list_v1";
+import { useSearchParams } from "next/navigation";
+import { Suspense, useEffect, useMemo, useState, useTransition } from "react";
+import { Notice } from "@/components/ui/notice";
+import { PageHeader } from "@/components/ui/page-header";
+import { SpkStepper } from "@/components/ui/spk-stepper";
+import { EmptyState, ErrorState, LoadingState } from "@/components/ui/states";
+import { keluarkanBahanUntukSpk, ubahStatusSpk } from "@/modules/produksi/actions";
+import { useProduksiActor } from "@/modules/produksi/context/actor-context";
+import { hitungKebutuhanBahan } from "@/modules/produksi/kebutuhan-bahan";
+import { muatSpkDetail } from "@/modules/produksi/queries";
+import type { SpkDetailData, SpkStatusType, StatusSpkInti } from "./types";
 
 const BULAN_LENGKAP_ID = [
   "Januari",
@@ -42,25 +39,6 @@ function formatJadwalLengkap(mulaiISO: string, selesaiISO: string, fallback: str
   return `${d1} ${BULAN_LENGKAP_ID[m1 - 1]}–${d2} ${BULAN_LENGKAP_ID[m2 - 1]} ${y2}`;
 }
 
-function parsePercent(val: string): number {
-  const num = parseFloat(val.replace("%", "").replace(",", ".").trim());
-  return Number.isFinite(num) ? num : 0;
-}
-
-interface StepDefinition {
-  step: number;
-  title: string;
-  actor: string;
-}
-
-const SPK_STEPS: StepDefinition[] = [
-  { step: 1, title: "Direncanakan", actor: "Produksi" },
-  { step: 2, title: "Cek bahan", actor: "Gudang" },
-  { step: 3, title: "Berjalan", actor: "Gudang · Produksi" },
-  { step: 4, title: "Hasil dicatat", actor: "Produksi" },
-  { step: 5, title: "QC lulus", actor: "QC" },
-  { step: 6, title: "Selesai", actor: "Gudang" },
-];
 
 function getActiveStepFromStatus(status: SpkStatusType): number {
   switch (status) {
@@ -80,193 +58,141 @@ function getActiveStepFromStatus(status: SpkStatusType): number {
 }
 
 function DetailSpkContent({ initialNomorSpk }: { initialNomorSpk?: string }) {
-  const params = useParams<{ nomorSpk: string }>();
   const searchParams = useSearchParams();
   const isJustSaved = searchParams.get("saved") === "1";
+  const [data, setData] = useState<SpkDetailData | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
-  const [spkList] = useState<SpkItem[]>(() => {
-    if (typeof window !== "undefined") {
-      try {
-        const savedSpk = sessionStorage.getItem(SPK_STORAGE_KEY);
-        if (savedSpk) {
-          const parsed = JSON.parse(savedSpk) as SpkItem[];
-          if (Array.isArray(parsed) && parsed.length > 0) return parsed;
-        }
-      } catch {
-        // Abaikan
-      }
-    }
-    return INITIAL_SPK_LIST;
-  });
+  const { can } = useProduksiActor();
+  const [notifikasi, setNotifikasi] = useState<string | null>(null);
+  const [qtyIssue, setQtyIssue] = useState("");
+  const [pending, startTransition] = useTransition();
 
-  const [bomList] = useState<BomItem[]>(() => {
-    if (typeof window !== "undefined") {
-      try {
-        const savedBom = sessionStorage.getItem(BOM_STORAGE_KEY);
-        if (savedBom) {
-          const parsed = JSON.parse(savedBom) as BomItem[];
-          if (Array.isArray(parsed) && parsed.length > 0) return parsed;
-        }
-      } catch {
-        // Abaikan
-      }
-    }
-    return INITIAL_BOM_LIST;
-  });
+  const transisi: Partial<Record<StatusSpkInti, { tujuan: StatusSpkInti; aksi: string; label: string }>> = {
+    DIRENCANAKAN: { tujuan: "CEK_BAHAN", aksi: "CEK_BAHAN", label: "Ajukan cek bahan" },
+    CEK_BAHAN: { tujuan: "BAHAN_CUKUP", aksi: "CEK_BAHAN", label: "Tandai bahan cukup" },
+    BAHAN_CUKUP: { tujuan: "BERJALAN", aksi: "MULAI", label: "Mulai produksi" },
+    BAHAN_SIAP: { tujuan: "BERJALAN", aksi: "MULAI", label: "Mulai produksi" },
+  };
 
-  const currentSpk = useMemo<SpkItem>(() => {
-    const slug = (initialNomorSpk ?? params?.nomorSpk ?? "spk-2611-013").toLowerCase();
-    const found = spkList.find((item) => item.nomorSpk.toLowerCase() === slug);
-    if (found) return found;
+  const kirimStatus = () => {
+    if (!currentSpk || !statusLanjutan) return;
+    const formData = new FormData();
+    formData.set("wo_id", currentSpk.woId);
+    formData.set("versi", String(currentSpk.versiDokumen));
+    formData.set("status_tujuan", statusLanjutan.tujuan);
+    formData.set("aksi", statusLanjutan.aksi);
+    startTransition(async () => {
+      const hasil = await ubahStatusSpk(formData);
+      setNotifikasi(hasil.ok ? `Status diperbarui menjadi ${statusLanjutan.tujuan}.` : hasil.message);
+    });
+  };
 
-    // Fallback default SPK-2611-013
-    return {
-      id: "spk-2611-013",
-      nomorSpk: "SPK-2611-013",
-      sumberInfo: "dari SO-2611-015",
-      produkNama: "Wiremesh M6",
-      produkKode: "WM-M6",
-      versiBom: "v2",
-      mesin: "Mesin las 1",
-      jumlahLembar: 120,
-      jadwalText: "27–28 Nov",
-      tanggalMulaiISO: "2026-11-27",
-      tanggalSelesaiISO: "2026-11-28",
-      status: "DIRENCANAKAN",
-      filterCategory: "direncanakan",
+  const kirimIssue = () => {
+    if (!currentSpk || !relatedBom || !qtyIssue) return;
+    const formData = new FormData();
+    formData.set("wo_id", currentSpk.woId);
+    formData.set("produk_id", relatedBom.komponenProdukId);
+    formData.set("satuan_id", relatedBom.satuanId);
+    formData.set("gudang_id", currentSpk.gudangId);
+    formData.set("qty_keluar", qtyIssue);
+    formData.set("tanggal", new Date().toISOString());
+    startTransition(async () => {
+      const hasil = await keluarkanBahanUntukSpk(formData);
+      setNotifikasi(hasil.ok ? "Pengeluaran bahan tercatat." : hasil.message);
+    });
+  };
+
+  useEffect(() => {
+    if (!initialNomorSpk) return;
+    let aktif = true;
+    muatSpkDetail(initialNomorSpk).then((hasil) => {
+      if (!aktif) return;
+      if (hasil.ok) setData(hasil.data);
+      else setError(hasil.message);
+    });
+    return () => {
+      aktif = false;
     };
-  }, [initialNomorSpk, params?.nomorSpk, spkList]);
+  }, [initialNomorSpk]);
 
-  const relatedBom = useMemo(() => {
-    return (
-      bomList.find((b) => b.produkKode === currentSpk.produkKode) ??
-      INITIAL_BOM_LIST[0]
-    );
-  }, [bomList, currentSpk.produkKode]);
+  const currentSpk = data?.spk ?? null;
+  const statusLanjutan = transisi[currentSpk?.statusInti as StatusSpkInti];
+  const relatedBom = data?.bom ?? null;
 
-  const kebutuhanBahan = useMemo(() => {
-    const perLembarKg = relatedBom.jumlahPerLembarKg;
-    const scrapPct = parsePercent(relatedBom.toleransiScrap);
-    const totalKg = currentSpk.jumlahLembar * perLembarKg * (1 + scrapPct / 100);
-    const totalTon = totalKg / 1000;
-    const tersediaTon = STOK_BAHAN_TERSEDIA_TON[relatedBom.komponenKode] ?? 3.2;
-
-    return {
-      perLembarText: `${perLembarKg.toLocaleString("id-ID", {
-        minimumFractionDigits: 1,
-      })} kg + scrap ${relatedBom.toleransiScrap}`,
-      totalTonText: `${totalTon.toLocaleString("id-ID", {
-        minimumFractionDigits: 1,
-        maximumFractionDigits: 1,
-      })} ton`,
-      tersediaTonText: `${tersediaTon.toLocaleString("id-ID", {
-        minimumFractionDigits: 1,
-        maximumFractionDigits: 1,
-      })} ton`,
-    };
-  }, [currentSpk.jumlahLembar, relatedBom]);
-
-  const activeStep = getActiveStepFromStatus(currentSpk.status);
-  const jadwalLengkap = formatJadwalLengkap(
-    currentSpk.tanggalMulaiISO,
-    currentSpk.tanggalSelesaiISO,
-    currentSpk.jadwalText
+  const kebutuhanBahan = useMemo(
+    () =>
+      currentSpk && relatedBom
+        ? hitungKebutuhanBahan(currentSpk.jumlahLembar, relatedBom, data?.stokTon ?? null)
+        : null,
+    [currentSpk, relatedBom, data?.stokTon],
   );
 
-  const versiBomKeterangan =
-    currentSpk.sumberInfo === "dari SO-2611-015"
-      ? `${currentSpk.versiBom} · untuk SO-2611-015 PT Graha Konstruksi`
-      : `${currentSpk.versiBom} · ${currentSpk.sumberInfo}`;
+  const activeStep = currentSpk ? getActiveStepFromStatus(currentSpk.status) : 1;
+  const jadwalLengkap = currentSpk
+    ? formatJadwalLengkap(
+        currentSpk.tanggalMulaiISO,
+        currentSpk.tanggalSelesaiISO,
+        currentSpk.jadwalText,
+      )
+    : "";
+  const versiBomKeterangan = currentSpk
+    ? `${currentSpk.versiBom} · ${currentSpk.sumberInfo}`
+    : "";
+
+  if (error) {
+    return (
+      <div className="w-full text-[#172335] animate-fade-in">
+        <ErrorState judul="Data SPK tidak dapat dimuat." teks={error} variant="compact" />
+      </div>
+    );
+  }
+
+  if (!data) {
+    return (
+      <div className="w-full text-[#172335] animate-fade-in">
+        <LoadingState judul="Memuat data SPK..." variant="inline" />
+      </div>
+    );
+  }
+
+  if (!currentSpk || !relatedBom || !kebutuhanBahan) {
+    return (
+      <div className="w-full text-[#172335] animate-fade-in">
+        <EmptyState
+          judul="Perintah produksi atau versi BOM terkait tidak ditemukan."
+          variant="inline"
+        />
+      </div>
+    );
+  }
 
   return (
     <div className="w-full text-[#172335] animate-fade-in">
-      <ProduksiSubnav />
+      {notifikasi && <Notice className="mt-3" tone="info" variant="card">{notifikasi}</Notice>}
+      <PageHeader
+        title={currentSpk.nomorSpk}
+        variant="cycle"
+      />
 
-      {/* Back Link */}
-      <Link
-        href="/produksi/perintah-produksi"
-        className="group inline-flex items-center gap-1.5 text-xs font-semibold text-[#C96A00] hover:text-[#E88A06]"
-      >
-        <ArrowIcon
-          direction="left"
-          className="transition-transform duration-150 group-hover:-translate-x-0.5"
-        />
-        <span>Perintah produksi</span>
-      </Link>
-
-      {/* Breadcrumb */}
-      <nav className="mt-2 text-xs font-medium text-[#526174]">
-        <Link
-          href="/produksi"
-          className="text-[#C96A00] underline decoration-[#C96A00]/60 underline-offset-2 hover:text-[#E88A06]"
-        >
-          Siklus Produksi
-        </Link>
-        <span className="mx-1.5">/</span>
-        <span>PR-002 Membuat perintah produksi</span>
-      </nav>
-
-      {/* Page Title */}
-      <h1 className="mt-1.5 text-[28px] leading-tight font-bold tracking-tight text-[#172335]">
-        {currentSpk.nomorSpk}
-      </h1>
-
-      {/* Banner Tersimpan */}
       {isJustSaved && (
-        <div className="shadow-card mt-4 rounded-[10px] border border-transparent bg-[#E6F4EA]/85 px-5 py-3 text-[#166534] animate-slide-down">
-          <p className="text-[13px] font-semibold">
-            {currentSpk.nomorSpk} tersimpan
-          </p>
+        <Notice
+          title={`${currentSpk.nomorSpk} tersimpan`}
+          tone="success"
+          variant="card"
+        >
           <p className="mt-0.5 text-[12px]">
             Status Direncanakan. SPK masuk daftar Gudang untuk dicek bahannya.
           </p>
-        </div>
+        </Notice>
       )}
 
-      {/* Stepper Card (6 Tahap SPK) */}
-      <section className="shadow-card mt-4 rounded-[10px] border border-transparent bg-white px-5 py-3.5 transition-shadow duration-150 hover:shadow-md">
-        <div className="flex flex-wrap items-center justify-between gap-2">
-          {SPK_STEPS.map((item, idx) => {
-            const isCurrent = item.step === activeStep;
-            const isCompleted = item.step < activeStep;
-            return (
-              <div key={item.step} className="contents">
-                <div className="flex shrink-0 items-center gap-2.5">
-                  <span
-                    className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-[11px] font-semibold ${
-                      isCurrent
-                        ? "bg-[#E88A06] text-white"
-                        : isCompleted
-                          ? "bg-[#DCFCE7] text-[#15803D]"
-                          : "border border-[#94A3B8] bg-white text-[#526174]"
-                    }`}
-                  >
-                    {item.step}
-                  </span>
-                  <div className="leading-tight whitespace-nowrap">
-                    <p
-                      className={`text-[12px] ${
-                        isCurrent
-                          ? "font-semibold text-[#172335]"
-                          : "font-medium text-[#526174]"
-                      }`}
-                    >
-                      {item.title}
-                    </p>
-                    <p className="mt-0.5 text-[10px] text-[#94A3B8]">
-                      {item.actor}
-                    </p>
-                  </div>
-                </div>
-
-                {idx < SPK_STEPS.length - 1 && (
-                  <div className="hidden h-[2px] w-[56px] shrink-0 bg-[#CBD5E1] lg:block xl:w-[80px]" />
-                )}
-              </div>
-            );
-          })}
-        </div>
-      </section>
+      <SpkStepper
+        activeStep={activeStep}
+        completedMarker="number"
+        connectorTone="neutral"
+        hoverable
+      />
 
       {/* Card 1: Perintah produksi */}
       <section className="shadow-card mt-4 rounded-[10px] border border-transparent bg-white p-5">
@@ -286,7 +212,7 @@ function DetailSpkContent({ initialNomorSpk }: { initialNomorSpk?: string }) {
           <div>
             <p className="text-[11px] font-medium text-[#526174]">Jadwal</p>
             <p className="mt-1 text-[13px] font-medium text-[#172335]">
-              {jadwalLengkap} · {currentSpk.mesin ?? "Mesin las 1"}
+              {jadwalLengkap} · Mesin ditentukan saat pelaksanaan
             </p>
           </div>
 
@@ -344,13 +270,25 @@ function DetailSpkContent({ initialNomorSpk }: { initialNomorSpk?: string }) {
           Lihat status bahan
         </Link>
       </div>
+
+      <div className="mt-4 flex flex-wrap items-center gap-3">
+        {statusLanjutan && can("check_stok_bahan") && (
+          <button type="button" disabled={pending} onClick={kirimStatus} className="rounded-[8px] border border-[#E5E7EB] bg-white px-4 py-2 text-[13px] font-semibold text-[#172335]">{statusLanjutan.label}</button>
+        )}
+        {can("issue_bahan_gudang") && (
+          <>
+            <input type="number" min="0" step="0.0001" value={qtyIssue} onChange={(e) => setQtyIssue(e.target.value)} placeholder="Qty keluar (ton)" className="w-[180px] rounded-[8px] border border-[#E5E7EB] px-3 py-2 text-[13px]" />
+            <button type="button" disabled={pending} onClick={kirimIssue} className="rounded-[8px] bg-[#E88A06] px-4 py-2 text-[13px] font-semibold text-white">Keluarkan bahan</button>
+          </>
+        )}
+      </div>
     </div>
   );
 }
 
 export function DetailSpkScreen({ nomorSpk }: { nomorSpk?: string }) {
   return (
-    <Suspense fallback={<div className="h-40 flex items-center justify-center text-sm text-[#526174]">Memuat data SPK...</div>}>
+    <Suspense fallback={<LoadingState judul="Memuat data SPK..." variant="inline" />}>
       <DetailSpkContent initialNomorSpk={nomorSpk} />
     </Suspense>
   );

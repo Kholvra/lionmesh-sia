@@ -83,23 +83,10 @@ function ConfirmButton({
   open: boolean;
   pending: boolean;
 }) {
-  const confirmedRef = useRef(false);
-
-  useEffect(() => {
-    if (open) confirmedRef.current = false;
-  }, [open]);
-
   function confirm() {
-    if (pending || confirmedRef.current) return;
-    confirmedRef.current = true;
-
-    try {
-      onConfirm();
-      onOpenChange(false);
-    } catch (error) {
-      confirmedRef.current = false;
-      throw error;
-    }
+    if (!open || pending) return;
+    onConfirm();
+    onOpenChange(false);
   }
 
   return (

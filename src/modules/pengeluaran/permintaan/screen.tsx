@@ -1,9 +1,11 @@
 import Link from "next/link";
 
+import { PageHeader } from "@/components/ui/page-header";
 import { StatusBadge } from "@/components/ui";
 import type { Profile } from "@/lib/auth/types";
 import { cekIzin } from "@/lib/auth/permissions";
-import { formatRupiah } from "@/lib/format/number";
+import { formatRupiah } from "@/lib/format/money";
+import { rupiahKeCents } from "@/modules/pengeluaran/pemasok/format";
 import { PermintaanActions } from "./components/permintaan-actions";
 import { PermintaanForm } from "./components/permintaan-form";
 import { PermintaanTable } from "./components/permintaan-table";
@@ -39,16 +41,10 @@ export async function PermintaanScreen({ mode, permintaanId, profile }: Props) {
 
   return (
     <section aria-label="Permintaan pembelian" className={styles.page}>
-      <header className={styles.header}>
-        <div>
-          <p className={styles.breadcrumb}>Siklus Pengeluaran / Permintaan Pembelian</p>
-          <h1 className={styles.title}>Permintaan pembelian</h1>
-          <p className={styles.description}>
-            Ajukan kebutuhan barang dari Gudang atau Produksi. Purchasing memeriksa
-            antrean, lalu meneruskan permintaan untuk persetujuan.
-          </p>
-        </div>
-      </header>
+      <PageHeader
+        description="Ajukan kebutuhan barang dari Gudang atau Produksi. Purchasing memeriksa antrean, lalu meneruskan permintaan untuk persetujuan."
+        title="Permintaan pembelian"
+      />
 
       <div className={styles.layout}>
         <section className={styles.listPanel} aria-labelledby="daftar-permintaan">
@@ -139,7 +135,7 @@ export async function PermintaanScreen({ mode, permintaanId, profile }: Props) {
                     <dd className={styles.detailValue}>
                       {terpilih.header.nominal === null
                         ? "Belum diisi"
-                        : formatRupiah(terpilih.header.nominal)}
+                        : formatRupiah(rupiahKeCents(terpilih.header.nominal))}
                     </dd>
                   </div>
                   <div className={styles.detailItem}>
@@ -204,9 +200,6 @@ export async function PermintaanScreen({ mode, permintaanId, profile }: Props) {
                 <p className={styles.emptyState}>
                   Permintaan tidak tersedia atau bukan milik Anda.
                 </p>
-                <Link className={styles.secondaryButton} href={PATH_PERMINTAAN}>
-                  Kembali ke antrean
-                </Link>
               </div>
             ) : (
               <p className={styles.emptyState}>

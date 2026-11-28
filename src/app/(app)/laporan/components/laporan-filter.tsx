@@ -1,3 +1,5 @@
+import { Select } from "@/components/ui/select";
+import { SubmitButton } from "@/components/ui/submit-button";
 import type { PeriodeLaporan } from "@/core/ledger";
 import styles from "../laporan.module.css";
 
@@ -34,7 +36,7 @@ export function LaporanFilter({
         <label className={styles.filterLabel} htmlFor="periode">
           Periode
         </label>
-        <select
+        <Select
           className={styles.select}
           defaultValue={nilaiPeriode}
           id="periode"
@@ -49,7 +51,7 @@ export function LaporanFilter({
               </option>
             ))
           )}
-        </select>
+        </Select>
       </div>
 
       {selects.map((select) => (
@@ -57,7 +59,7 @@ export function LaporanFilter({
           <label className={styles.filterLabel} htmlFor={select.name}>
             {select.label}
           </label>
-          <select
+          <Select
             className={styles.select}
             defaultValue={select.value ?? select.options[0]?.value ?? ""}
             id={select.name}
@@ -72,13 +74,13 @@ export function LaporanFilter({
                 </option>
               ))
             )}
-          </select>
+          </Select>
         </div>
       ))}
 
-      <button className={styles.primaryButton} type="submit">
+      <SubmitButton className={styles.primaryButton} type="submit">
         Tampilkan
-      </button>
+      </SubmitButton>
     </form>
   );
 }

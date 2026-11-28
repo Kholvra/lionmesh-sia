@@ -1,9 +1,12 @@
 #!/usr/bin/env node
 // Exercises the session-backed inventory boundary against a disposable local Supabase project.
 import { randomBytes, randomUUID } from "node:crypto";
-import { createServerClient } from "@supabase/ssr";
 import { createClient } from "@supabase/supabase-js";
 import pg from "pg";
+import { buatLaporan } from "./lib/harness.mjs";
+import { validasiLokal } from "./lib/local-host.mjs";
+import { masukSesi } from "./lib/session-login.mjs";
+
 
 const api = process.env.FND005_TEST_API_URL;
 const dbUrl = process.env.FND005_TEST_DB_URL;
@@ -14,11 +17,9 @@ if (process.env.FND005_DISPOSABLE !== "1" || !api || !dbUrl || !app || !anon || 
   throw new Error("Provide isolated test URLs, keys, and FND005_DISPOSABLE=1.");
 }
 for (const value of [api, dbUrl, app]) {
-  const url = new URL(value);
-  if (!["localhost", "127.0.0.1", "[::1]"].includes(url.hostname)) {
-    throw new Error("Only local endpoints are permitted.");
-  }
+  validasiLokal(value, "Only local endpoints are permitted.");
 }
+
 if (["54321", "54322"].includes(new URL(api).port) || ["54321", "54322"].includes(new URL(dbUrl).port)) {
   throw new Error("Do not run against the default local Supabase project.");
 }
@@ -29,12 +30,11 @@ await db.connect();
 const suffix = randomBytes(6).toString("hex");
 const password = randomBytes(24).toString("hex");
 const accounts = {};
-let failed = false;
 
-function check(name, condition) {
-  console.log(`${condition ? "PASS" : "FAIL"} ${name}`);
-  if (!condition) failed = true;
-}
+
+const laporan = buatLaporan({ gaya: "polos" });
+const { status: check } = laporan;
+
 
 async function makeAccount(role) {
   const email = `inventory-${role.toLowerCase()}-${suffix}@lionmesh.test`;
@@ -42,16 +42,9 @@ async function makeAccount(role) {
   if (created.error) throw created.error;
   const id = created.data.user.id;
   await db.query("update public.profiles set peran=$1 where id=$2", [role, id]);
-  const jar = new Map();
-  const client = createServerClient(api, anon, {
-    cookies: {
-      getAll: () => Array.from(jar, ([name, value]) => ({ name, value })),
-      setAll: (cookies) => cookies.forEach(({ name, value }) => jar.set(name, value)),
-    },
-  });
-  const login = await client.auth.signInWithPassword({ email, password });
-  if (login.error) throw login.error;
-  return { id, client, cookie: Array.from(jar, ([name, value]) => `${name}=${value}`).join("; ") };
+  const login = await masukSesi({ url: api, key: anon, email, password });
+  return { id, client: login.client, cookie: login.cookie };
+
 }
 
 async function request(operation, payload, cookie = "") {
@@ -138,4 +131,4 @@ try {
 } finally {
   await db.end();
 }
-if (failed) process.exitCode = 1;
+if (laporan.jumlahGagal > 0) process.exitCode = 1;

@@ -12,72 +12,50 @@
 // Usage:
 //   node scripts/verify-c012-notifikasi.mjs
 
-import { readFileSync } from "node:fs";
 import { createServer } from "node:http";
 import { randomUUID } from "node:crypto";
 import { Client } from "pg";
+import { DB_URL } from "./lib/db-url.mjs";
+import { bacaEnvLocal } from "./lib/env.mjs";
+import { assert, buatLaporan, gagal } from "./lib/harness.mjs";
+import { hostDari, hostLokal } from "./lib/local-host.mjs";
+import { masukSesi } from "./lib/session-login.mjs";
 
-const PASSWORD = process.env.FND_TEST_PASSWORD ?? "lionmesh-dev-2026";
+
 const PORT_EMAIL = Number(process.env.C012_EMAIL_PORT ?? 4319);
 const TOKEN = process.env.NOTIFIKASI_KIRIM_TOKEN ?? "uji-c012-lokal";
 const NOMOR = `UJI/2026/11/${Date.now().toString().slice(-4)}`;
 
-function readEnv() {
-  const isi = readFileSync(".env.local", "utf8");
-  const peta = {};
-  for (const baris of isi.split("\n")) {
-    const cocok = /^([A-Z0-9_]+)=(.*)$/.exec(baris.trim());
-    if (cocok) peta[cocok[1]] = cocok[2];
-  }
-  return peta;
+const env = bacaEnvLocal({ wajib: true });
+const PASSWORD = process.env.FND_TEST_PASSWORD ?? env.FND_TEST_PASSWORD;
+if (!PASSWORD) {
+  gagal(
+    "Atur FND_TEST_PASSWORD untuk akun uji lokal sebelum verifikasi.",
+    "verify-c012",
+  );
 }
 
-const env = readEnv();
 const SUPABASE_URL = env.NEXT_PUBLIC_SUPABASE_URL;
 const ANON = env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ?? env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 const SERVICE = env.SUPABASE_SERVICE_ROLE_KEY;
 const APP_URL = process.env.APP_URL ?? "http://127.0.0.1:3000";
-const DB_URL =
-  process.env.SUPABASE_DB_URL ?? "postgresql://postgres:postgres@127.0.0.1:54322/postgres";
 
 for (const [nama, nilai] of Object.entries({
   NEXT_PUBLIC_SUPABASE_URL: SUPABASE_URL,
   NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: ANON,
   SUPABASE_SERVICE_ROLE_KEY: SERVICE,
 })) {
-  if (!nilai) {
-    console.error(`[verify-c012] ${nama} tidak ada di .env.local`);
-    process.exit(1);
-  }
+  if (!nilai) gagal(`${nama} tidak ada di .env.local`, "verify-c012");
 }
 
-const host = new URL(SUPABASE_URL).hostname;
-if (!["127.0.0.1", "localhost", "[::1]"].includes(host)) {
-  console.error("[verify-c012] hanya untuk database lokal");
-  process.exit(1);
+if (!hostLokal(hostDari(SUPABASE_URL))) {
+  gagal("hanya untuk database lokal", "verify-c012");
 }
 
-const hasil = [];
-let gagal = 0;
 
-function catat(id, nama, detail) {
-  hasil.push({ detail, id, nama });
-  console.log(`[PASS] ${id}: ${nama} — ${detail}`);
-}
+const laporan = buatLaporan({ gaya: "kurung" });
+const { pass: catat, periksa } = laporan;
 
-function assert(nilai, pesan) {
-  if (!nilai) throw new Error(pesan);
-}
-
-async function periksa(id, nama, fn) {
-  try {
-    catat(id, nama, await fn());
-  } catch (error) {
-    gagal += 1;
-    const pesan = error instanceof Error ? error.message : String(error);
-    console.log(`[FAIL] ${id}: ${nama} — ${pesan}`);
-  }
-}
 
 // --- fake email provider -----------------------------------------------------
 
@@ -149,15 +127,17 @@ async function idPengguna(email) {
   return rows[0].id;
 }
 
-async function login(email) {
-  const res = await fetch(`${SUPABASE_URL}/auth/v1/token?grant_type=password`, {
-    body: JSON.stringify({ email, password: PASSWORD }),
-    headers: { apikey: ANON, "content-type": "application/json" },
-    method: "POST",
-  });
-  assert(res.ok, `login ${email} gagal`);
-  return (await res.json()).access_token;
-}
+const login = async (email) =>
+  (
+    await masukSesi({
+      url: SUPABASE_URL,
+      key: ANON,
+      email,
+      password: PASSWORD,
+      mode: "rest",
+    })
+  ).token;
+
 
 async function rpc(jwt, nama, args) {
   const res = await fetch(`${SUPABASE_URL}/rest/v1/rpc/${nama}`, {
@@ -437,9 +417,9 @@ await client.end();
 await new Promise((resolve) => serverEmail.close(resolve));
 
 console.log("\n=== Ringkasan ===");
-for (const item of hasil) console.log(`${item.id}: PASS — ${item.nama}`);
-if (gagal > 0) {
-  console.error(`\n${gagal} pemeriksaan gagal.`);
+for (const item of laporan.hasil) console.log(`${item.id}: PASS — ${item.nama}`);
+if (laporan.jumlahGagal > 0) {
+  console.error(`\n${laporan.jumlahGagal} pemeriksaan gagal.`);
   process.exit(1);
 }
-console.log(`\n${hasil.length} pemeriksaan lulus.`);
+console.log(`\n${laporan.hasil.length} pemeriksaan lulus.`);

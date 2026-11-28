@@ -3,6 +3,8 @@
 import { useActionState, useRef, useState } from "react";
 
 import { ConfirmDialog } from "@/components/ui";
+import { Notice } from "@/components/ui/notice";
+import { SubmitButton } from "@/components/ui/submit-button";
 import type { EntitasMaster } from "@/core/master/types";
 
 import { ubahStatusMasterAction } from "../actions";
@@ -43,26 +45,28 @@ export function MasterStatusButton({
         <input name="entitas" type="hidden" value={entitas} />
         <input name="id" type="hidden" value={id} />
         <input name="aktif" type="hidden" value={aktif ? "false" : "true"} />
-        <button
+        <SubmitButton
           className={aktif ? styles.dangerButton : styles.secondaryButton}
           disabled={pending}
           onClick={() => setOpen(true)}
+          size="lg"
           type="button"
+          variant={aktif ? "danger" : "secondary"}
         >
           {pending ? "Memproses..." : aksi}
-        </button>
+        </SubmitButton>
       </form>
 
       {state.status === "error" && state.message ? (
-        <p className={styles.messageError} role="alert">
+        <Notice className={styles.messageError} tone="danger">
           {state.message}
-        </p>
+        </Notice>
       ) : null}
 
       {state.status === "success" && state.message ? (
-        <p className={styles.messageSuccess} role="status">
+        <Notice className={styles.messageSuccess} tone="success">
           {state.message}
-        </p>
+        </Notice>
       ) : null}
 
       <ConfirmDialog

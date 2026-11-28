@@ -5,7 +5,7 @@ import { formatWaktu } from "@/modules/penggajian/karyawan/format";
 import { reopenPeriode } from "@/modules/penggajian/periode/actions";
 import { labelStatusPeriode } from "@/modules/penggajian/periode/rules";
 import { semuaPeriode } from "@/modules/penggajian/periode/queries";
-import { PageHeader } from "@/modules/penggajian/ui/page-header";
+import { PageHeader } from "@/components/ui/page-header";
 import { KartuBaca } from "@/modules/penggajian/shared/bidang-baca";
 import { FormAksi } from "@/modules/penggajian/shared/form-aksi";
 import { Keadaan, TidakBerwenang } from "@/modules/penggajian/shared/states";
@@ -47,7 +47,8 @@ export function BukaUlangScreen({ periodeId }: { periodeId?: string }) {
     <>
       <PageHeader
         back={{ href: `/penggajian/rekap${periodeId ? `?periode=${periodeId}` : ""}`, label: "Rekap presensi & lembur" }}
-        item="GJ-003 Memvalidasi presensi dan lembur"
+        breadcrumb={[{ label: "Siklus Penggajian", accent: true }, "GJ-003 Memvalidasi presensi dan lembur"]}
+        variant="page"
         title="Buka ulang periode"
       />
       <Suspense fallback={null}>

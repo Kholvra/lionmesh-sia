@@ -1,37 +1,22 @@
 /* The shell owns page padding and height (FND-009); this file adds no offset. */
 .page {
-  width: 100%;
-  max-width: var(--layout-content-max);
-  margin-inline: auto;
+  composes: ui-page from global;
 }
 
 .header {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: var(--space-6);
-  margin-bottom: var(--space-8);
+  composes: ui-page-header ui-page-header-spaced from global;
 }
 
 .breadcrumb {
-  margin: 0 0 var(--space-2);
-  color: var(--text-muted);
-  font-size: var(--font-size-caption);
-  line-height: var(--line-height-caption);
+  composes: ui-page-breadcrumb ui-page-breadcrumb-gap from global;
 }
 
 .title {
-  margin: 0;
-  color: var(--text-primary);
-  font-size: var(--font-size-title);
-  font-weight: 700;
-  line-height: var(--line-height-title);
+  composes: ui-page-title from global;
 }
 
 .description {
-  max-width: var(--dialog-form-width);
-  margin: var(--space-2) 0 0;
-  color: var(--text-secondary);
+  composes: ui-page-description ui-page-description-gap ui-page-description-bounded from global;
 }
 
 .meta {
@@ -47,17 +32,13 @@
 }
 
 .metaAngka {
+  composes: ui-tabular from global;
   color: var(--text-primary);
   font-size: var(--font-size-section);
-  font-variant-numeric: tabular-nums;
 }
 
 .panelCard {
-  padding: var(--space-5);
-  border: var(--border-width-default) solid var(--border-subtle);
-  border-radius: var(--radius-lg);
-  background: var(--bg-surface);
-  box-shadow: var(--shadow-sm);
+  composes: ui-card from global;
 }
 
 .list {
@@ -85,113 +66,49 @@
 }
 
 .cellMeta {
-  color: var(--text-muted);
-  font-size: var(--font-size-label);
-  line-height: var(--line-height-label);
+  composes: ui-meta-label from global;
   white-space: normal;
 }
 
 .messageError {
-  margin: 0;
-  padding: var(--space-3) var(--space-4);
-  border: var(--border-width-default) solid var(--status-danger-bg);
-  border-radius: var(--radius-md);
-  background: var(--status-danger-bg);
-  color: var(--status-danger-text);
-  font-size: var(--font-size-body-sm);
-  line-height: var(--line-height-body-sm);
+  composes: ui-message ui-message-error from global;
 }
 
 .primaryButton,
 .secondaryButton {
-  display: inline-flex;
-  min-height: var(--control-height);
-  align-items: center;
-  justify-content: center;
-  gap: var(--space-2);
-  padding-inline: var(--space-3);
-  border-radius: var(--radius-md);
-  cursor: pointer;
-  font-size: var(--font-size-body-sm);
-  font-weight: 600;
-  line-height: var(--line-height-body-sm);
-  text-decoration: none;
-  transition:
-    background-color var(--motion-fast) ease-out,
-    border-color var(--motion-fast) ease-out;
+  composes: ui-button-sm ui-focus-ring from global;
 }
 
 .primaryButton {
-  border: 0;
-  background: var(--brand-500);
-  color: var(--text-on-brand);
-}
-
-.primaryButton:hover:not(:disabled) {
-  background: var(--brand-600);
+  composes: ui-button-primary from global;
 }
 
 .secondaryButton {
-  border: var(--border-width-default) solid var(--border-input);
-  background: var(--bg-surface);
-  color: var(--text-primary);
-}
-
-.secondaryButton:hover:not(:disabled) {
-  background: var(--bg-subtle);
-}
-
-.primaryButton:disabled,
-.secondaryButton:disabled {
-  cursor: wait;
-  opacity: 0.7;
-}
-
-.primaryButton:focus-visible,
-.secondaryButton:focus-visible {
-  outline: var(--focus-ring-width) solid var(--border-focus);
-  outline-offset: var(--focus-ring-offset);
+  composes: ui-button-secondary from global;
 }
 
 .loadingPage,
 .errorPage {
-  display: grid;
-  min-height: 100vh;
-  place-items: center;
-  padding: var(--space-8);
+  composes: ui-state-page from global;
 }
 
 .loadingCard,
 .errorCard {
-  width: 100%;
-  max-width: var(--dialog-form-width);
-  padding: var(--space-6);
-  border: var(--border-width-default) solid var(--border-subtle);
-  border-radius: var(--radius-lg);
-  background: var(--bg-surface);
-  box-shadow: var(--shadow-sm);
+  composes: ui-state-card from global;
 }
 
 .loadingTitle,
 .errorTitle {
-  margin: 0;
-  color: var(--text-primary);
-  font-size: var(--font-size-section);
-  font-weight: 600;
-  line-height: var(--line-height-section);
+  composes: ui-section-title from global;
 }
 
 .loadingText,
 .errorText {
-  margin: var(--space-2) 0 var(--space-5);
-  color: var(--text-secondary);
-  font-size: var(--font-size-body-sm);
-  line-height: var(--line-height-body-sm);
+  composes: ui-state-text from global;
 }
 
 .errorActions {
-  display: flex;
-  gap: var(--space-3);
+  composes: ui-error-actions from global;
 }
 
 @media (prefers-reduced-motion: reduce) {

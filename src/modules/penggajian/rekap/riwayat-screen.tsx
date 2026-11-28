@@ -7,7 +7,7 @@ import { sesiPenggajian } from "@/modules/penggajian/akun/akun";
 import { formatWaktu } from "@/modules/penggajian/karyawan/format";
 import { getPeriodeDipilih } from "@/modules/penggajian/presensi/queries";
 import { aksesRekap } from "@/modules/penggajian/rekap/queries";
-import { PageHeader } from "@/modules/penggajian/ui/page-header";
+import { PageHeader } from "@/components/ui/page-header";
 import { ui } from "@/modules/penggajian/ui/kelas";
 import type { RiwayatStatus } from "@/modules/penggajian/shared/riwayat";
 import { Keadaan, TidakBerwenang } from "@/modules/penggajian/shared/states";
@@ -29,13 +29,13 @@ function peristiwa(r: RiwayatStatus): Peristiwa {
 
 async function Konten({ periodeId }: { periodeId?: string }) {
   const sesi = await sesiPenggajian();
-  const judul = <PageHeader item="GJ-003 Memvalidasi presensi dan lembur" title="Riwayat rekap" />;
+  const judul = <PageHeader breadcrumb={[{ label: "Siklus Penggajian", accent: true }, "GJ-003 Memvalidasi presensi dan lembur"]} title="Riwayat rekap" variant="page" />;
   if (!(await aksesRekap(sesi)).bolehMembaca) return <>{judul}<TidakBerwenang pesan="Riwayat rekap dibuka HR dan Supervisor Lapangan." /></>;
   const periode = await getPeriodeDipilih(periodeId);
   if (!periode) return <>{judul}<Keadaan judul="Belum ada riwayat rekap" pesan="Riwayat terisi setelah HR menyimpan rekap pertama periode ini." /></>;
   return (
     <>
-      <PageHeader description={`Periode ${periode.nama}`} item="GJ-003 Memvalidasi presensi dan lembur" title="Riwayat rekap" />
+      <PageHeader breadcrumb={[{ label: "Siklus Penggajian", accent: true }, "GJ-003 Memvalidasi presensi dan lembur"]} description={`Periode ${periode.nama}`} title="Riwayat rekap" variant="page" />
       <div className={ui.stack}>
         <Stepper aktif={langkahRekap(periode.status)} langkah={ALUR_REKAP} />
         <section className={ui.card}>
@@ -64,7 +64,7 @@ async function Konten({ periodeId }: { periodeId?: string }) {
 
 export function RiwayatRekapScreen({ periodeId }: { periodeId?: string }) {
   return (
-    <Suspense fallback={<PageHeader item="GJ-003 Memvalidasi presensi dan lembur" title="Riwayat rekap" />}>
+    <Suspense fallback={<PageHeader breadcrumb={[{ label: "Siklus Penggajian", accent: true }, "GJ-003 Memvalidasi presensi dan lembur"]} title="Riwayat rekap" variant="page" />}>
       <Konten periodeId={periodeId} />
     </Suspense>
   );

@@ -7,7 +7,6 @@ import {
 } from "@/core/ledger";
 import type { Result } from "@/lib/result";
 import { susunOpsiPeriode } from "../period-options";
-import { Pesan } from "../components/laporan-shell";
 
 export type LaporanParams = {
   periode?: string | string[];
@@ -15,6 +14,9 @@ export type LaporanParams = {
   produk?: string | string[];
   gudang?: string | string[];
 };
+
+export const TEKS_PILIH_PERIODE =
+  "Laporan keuangan dibuka untuk satu bulan kalender. Pilih periode lalu tekan Tampilkan.";
 
 export function parameterTunggal(
   value: string | string[] | undefined,
@@ -34,6 +36,3 @@ export async function muatOpsiPeriode(
   };
 }
 
-export function GagalMemuat({ pesan }: { pesan: string }) {
-  return <Pesan nada="bahaya">Laporan gagal dimuat: {pesan}</Pesan>;
-}

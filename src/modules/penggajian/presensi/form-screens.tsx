@@ -10,7 +10,7 @@ import { KartuBaca } from "@/modules/penggajian/shared/bidang-baca";
 import { batasLemburUntuk } from "@/modules/penggajian/presensi/rules";
 import { LABEL_KEHADIRAN } from "@/modules/penggajian/presensi/status";
 import { KEHADIRAN } from "@/modules/penggajian/presensi/types";
-import { PageHeader } from "@/modules/penggajian/ui/page-header";
+import { PageHeader } from "@/components/ui/page-header";
 import { FormAksi } from "@/modules/penggajian/shared/form-aksi";
 import type { IsianForm } from "@/modules/penggajian/shared/form-aksi";
 import { TidakBerwenang } from "@/modules/penggajian/shared/states";
@@ -49,7 +49,8 @@ export function CatatPresensiScreen() {
       <PageHeader
         back={{ href: "/penggajian/presensi", label: "Presensi & lembur" }}
         description="Untuk karyawan tanpa akun atau yang tidak bisa absen sendiri."
-        item={ITEM}
+        breadcrumb={[{ label: "Siklus Penggajian", accent: true }, ITEM]}
+        variant="page"
         title="Catat presensi atas nama karyawan"
       />
       <Suspense fallback={null}>
@@ -106,7 +107,8 @@ export function AjukanLemburScreen() {
     <>
       <PageHeader
         description="Isi sesuai Surat Perintah Lembur (SPL) dari atasan. Pengajuan menunggu validasi Supervisor saat rekap periode."
-        item={ITEM}
+        breadcrumb={[{ label: "Siklus Penggajian", accent: true }, ITEM]}
+        variant="page"
         title="Pengajuan lembur"
       />
       <Suspense fallback={null}>

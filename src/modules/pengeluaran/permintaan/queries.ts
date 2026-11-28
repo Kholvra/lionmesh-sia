@@ -7,6 +7,7 @@ import {
 } from "@/core/pengadaan";
 import { listGudang, listProduk, listSatuan } from "@/core/master";
 import type { RiwayatStatus } from "@/core/dokumen";
+import { cekIzin } from "@/lib/auth/permissions";
 import type { Peran } from "@/lib/auth/types";
 
 export interface PermintaanPageData {
@@ -26,10 +27,8 @@ export interface PermintaanPageData {
 
 function bolehMelihat(peran: Peran | null): boolean {
   return (
-    peran === "Gudang" ||
-    peran === "Produksi" ||
-    peran === "Purchasing" ||
-    peran === "Manajemen"
+    cekIzin(peran, "lihat_permintaan_pembelian") ||
+    cekIzin(peran, "lihat_permintaan_pembelian_sendiri")
   );
 }
 
@@ -54,8 +53,9 @@ export async function getPermintaanPageData(
   }
 
   const client = context.data.supabase;
-  const pemohonId =
-    peran === "Gudang" || peran === "Produksi" ? context.data.actorId : undefined;
+  const pemohonId = cekIzin(peran, "lihat_permintaan_pembelian_sendiri")
+    ? context.data.actorId
+    : undefined;
 
   const [daftar, produk, satuan, gudang] = await Promise.all([
     listPermintaanPembelian(client, { pemohonId }),

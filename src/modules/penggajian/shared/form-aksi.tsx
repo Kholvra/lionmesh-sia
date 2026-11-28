@@ -6,9 +6,9 @@ import type { ReactNode } from "react";
 
 import { ConfirmDialog, Form, FormField, Input } from "@/components/ui";
 import type { AksiState } from "@/modules/penggajian/karyawan/actions";
-import { Pilihan } from "@/modules/penggajian/karyawan/components/pilihan";
+import { PilihanSelect } from "@/components/ui/select";
 import { useAksiForm } from "@/modules/penggajian/karyawan/components/use-aksi-form";
-import { Notice } from "@/modules/penggajian/ui/notice";
+import { Notice } from "@/components/ui/notice";
 import { ui } from "@/modules/penggajian/ui/kelas";
 
 export type IsianForm = {
@@ -73,7 +73,7 @@ export function FormAksi({ aksi, atas, batalHref, batalLabel = "Batal", isian, j
                   <div className={f.lebar ? ui.formWide : undefined} key={f.name}>
                     <FormField error={e[f.name]} helpText={f.bantuan} label={f.label} name={f.name} required={f.wajib}>
                       {f.jenis === "pilihan" ? (
-                        <Pilihan defaultValue={f.awal} invalid={Boolean(e[f.name])} name={f.name} options={f.pilihan ?? []} />
+                        <PilihanSelect defaultValue={f.awal} invalid={Boolean(e[f.name])} name={f.name} options={f.pilihan ?? []} />
                       ) : (
                         <Input accept={f.terima} defaultValue={f.awal} placeholder={f.contoh} type={f.jenis ?? "text"} />
                       )}

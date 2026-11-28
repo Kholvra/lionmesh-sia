@@ -2,15 +2,10 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 
-import {
-  DataTable,
-  ROWS_PER_PAGE,
-  StatusBadge,
-  type DataTableColumn,
-  type TableSort,
-} from "@/components/ui";
+import { DataTable, StatusBadge, type DataTableColumn } from "@/components/ui";
+import { useTableState } from "@/components/ui/use-table-state";
 
 import { STATUS_MASTER, statusMaster } from "../format";
 import styles from "../master.module.css";
@@ -39,24 +34,6 @@ type MasterTableProps = {
   errorMessage?: string;
 };
 
-function sortRows(
-  rows: readonly MasterBaris[],
-  sort: TableSort | null,
-): MasterBaris[] {
-  if (!sort) return [...rows];
-
-  const factor = sort.direction === "ascending" ? 1 : -1;
-
-  return [...rows].sort((a, b) => {
-    const left = a[sort.columnId] ?? "";
-    const right = b[sort.columnId] ?? "";
-    if (typeof left === "number" && typeof right === "number") {
-      return (left - right) * factor;
-    }
-    return String(left).localeCompare(String(right), "id") * factor;
-  });
-}
-
 export function MasterTable({
   caption,
   emptyMessage,
@@ -67,12 +44,6 @@ export function MasterTable({
   selectedId,
 }: MasterTableProps) {
   const router = useRouter();
-  const [page, setPage] = useState(1);
-  const [sort, setSort] = useState<TableSort | null>({
-    columnId: "kode",
-    direction: "ascending",
-  });
-
   const columns = useMemo<DataTableColumn<MasterBaris>[]>(
     () => [
       {
@@ -125,11 +96,19 @@ export function MasterTable({
     [hrefBase, kolom, selectedId],
   );
 
-  const sortedRows = useMemo(() => sortRows(rows, sort), [rows, sort]);
-  const visibleRows = useMemo(
-    () => sortedRows.slice((page - 1) * ROWS_PER_PAGE, page * ROWS_PER_PAGE),
-    [page, sortedRows],
-  );
+  const {
+    onPageChange,
+    onSortChange,
+    page,
+    sort,
+    totalItems,
+    visibleRows,
+  } = useTableState(rows, {
+    columns,
+    emptyMessage,
+    initialSort: { columnId: "kode", direction: "ascending" },
+  });
+
 
   return (
     <DataTable
@@ -137,17 +116,14 @@ export function MasterTable({
       columns={columns}
       emptyMessage={emptyMessage}
       errorMessage={errorMessage}
-      onPageChange={setPage}
+      onPageChange={onPageChange}
       onRetry={() => router.refresh()}
-      onSortChange={(nextSort) => {
-        setSort(nextSort);
-        setPage(1);
-      }}
+      onSortChange={onSortChange}
       page={page}
       rowKey={(row) => row.id}
       rows={visibleRows}
       sort={sort}
-      totalItems={sortedRows.length}
+      totalItems={totalItems}
     />
   );
 }

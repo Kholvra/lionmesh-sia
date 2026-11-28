@@ -11,7 +11,8 @@ import {
   type DataTableColumn,
 } from "@/components/ui";
 import type { PurchaseOrderView } from "@/core/pengadaan";
-import { formatRupiah } from "@/lib/format/number";
+import { formatRupiah } from "@/lib/format/money";
+import { rupiahKeCents } from "@/modules/pengeluaran/pemasok/format";
 import { formatTanggalSingkat, STATUS_PO } from "../format";
 import common from "../../permintaan/permintaan.module.css";
 import { PATH_PO } from "../constants";
@@ -61,7 +62,7 @@ export function PoTable({ errorMessage, rows, selectedId }: Props) {
         header: "Total",
         align: "right",
         sortValue: (row) => Number(row.nominal ?? 0),
-        render: (row) => (row.nominal === null ? "—" : formatRupiah(row.nominal)),
+        render: (row) => (row.nominal === null ? "—" : formatRupiah(rupiahKeCents(row.nominal))),
       },
       {
         id: "status",

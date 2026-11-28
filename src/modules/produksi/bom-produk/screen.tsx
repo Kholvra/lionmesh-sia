@@ -1,43 +1,40 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
-import { ArrowIcon } from "@/components/ui/arrow-icon";
+import { useEffect, useState } from "react";
+import { EmptyState, ErrorState, LoadingState } from "@/components/ui/states";
+import { PageHeader } from "@/components/ui/page-header";
+import { TableActionLink } from "@/components/ui/table-action-link";
+import { useTableState } from "@/components/ui/use-table-state";
+import { muatBomProduk } from "@/modules/produksi/queries";
 import { useProduksiActor } from "../context/actor-context";
-import { ProduksiSubnav } from "../components/produksi-subnav";
-import { BomItem, INITIAL_BOM_LIST } from "./types";
-
-const STORAGE_KEY = "lionmesh_bom_list_v1";
+import type { BomItem } from "./types";
 
 export function BomProdukScreen() {
-  const [bomList] = useState<BomItem[]>(() => {
-    if (typeof window !== "undefined") {
-      try {
-        const saved = sessionStorage.getItem(STORAGE_KEY);
-        if (saved) {
-          const parsed = JSON.parse(saved) as BomItem[];
-          if (Array.isArray(parsed) && parsed.length > 0) {
-            return parsed;
-          }
-        }
-      } catch {
-        // Abaikan jika error membaca storage
-      }
-    }
-    return INITIAL_BOM_LIST;
-  });
-  const [searchQuery, setSearchQuery] = useState("");
+  const [bomList, setBomList] = useState<BomItem[] | null>(null);
+  const [error, setError] = useState<string | null>(null);
   const { can, activeRole } = useProduksiActor();
   const canEdit = can("create_bom_version");
 
-  const filteredBom = bomList.filter((item) => {
-    const q = searchQuery.trim().toLowerCase();
-    if (!q) return true;
-    return (
-      item.produkNama.toLowerCase().includes(q) ||
-      item.produkKode.toLowerCase().includes(q) ||
-      item.komponenNama.toLowerCase().includes(q)
-    );
+  useEffect(() => {
+    let aktif = true;
+    muatBomProduk().then((hasil) => {
+      if (!aktif) return;
+      if (hasil.ok) setBomList(hasil.data);
+      else setError(hasil.message);
+    });
+    return () => {
+      aktif = false;
+    };
+  }, []);
+
+  const table = useTableState(bomList ?? [], {
+    getFilterValues: (item: BomItem) => [
+      item.produkNama,
+      item.produkKode,
+      item.komponenNama,
+    ],
+    pageSize: bomList?.length || 1,
   });
 
   const formatKomponenPerLembar = (item: BomItem) => {
@@ -48,30 +45,31 @@ export function BomProdukScreen() {
     return `${formattedKg} kg ${item.komponenNama.toLowerCase()}`;
   };
 
+
+  if (error) {
+    return (
+      <div className="w-full text-[#172335] animate-fade-in">
+        <PageHeader title="Data produksi" variant="cycle" />
+        <ErrorState judul="Data BOM tidak dapat dimuat." teks={error} variant="compact" />
+      </div>
+    );
+  }
+
+  if (!bomList) {
+    return (
+      <div className="w-full text-[#172335] animate-fade-in">
+        <PageHeader title="Data produksi" variant="cycle" />
+        <LoadingState judul="Memuat BOM..." variant="inline" />
+      </div>
+    );
+  }
   return (
     <div className="w-full text-[#172335] animate-fade-in">
-      <ProduksiSubnav />
-
-      {/* Breadcrumb */}
-      <nav className="text-xs font-medium text-[#526174]">
-        <Link
-          href="/produksi"
-          className="text-[#C96A00] underline decoration-[#C96A00]/60 underline-offset-2 hover:text-[#E88A06]"
-        >
-          Siklus Produksi
-        </Link>
-        <span className="mx-1.5">/</span>
-        <span>PR-001 Mengelola BOM berversi</span>
-      </nav>
-
-      {/* Page Heading */}
-      <h1 className="mt-2 text-[28px] leading-tight font-bold tracking-tight text-[#172335]">
-        Data produksi
-      </h1>
-      <p className="mt-1.5 text-[13px] text-[#526174]">
-        Resep bahan per produk. Setiap perubahan dibuat sebagai versi baru; versi lama tetap
-        tersimpan dan perintah produksi memakai versi yang dipilih saat dibuat.
-      </p>
+      <PageHeader
+        description="Resep bahan per produk. Setiap perubahan dibuat sebagai versi baru; versi lama tetap tersimpan dan perintah produksi memakai versi yang dipilih saat dibuat."
+        title="Data produksi"
+        variant="cycle"
+      />
 
       {/* Primary Action Button */}
       <div className="mt-5">
@@ -93,8 +91,8 @@ export function BomProdukScreen() {
         <div>
           <input
             type="text"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
+            value={table.filterText}
+            onChange={(e) => table.setFilterText(e.target.value)}
             placeholder="Cari kode atau nama"
             className="w-full max-w-[300px] rounded-[8px] border border-[#E5E7EB] bg-white px-3.5 py-2 text-[13px] text-[#172335] placeholder-[#94A3B8] transition outline-none focus:border-[#E88A06] focus:ring-2 focus:ring-[#E88A06]/15"
           />
@@ -117,7 +115,7 @@ export function BomProdukScreen() {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {filteredBom.map((item) => (
+              {table.visibleRows.map((item) => (
                 <tr key={item.id} className="transition-colors hover:bg-slate-50/70">
                   <td className="px-[12px] py-4">
                     <p className="text-[13px] leading-none font-semibold text-[#172335]">
@@ -145,18 +143,15 @@ export function BomProdukScreen() {
                   </td>
                   <td className="px-[12px] py-4 text-right">
                     {canEdit ? (
-                      <Link
+                      <TableActionLink
+                        className="flex-col items-start text-left leading-tight"
                         href={`/produksi/bom-produk/versi-baru?kode=${encodeURIComponent(
                           item.produkKode
                         )}`}
-                        className="group inline-flex flex-col items-start text-left text-[12px] leading-tight font-semibold text-[#C96A00] transition hover:text-[#E88A06] hover:underline"
                       >
                         <span>Buat versi</span>
-                        <span className="inline-flex items-center gap-1">
-                          <span>baru</span>
-                          <ArrowIcon className="transition-transform duration-150 group-hover:translate-x-0.5" />
-                        </span>
-                      </Link>
+                        <span>baru</span>
+                      </TableActionLink>
                     ) : (
                       <span
                         className="inline-flex items-center rounded-[6px] bg-slate-100 px-2 py-1 text-[11px] font-medium text-slate-500"
@@ -169,13 +164,15 @@ export function BomProdukScreen() {
                 </tr>
               ))}
 
-              {filteredBom.length === 0 && (
+              {table.isEmpty && (
                 <tr>
-                  <td
-                    colSpan={6}
-                    className="px-[12px] py-8 text-center text-[13px] text-[#526174]"
-                  >
-                    Tidak ada produk BOM yang cocok dengan pencarian “{searchQuery}”.
+                  <td colSpan={6}>
+                  <div className="py-8 text-center">
+                    <EmptyState
+                      judul={`Tidak ada produk BOM yang cocok dengan pencarian “${table.filterText}”.`}
+                      variant="inline"
+                    />
+                  </div>
                   </td>
                 </tr>
               )}

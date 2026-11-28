@@ -1,17 +1,20 @@
 /**
- * Formatting helpers shared by reports. They take strings or bigint cents so a
- * value never passes through a floating-point number.
+ * Canonical formatter for whole-rupiah cents. Callers holding decimal rupiah
+ * must convert to cents explicitly before passing a value here.
  */
+import { kelompokkanRibuan } from "./number.ts";
 
-function kelompokkanRibuan(digits: string): string {
-  return digits.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
-}
+const POLA_CENTS = /^-?\d+$/;
 
 export function formatRupiah(cents: bigint | string): string {
+  if (typeof cents === "string" && !POLA_CENTS.test(cents)) {
+    throw new Error(`Nilai rupiah tidak valid: ${cents}`);
+  }
   const nilai = typeof cents === "bigint" ? cents : BigInt(cents);
+  if (nilai % BigInt(100) !== BigInt(0)) {
+    throw new Error(`Nominal harus bulat tanpa sen: ${cents}`);
+  }
   const negatif = nilai < BigInt(0);
-  const absolut = negatif ? -nilai : nilai;
-  const utuh = kelompokkanRibuan((absolut / BigInt(100)).toString());
-  const pecahan = (absolut % BigInt(100)).toString().padStart(2, "0");
-  return `${negatif ? "-" : ""}Rp ${utuh},${pecahan}`;
+  const utuh = kelompokkanRibuan((negatif ? -nilai : nilai) / BigInt(100));
+  return `${negatif ? "-" : ""}Rp ${utuh},00`;
 }

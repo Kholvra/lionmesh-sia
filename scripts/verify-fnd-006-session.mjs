@@ -1,9 +1,15 @@
 #!/usr/bin/env node
 // Exercises the FND-006 session boundary against a disposable local Supabase project.
 
-import { randomBytes, randomUUID } from "node:crypto";
-import { createServerClient } from "@supabase/ssr";
 import pg from "pg";
+import { buatLaporan } from "./lib/harness.mjs";
+import { validasiLokal } from "./lib/local-host.mjs";
+import { masukSesi } from "./lib/session-login.mjs";
+
+
+
+// The app boundary validates ISO-8601 timestamps, so these fixtures keep the
+// numeric offset equivalent to the named Asia/Jakarta zone (UTC+7, no DST).
 
 const api = process.env.FND006_TEST_API_URL;
 const dbUrl = process.env.FND006_TEST_DB_URL;
@@ -25,10 +31,7 @@ if (
 }
 
 for (const value of [api, dbUrl, app]) {
-  const url = new URL(value);
-  if (!["localhost", "127.0.0.1", "[::1]"].includes(url.hostname)) {
-    throw new Error("Only local endpoints are permitted.");
-  }
+  validasiLokal(value, "Only local endpoints are permitted.");
 }
 for (const value of [api, dbUrl]) {
   const port = new URL(value).port;
@@ -37,35 +40,17 @@ for (const value of [api, dbUrl]) {
   }
 }
 
+
 const db = new pg.Client({ connectionString: dbUrl });
 await db.connect();
 const sourceType = "UJI_SESI_FND_006";
-const checks = [];
-let failed = false;
+const laporan = buatLaporan({ gaya: "polos" });
+const { status: check } = laporan;
 
-function check(name, condition, detail = "") {
-  checks.push({ name, condition, detail });
-  console.log(`${condition ? "PASS" : "FAIL"} ${name}${detail ? ` — ${detail}` : ""}`);
-  if (!condition) failed = true;
-}
 
-async function login(email) {
-  const jar = new Map();
-  const client = createServerClient(api, anon, {
-    cookies: {
-      getAll: () => Array.from(jar, ([name, value]) => ({ name, value })),
-      setAll: (cookies) =>
-        cookies.forEach(({ name, value }) => jar.set(name, value)),
-    },
-  });
-  const { error } = await client.auth.signInWithPassword({ email, password });
-  if (error) throw error;
+const login = async (email) =>
+  masukSesi({ url: api, key: anon, email, password });
 
-  return {
-    client,
-    cookie: Array.from(jar, ([name, value]) => `${name}=${value}`).join("; "),
-  };
-}
 
 async function call(operation, payload, cookie = "") {
   const response = await fetch(`${app}/fnd006-security-probe`, {
@@ -246,4 +231,4 @@ try {
   await db.end();
 }
 
-if (failed) process.exitCode = 1;
+if (laporan.jumlahGagal > 0) process.exitCode = 1;

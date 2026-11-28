@@ -1,3 +1,4 @@
+import { Notice } from "@/components/ui/notice";
 import type { RiwayatStatusMaster } from "@/core/master/types";
 import { formatTanggalWaktu } from "@/lib/format/date";
 
@@ -20,9 +21,9 @@ export function RiwayatMaster({ errorMessage, riwayat }: RiwayatMasterProps) {
       </div>
 
       {errorMessage ? (
-        <p className={styles.messageError} role="alert">
+        <Notice className={styles.messageError} tone="danger">
           Riwayat status gagal dimuat: {errorMessage}
-        </p>
+        </Notice>
       ) : riwayat.length === 0 ? (
         <p className={styles.emptyState}>Belum ada riwayat status.</p>
       ) : (

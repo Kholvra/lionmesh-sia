@@ -16,8 +16,6 @@ const waktuFormatter = new Intl.DateTimeFormat("id-ID", {
   timeZone: ZONA_WAKTU,
 });
 
-const rupiahFormatter = new Intl.NumberFormat("id-ID");
-
 /** `2026-11-02` → `02 Nov 2026`. Dates are calendar days, so read them as UTC. */
 export function formatTanggal(isoDate: string): string {
   return tanggalFormatter.format(new Date(`${isoDate}T00:00:00Z`));
@@ -26,10 +24,6 @@ export function formatTanggal(isoDate: string): string {
 /** ISO timestamp → `02 Nov 2026, 14.30` in Asia/Jakarta. */
 export function formatWaktu(isoTimestamp: string): string {
   return waktuFormatter.format(new Date(isoTimestamp));
-}
-
-export function formatRupiah(nominal: number): string {
-  return `Rp ${rupiahFormatter.format(nominal)}`;
 }
 
 /** Today's calendar date in Asia/Jakarta as `YYYY-MM-DD`. */

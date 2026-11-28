@@ -11,7 +11,7 @@ import { LABEL_KEHADIRAN, STATUS_ENTRI } from "@/modules/penggajian/presensi/sta
 import { returnRekap } from "@/modules/penggajian/rekap/actions";
 import { aksesRekap, getRekap, getRekapKaryawan } from "@/modules/penggajian/rekap/queries";
 import type { RekapKaryawan } from "@/modules/penggajian/rekap/queries";
-import { PageHeader } from "@/modules/penggajian/ui/page-header";
+import { PageHeader } from "@/components/ui/page-header";
 import { ui } from "@/modules/penggajian/ui/kelas";
 import { KartuBaca } from "@/modules/penggajian/shared/bidang-baca";
 import { FormAksi } from "@/modules/penggajian/shared/form-aksi";
@@ -61,7 +61,7 @@ function TabelPerTanggal({ k }: { k: RekapKaryawan }) {
 async function DetailKonten({ karyawanId, periodeId }: { karyawanId: string; periodeId?: string }) {
   const sesi = await sesiPenggajian();
   const akses = await aksesRekap(sesi);
-  const judul = <PageHeader item={ITEM} title="Detail rekap" />;
+  const judul = <PageHeader breadcrumb={[{ label: "Siklus Penggajian", accent: true }, ITEM]} title="Detail rekap" variant="page" />;
   if (!akses.bolehMembaca) return <>{judul}<TidakBerwenang pesan={TOLAK} /></>;
   const periode = await getPeriodeDipilih(periodeId);
   const data = periode ? await getRekapKaryawan(sesi, periode, karyawanId) : null;
@@ -75,7 +75,8 @@ async function DetailKonten({ karyawanId, periodeId }: { karyawanId: string; per
       <PageHeader
         back={{ href: kembali, label: akses.hr ? "Rekap presensi & lembur" : "Kembali ke validasi rekap" }}
         description={`${k.nik} · ${departemen.nama} · Periode ${rentangPeriode(periode)}`}
-        item={akses.hr ? "GJ-003 Merekap presensi dan lembur" : ITEM}
+        breadcrumb={[{ label: "Siklus Penggajian", accent: true }, akses.hr ? "GJ-003 Merekap presensi dan lembur" : ITEM]}
+        variant="page"
         title={`Detail rekap / ${k.nama}`}
       />
       <div className={ui.stack}>
@@ -117,7 +118,7 @@ async function DetailKonten({ karyawanId, periodeId }: { karyawanId: string; per
 
 export function RekapKaryawanScreen({ karyawanId, periodeId }: { karyawanId: string; periodeId?: string }) {
   return (
-    <Suspense fallback={<PageHeader item={ITEM} title="Detail rekap" />}>
+    <Suspense fallback={<PageHeader breadcrumb={[{ label: "Siklus Penggajian", accent: true }, ITEM]} title="Detail rekap" variant="page" />}>
       <DetailKonten karyawanId={karyawanId} periodeId={periodeId} />
     </Suspense>
   );
@@ -149,7 +150,7 @@ async function KembalikanKonten({ departemenId, periodeId }: { departemenId?: st
 export function KembalikanRekapScreen({ departemenId, periodeId }: { departemenId?: string; periodeId?: string }) {
   return (
     <>
-      <PageHeader description="Alasan wajib. HR memperbaiki data lalu menyimpan rekap ulang." item={ITEM} title="Kembalikan rekap ke HR" />
+      <PageHeader breadcrumb={[{ label: "Siklus Penggajian", accent: true }, ITEM]} description="Alasan wajib. HR memperbaiki data lalu menyimpan rekap ulang." title="Kembalikan rekap ke HR" variant="page" />
       <div className={ui.stack}>
         <Suspense fallback={null}>
           <KembalikanKonten departemenId={departemenId} periodeId={periodeId} />

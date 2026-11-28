@@ -1,4 +1,5 @@
-import { formatRupiah } from "@/lib/format/number";
+import { formatRupiah } from "@/lib/format/money";
+import { rupiahKeCents } from "@/modules/pengeluaran/pemasok/format";
 import common from "../../permintaan/permintaan.module.css";
 import type { Perbandingan } from "../perbandingan";
 import styles from "../pemilihan.module.css";
@@ -65,7 +66,7 @@ export function PerbandinganTable({
                     className={termurah ? styles.termurahCell : undefined}
                     key={item.id}
                   >
-                    {harga === undefined ? "—" : formatRupiah(harga)}
+                    {harga === undefined ? "—" : formatRupiah(rupiahKeCents(harga))}
                     {termurah ? <span className={styles.mark}>terendah</span> : null}
                   </td>
                 );
@@ -85,7 +86,7 @@ export function PerbandinganTable({
                   className={total?.termurah ? styles.termurahCell : undefined}
                   key={item.id}
                 >
-                  {total?.total ? formatRupiah(total.total) : "Belum lengkap"}
+                  {total?.total ? formatRupiah(rupiahKeCents(total.total)) : "Belum lengkap"}
                   {total?.termurah ? (
                     <span className={styles.mark}>terendah</span>
                   ) : null}

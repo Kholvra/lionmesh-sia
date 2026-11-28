@@ -4,7 +4,7 @@ import type { Peran } from "@/lib/auth";
 import { approvePayroll, checkPayroll } from "@/modules/penggajian/payroll/persetujuan-actions";
 import type { DraftView } from "@/modules/penggajian/payroll/queries";
 import { terkunci } from "@/modules/penggajian/payroll/status";
-import { Notice } from "@/modules/penggajian/ui/notice";
+import { Notice } from "@/components/ui/notice";
 import { ui } from "@/modules/penggajian/ui/kelas";
 import { FormAksi } from "@/modules/penggajian/shared/form-aksi";
 

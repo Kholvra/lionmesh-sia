@@ -1,6 +1,6 @@
 import { StatusBadge } from "@/components/ui";
 import type { StatusOption } from "@/components/ui";
-import { formatRupiah } from "@/modules/penggajian/karyawan/format";
+import { formatRupiah } from "@/lib/format/money";
 import { rentangPeriode, sudahTervalidasi } from "@/modules/penggajian/periode/rules";
 import type { PeriodeGaji } from "@/modules/penggajian/periode/types";
 import type { DraftView } from "@/modules/penggajian/payroll/queries";
@@ -20,9 +20,9 @@ export function DaftarPemeriksaan({ draft, periode, profileId }: { draft: DraftV
   const r = draft.ringkasan;
   const baris: [string, string, boolean][] = [
     ["Data kerja", sudahTervalidasi(periode.status) ? "Presensi dan lembur tervalidasi" : `Periode berstatus ${periode.status}`, sudahTervalidasi(periode.status)],
-    ["Total bruto", formatRupiah(r.totalBruto), true],
-    ["Total potongan", formatRupiah(r.totalPotongan), true],
-    ["Total neto", `${formatRupiah(r.totalNeto)} (bruto − potongan)`, r.totalBruto - r.totalPotongan === r.totalNeto],
+    ["Total bruto", formatRupiah(BigInt(r.totalBruto) * BigInt(100)), true],
+    ["Total potongan", formatRupiah(BigInt(r.totalPotongan) * BigInt(100)), true],
+    ["Total neto", `${formatRupiah(BigInt(r.totalNeto) * BigInt(100))} (bruto − potongan)`, r.totalBruto - r.totalPotongan === r.totalNeto],
     ["Karyawan tanpa angka", draft.ditandai.length ? draft.ditandai.map((d) => d.nama).join(", ") : "Tidak ada", draft.ditandai.length === 0],
     ["Pemisahan tugas", `${draft.dihitungOleh} menyusun, Accounting memeriksa`, draft.dihitungOlehProfileId !== profileId],
   ];

@@ -1,51 +1,28 @@
 /* The shell already pads the page and owns the height (FND-009); extra padding
    here would start content at x=284 instead of x=252. */
 .page {
-  width: 100%;
-  max-width: var(--layout-content-max);
-  margin-inline: auto;
+  composes: ui-page from global;
 }
 
 .header {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: var(--space-6);
-  margin-bottom: var(--space-8);
-}
-
-.breadcrumb {
-  margin: 0 0 var(--space-2);
-  color: var(--text-muted);
-  font-size: var(--font-size-caption);
-  line-height: var(--line-height-caption);
+  composes: ui-page-header ui-page-header-spaced from global;
 }
 
 .title {
-  margin: 0;
-  color: var(--text-primary);
-  font-size: var(--font-size-title);
-  font-weight: 700;
-  line-height: var(--line-height-title);
+  composes: ui-page-title from global;
 }
 
 .description {
-  max-width: var(--dialog-form-width);
-  margin: var(--space-2) 0 0;
-  color: var(--text-secondary);
+  composes: ui-page-description ui-page-description-gap ui-page-description-bounded from global;
 }
 
 .layout {
-  display: grid;
-  grid-template-columns: repeat(12, minmax(0, 1fr));
-  align-items: start;
-  gap: var(--space-6);
+  composes: ui-layout-12 from global;
 }
 
 .panel,
 .listPanel {
-  min-width: 0;
-  grid-column: span 6;
+  composes: ui-panel-half from global;
 }
 
 /* Produk: the list carries six columns, so it takes the wider side (LAYOUTS §2). */
@@ -58,34 +35,19 @@
 }
 
 .panelCard {
-  padding: var(--space-5);
-  border: var(--border-width-default) solid var(--border-subtle);
-  border-radius: var(--radius-lg);
-  background: var(--bg-surface);
-  box-shadow: var(--shadow-sm);
+  composes: ui-card from global;
 }
 
 .panelHeader {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: var(--space-4);
-  margin-bottom: var(--space-4);
+  composes: ui-panel-header from global;
 }
 
 .panelTitle {
-  margin: 0;
-  color: var(--text-primary);
-  font-size: var(--font-size-section);
-  font-weight: 600;
-  line-height: var(--line-height-section);
+  composes: ui-section-title from global;
 }
 
 .panelMeta {
-  margin: var(--space-1) 0 0;
-  color: var(--text-muted);
-  font-size: var(--font-size-label);
-  line-height: var(--line-height-label);
+  composes: ui-panel-meta from global;
 }
 
 .panelAction {
@@ -97,75 +59,25 @@
 }
 
 .sectionHeader {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: var(--space-4);
-  margin-bottom: var(--space-4);
+  composes: ui-panel-header from global;
 }
 
 .primaryButton,
 .secondaryButton,
 .dangerButton {
-  display: inline-flex;
-  min-height: var(--button-lg-height);
-  align-items: center;
-  justify-content: center;
-  gap: var(--space-2);
-  padding-inline: var(--space-4);
-  border-radius: var(--radius-md);
-  cursor: pointer;
-  font-size: var(--font-size-body);
-  font-weight: 600;
-  line-height: var(--line-height-body);
-  text-decoration: none;
-  transition:
-    background-color var(--motion-fast) ease-out,
-    border-color var(--motion-fast) ease-out;
+  composes: ui-button ui-button-transition ui-focus-ring from global;
 }
 
 .primaryButton {
-  border: 0;
-  background: var(--brand-500);
-  color: var(--text-on-brand);
-}
-
-.primaryButton:hover:not(:disabled) {
-  background: var(--brand-600);
+  composes: ui-button-primary from global;
 }
 
 .secondaryButton {
-  border: var(--border-width-default) solid var(--border-input);
-  background: var(--bg-surface);
-  color: var(--text-primary);
-}
-
-.secondaryButton:hover:not(:disabled) {
-  background: var(--bg-subtle);
+  composes: ui-button-secondary from global;
 }
 
 .dangerButton {
-  border: var(--border-width-default) solid var(--status-danger-bg);
-  background: var(--bg-surface);
-  color: var(--status-danger-text);
-}
-
-.dangerButton:hover:not(:disabled) {
-  background: var(--status-danger-bg);
-}
-
-.primaryButton:disabled,
-.secondaryButton:disabled,
-.dangerButton:disabled {
-  cursor: wait;
-  opacity: 0.7;
-}
-
-.primaryButton:focus-visible,
-.secondaryButton:focus-visible,
-.dangerButton:focus-visible {
-  outline: var(--focus-ring-width) solid var(--border-focus);
-  outline-offset: var(--focus-ring-offset);
+  composes: ui-button-danger from global;
 }
 
 .buttonRow {
@@ -194,14 +106,11 @@
 }
 
 .form {
-  display: grid;
-  gap: var(--space-4);
+  composes: ui-form from global;
 }
 
 .formGrid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: var(--space-4);
+  composes: ui-form-grid from global;
 }
 
 .formGridTiga {
@@ -212,18 +121,15 @@
 }
 
 .fieldFull {
-  grid-column: 1 / -1;
+  composes: ui-field-full from global;
 }
 
 .formActions {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: var(--space-3);
-  padding-top: var(--space-2);
+  composes: ui-form-actions from global;
 }
 
 .select {
+  composes: ui-focus-ring from global;
   width: 100%;
   min-height: var(--control-height);
   padding-inline: var(--space-3);
@@ -234,95 +140,49 @@
   font: inherit;
 }
 
-.select:focus-visible {
-  outline: var(--focus-ring-width) solid var(--border-focus);
-  outline-offset: var(--focus-ring-offset);
-}
-
 .select[aria-invalid="true"] {
   border-color: var(--status-danger-text);
 }
 
-.messageSuccess,
-.messageError {
-  margin: 0;
-  padding: var(--space-3) var(--space-4);
-  border: var(--border-width-default) solid;
-  border-radius: var(--radius-md);
-  font-size: var(--font-size-body-sm);
-  line-height: var(--line-height-body-sm);
-}
-
 .messageSuccess {
-  border-color: var(--status-success-bg);
-  background: var(--status-success-bg);
-  color: var(--status-success-text);
+  composes: ui-message ui-message-success from global;
 }
 
 .messageError {
-  border-color: var(--status-danger-bg);
-  background: var(--status-danger-bg);
-  color: var(--status-danger-text);
+  composes: ui-message ui-message-error from global;
 }
 
 .detailHeader {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: var(--space-4);
-  margin-bottom: var(--space-5);
+  composes: ui-detail-header from global;
 }
 
 .detailName {
-  margin: 0;
+  composes: ui-section-title from global;
   overflow-wrap: anywhere;
-  color: var(--text-primary);
-  font-size: var(--font-size-section);
-  font-weight: 600;
-  line-height: var(--line-height-section);
 }
 
 .detailSubtitle {
-  margin: var(--space-1) 0 0;
-  color: var(--text-muted);
-  font-size: var(--font-size-label);
-  line-height: var(--line-height-label);
+  composes: ui-panel-meta from global;
 }
 
 .details {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: var(--space-4);
-  margin: 0;
+  composes: ui-details from global;
 }
 
 .detailItem {
-  min-width: 0;
+  composes: ui-detail-item from global;
 }
 
 .detailLabel {
-  color: var(--text-muted);
-  font-size: var(--font-size-label);
-  font-weight: 600;
-  line-height: var(--line-height-label);
+  composes: ui-detail-label from global;
 }
 
 .detailValue {
-  margin: var(--space-1) 0 0;
-  overflow-wrap: anywhere;
-  color: var(--text-primary);
-  font-size: var(--font-size-body-sm);
-  line-height: var(--line-height-body-sm);
-}
-
-.detailValueNumeric {
-  font-variant-numeric: tabular-nums;
+  composes: ui-detail-value from global;
 }
 
 .sectionDivider {
-  margin: var(--space-6) 0 var(--space-4);
-  border: 0;
-  border-top: var(--border-width-default) solid var(--border-subtle);
+  composes: ui-section-divider from global;
 }
 
 .historyHeader {
@@ -334,93 +194,47 @@
 }
 
 .historyTitle {
-  margin: 0;
-  color: var(--text-primary);
-  font-size: var(--font-size-body);
-  font-weight: 600;
-  line-height: var(--line-height-body);
+  composes: ui-body-title from global;
 }
 
 .historyList {
-  display: grid;
-  gap: var(--space-3);
-  margin: 0;
-  padding: 0;
-  list-style: none;
+  composes: ui-clean-list from global;
 }
 
 .historyItem {
-  display: grid;
-  gap: var(--space-1);
-  padding: var(--space-3);
-  border: var(--border-width-default) solid var(--border-subtle);
-  border-radius: var(--radius-md);
-  background: var(--bg-subtle);
+  composes: ui-history-item from global;
 }
 
 .historyAction {
-  color: var(--text-primary);
-  font-size: var(--font-size-body-sm);
-  font-weight: 600;
-  line-height: var(--line-height-body-sm);
+  composes: ui-history-action from global;
 }
 
 .historyMeta {
-  color: var(--text-muted);
-  font-size: var(--font-size-label);
-  line-height: var(--line-height-label);
+  composes: ui-meta-label from global;
 }
 
 .emptyState {
-  margin: 0;
-  padding: var(--space-8) var(--space-4);
-  border: var(--border-width-default) dashed var(--border-strong);
-  border-radius: var(--radius-lg);
-  background: var(--bg-subtle);
-  color: var(--text-secondary);
-  font-size: var(--font-size-body-sm);
-  line-height: var(--line-height-body-sm);
-  text-align: center;
+  composes: ui-empty-state from global;
 }
 
 .tableLink {
-  color: var(--text-primary);
-  font-weight: 600;
-  text-decoration: none;
-}
-
-.tableLink:hover {
-  color: var(--brand-700);
-  text-decoration: underline;
-}
-
-.tableLink:focus-visible {
-  outline: var(--focus-ring-width) solid var(--border-focus);
-  outline-offset: var(--focus-ring-offset);
+  composes: ui-table-link ui-focus-ring from global;
 }
 
 .tableLinkActive {
-  color: var(--brand-700);
+  composes: ui-table-link-active from global;
 }
 
 .statusCell {
-  display: flex;
-  align-items: center;
+  composes: ui-status-cell from global;
 }
 
 .numericCell {
-  font-variant-numeric: tabular-nums;
-}
-
-.hubList {
-  display: grid;
-  gap: var(--space-3);
-  margin: 0;
-  padding: 0;
-  list-style: none;
+  composes: ui-tabular from global;
 }
 
 .hubLink {
+  composes: ui-focus-ring from global;
   display: flex;
   align-items: baseline;
   justify-content: space-between;
@@ -437,60 +251,28 @@
   background: var(--bg-subtle);
 }
 
-.hubLink:focus-visible {
-  outline: var(--focus-ring-width) solid var(--border-focus);
-  outline-offset: var(--focus-ring-offset);
-}
-
-.hubLinkTitle {
-  font-weight: 600;
-}
-
-.hubLinkMeta {
-  color: var(--text-muted);
-  font-size: var(--font-size-label);
-  line-height: var(--line-height-label);
-}
-
 .loadingPage,
 .errorPage {
-  display: grid;
-  min-height: 100vh;
-  place-items: center;
-  padding: var(--space-8);
+  composes: ui-state-page from global;
 }
 
 .loadingCard,
 .errorCard {
-  width: 100%;
-  max-width: var(--dialog-form-width);
-  padding: var(--space-6);
-  border: var(--border-width-default) solid var(--border-subtle);
-  border-radius: var(--radius-lg);
-  background: var(--bg-surface);
-  box-shadow: var(--shadow-sm);
+  composes: ui-state-card from global;
 }
 
 .loadingTitle,
 .errorTitle {
-  margin: 0;
-  color: var(--text-primary);
-  font-size: var(--font-size-section);
-  font-weight: 600;
-  line-height: var(--line-height-section);
+  composes: ui-section-title from global;
 }
 
 .loadingText,
 .errorText {
-  margin: var(--space-2) 0 var(--space-5);
-  color: var(--text-secondary);
-  font-size: var(--font-size-body-sm);
-  line-height: var(--line-height-body-sm);
+  composes: ui-state-text from global;
 }
 
 .errorActions {
-  display: flex;
-  gap: var(--space-3);
+  composes: ui-error-actions from global;
 }
 
 @media (prefers-reduced-motion: reduce) {

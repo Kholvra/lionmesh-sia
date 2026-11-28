@@ -3,32 +3,28 @@ import type { ReactNode } from "react";
 import {
   hitungKartuPersediaan,
   hitungSaldoKartu,
-  hitungTotalNilaiMutasiCents,
   listGudangRingkas,
   listMutasiKartu,
-  listMutasiPeriode,
   listProdukRingkas,
-  rekonsiliasiPersediaan,
   uangMentahKeCents,
 } from "@/core/inventory";
-import { listBarisJurnal, parsePeriode, totalJurnalPersediaanCents } from "@/core/ledger";
+import { muatRekonsiliasiPersediaan } from "@/core/inventory/rekonsiliasi";
+import { parsePeriode } from "@/core/ledger";
 import type { Profile } from "@/lib/auth/types";
 import { formatTanggal } from "@/lib/format/date";
 import { formatRupiah } from "@/lib/format/money";
 import { createClient } from "@/lib/supabase/server";
+import { Notice } from "@/components/ui/notice";
+import { PageHeader } from "@/components/ui/page-header";
+import { Ringkasan } from "@/components/ui/metric-card";
+import { EmptyState, ErrorState } from "@/components/ui/states";
 import { LaporanFilter } from "../components/laporan-filter";
-import {
-  LaporanShell,
-  Pesan,
-  PilihPeriode,
-  Ringkasan,
-  SectionHeader,
-} from "../components/laporan-shell";
+import { LaporanShell } from "../components/laporan-shell";
 import { ReportTable, type ReportRow } from "../components/report-table";
 import {
-  GagalMemuat,
   muatOpsiPeriode,
   parameterTunggal,
+  TEKS_PILIH_PERIODE,
   type LaporanParams,
 } from "./shared";
 
@@ -59,9 +55,9 @@ export async function KartuPersediaanScreen({ profil, params }: Props) {
     </LaporanShell>
   );
 
-  if (!opsi.ok) return bingkai(<GagalMemuat pesan={opsi.message} />);
-  if (!produk.ok) return bingkai(<GagalMemuat pesan={produk.message} />);
-  if (!gudang.ok) return bingkai(<GagalMemuat pesan={gudang.message} />);
+  if (!opsi.ok) return bingkai(<ErrorState judul="Laporan gagal dimuat" teks={opsi.message} variant="inline" />);
+  if (!produk.ok) return bingkai(<ErrorState judul="Laporan gagal dimuat" teks={produk.message} variant="inline" />);
+  if (!gudang.ok) return bingkai(<ErrorState judul="Laporan gagal dimuat" teks={gudang.message} variant="inline" />);
 
   const periode = parsePeriode(params.periode);
   if (!periode.ok) {
@@ -71,7 +67,7 @@ export async function KartuPersediaanScreen({ profil, params }: Props) {
           action="/laporan/kartu-persediaan"
           periodeOptions={opsi.data}
         />
-        <PilihPeriode pesan={periode.message} />
+        <EmptyState judul="Pilih periode laporan" teks={periode.message ?? TEKS_PILIH_PERIODE} variant="compact" />
       </>,
     );
   }
@@ -84,10 +80,10 @@ export async function KartuPersediaanScreen({ profil, params }: Props) {
           periodeOptions={opsi.data}
           periodeValue={periode.data.kunci}
         />
-        <Pesan>
+        <Notice variant="bordered">
           Master produk atau gudang belum tersedia. Kartu persediaan tidak dapat
           disusun.
-        </Pesan>
+        </Notice>
       </>,
       periode.data.kunci,
     );
@@ -116,47 +112,31 @@ export async function KartuPersediaanScreen({ profil, params }: Props) {
 
   if (!mutasiPeriode.ok) {
     return bingkai(
-      <GagalMemuat pesan={mutasiPeriode.message} />,
+      <ErrorState judul="Laporan gagal dimuat" teks={mutasiPeriode.message} variant="inline" />,
       periode.data.kunci,
     );
   }
   if (!mutasiSebelum.ok) {
     return bingkai(
-      <GagalMemuat pesan={mutasiSebelum.message} />,
+      <ErrorState judul="Laporan gagal dimuat" teks={mutasiSebelum.message} variant="inline" />,
       periode.data.kunci,
     );
   }
   const saldoAwal = hitungSaldoKartu(mutasiSebelum.data);
   const laporan = hitungKartuPersediaan(mutasiPeriode.data, saldoAwal);
 
-  const [semuaMutasi, semuaBarisJurnal] = await Promise.all([
-    listMutasiPeriode(supabase, {
-      mulai: periode.data.mulai,
-      selesai: periode.data.selesai,
-    }),
-    listBarisJurnal(supabase, {
-      mulai: periode.data.mulai,
-      selesai: periode.data.selesai,
-    }),
-  ]);
+  const rekonsiliasiData = await muatRekonsiliasiPersediaan(supabase, {
+    mulai: periode.data.mulai,
+    selesai: periode.data.selesai,
+  });
 
-  if (!semuaMutasi.ok) {
+  if (!rekonsiliasiData.ok) {
     return bingkai(
-      <GagalMemuat pesan={semuaMutasi.message} />,
+      <ErrorState judul="Laporan gagal dimuat" teks={rekonsiliasiData.message} variant="inline" />,
       periode.data.kunci,
     );
   }
-  if (!semuaBarisJurnal.ok) {
-    return bingkai(
-      <GagalMemuat pesan={semuaBarisJurnal.message} />,
-      periode.data.kunci,
-    );
-  }
-
-  const rekonsiliasi = rekonsiliasiPersediaan(
-    hitungTotalNilaiMutasiCents(semuaMutasi.data),
-    totalJurnalPersediaanCents(semuaBarisJurnal.data),
-  );
+  const rekonsiliasi = rekonsiliasiData.data;
 
   const rows: ReportRow[] = laporan.baris.map((item) => ({
     key: item.id,
@@ -221,9 +201,10 @@ export async function KartuPersediaanScreen({ profil, params }: Props) {
       />
 
       <section>
-        <SectionHeader
-          judul={`Kartu ${produkDipilih.kode} · ${gudangDipilih.nama}`}
-          meta={`${periode.data.label} · ${laporan.baris.length} mutasi · dibaca dari buku stok core`}
+        <PageHeader
+          title={`Kartu ${produkDipilih.kode} · ${gudangDipilih.nama}`}
+          description={`${periode.data.label} · ${laporan.baris.length} mutasi · dibaca dari buku stok core`}
+          variant="section"
         />
         <ReportTable
           caption={`Kartu persediaan ${produkDipilih.kode} ${gudangDipilih.nama}`}
@@ -243,9 +224,10 @@ export async function KartuPersediaanScreen({ profil, params }: Props) {
         />
       </section>
       <section>
-        <SectionHeader
-          judul="Rekonsiliasi dengan buku besar"
-          meta={`${periode.data.label} · agregat seluruh produk dan gudang`}
+        <PageHeader
+          title="Rekonsiliasi dengan buku besar"
+          description={`${periode.data.label} · agregat seluruh produk dan gudang`}
+          variant="section"
         />
         <Ringkasan
           items={[

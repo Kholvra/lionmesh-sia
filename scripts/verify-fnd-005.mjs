@@ -2,38 +2,31 @@
 // Skrip verifikasi FND-005 — membuktikan AC-01 sampai AC-15 dan mencatat bukti.
 
 import { Client } from "pg";
+import { assertGagal, buatLaporan } from "./lib/harness.mjs";
+import { validasiLokal } from "./lib/local-host.mjs";
 
 const DB_URL = process.env.SUPABASE_DB_URL;
 if (!DB_URL) {
   throw new Error("SUPABASE_DB_URL must point to an isolated fnd005_test_* database.");
 }
-const target = new URL(DB_URL);
-if (!["localhost", "127.0.0.1", "[::1]"].includes(target.hostname) || !target.pathname.slice(1).startsWith("fnd005_test_")) {
+validasiLokal(DB_URL, "FND-005 verification requires an isolated local fnd005_test_* database.");
+if (!new URL(DB_URL).pathname.slice(1).startsWith("fnd005_test_")) {
   throw new Error("FND-005 verification requires an isolated local fnd005_test_* database.");
 }
+
 
 const client = new Client({ connectionString: DB_URL });
 await client.connect();
 
-const results = [];
+const laporan = buatLaporan({
+  gaya: "kurung",
+  sertakanDetailPass: false,
+  stderrSaatGagal: true,
+});
+const assert = assertGagal;
+const recordResult = (id, name, run) =>
+  laporan.record(id, name, run, { lempar: true });
 
-function assert(condition, message) {
-  if (!condition) {
-    throw new Error(`FAIL: ${message}`);
-  }
-}
-
-async function recordResult(id, name, runFn) {
-  try {
-    const detail = await runFn();
-    results.push({ id, name, status: "PASS", detail });
-    console.log(`[PASS] ${id}: ${name}`);
-  } catch (err) {
-    results.push({ id, name, status: "FAIL", error: err.message });
-    console.error(`[FAIL] ${id}: ${name} — ${err.message}`);
-    throw err;
-  }
-}
 
 console.log("=== Memulai Verifikasi FND-005 ===");
 

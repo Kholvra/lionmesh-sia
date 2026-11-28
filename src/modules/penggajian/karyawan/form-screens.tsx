@@ -1,38 +1,34 @@
 import { Suspense } from "react";
 
+import { Notice } from "@/components/ui/notice";
+import { PageHeader } from "@/components/ui/page-header";
+import { EmptyState, ErrorState } from "@/components/ui/states";
 import { createKaryawan, deactivateKaryawan, updateKaryawan } from "@/modules/penggajian/karyawan/actions";
 import { KaryawanForm } from "@/modules/penggajian/karyawan/components/karyawan-form";
 import { NonaktifForm } from "@/modules/penggajian/karyawan/components/nonaktif-form";
-import { KaryawanTidakDitemukan, TidakBerwenang } from "@/modules/penggajian/karyawan/components/states";
+import { PATH_KARYAWAN, pathKaryawanDetail } from "@/modules/penggajian/karyawan/constants";
 import { getDaftarAktif, getKaryawanUntukUbah } from "@/modules/penggajian/karyawan/queries";
 import { aksesSesi } from "@/modules/penggajian/karyawan/sesi";
-import { Notice } from "@/modules/penggajian/ui/notice";
-import { PageHeader } from "@/modules/penggajian/ui/page-header";
 import { ui } from "@/modules/penggajian/ui/kelas";
 
-const ITEM = "GJ-001 Mengelola data karyawan";
-const DAFTAR = { href: "/penggajian/karyawan", label: "Data karyawan" };
-
 function Memuat({ title }: { title: string }) {
-  return <PageHeader back={DAFTAR} description="Memuat formulir…" item={ITEM} title={title} />;
+  return <PageHeader description="Memuat formulir…" title={title} />;
 }
 
 async function TambahKonten() {
   const akses = await aksesSesi();
   const header = (
     <PageHeader
-      back={DAFTAR}
       description="Data harus unik dan setiap perubahan tercatat dengan pelaku dan waktunya."
-      item={ITEM}
       title="Tambah karyawan"
     />
   );
-  if (!akses.bolehMengubah) return (<>{header}<TidakBerwenang /></>);
+  if (!akses.bolehMengubah) return (<>{header}<ErrorState judul="Anda tidak punya akses ke data karyawan" teks="Data karyawan hanya bisa dibuka oleh HR, Accounting, dan Finance. Hubungi HR bila Anda membutuhkannya." variant="compact" /></>);
 
   return (
     <>
       {header}
-      <KaryawanForm aksi={createKaryawan} batalHref={DAFTAR.href} daftar={await getDaftarAktif()} />
+      <KaryawanForm aksi={createKaryawan} batalHref={PATH_KARYAWAN} daftar={await getDaftarAktif()} />
     </>
   );
 }
@@ -47,21 +43,18 @@ export function KaryawanTambahScreen() {
 
 async function UbahKonten({ id }: { id: string }) {
   const akses = await aksesSesi();
-  const back = { href: `/penggajian/karyawan/${id}`, label: "Detail karyawan" };
   if (!akses.bolehMengubah) {
-    return (<><PageHeader back={back} item={ITEM} title="Ubah data karyawan" /><TidakBerwenang /></>);
+    return (<><PageHeader title="Ubah data karyawan" /><ErrorState judul="Anda tidak punya akses ke data karyawan" teks="Data karyawan hanya bisa dibuka oleh HR, Accounting, dan Finance. Hubungi HR bila Anda membutuhkannya." variant="compact" /></>);
   }
   const karyawan = await getKaryawanUntukUbah(id, akses);
   if (!karyawan) {
-    return (<><PageHeader back={DAFTAR} item={ITEM} title="Ubah data karyawan" /><KaryawanTidakDitemukan /></>);
+    return (<><PageHeader title="Ubah data karyawan" /><EmptyState judul="Karyawan tidak ditemukan" teks="Data mungkin sudah dipindahkan atau tautannya salah." variant="compact" /></>);
   }
 
   return (
     <>
       <PageHeader
-        back={back}
         description="NIK tetap. Perubahan gaji pokok dicatat sebagai entri baru di halaman detail."
-        item={ITEM}
         title={`Ubah data karyawan / ${karyawan.nama}`}
       />
       {karyawan.status === "NONAKTIF" ? (
@@ -69,7 +62,7 @@ async function UbahKonten({ id }: { id: string }) {
       ) : (
         <KaryawanForm
           aksi={updateKaryawan.bind(null, id)}
-          batalHref={back.href}
+          batalHref={pathKaryawanDetail(id)}
           daftar={await getDaftarAktif()}
           karyawan={karyawan}
         />
@@ -88,21 +81,18 @@ export function KaryawanUbahScreen({ id }: { id: string }) {
 
 async function StatusKonten({ id }: { id: string }) {
   const akses = await aksesSesi();
-  const back = { href: `/penggajian/karyawan/${id}`, label: "Detail karyawan" };
   if (!akses.bolehMengubah) {
-    return (<><PageHeader back={back} item={ITEM} title="Nonaktifkan karyawan" /><TidakBerwenang /></>);
+    return (<><PageHeader title="Nonaktifkan karyawan" /><ErrorState judul="Anda tidak punya akses ke data karyawan" teks="Data karyawan hanya bisa dibuka oleh HR, Accounting, dan Finance. Hubungi HR bila Anda membutuhkannya." variant="compact" /></>);
   }
   const karyawan = await getKaryawanUntukUbah(id, akses);
   if (!karyawan) {
-    return (<><PageHeader back={DAFTAR} item={ITEM} title="Nonaktifkan karyawan" /><KaryawanTidakDitemukan /></>);
+    return (<><PageHeader title="Nonaktifkan karyawan" /><EmptyState judul="Karyawan tidak ditemukan" teks="Data mungkin sudah dipindahkan atau tautannya salah." variant="compact" /></>);
   }
 
   return (
     <>
       <PageHeader
-        back={back}
         description="Nonaktif bukan hapus. Data, riwayat gaji, dan presensi tetap tersimpan."
-        item={ITEM}
         title={`Nonaktifkan karyawan / ${karyawan.nama}`}
       />
       <div className={ui.stack}>
@@ -110,7 +100,7 @@ async function StatusKonten({ id }: { id: string }) {
           <Notice title="Karyawan ini sudah nonaktif." tone="info" />
         ) : (
           <>
-            <NonaktifForm aksi={deactivateKaryawan.bind(null, id)} batalHref={back.href} nama={karyawan.nama} />
+            <NonaktifForm aksi={deactivateKaryawan.bind(null, id)} batalHref={pathKaryawanDetail(id)} nama={karyawan.nama} />
             <Notice title="Dampak perubahan" tone="info">
               <p>Karyawan nonaktif tidak bisa dipilih untuk dokumen baru, misalnya presensi.</p>
               <p>Gaji karyawan yang keluar di tengah periode dihitung prorata saat perhitungan gaji.</p>

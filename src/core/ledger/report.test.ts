@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
+import { isoWaktuJakarta } from "../../lib/format/date.ts";
 
 import {
   hitungBukuBesar,
@@ -12,6 +13,7 @@ import {
   totalJurnalPersediaanCents,
   type BarisLaporan,
 } from "./report.ts";
+import { isMoney, moneyToCents, roundToWholeRupiah } from "./money.ts";
 
 type AkunKunci =
   | "kas"
@@ -78,8 +80,8 @@ function baris(
   return {
     barisId: `baris-${urutan}`,
     jurnalId: overrides.jurnalId ?? `jurnal-${urutan}`,
-    tanggal: overrides.tanggal ?? "2026-11-05T10:00:00+07:00",
-    dibuatPada: overrides.dibuatPada ?? "2026-11-05T10:00:00+07:00",
+    tanggal: overrides.tanggal ?? isoWaktuJakarta("2026-11-05T10:00:00"),
+    dibuatPada: overrides.dibuatPada ?? isoWaktuJakarta("2026-11-05T10:00:00"),
     sumberTipe: overrides.sumberTipe ?? "UJI",
     sumberNomor: overrides.sumberNomor ?? `UJI-${urutan}`,
     sumberPemicu: overrides.sumberPemicu ?? "UJI",
@@ -94,8 +96,8 @@ function baris(
 
 test("buku besar: saldo akhir = saldo awal + debit - kredit", () => {
   const rows = [
-    baris("kas", "50", "0", { tanggal: "2026-11-02T09:00:00+07:00" }),
-    baris("kas", "0", "30", { tanggal: "2026-11-03T09:00:00+07:00" }),
+    baris("kas", "50", "0", { tanggal: isoWaktuJakarta("2026-11-02T09:00:00") }),
+    baris("kas", "0", "30", { tanggal: isoWaktuJakarta("2026-11-03T09:00:00") }),
   ];
 
   const laporan = hitungBukuBesar(rows, AKUN.kas, "10000");
@@ -113,12 +115,12 @@ test("buku besar: saldo akhir = saldo awal + debit - kredit", () => {
 test("buku besar mengurutkan baris menurut tanggal lalu waktu dibuat", () => {
   const rows = [
     baris("kas", "0", "10", {
-      tanggal: "2026-11-03T09:00:00+07:00",
-      dibuatPada: "2026-11-03T09:00:01+07:00",
+      tanggal: isoWaktuJakarta("2026-11-03T09:00:00"),
+      dibuatPada: isoWaktuJakarta("2026-11-03T09:00:01"),
     }),
     baris("kas", "25", "0", {
-      tanggal: "2026-11-02T09:00:00+07:00",
-      dibuatPada: "2026-11-02T09:00:00+07:00",
+      tanggal: isoWaktuJakarta("2026-11-02T09:00:00"),
+      dibuatPada: isoWaktuJakarta("2026-11-02T09:00:00"),
     }),
   ];
 
@@ -126,7 +128,7 @@ test("buku besar mengurutkan baris menurut tanggal lalu waktu dibuat", () => {
 
   assert.deepEqual(
     laporan.baris.map((item) => item.tanggal),
-    ["2026-11-02T09:00:00+07:00", "2026-11-03T09:00:00+07:00"],
+    [isoWaktuJakarta("2026-11-02T09:00:00"), isoWaktuJakarta("2026-11-03T09:00:00")],
   );
   assert.deepEqual(
     laporan.baris.map((item) => item.saldoCents),
@@ -322,4 +324,38 @@ test("isPeranPersediaan mengenali tiga peran akun persediaan", () => {
   assert.equal(isPeranPersediaan("persediaan_barang_jadi"), true);
   assert.equal(isPeranPersediaan("kas_bank"), false);
   assert.equal(isPeranPersediaan("hpp"), false);
+});
+
+test("uang menolak pecahan sen, kosong, negatif, dan presisi lebih", () => {
+  assert.equal(isMoney(""), false);
+  assert.equal(isMoney("0"), true);
+  assert.equal(isMoney("0.00"), true);
+  assert.equal(isMoney("1"), true);
+  assert.equal(isMoney("1.00"), true);
+  assert.equal(isMoney("0.50"), false);
+  assert.equal(isMoney("0.01"), false);
+  assert.equal(isMoney("-0.01"), false);
+  assert.equal(isMoney("1.001"), false);
+  assert.equal(moneyToCents("0"), BigInt(0));
+  assert.equal(moneyToCents("1"), BigInt(100));
+  assert.equal(moneyToCents("1.00"), BigInt(100));
+  assert.throws(() => moneyToCents(""), /uang/i);
+  assert.throws(() => moneyToCents("-0.01"), /uang/i);
+  assert.throws(() => moneyToCents("0.50"), /bulat/i);
+  assert.throws(() => moneyToCents("0.01"), /bulat/i);
+  assert.throws(() => moneyToCents("1.001"), /uang/i);
+});
+
+test("pembulatan setengah rupiah ke atas di batas penyimpanan", () => {
+  assert.equal(roundToWholeRupiah(BigInt(49)), BigInt(0));
+  assert.equal(roundToWholeRupiah(BigInt(50)), BigInt(100));
+  assert.equal(roundToWholeRupiah(BigInt(149)), BigInt(100));
+  assert.equal(roundToWholeRupiah(BigInt(150)), BigInt(200));
+  assert.equal(roundToWholeRupiah(BigInt(-50)), BigInt(-100));
+});
+
+test("saldo neto memakai konvensi debit dikurangi kredit", () => {
+  assert.equal(saldoNetoCents([baris("kas", "1", "0")]), "100");
+  assert.equal(saldoNetoCents([baris("kas", "0", "1")]), "-100");
+  assert.throws(() => saldoNetoCents([baris("kas", "0.01", "0")]), /bulat/i);
 });

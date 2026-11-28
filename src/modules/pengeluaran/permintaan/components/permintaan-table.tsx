@@ -2,21 +2,14 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 
-import {
-  DataTable,
-  ROWS_PER_PAGE,
-  StatusBadge,
-  type DataTableColumn,
-  type TableSort,
-} from "@/components/ui";
+import { DataTable, type DataTableColumn } from "@/components/ui/data-table";
+import { StatusBadge } from "@/components/ui/status-badge";
+import { useTableState } from "@/components/ui/use-table-state";
 import type { PermintaanPembelianView } from "@/core/pengadaan";
 import { PATH_PERMINTAAN } from "../constants";
-import {
-  formatTanggalSingkat,
-  STATUS_PERMINTAAN,
-} from "../format";
+import { formatTanggalSingkat, STATUS_PERMINTAAN } from "../format";
 import styles from "../permintaan.module.css";
 
 type Props = {
@@ -25,32 +18,8 @@ type Props = {
   errorMessage?: string;
 };
 
-function sortRows(
-  rows: readonly PermintaanPembelianView[],
-  columns: readonly DataTableColumn<PermintaanPembelianView>[],
-  sort: TableSort | null,
-): PermintaanPembelianView[] {
-  if (!sort) return [...rows];
-  const column = columns.find((item) => item.id === sort.columnId);
-  if (!column?.sortValue) return [...rows];
-  const factor = sort.direction === "ascending" ? 1 : -1;
-  return [...rows].sort((a, b) => {
-    const left = column.sortValue?.(a) ?? "";
-    const right = column.sortValue?.(b) ?? "";
-    if (typeof left === "number" && typeof right === "number") {
-      return (left - right) * factor;
-    }
-    return String(left).localeCompare(String(right), "id") * factor;
-  });
-}
-
 export function PermintaanTable({ errorMessage, rows, selectedId }: Props) {
   const router = useRouter();
-  const [page, setPage] = useState(1);
-  const [sort, setSort] = useState<TableSort | null>({
-    columnId: "nomor",
-    direction: "ascending",
-  });
 
   const columns = useMemo<DataTableColumn<PermintaanPembelianView>[]>(
     () => [
@@ -96,29 +65,26 @@ export function PermintaanTable({ errorMessage, rows, selectedId }: Props) {
     [selectedId],
   );
 
-  const sorted = useMemo(() => sortRows(rows, columns, sort), [columns, rows, sort]);
-  const visible = useMemo(
-    () => sorted.slice((page - 1) * ROWS_PER_PAGE, page * ROWS_PER_PAGE),
-    [page, sorted],
-  );
+  const table = useTableState(rows, {
+    columns,
+    emptyMessage: "Belum ada permintaan pembelian.",
+    initialSort: { columnId: "nomor", direction: "ascending" },
+  });
 
   return (
     <DataTable
       caption="Daftar permintaan pembelian"
       columns={columns}
-      emptyMessage="Belum ada permintaan pembelian."
+      emptyMessage={table.emptyMessage}
       errorMessage={errorMessage}
-      onPageChange={setPage}
+      onPageChange={table.onPageChange}
       onRetry={() => router.refresh()}
-      onSortChange={(next) => {
-        setSort(next);
-        setPage(1);
-      }}
-      page={page}
+      onSortChange={table.onSortChange}
+      page={table.page}
       rowKey={(row) => row.dokumenId}
-      rows={visible}
-      sort={sort}
-      totalItems={sorted.length}
+      rows={table.visibleRows}
+      sort={table.sort}
+      totalItems={table.totalItems}
     />
   );
 }

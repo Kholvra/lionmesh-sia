@@ -1,11 +1,11 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 
+import { readAllPages } from "@/core/dashboard/pagination";
+import { ambilTeks } from "@/lib/ambil-teks";
 import { fail, ok, type Result } from "@/lib/result";
 import { isRecord } from "@/lib/validation";
 import { buatPeriode, type PeriodeLaporan } from "./periode";
 import type { AkunRingkas, BarisLaporan } from "./report";
-
-const UKURAN_HALAMAN = 1000;
 
 const SELECT_BARIS =
   "id, debit::text, kredit::text, " +
@@ -20,11 +20,7 @@ export interface FilterBarisJurnal {
   akunId?: string;
 }
 
-function ambilTeks(value: unknown): string | null {
-  if (typeof value === "string") return value;
-  if (typeof value === "number" && Number.isFinite(value)) return String(value);
-  return null;
-}
+const OPSI_TEKS_LAPORAN = { coerceNumber: true, onlyFiniteNumbers: true } as const;
 
 function petakanBaris(value: unknown): BarisLaporan | null {
   if (!isRecord(value) || !isRecord(value.jurnal) || !isRecord(value.akun)) {
@@ -34,19 +30,19 @@ function petakanBaris(value: unknown): BarisLaporan | null {
   const jurnal = value.jurnal;
   const akun = value.akun;
 
-  const barisId = ambilTeks(value.id);
-  const jurnalId = ambilTeks(jurnal.id);
-  const tanggal = ambilTeks(jurnal.tanggal);
-  const dibuatPada = ambilTeks(jurnal.created_at);
-  const sumberTipe = ambilTeks(jurnal.sumber_tipe);
-  const sumberNomor = ambilTeks(jurnal.sumber_nomor);
-  const sumberPemicu = ambilTeks(jurnal.sumber_pemicu);
-  const akunId = ambilTeks(akun.id);
-  const akunNomor = ambilTeks(akun.nomor);
-  const akunNama = ambilTeks(akun.nama);
-  const akunPeran = ambilTeks(akun.peran);
-  const debit = ambilTeks(value.debit);
-  const kredit = ambilTeks(value.kredit);
+  const barisId = ambilTeks(value.id, OPSI_TEKS_LAPORAN);
+  const jurnalId = ambilTeks(jurnal.id, OPSI_TEKS_LAPORAN);
+  const tanggal = ambilTeks(jurnal.tanggal, OPSI_TEKS_LAPORAN);
+  const dibuatPada = ambilTeks(jurnal.created_at, OPSI_TEKS_LAPORAN);
+  const sumberTipe = ambilTeks(jurnal.sumber_tipe, OPSI_TEKS_LAPORAN);
+  const sumberNomor = ambilTeks(jurnal.sumber_nomor, OPSI_TEKS_LAPORAN);
+  const sumberPemicu = ambilTeks(jurnal.sumber_pemicu, OPSI_TEKS_LAPORAN);
+  const akunId = ambilTeks(akun.id, OPSI_TEKS_LAPORAN);
+  const akunNomor = ambilTeks(akun.nomor, OPSI_TEKS_LAPORAN);
+  const akunNama = ambilTeks(akun.nama, OPSI_TEKS_LAPORAN);
+  const akunPeran = ambilTeks(akun.peran, OPSI_TEKS_LAPORAN);
+  const debit = ambilTeks(value.debit, OPSI_TEKS_LAPORAN);
+  const kredit = ambilTeks(value.kredit, OPSI_TEKS_LAPORAN);
 
   if (
     !barisId ||
@@ -92,41 +88,52 @@ export async function listBarisJurnal(
   supabase: SupabaseClient,
   filter: FilterBarisJurnal = {},
 ): Promise<Result<BarisLaporan[]>> {
-  const hasil: BarisLaporan[] = [];
+  let kegagalanHalaman: "respons" | "data" | null = null;
 
-  for (let offset = 0; ; offset += UKURAN_HALAMAN) {
+  const { data, error } = await readAllPages(async (from, to) => {
     let query = supabase
       .from("detail_jurnal")
       .select(SELECT_BARIS)
       .order("tanggal", { referencedTable: "jurnal", ascending: true })
       .order("id", { ascending: true })
-      .range(offset, offset + UKURAN_HALAMAN - 1);
+      .range(from, to);
 
     if (filter.mulai) query = query.gte("jurnal.tanggal", filter.mulai);
     if (filter.selesai) query = query.lt("jurnal.tanggal", filter.selesai);
     if (filter.akunId) query = query.eq("akun_id", filter.akunId);
 
-    const { data, error } = await query;
-    if (error) {
-      return fail(`Gagal membaca jurnal: ${error.message}`);
+    const halaman = await query;
+    if (halaman.error) {
+      return { data: null, error: { message: halaman.error.message } };
+    }
+    if (!Array.isArray(halaman.data)) {
+      kegagalanHalaman = "respons";
+      return { data: null, error: { message: "Respons jurnal tidak valid." } };
     }
 
-    if (!Array.isArray(data)) {
-      return fail("Respons jurnal tidak valid.");
-    }
-
-    for (const item of data) {
+    const barisHalaman: BarisLaporan[] = [];
+    for (const item of halaman.data) {
       const baris = petakanBaris(item);
       if (!baris) {
-        return fail("Data jurnal tidak lengkap.");
+        kegagalanHalaman = "data";
+        return { data: null, error: { message: "Data jurnal tidak lengkap." } };
       }
-      hasil.push(baris);
+      barisHalaman.push(baris);
     }
+    return { data: barisHalaman, error: null };
+  });
 
-    if (data.length < UKURAN_HALAMAN) break;
+  if (error) {
+    if (kegagalanHalaman === "respons") {
+      return fail("Respons jurnal tidak valid.");
+    }
+    if (kegagalanHalaman === "data") {
+      return fail("Data jurnal tidak lengkap.");
+    }
+    return fail(`Gagal membaca jurnal: ${error}`);
   }
 
-  return ok(hasil);
+  return ok(data as BarisLaporan[]);
 }
 
 export async function listAkunAktif(
@@ -148,10 +155,10 @@ export async function listAkunAktif(
   const hasil: AkunRingkas[] = [];
   for (const item of data) {
     if (!isRecord(item)) return fail("Data akun tidak lengkap.");
-    const id = ambilTeks(item.id);
-    const nomor = ambilTeks(item.nomor);
-    const nama = ambilTeks(item.nama);
-    const peran = ambilTeks(item.peran);
+    const id = ambilTeks(item.id, OPSI_TEKS_LAPORAN);
+    const nomor = ambilTeks(item.nomor, OPSI_TEKS_LAPORAN);
+    const nama = ambilTeks(item.nama, OPSI_TEKS_LAPORAN);
+    const peran = ambilTeks(item.peran, OPSI_TEKS_LAPORAN);
     if (!id || !nomor || !nama || !peran) {
       return fail("Data akun tidak lengkap.");
     }

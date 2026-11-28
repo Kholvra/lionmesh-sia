@@ -1,24 +1,3 @@
-.backLink {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--space-1);
-  margin-bottom: var(--space-2);
-  color: var(--text-link);
-  font-size: var(--font-size-label);
-  font-weight: 600;
-  line-height: var(--line-height-label);
-  text-decoration: none;
-}
-
-.backLink:hover {
-  text-decoration: underline;
-}
-
-.backIcon {
-  width: var(--space-4);
-  height: var(--space-4);
-}
-
 .section {
   margin-bottom: var(--space-6);
 }
