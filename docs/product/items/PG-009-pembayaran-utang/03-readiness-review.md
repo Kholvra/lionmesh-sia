@@ -9,9 +9,9 @@
 | 3 | Status dan transisi eksplisit; jalur gagal juga | lolos | Status invoice `TERCATAT`, `DIBAYAR_SEBAGIAN`, `LUNAS` (D-46). Status pembayaran `GAGAL_TRANSFER` ([USULAN-AGEN]) dan `DIBATALKAN` (R-09). Jalur gagal: transfer gagal, kelebihan bayar, verifikasi belum ada, pembalikan tanpa alasan. |
 | 4 | Validasi punya pesan yang bisa dibaca | lolos | Setiap kondisi punya isi informasi pesan yang tetap. Kalimat final adalah pekerjaan implementasi dan tidak mengubah perilaku. |
 | 5 | Acceptance criteria dapat dibuktikan | lolos | 19 AC dengan langkah UI atau pemeriksaan sisa, status, jurnal, dan riwayat. Tidak ada AC yang menunggu pertanyaan terbuka. |
-| 6 | Semua `depends on` berstatus `done` | belum | `PG-008` `specified`; `FND-006` `specified`. |
+| 6 | Semua `depends on` berstatus `done` | lolos | `PG-008` merge 2026-11-28; `FND-006` `done` |
 | 7 | Tidak ada pertanyaan pemblokir terbuka | lolos | 11 pertanyaan: terjawab dengan D-xx, sumber, atau [USULAN-AGEN]. Tidak ada yang `Terbuka`. |
-| 8 | Gate fondasi terpenuhi | belum | `FND-002` sampai `FND-006` belum `done`; hanya `FND-001` yang `done`. |
+| 8 | Gate fondasi terpenuhi | lolos | `FND-001`-`FND-009` `done` |
 | 9 | Ukuran masuk akal untuk satu orang | lolos | Ukuran M (usulan). Satu track PG-D; laporan dikeluarkan ke core (C-009), sehingga item ini tidak membengkak. |
 
 Pemeriksaan bersyarat:
@@ -26,11 +26,9 @@ Pemeriksaan bersyarat:
 
 ## Verdict
 
-`Blocked`
+`Ready` (2026-11-28)
 
-Alasan: dependensi belum `done`. Daftar dependensi (backlog `depends on`): `PG-008` dan `FND-006`. Gate fondasi `FND-002` sampai `FND-006` juga belum `done`.
-
-Siap menjadi `Ready` begitu dependensi done; tidak ada pemblokir lain.
+Dependensi `PG-008` sudah merge dan `FND-006` `done`; gate fondasi `FND-001`–`FND-009` `done`. Tiga input yang semula kosong diputuskan pemilik track pada 2026-11-28: master `rekening_bank` dengan seed placeholder, status berhasil `DIPOSTING`, dan bukti transfer di Supabase Storage. Bukti implementasi di `05-evidence.md`; bukti database di `docs/tech-debt/pg-009-bukti-db.md`.
 
 ## Blockers / decisions needed
 

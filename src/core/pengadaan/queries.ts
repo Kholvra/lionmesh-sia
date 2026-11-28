@@ -6,6 +6,8 @@ import type {
   ExceptionPengadaanView,
   InvoicePemasokDetail,
   InvoicePemasokView,
+  PembayaranPemasokDetail,
+  PembayaranPemasokView,
   PemilihanPemasokView,
   PenerimaanDetail,
   PenerimaanQcView,
@@ -17,9 +19,11 @@ import type {
   PoSiapTerima,
   PurchaseOrderDetail,
   PurchaseOrderView,
+  RekeningBank,
   ReturPemasokDetail,
   ReturPemasokView,
   RiwayatHarga,
+  UtangInvoiceView,
 } from "./types";
 
 type Row = Record<string, unknown>;
@@ -1167,5 +1171,221 @@ export async function listPenerimaanSiapInvoice(
           };
         }),
     })),
+  );
+}
+
+export async function listRekeningBank(
+  client: SupabaseClient,
+): Promise<Result<RekeningBank[]>> {
+  const { data, error } = await client
+    .from("rekening_bank")
+    .select("id,nama_bank,nomor,nama_pemilik,aktif")
+    .order("nama_bank", { ascending: true });
+  if (error) return fail(error.message);
+
+  return ok(
+    ((data ?? []) as unknown as Row[]).map((row) => ({
+      id: asString(row.id),
+      namaBank: asString(row.nama_bank),
+      nomor: asString(row.nomor),
+      namaPemilik: asString(row.nama_pemilik),
+      aktif: row.aktif === true,
+    })),
+  );
+}
+
+export async function listUtangPemasok(
+  client: SupabaseClient,
+): Promise<Result<UtangInvoiceView[]>> {
+  const { data: invoices, error } = await client
+    .from("invoice_pemasok")
+    .select("dokumen_id,pemasok_id,nomor_invoice,tanggal,jatuh_tempo,total::text")
+    .order("tanggal", { ascending: true });
+  if (error) return fail(error.message);
+
+  const rows = (invoices ?? []) as unknown as Row[];
+  if (rows.length === 0) return ok([]);
+
+  const docs = await ambilDokumen(
+    client,
+    rows.map((row) => asString(row.dokumen_id)),
+  );
+  const pemasok = await ambilPemasokNama(
+    client,
+    rows.map((row) => asString(row.pemasok_id)),
+  );
+
+  const { data: alokasi, error: alokasiError } = await client
+    .from("pembayaran_pemasok_alokasi")
+    .select("invoice_id,nominal::text,pembayaran_id");
+  if (alokasiError) return fail(alokasiError.message);
+
+  const alokasiRows = (alokasi ?? []) as unknown as Row[];
+  const bayarDocs = await ambilDokumen(
+    client,
+    [...new Set(alokasiRows.map((row) => asString(row.pembayaran_id)))],
+  );
+  const terpakai = new Map<string, number>();
+  for (const row of alokasiRows) {
+    const doc = bayarDocs.get(asString(row.pembayaran_id));
+    const status = doc ? asString(doc.status) : "";
+    if (status !== "DIAJUKAN" && status !== "DIPOSTING") continue;
+    const key = asString(row.invoice_id);
+    terpakai.set(key, (terpakai.get(key) ?? 0) + asNumber(row.nominal));
+  }
+
+  const hasil: UtangInvoiceView[] = [];
+  for (const row of rows) {
+    const doc = docs.get(asString(row.dokumen_id));
+    if (!doc) continue;
+    const status = asString(doc.status);
+    if (status !== "TERCATAT" && status !== "DIBAYAR_SEBAGIAN") continue;
+
+    const total = asNumber(row.total);
+    const sisa = Math.max(0, total - (terpakai.get(asString(row.dokumen_id)) ?? 0));
+    if (sisa <= 0) continue;
+
+    hasil.push({
+      invoiceId: asString(row.dokumen_id),
+      nomor: asString(doc.nomor),
+      nomorInvoice: asString(row.nomor_invoice),
+      pemasokId: asString(row.pemasok_id),
+      pemasokNama: pemasok.get(asString(row.pemasok_id)) ?? "Pemasok",
+      tanggal: asString(row.tanggal),
+      jatuhTempo: asString(row.jatuh_tempo),
+      total: asString(row.total),
+      sisa: sisa.toString(),
+      status: status as UtangInvoiceView["status"],
+    });
+  }
+
+  return ok(hasil);
+}
+
+export async function listPembayaranPemasok(
+  client: SupabaseClient,
+): Promise<Result<PembayaranPemasokView[]>> {
+  const { data, error } = await client
+    .from("pembayaran_pemasok")
+    .select(
+      "dokumen_id,pemasok_id,rekening_bank_id,nominal::text,tanggal,alasan_gagal," +
+        "bukti_transfer_path,diverifikasi_oleh",
+    )
+    .order("tanggal", { ascending: false });
+  if (error) return fail(error.message);
+
+  const rows = (data ?? []) as unknown as Row[];
+  if (rows.length === 0) return ok([]);
+
+  const docs = await ambilDokumen(
+    client,
+    rows.map((row) => asString(row.dokumen_id)),
+  );
+  const pemasok = await ambilPemasokNama(
+    client,
+    rows.map((row) => asString(row.pemasok_id)),
+  );
+  const rekening = await ambilRekening(
+    client,
+    rows.map((row) => asString(row.rekening_bank_id)),
+  );
+
+  return ok(
+    rows
+      .map((row) => {
+        const doc = docs.get(asString(row.dokumen_id));
+        if (!doc) return null;
+        const bank = rekening.get(asString(row.rekening_bank_id));
+        return {
+          dokumenId: asString(row.dokumen_id),
+          nomor: asString(doc.nomor),
+          status: asString(doc.status) as PembayaranPemasokView["status"],
+          versi: asNumber(doc.versi),
+          pemasokId: asString(row.pemasok_id),
+          pemasokNama: pemasok.get(asString(row.pemasok_id)) ?? "Pemasok",
+          rekeningBankId: asString(row.rekening_bank_id),
+          rekeningLabel: bank ? `${bank.namaBank} · ${bank.nomor}` : "Rekening",
+          nominal: asString(row.nominal),
+          tanggal: asString(row.tanggal),
+          alasanGagal: row.alasan_gagal === null ? null : asString(row.alasan_gagal),
+          buktiTransferPath:
+            row.bukti_transfer_path === null ? null : asString(row.bukti_transfer_path),
+          diverifikasiOleh:
+            row.diverifikasi_oleh === null ? null : asString(row.diverifikasi_oleh),
+          createdBy: doc.pembuat_id === null ? null : asString(doc.pembuat_id),
+          createdAt: asString(doc.created_at),
+        };
+      })
+      .filter((view): view is PembayaranPemasokView => view !== null),
+  );
+}
+
+export async function getPembayaranPemasok(
+  client: SupabaseClient,
+  dokumenId: string,
+): Promise<Result<PembayaranPemasokDetail | null>> {
+  const daftar = await listPembayaranPemasok(client);
+  if (!daftar.ok) return daftar;
+  const header = daftar.data.find((row) => row.dokumenId === dokumenId);
+  if (!header) return ok(null);
+
+  const { data: alokasi, error } = await client
+    .from("pembayaran_pemasok_alokasi")
+    .select("id,invoice_id,nominal::text,urutan")
+    .eq("pembayaran_id", dokumenId)
+    .order("urutan", { ascending: true });
+  if (error) return fail(error.message);
+
+  const alokasiRows = (alokasi ?? []) as unknown as Row[];
+  const invoiceDocs = await ambilDokumen(
+    client,
+    alokasiRows.map((row) => asString(row.invoice_id)),
+  );
+
+  const riwayat = await listRiwayatStatus(client, dokumenId);
+  if (!riwayat.ok) return riwayat;
+
+  return ok({
+    header,
+    alokasi: alokasiRows.map((row) => {
+      const doc = invoiceDocs.get(asString(row.invoice_id));
+      return {
+        id: asString(row.id),
+        invoiceId: asString(row.invoice_id),
+        invoiceNomor: doc ? asString(doc.nomor) : null,
+        nominal: asString(row.nominal),
+        urutan: asNumber(row.urutan),
+      };
+    }),
+    riwayat: riwayat.data,
+  });
+}
+
+export async function getBuktiTransferUrl(
+  client: SupabaseClient,
+  path: string,
+): Promise<Result<string | null>> {
+  const { data, error } = await client.storage
+    .from("bukti-transfer")
+    .createSignedUrl(path, 300);
+  if (error) return fail(error.message);
+  return ok(data?.signedUrl ?? null);
+}
+
+async function ambilRekening(
+  client: SupabaseClient,
+  ids: string[],
+): Promise<Map<string, { namaBank: string; nomor: string }>> {
+  if (ids.length === 0) return new Map();
+  const { data, error } = await client
+    .from("rekening_bank")
+    .select("id,nama_bank,nomor")
+    .in("id", [...new Set(ids)]);
+  if (error) throw new Error(error.message);
+  return new Map(
+    ((data ?? []) as unknown as Row[]).map((row) => [
+      asString(row.id),
+      { namaBank: asString(row.nama_bank), nomor: asString(row.nomor) },
+    ]),
   );
 }

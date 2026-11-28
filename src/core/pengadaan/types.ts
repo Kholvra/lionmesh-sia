@@ -526,3 +526,85 @@ export interface PenerimaanSiapInvoice {
     hargaPo: string;
   }[];
 }
+
+export interface RekeningBank {
+  id: string;
+  namaBank: string;
+  nomor: string;
+  namaPemilik: string;
+  aktif: boolean;
+}
+
+export interface PembayaranPemasokView {
+  dokumenId: string;
+  nomor: string;
+  status: StatusDokumen;
+  versi: number;
+  pemasokId: string;
+  pemasokNama: string;
+  rekeningBankId: string;
+  rekeningLabel: string;
+  nominal: string;
+  tanggal: string;
+  alasanGagal: string | null;
+  buktiTransferPath: string | null;
+  diverifikasiOleh: string | null;
+  createdBy: string | null;
+  createdAt: string;
+}
+
+export interface PembayaranAlokasiView {
+  id: string;
+  invoiceId: string;
+  invoiceNomor: string | null;
+  nominal: string;
+  urutan: number;
+}
+
+export interface PembayaranPemasokDetail {
+  header: PembayaranPemasokView;
+  alokasi: PembayaranAlokasiView[];
+  riwayat: RiwayatStatus[];
+}
+
+export interface UtangInvoiceView {
+  invoiceId: string;
+  nomor: string;
+  nomorInvoice: string;
+  pemasokId: string;
+  pemasokNama: string;
+  tanggal: string;
+  jatuhTempo: string;
+  total: string;
+  sisa: string;
+  status: StatusDokumen;
+}
+
+export interface CatatPembayaranInput {
+  pemasokId: string;
+  rekeningBankId: string;
+  nominal: string;
+  tanggal: string;
+  actorId: string;
+}
+
+export interface VerifikasiPembayaranInput {
+  dokumenId: string;
+  actorId: string;
+}
+
+export interface HasilTransferInput {
+  dokumenId: string;
+  versi: number;
+  berhasil: boolean;
+  buktiPath?: string;
+  alasan?: string;
+  actorId: string;
+}
+
+export interface BatalkanPembayaranInput {
+  dokumenId: string;
+  versi: number;
+  alasan: string;
+  actorId: string;
+}
