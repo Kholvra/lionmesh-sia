@@ -110,6 +110,7 @@ test("penolakan tanpa alasan ditolak", () => {
   const parsed = parsePenolakan(form({ id: PRODUK, versi: "1", alasan: "   " }));
   assert.equal(parsed.input, null);
   assert.equal(parsed.message, "Alasan penolakan wajib diisi");
+});
 test("pemohon Produksi wajib mengisi referensi perintah produksi", () => {
   const parsed = parsePermintaanForm(
     form({

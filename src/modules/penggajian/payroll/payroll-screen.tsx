@@ -4,7 +4,8 @@ import { Suspense } from "react";
 import { StatusBadge } from "@/components/ui";
 import { sesiPenggajian } from "@/modules/penggajian/akun/akun";
 import type { SesiPenggajian } from "@/modules/penggajian/akun/akun";
-import { formatRupiah, formatWaktu } from "@/modules/penggajian/karyawan/format";
+import { formatRupiah } from "@/lib/format/money";
+import { formatWaktu } from "@/modules/penggajian/karyawan/format";
 import { rentangPeriode, sudahTervalidasi } from "@/modules/penggajian/periode/rules";
 import type { PeriodeGaji } from "@/modules/penggajian/periode/types";
 import { calculatePayroll } from "@/modules/penggajian/payroll/actions";
@@ -17,8 +18,8 @@ import { labelDraft, STATUS_DRAFT } from "@/modules/penggajian/payroll/status";
 import type { BarisGaji, KodeKomponen } from "@/modules/penggajian/payroll/types";
 import { PilihPeriode } from "@/modules/penggajian/presensi/components/pilih-periode";
 import { getPeriodeDipilih, listPeriode } from "@/modules/penggajian/presensi/queries";
-import { Notice } from "@/modules/penggajian/ui/notice";
-import { PageHeader } from "@/modules/penggajian/ui/page-header";
+import { Notice } from "@/components/ui/notice";
+import { PageHeader } from "@/components/ui/page-header";
 import { ui } from "@/modules/penggajian/ui/kelas";
 import { FormAksi } from "@/modules/penggajian/shared/form-aksi";
 import { KartuAngka } from "@/modules/penggajian/shared/kartu-angka";
@@ -96,7 +97,7 @@ function TabelNeto({ draft }: { draft: DraftView }) {
         <thead><tr><th scope="col">Karyawan</th><th scope="col">NIK</th><th className={ui.right} scope="col">Neto</th></tr></thead>
         <tbody>
           {(draft.neto ?? []).map((n) => (
-            <tr key={n.karyawanId}><td>{n.nama}</td><td className={ui.numeric}>{n.nik}</td><td className={`${ui.right} ${ui.numeric}`}>{formatRupiah(n.neto)}</td></tr>
+            <tr key={n.karyawanId}><td>{n.nama}</td><td className={ui.numeric}>{n.nik}</td><td className={`${ui.right} ${ui.numeric}`}>{formatRupiah(BigInt(n.neto) * BigInt(100))}</td></tr>
           ))}
         </tbody>
       </table>
@@ -139,7 +140,7 @@ async function Konten({ periodeId, pesan }: { periodeId?: string; pesan?: string
   const sesi = await sesiPenggajian();
   const akses = aksesPayroll(sesi);
   const { judul, deskripsi, item = ITEM } = judulPeran(sesi);
-  const header = <PageHeader actions={akses.rincian ? <Link className={ui.button} href="/penggajian/payroll/tarif">Tabel tarif</Link> : undefined} description={deskripsi} item={item} title={judul} />;
+  const header = <PageHeader actions={akses.rincian ? <Link className={ui.button} href="/penggajian/payroll/tarif">Tabel tarif</Link> : undefined} breadcrumb={[{ label: "Siklus Penggajian", accent: true }, item]} description={deskripsi} title={judul} variant="page" />;
   if (!akses.ringkasan) return <>{header}<TidakBerwenang pesan="Draft payroll dibuka HR, Accounting, Finance (gaji bersih), dan Direksi (ringkasan)." /></>;
   const periode = await getPeriodeDipilih(periodeId);
   if (!periode) return <>{header}<Keadaan judul="Belum ada periode penggajian" pesan="Periode dibuat HR lebih dulu." /></>;
@@ -161,8 +162,8 @@ async function Konten({ periodeId, pesan }: { periodeId?: string; pesan?: string
         ) : null}
         {r ? (
           sesi.peran === "Direksi"
-            ? <KartuAngka isi={[["Karyawan", String(r.jumlahKaryawan)], ["Neto payroll", formatRupiah(r.totalNeto)], ["Periode", rentangPeriode(periode)]]} />
-            : <KartuAngka isi={[["Bruto", formatRupiah(r.totalBruto)], ["Potongan", formatRupiah(r.totalPotongan)], ["Neto dibayarkan", formatRupiah(r.totalNeto)]]} />
+            ? <KartuAngka isi={[["Karyawan", String(r.jumlahKaryawan)], ["Neto payroll", formatRupiah(BigInt(r.totalNeto) * BigInt(100))], ["Periode", rentangPeriode(periode)]]} />
+            : <KartuAngka isi={[["Bruto", formatRupiah(BigInt(r.totalBruto) * BigInt(100))], ["Potongan", formatRupiah(BigInt(r.totalPotongan) * BigInt(100))], ["Neto dibayarkan", formatRupiah(BigInt(r.totalNeto) * BigInt(100))]]} />
         ) : (
           <Keadaan judul="Belum ada draft payroll" pesan={sudahTervalidasi(periode.status) ? "HR menghitung draft dari presensi tervalidasi dan tabel tarif berversi." : "Draft dihitung setelah periode Tervalidasi."} />
         )}
@@ -200,7 +201,7 @@ async function Konten({ periodeId, pesan }: { periodeId?: string; pesan?: string
 
 export function PayrollScreen({ periodeId, pesan }: { periodeId?: string; pesan?: string }) {
   return (
-    <Suspense fallback={<PageHeader item={ITEM} title="Draft payroll" />}>
+    <Suspense fallback={<PageHeader breadcrumb={[{ label: "Siklus Penggajian", accent: true }, ITEM]} title="Draft payroll" variant="page" />}>
       <Konten periodeId={periodeId} pesan={pesan} />
     </Suspense>
   );

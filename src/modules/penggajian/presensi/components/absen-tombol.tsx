@@ -3,7 +3,7 @@
 import { useActionState } from "react";
 
 import type { AksiState } from "@/modules/penggajian/karyawan/actions";
-import { Notice } from "@/modules/penggajian/ui/notice";
+import { Notice } from "@/components/ui/notice";
 import { ui } from "@/modules/penggajian/ui/kelas";
 
 type AbsenTombolProps = {

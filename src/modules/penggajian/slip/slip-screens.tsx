@@ -3,7 +3,8 @@ import { Suspense } from "react";
 
 import { StatusBadge } from "@/components/ui";
 import { sesiPenggajian } from "@/modules/penggajian/akun/akun";
-import { formatRupiah, formatWaktu } from "@/modules/penggajian/karyawan/format";
+import { formatRupiah } from "@/lib/format/money";
+import { formatWaktu } from "@/modules/penggajian/karyawan/format";
 import { statusTransfer } from "@/modules/penggajian/pembayaran/queries";
 import { STATUS_TRANSFER } from "@/modules/penggajian/pembayaran/status";
 import { getDraft } from "@/modules/penggajian/payroll/queries";
@@ -12,8 +13,8 @@ import { semuaPeriode } from "@/modules/penggajian/periode/queries";
 import { AbsenTombol } from "@/modules/penggajian/presensi/components/absen-tombol";
 import { PilihPeriode } from "@/modules/penggajian/presensi/components/pilih-periode";
 import { getPeriodeDipilih, listPeriode } from "@/modules/penggajian/presensi/queries";
-import { Notice } from "@/modules/penggajian/ui/notice";
-import { PageHeader } from "@/modules/penggajian/ui/page-header";
+import { Notice } from "@/components/ui/notice";
+import { PageHeader } from "@/components/ui/page-header";
 import { ui } from "@/modules/penggajian/ui/kelas";
 import { KartuBaca } from "@/modules/penggajian/shared/bidang-baca";
 import { FormAksi } from "@/modules/penggajian/shared/form-aksi";
@@ -65,7 +66,7 @@ async function Daftar({ periodeId }: { periodeId?: string }) {
 export function SlipListScreen({ periodeId }: { periodeId?: string }) {
   return (
     <>
-      <PageHeader description="Slip dicetak HR untuk karyawan yang sudah dibayar; tidak ada slip digital." item={ITEM} title="Slip gaji" />
+      <PageHeader breadcrumb={[{ label: "Siklus Penggajian", accent: true }, ITEM]} description="Slip dicetak HR untuk karyawan yang sudah dibayar; tidak ada slip digital." title="Slip gaji" variant="page" />
       <Suspense fallback={null}>
         <Daftar periodeId={periodeId} />
       </Suspense>
@@ -89,11 +90,11 @@ async function Detail({ periodeId, karyawanId, pesan }: { periodeId: string; kar
   const rincian: [string, string][] = [
     ["Periode", periode.nama],
     ["Rentang kerja", rentangPeriode(periode)],
-    ["Gaji pokok", formatRupiah(nilai("GAJI_POKOK"))],
-    ["Tunjangan tetap + kehadiran", formatRupiah(nilai("TUNJANGAN_TETAP") + nilai("TUNJANGAN_KEHADIRAN"))],
-    ["Uang lembur", formatRupiah(nilai("LEMBUR"))],
-    [`Potongan: ${potongan.map((k) => `${k.label} ${k.nilai.toLocaleString("id-ID")}`).join(", ") || "tidak ada"}`, formatRupiah(baris.totalKurang)],
-    ["Gaji bersih", formatRupiah(baris.neto)],
+    ["Gaji pokok", formatRupiah(BigInt(nilai("GAJI_POKOK")) * BigInt(100))],
+    ["Tunjangan tetap + kehadiran", formatRupiah(BigInt(nilai("TUNJANGAN_TETAP") + nilai("TUNJANGAN_KEHADIRAN")) * BigInt(100))],
+    ["Uang lembur", formatRupiah(BigInt(nilai("LEMBUR")) * BigInt(100))],
+    [`Potongan: ${potongan.map((k) => `${k.label} ${k.nilai.toLocaleString("id-ID")}`).join(", ") || "tidak ada"}`, formatRupiah(BigInt(baris.totalKurang) * BigInt(100))],
+    ["Gaji bersih", formatRupiah(BigInt(baris.neto) * BigInt(100))],
   ];
   return (
     <div className={ui.stack}>
@@ -145,7 +146,8 @@ export function SlipDetailScreen({ periodeId, karyawanId, pesan }: { periodeId: 
       <PageHeader
         back={{ href: `/penggajian/slip?periode=${periodeId}`, label: "Slip gaji" }}
         description="Slip dicetak HR untuk karyawan yang sudah Dibayar dan diserahkan langsung."
-        item={ITEM}
+        breadcrumb={[{ label: "Siklus Penggajian", accent: true }, ITEM]}
+        variant="page"
         title="Penerbitan slip gaji"
       />
       <Suspense fallback={null}>
@@ -187,7 +189,7 @@ async function Pengganti({ periodeId, karyawanId }: { periodeId: string; karyawa
 export function SlipPenggantiScreen({ periodeId, karyawanId }: { periodeId: string; karyawanId: string }) {
   return (
     <>
-      <PageHeader back={{ href: `/penggajian/slip/${periodeId}/${karyawanId}`, label: "Penerbitan slip gaji" }} item={ITEM} title="Cetak slip pengganti" />
+      <PageHeader back={{ href: `/penggajian/slip/${periodeId}/${karyawanId}`, label: "Penerbitan slip gaji" }} breadcrumb={[{ label: "Siklus Penggajian", accent: true }, ITEM]} title="Cetak slip pengganti" variant="page" />
       <Suspense fallback={null}>
         <Pengganti karyawanId={karyawanId} periodeId={periodeId} />
       </Suspense>

@@ -2,13 +2,13 @@ import { Suspense } from "react";
 
 import { StatusBadge } from "@/components/ui";
 import { sesiPenggajian } from "@/modules/penggajian/akun/akun";
-import { formatRupiah } from "@/modules/penggajian/karyawan/format";
+import { formatRupiah } from "@/lib/format/money";
 import { retryTransfer } from "@/modules/penggajian/pembayaran/actions";
 import { getPembayaran } from "@/modules/penggajian/pembayaran/queries";
 import { BUKTI_TIPE } from "@/modules/penggajian/pembayaran/rules";
 import { HASIL_TRANSFER, STATUS_TRANSFER } from "@/modules/penggajian/pembayaran/status";
-import { Notice } from "@/modules/penggajian/ui/notice";
-import { PageHeader } from "@/modules/penggajian/ui/page-header";
+import { Notice } from "@/components/ui/notice";
+import { PageHeader } from "@/components/ui/page-header";
 import { ui } from "@/modules/penggajian/ui/kelas";
 import { FormAksi } from "@/modules/penggajian/shared/form-aksi";
 import { Keadaan, TidakBerwenang } from "@/modules/penggajian/shared/states";
@@ -20,7 +20,7 @@ async function Konten({ periodeId, karyawanId }: { periodeId: string; karyawanId
   const sesi = await sesiPenggajian();
   const view = await getPembayaran(sesi, periodeId);
   const baris = view?.baris.find((b) => b.karyawanId === karyawanId);
-  const judul = <PageHeader item={ITEM} title="Periksa transfer gagal" />;
+  const judul = <PageHeader breadcrumb={[{ label: "Siklus Penggajian", accent: true }, ITEM]} title="Periksa transfer gagal" variant="page" />;
   if (sesi.peran !== "Finance") return <>{judul}<TidakBerwenang pesan="Transfer ulang dicatat Finance." /></>;
   if (!view || !baris) return <>{judul}<Keadaan judul="Data transfer tidak ditemukan" pesan="Tautannya mungkin salah." /></>;
   return (
@@ -28,7 +28,8 @@ async function Konten({ periodeId, karyawanId }: { periodeId: string; karyawanId
       <PageHeader
         back={{ href: `/penggajian/pembayaran?periode=${periodeId}`, label: "Pembayaran gaji" }}
         description="Hanya penerima yang gagal yang diproses ulang. Transfer berhasil tidak diulang."
-        item={ITEM}
+        breadcrumb={[{ label: "Siklus Penggajian", accent: true }, ITEM]}
+        variant="page"
         title={`Periksa transfer gagal / ${baris.nama}`}
       />
       <div className={ui.stack}>
@@ -42,7 +43,7 @@ async function Konten({ periodeId, karyawanId }: { periodeId: string; karyawanId
               {view.baris.map((b) => (
                 <tr key={b.karyawanId}>
                   <td>{b.nama}</td>
-                  <td className={`${ui.right} ${ui.numeric}`}>{b.nominal !== undefined ? formatRupiah(b.nominal) : "—"}</td>
+                  <td className={`${ui.right} ${ui.numeric}`}>{b.nominal !== undefined ? formatRupiah(BigInt(b.nominal) * BigInt(100)) : "—"}</td>
                   <td><StatusBadge status={b.status} statuses={STATUS_TRANSFER} /></td>
                   <td>{TINDAKAN[b.status]}</td>
                 </tr>
@@ -69,7 +70,7 @@ async function Konten({ periodeId, karyawanId }: { periodeId: string; karyawanId
 
 export function UlangTransferScreen({ periodeId, karyawanId }: { periodeId: string; karyawanId: string }) {
   return (
-    <Suspense fallback={<PageHeader item={ITEM} title="Periksa transfer gagal" />}>
+    <Suspense fallback={<PageHeader breadcrumb={[{ label: "Siklus Penggajian", accent: true }, ITEM]} title="Periksa transfer gagal" variant="page" />}>
       <Konten karyawanId={karyawanId} periodeId={periodeId} />
     </Suspense>
   );

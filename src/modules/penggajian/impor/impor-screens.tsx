@@ -9,8 +9,8 @@ import type { ProfilPemetaan } from "@/modules/penggajian/impor/types";
 import { listKaryawanAktifUntukCatat } from "@/modules/penggajian/presensi/queries";
 import { listPeriodeTerbaru } from "@/modules/penggajian/periode/queries";
 import { labelStatusPeriode, rentangPeriode } from "@/modules/penggajian/periode/rules";
-import { Notice } from "@/modules/penggajian/ui/notice";
-import { PageHeader } from "@/modules/penggajian/ui/page-header";
+import { Notice } from "@/components/ui/notice";
+import { PageHeader } from "@/components/ui/page-header";
 import { ui } from "@/modules/penggajian/ui/kelas";
 import { FormAksi } from "@/modules/penggajian/shared/form-aksi";
 import { Keadaan, TidakBerwenang } from "@/modules/penggajian/shared/states";
@@ -82,7 +82,8 @@ export function ImporScreen() {
       <PageHeader
         back={{ href: "/penggajian/presensi", label: "Presensi & lembur" }}
         description="Unggah berkas CSV ekspor mesin. Baris yang valid masuk sebagai presensi menunggu validasi Supervisor."
-        item={ITEM}
+        breadcrumb={[{ label: "Siklus Penggajian", accent: true }, ITEM]}
+        variant="page"
         title="Impor presensi dari mesin absensi"
       />
       <Suspense fallback={null}>
@@ -144,7 +145,7 @@ async function Pengaturan({ pesan }: { pesan?: string }) {
 export function PengaturanImporScreen({ pesan }: { pesan?: string }) {
   return (
     <>
-      <PageHeader back={{ href: "/penggajian/impor", label: "Impor presensi dari mesin absensi" }} item={ITEM} title="Profil dan pemetaan impor" />
+      <PageHeader back={{ href: "/penggajian/impor", label: "Impor presensi dari mesin absensi" }} breadcrumb={[{ label: "Siklus Penggajian", accent: true }, ITEM]} title="Profil dan pemetaan impor" variant="page" />
       <Suspense fallback={null}>
         <Pengaturan pesan={pesan} />
       </Suspense>
@@ -189,7 +190,7 @@ async function Hasil({ id }: { id: string }) {
 export function HasilImporScreen({ id }: { id: string }) {
   return (
     <>
-      <PageHeader back={{ href: "/penggajian/impor", label: "Impor presensi dari mesin absensi" }} item={ITEM} title="Hasil impor" />
+      <PageHeader back={{ href: "/penggajian/impor", label: "Impor presensi dari mesin absensi" }} breadcrumb={[{ label: "Siklus Penggajian", accent: true }, ITEM]} title="Hasil impor" variant="page" />
       <Suspense fallback={null}>
         <Hasil id={id} />
       </Suspense>

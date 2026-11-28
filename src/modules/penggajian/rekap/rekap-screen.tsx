@@ -13,8 +13,8 @@ import { getPeriodeDipilih, listPeriode } from "@/modules/penggajian/presensi/qu
 import { saveRekap, validateRekap } from "@/modules/penggajian/rekap/actions";
 import { aksesRekap, getRekap } from "@/modules/penggajian/rekap/queries";
 import type { RekapDepartemen, RekapKaryawan } from "@/modules/penggajian/rekap/queries";
-import { Notice } from "@/modules/penggajian/ui/notice";
-import { PageHeader } from "@/modules/penggajian/ui/page-header";
+import { Notice } from "@/components/ui/notice";
+import { PageHeader } from "@/components/ui/page-header";
 import { ui } from "@/modules/penggajian/ui/kelas";
 import { FormAksi } from "@/modules/penggajian/shared/form-aksi";
 import { Keadaan, TidakBerwenang } from "@/modules/penggajian/shared/states";
@@ -212,13 +212,13 @@ async function KontenRekap({ periodeId, pesan }: { periodeId?: string; pesan?: s
   const sesi = await sesiPenggajian();
   const akses = await aksesRekap(sesi);
   if (!akses.bolehMembaca) {
-    return <><PageHeader item={ITEM_HR} title="Rekap presensi & lembur" /><TidakBerwenang pesan="Rekap dibuka HR untuk seluruh karyawan dan Supervisor Lapangan untuk departemennya." /></>;
+    return <><PageHeader breadcrumb={[{ label: "Siklus Penggajian", accent: true }, ITEM_HR]} title="Rekap presensi & lembur" variant="page" /><TidakBerwenang pesan="Rekap dibuka HR untuk seluruh karyawan dan Supervisor Lapangan untuk departemennya." /></>;
   }
   const periode = await getPeriodeDipilih(periodeId);
   const header = akses.hr ? (
-    <PageHeader description="HR memeriksa kelengkapan lalu menyimpan rekap. Periode ditutup (Rekap) dan menunggu validasi Supervisor tiap departemen." item={ITEM_HR} title="Rekap presensi & lembur" />
+    <PageHeader breadcrumb={[{ label: "Siklus Penggajian", accent: true }, ITEM_HR]} description="HR memeriksa kelengkapan lalu menyimpan rekap. Periode ditutup (Rekap) dan menunggu validasi Supervisor tiap departemen." title="Rekap presensi & lembur" variant="page" />
   ) : (
-    <PageHeader description={periode ? `Periode ${rentangPeriode(periode)}` : undefined} item={ITEM_SPV} title="Validasi rekap presensi & lembur" />
+    <PageHeader breadcrumb={[{ label: "Siklus Penggajian", accent: true }, ITEM_SPV]} description={periode ? `Periode ${rentangPeriode(periode)}` : undefined} title="Validasi rekap presensi & lembur" variant="page" />
   );
   if (!periode) return <>{header}<Keadaan judul="Belum ada periode penggajian" pesan="Periode dibuat HR sebelum rekap bisa disusun." /></>;
   const departemen = await getRekap(sesi, periode);
@@ -244,7 +244,7 @@ async function KontenRekap({ periodeId, pesan }: { periodeId?: string; pesan?: s
 
 export function RekapScreen({ periodeId, pesan }: { periodeId?: string; pesan?: string }) {
   return (
-    <Suspense fallback={<PageHeader item={ITEM_HR} title="Rekap presensi & lembur" />}>
+    <Suspense fallback={<PageHeader breadcrumb={[{ label: "Siklus Penggajian", accent: true }, ITEM_HR]} title="Rekap presensi & lembur" variant="page" />}>
       <KontenRekap periodeId={periodeId} pesan={pesan} />
     </Suspense>
   );

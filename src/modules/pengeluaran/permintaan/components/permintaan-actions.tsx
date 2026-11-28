@@ -116,10 +116,14 @@ function SetujuiForm({ permintaan }: { permintaan: PermintaanPembelianView }) {
     <form action={action} className={styles.actionForm}>
       <input name="id" type="hidden" value={permintaan.dokumenId} />
       <input name="versi" type="hidden" value={permintaan.versi} />
-      <Pesan state={state} />
-      <button className={styles.primaryButton} disabled={pending} type="submit">
-        {pending ? "Memproses..." : "Setujui jenjang ini"}
-      </button>
+      {state.message ? (
+        <Notice tone={state.status === "success" ? "success" : "danger"}>
+          {state.message}
+        </Notice>
+      ) : null}
+      <SubmitButton busy={pending} size="lg">
+        Setujui jenjang ini
+      </SubmitButton>
     </form>
   );
 }
@@ -142,10 +146,14 @@ function TolakForm({ permintaan }: { permintaan: PermintaanPembelianView }) {
         name="alasan"
         placeholder="Contoh: anggaran tidak tersedia"
       />
-      <Pesan state={state} />
-      <button className={styles.dangerButton} disabled={pending} type="submit">
-        {pending ? "Memproses..." : "Tolak permintaan"}
-      </button>
+      {state.message ? (
+        <Notice tone={state.status === "success" ? "success" : "danger"}>
+          {state.message}
+        </Notice>
+      ) : null}
+      <SubmitButton busy={pending} size="lg" variant="danger">
+        Tolak permintaan
+      </SubmitButton>
     </form>
   );
 }

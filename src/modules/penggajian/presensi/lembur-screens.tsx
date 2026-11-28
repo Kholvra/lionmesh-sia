@@ -12,8 +12,8 @@ import { PilihPeriode } from "@/modules/penggajian/presensi/components/pilih-per
 import { getLembur, getPeriodeDipilih, listLembur, listPeriode } from "@/modules/penggajian/presensi/queries";
 import type { LemburView } from "@/modules/penggajian/presensi/queries";
 import { LABEL_SUMBER, STATUS_ENTRI } from "@/modules/penggajian/presensi/status";
-import { Notice } from "@/modules/penggajian/ui/notice";
-import { PageHeader } from "@/modules/penggajian/ui/page-header";
+import { Notice } from "@/components/ui/notice";
+import { PageHeader } from "@/components/ui/page-header";
 import { ui } from "@/modules/penggajian/ui/kelas";
 import { KartuBaca } from "@/modules/penggajian/shared/bidang-baca";
 import { FormAksi } from "@/modules/penggajian/shared/form-aksi";
@@ -93,7 +93,7 @@ async function DaftarLembur({ periodeId }: { periodeId?: string }) {
 export function LemburListScreen({ periodeId }: { periodeId?: string }) {
   return (
     <>
-      <PageHeader description="Pengajuan yang sudah tervalidasi tidak bisa dibatalkan. Untuk koreksi, hubungi HR." item={ITEM} title="Pengajuan saya" />
+      <PageHeader breadcrumb={[{ label: "Siklus Penggajian", accent: true }, ITEM]} description="Pengajuan yang sudah tervalidasi tidak bisa dibatalkan. Untuk koreksi, hubungi HR." title="Pengajuan saya" variant="page" />
       <Suspense fallback={<TabelMemuat caption="Memuat lembur" kolom={KOLOM} />}>
         <DaftarLembur periodeId={periodeId} />
       </Suspense>
@@ -127,7 +127,7 @@ function bidang(l: LemburView): [string, string][] {
 async function DetailLembur({ id, pesan }: { id: string; pesan?: string }) {
   const sesi = await sesiPenggajian();
   const akses = aksesPresensi(sesi);
-  const judul = <PageHeader item={ITEM} title="Detail lembur" />;
+  const judul = <PageHeader breadcrumb={[{ label: "Siklus Penggajian", accent: true }, ITEM]} title="Detail lembur" variant="page" />;
   if (!akses.bolehMembaca) return <>{judul}<TidakBerwenang pesan={TOLAK_AKSES} /></>;
   const lembur = await getLembur(sesi, id);
   if (!lembur) {
@@ -141,7 +141,8 @@ async function DetailLembur({ id, pesan }: { id: string; pesan?: string }) {
     <>
       <PageHeader
         description={`Diajukan ${lembur.dicatatOleh} pada ${formatWaktu(diajukan?.pada ?? lembur.dicatatPada)}.${menunggu ? " Bisa dibatalkan selama belum divalidasi Supervisor." : ""}`}
-        item={ITEM}
+        breadcrumb={[{ label: "Siklus Penggajian", accent: true }, ITEM]}
+        variant="page"
         title={`Detail lembur ${formatTanggal(lembur.tanggal)}`}
       />
       <div className={ui.stack}>
@@ -165,7 +166,7 @@ async function DetailLembur({ id, pesan }: { id: string; pesan?: string }) {
 
 export function LemburDetailScreen({ id, pesan }: { id: string; pesan?: string }) {
   return (
-    <Suspense fallback={<PageHeader item={ITEM} title="Detail lembur" />}>
+    <Suspense fallback={<PageHeader breadcrumb={[{ label: "Siklus Penggajian", accent: true }, ITEM]} title="Detail lembur" variant="page" />}>
       <DetailLembur id={id} pesan={pesan} />
     </Suspense>
   );
@@ -175,13 +176,14 @@ async function FormBatal({ id }: { id: string }) {
   const sesi = await sesiPenggajian();
   const lembur = await getLembur(sesi, id);
   if (!lembur) {
-    return <><PageHeader item={ITEM} title="Batalkan pengajuan lembur" /><Keadaan aksi={{ href: "/penggajian/lembur", label: "Kembali ke pengajuan saya" }} judul="Pengajuan lembur tidak ditemukan" pesan="Data mungkin bukan milik Anda atau tautannya salah." /></>;
+    return <><PageHeader breadcrumb={[{ label: "Siklus Penggajian", accent: true }, ITEM]} title="Batalkan pengajuan lembur" variant="page" /><Keadaan aksi={{ href: "/penggajian/lembur", label: "Kembali ke pengajuan saya" }} judul="Pengajuan lembur tidak ditemukan" pesan="Data mungkin bukan milik Anda atau tautannya salah." /></>;
   }
   return (
     <>
       <PageHeader
         description="Pembatalan hanya bisa selama status Menunggu validasi Supervisor. Alasan wajib dan tercatat di riwayat status."
-        item={ITEM}
+        breadcrumb={[{ label: "Siklus Penggajian", accent: true }, ITEM]}
+        variant="page"
         title={`Batalkan lembur ${formatTanggal(lembur.tanggal)}`}
       />
       <FormAksi
@@ -206,7 +208,7 @@ async function FormBatal({ id }: { id: string }) {
 
 export function BatalLemburScreen({ id }: { id: string }) {
   return (
-    <Suspense fallback={<PageHeader item={ITEM} title="Batalkan pengajuan lembur" />}>
+    <Suspense fallback={<PageHeader breadcrumb={[{ label: "Siklus Penggajian", accent: true }, ITEM]} title="Batalkan pengajuan lembur" variant="page" />}>
       <FormBatal id={id} />
     </Suspense>
   );

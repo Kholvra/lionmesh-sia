@@ -2,7 +2,7 @@ import { Suspense } from "react";
 
 import { sesiPenggajian } from "@/modules/penggajian/akun/akun";
 import { returnPayroll } from "@/modules/penggajian/payroll/persetujuan-actions";
-import { PageHeader } from "@/modules/penggajian/ui/page-header";
+import { PageHeader } from "@/components/ui/page-header";
 import { FormAksi } from "@/modules/penggajian/shared/form-aksi";
 import { TidakBerwenang } from "@/modules/penggajian/shared/states";
 
@@ -29,7 +29,8 @@ export function KembalikanPayrollScreen({ periodeId }: { periodeId: string }) {
       <PageHeader
         back={{ href: `/penggajian/payroll?periode=${periodeId}`, label: "Draft payroll" }}
         description="Alasan wajib dan tampil bagi HR. Draft menjadi Revisi sampai HR menghitung ulang."
-        item="GJ-005 Memeriksa dan menyetujui payroll"
+        breadcrumb={[{ label: "Siklus Penggajian", accent: true }, "GJ-005 Memeriksa dan menyetujui payroll"]}
+        variant="page"
         title="Kembalikan draft payroll"
       />
       <Suspense fallback={null}>

@@ -4,7 +4,8 @@ import { PageHeader } from "@/components/ui/page-header";
 import { StatusBadge } from "@/components/ui";
 import type { Profile } from "@/lib/auth/types";
 import { cekIzin } from "@/lib/auth/permissions";
-import { formatRupiah } from "@/lib/format/number";
+import { formatRupiah } from "@/lib/format/money";
+import { rupiahKeCents } from "@/modules/pengeluaran/pemasok/format";
 import { PermintaanActions } from "./components/permintaan-actions";
 import { PermintaanForm } from "./components/permintaan-form";
 import { PermintaanTable } from "./components/permintaan-table";
@@ -134,7 +135,7 @@ export async function PermintaanScreen({ mode, permintaanId, profile }: Props) {
                     <dd className={styles.detailValue}>
                       {terpilih.header.nominal === null
                         ? "Belum diisi"
-                        : formatRupiah(terpilih.header.nominal)}
+                        : formatRupiah(rupiahKeCents(terpilih.header.nominal))}
                     </dd>
                   </div>
                   <div className={styles.detailItem}>

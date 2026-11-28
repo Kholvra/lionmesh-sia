@@ -3,7 +3,8 @@
 import { useActionState, useMemo, useState } from "react";
 
 import { FormField, Input } from "@/components/ui";
-import { formatRupiah } from "@/lib/format/number";
+import { formatRupiah } from "@/lib/format/money";
+import { rupiahKeCents } from "@/modules/pengeluaran/pemasok/format";
 import { catatInvoiceAction } from "../actions";
 import { INITIAL_INVOICE_ACTION_STATE } from "../form-state";
 import common from "../../permintaan/permintaan.module.css";
@@ -128,7 +129,7 @@ export function InvoiceForm({
                   />
                 </th>
                 <td className={table.nominal}>{item.qtyLulus}</td>
-                <td className={table.nominal}>{formatRupiah(item.hargaPo)}</td>
+                <td className={table.nominal}>{formatRupiah(rupiahKeCents(item.hargaPo))}</td>
                 <td>
                   <input
                     aria-label={`Qty tagih ${item.label}`}
@@ -165,7 +166,7 @@ export function InvoiceForm({
 
       <div className={common.formGrid}>
         <FormField
-          helpText={`PPN hitung dari tarif: ${formatRupiah(String(ppnHitung))}`}
+          helpText={`PPN hitung dari tarif: ${formatRupiah(rupiahKeCents(ppnHitung))}`}
           id="invoice-ppn"
           label="PPN invoice"
           name="ppn_nilai"
@@ -180,7 +181,7 @@ export function InvoiceForm({
         </FormField>
         <div className={common.detailItem}>
           <p className={common.detailLabel}>Total DPP + PPN</p>
-          <p className={common.detailValue}>{formatRupiah(String(dpp))}</p>
+          <p className={common.detailValue}>{formatRupiah(rupiahKeCents(Math.round(dpp)))}</p>
         </div>
       </div>
 

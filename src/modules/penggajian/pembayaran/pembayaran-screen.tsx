@@ -3,7 +3,8 @@ import { Suspense } from "react";
 
 import { StatusBadge } from "@/components/ui";
 import { sesiPenggajian } from "@/modules/penggajian/akun/akun";
-import { formatRupiah, formatWaktu, samarkanRekening } from "@/modules/penggajian/karyawan/format";
+import { formatRupiah } from "@/lib/format/money";
+import { formatWaktu, samarkanRekening } from "@/modules/penggajian/karyawan/format";
 import { recordDanaKurang, sendBatch } from "@/modules/penggajian/pembayaran/actions";
 import { aksesPembayaran, getPembayaran } from "@/modules/penggajian/pembayaran/queries";
 import type { BarisPembayaran, PembayaranView } from "@/modules/penggajian/pembayaran/queries";
@@ -13,8 +14,8 @@ import { KartuAngka } from "@/modules/penggajian/shared/kartu-angka";
 import { STATUS_DRAFT } from "@/modules/penggajian/payroll/status";
 import { PilihPeriode } from "@/modules/penggajian/presensi/components/pilih-periode";
 import { getPeriodeDipilih, listPeriode } from "@/modules/penggajian/presensi/queries";
-import { Notice } from "@/modules/penggajian/ui/notice";
-import { PageHeader } from "@/modules/penggajian/ui/page-header";
+import { Notice } from "@/components/ui/notice";
+import { PageHeader } from "@/components/ui/page-header";
 import { ui } from "@/modules/penggajian/ui/kelas";
 import { FormAksi } from "@/modules/penggajian/shared/form-aksi";
 import type { IsianForm } from "@/modules/penggajian/shared/form-aksi";
@@ -44,7 +45,7 @@ function sel(b: BarisPembayaran, periodeId: string, bayar: boolean) {
   return {
     karyawan: `${b.nama} · ${b.nik}`,
     rekening: b.rekening ? `${b.rekening.namaBank || "—"} · ${samarkanRekening(b.rekening.nomor)}` : "—",
-    nominal: b.nominal !== undefined ? <span className={ui.numeric}>{formatRupiah(b.nominal)}</span> : "—",
+    nominal: b.nominal !== undefined ? <span className={ui.numeric}>{formatRupiah(BigInt(b.nominal) * BigInt(100))}</span> : "—",
     status: <StatusBadge status={b.status} statuses={STATUS_TRANSFER} />,
     jejak: terakhir ? `${b.percobaan.length}× · ref ${terakhir.referensi || "—"} · ${formatWaktu(terakhir.pada)}` : b.masalahRekening ?? "—",
     aksi: bayar && b.status === "GAGAL_TRANSFER"
@@ -97,7 +98,7 @@ async function Konten({ periodeId, pesan }: { periodeId?: string; pesan?: string
         <KartuAngka
           isi={[
             ["Penerima", String(view.baris.length || view.jumlah.dibayar + view.jumlah.gagal + view.jumlah.belum)],
-            ...(akses.nominal ? [["Total transfer", formatRupiah(total)] as [string, string]] : [["Dibayar", String(view.jumlah.dibayar)] as [string, string]]),
+            ...(akses.nominal ? [["Total transfer", formatRupiah(BigInt(total) * BigInt(100))] as [string, string]] : [["Dibayar", String(view.jumlah.dibayar)] as [string, string]]),
             ["Periode", periode.nama],
           ]}
         />
@@ -157,7 +158,7 @@ async function Konten({ periodeId, pesan }: { periodeId?: string; pesan?: string
 export function PembayaranScreen({ periodeId, pesan }: { periodeId?: string; pesan?: string }) {
   return (
     <>
-      <PageHeader description="Cocokkan hasil bank sebelum mengonfirmasi pembayaran. Satu batch per periode; karyawan yang sudah dibayar tidak masuk batch lagi." item="GJ-006 Membayar gaji dan menerbitkan slip" title="Pembayaran gaji" />
+      <PageHeader breadcrumb={[{ label: "Siklus Penggajian", accent: true }, "GJ-006 Membayar gaji dan menerbitkan slip"]} description="Cocokkan hasil bank sebelum mengonfirmasi pembayaran. Satu batch per periode; karyawan yang sudah dibayar tidak masuk batch lagi." title="Pembayaran gaji" variant="page" />
       <Suspense fallback={<TabelMemuat caption="Memuat pembayaran" kolom={[{ id: "k", header: "Karyawan" }, { id: "s", header: "Status" }]} />}>
         <Konten periodeId={periodeId} pesan={pesan} />
       </Suspense>

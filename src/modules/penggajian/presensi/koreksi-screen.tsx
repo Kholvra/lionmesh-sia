@@ -7,8 +7,8 @@ import { correctClosedPresensi } from "@/modules/penggajian/presensi/koreksi-act
 import { listKaryawanAktifUntukCatat } from "@/modules/penggajian/presensi/queries";
 import { LABEL_KEHADIRAN } from "@/modules/penggajian/presensi/status";
 import { KEHADIRAN } from "@/modules/penggajian/presensi/types";
-import { Notice } from "@/modules/penggajian/ui/notice";
-import { PageHeader } from "@/modules/penggajian/ui/page-header";
+import { Notice } from "@/components/ui/notice";
+import { PageHeader } from "@/components/ui/page-header";
 import { FormAksi } from "@/modules/penggajian/shared/form-aksi";
 import { Keadaan, TidakBerwenang } from "@/modules/penggajian/shared/states";
 
@@ -58,7 +58,7 @@ async function Konten() {
 export function KoreksiPresensiScreen() {
   return (
     <>
-      <PageHeader back={{ href: "/penggajian/presensi", label: "Presensi & lembur" }} item="GJ-002 Mencatat presensi dan lembur" title="Koreksi presensi periode tertutup" />
+      <PageHeader back={{ href: "/penggajian/presensi", label: "Presensi & lembur" }} breadcrumb={[{ label: "Siklus Penggajian", accent: true }, "GJ-002 Mencatat presensi dan lembur"]} title="Koreksi presensi periode tertutup" variant="page" />
       <Suspense fallback={null}>
         <Konten />
       </Suspense>
