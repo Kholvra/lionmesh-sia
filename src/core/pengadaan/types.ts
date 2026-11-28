@@ -372,3 +372,73 @@ export interface TutupExceptionInput {
   alasan: string;
   actorId: string;
 }
+
+export interface PenerimaanQcItem {
+  id: string;
+  produkId: string;
+  produkTipe: string;
+  qtyDiterima: string;
+  qtyLulus: string | null;
+  hargaPo: string;
+  lokasiPemisahan: string | null;
+  qtyGagalTersedia: string;
+}
+
+export interface PenerimaanQcView {
+  header: PenerimaanView;
+  items: PenerimaanQcItem[];
+  riwayat: RiwayatStatus[];
+}
+
+export interface ReturPemasokView {
+  dokumenId: string;
+  nomor: string;
+  status: StatusDokumen;
+  versi: number;
+  penerimaanId: string;
+  penerimaanNomor: string | null;
+  pemasokNama: string;
+  alasan: string | null;
+  createdAt: string;
+}
+
+export interface ReturPemasokItemView {
+  id: string;
+  penerimaanItemId: string;
+  produkId: string;
+  qty: string;
+}
+
+export interface ReturPemasokDetail {
+  header: ReturPemasokView;
+  items: ReturPemasokItemView[];
+  riwayat: RiwayatStatus[];
+}
+
+export interface AjukanReturInput {
+  penerimaanId: string;
+  alasan?: string;
+  baris: readonly { penerimaanItemId: string; qty: string }[];
+  actorId: string;
+}
+
+export interface PutuskanReturInput {
+  dokumenId: string;
+  versi: number;
+  setuju: boolean;
+  alasan?: string;
+  actorId: string;
+}
+
+export interface BatalkanReturInput {
+  dokumenId: string;
+  versi: number;
+  alasan: string;
+  actorId: string;
+}
+
+export interface LokasiPemisahanInput {
+  penerimaanItemId: string;
+  lokasi: string;
+  actorId: string;
+}

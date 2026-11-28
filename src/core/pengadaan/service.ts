@@ -29,11 +29,15 @@ import type {
   HasilPermintaanPembelian,
   HasilPurchaseOrder,
   HasilQC,
+  AjukanReturInput,
   BatalkanPenerimaanInput,
   BatalkanPoInput,
+  BatalkanReturInput,
   CatatKonfirmasiPoInput,
+  LokasiPemisahanInput,
   PeriksaPRDenganNilaiInput,
   PeriksaPRInput,
+  PutuskanReturInput,
   SimpanPenawaranHargaInput,
   TerbitkanPoInput,
   TetapkanPemasokDenganAlasanInput,
@@ -531,4 +535,102 @@ export async function tutupExceptionPengadaan(
 
   if (error) return fail(pesanKesalahan(error, "Gagal menutup exception."));
   return ok({ exceptionId: input.exceptionId });
+}
+
+export async function catatLokasiPemisahan(
+  supabase: SupabaseClient,
+  input: LokasiPemisahanInput,
+): Promise<Result<{ penerimaanItemId: string }>> {
+  if (!isUuid(input.actorId) || !isUuid(input.penerimaanItemId)) {
+    return fail("Data lokasi pemisahan tidak valid.");
+  }
+  if (input.lokasi.trim().length === 0) {
+    return fail("Lokasi pemisahan wajib diisi");
+  }
+
+  const { error } = await supabase.rpc("catat_lokasi_pemisahan", {
+    p_penerimaan_item_id: input.penerimaanItemId,
+    p_lokasi: input.lokasi.trim(),
+    p_aktor_id: input.actorId,
+  });
+
+  if (error) return fail(pesanKesalahan(error, "Gagal menyimpan lokasi pemisahan."));
+  return ok({ penerimaanItemId: input.penerimaanItemId });
+}
+
+export async function ajukanReturPemasok(
+  supabase: SupabaseClient,
+  input: AjukanReturInput,
+): Promise<Result<HasilDokumenPengadaan>> {
+  if (
+    !isUuid(input.actorId) ||
+    !isUuid(input.penerimaanId) ||
+    input.baris.length === 0 ||
+    input.baris.some(
+      (row) => !isUuid(row.penerimaanItemId) || !/^\d+(\.\d{1,4})?$/.test(row.qty),
+    )
+  ) {
+    return fail("Data retur pemasok tidak valid.");
+  }
+
+  const { data, error } = await supabase.rpc("ajukan_retur_pemasok", {
+    p_dokumen_id: input.penerimaanId,
+    p_baris: input.baris.map((row) => ({
+      penerimaan_item_id: row.penerimaanItemId,
+      qty: row.qty,
+    })),
+    p_alasan: input.alasan ?? null,
+    p_aktor_id: input.actorId,
+  });
+
+  if (error) return fail(pesanKesalahan(error, "Gagal mengajukan retur pemasok."));
+  const hasil = parseDokumen(data);
+  return hasil ? ok(hasil) : fail("Respons retur pemasok tidak valid.");
+}
+
+export async function putuskanReturPemasok(
+  supabase: SupabaseClient,
+  input: PutuskanReturInput,
+): Promise<Result<HasilDokumenPengadaan>> {
+  if (!isUuid(input.actorId) || !isUuid(input.dokumenId) || validasiVersi(input.versi)) {
+    return fail("Data keputusan retur tidak valid.");
+  }
+  if (!input.setuju && (input.alasan ?? "").trim().length === 0) {
+    return fail("Alasan penolakan wajib diisi");
+  }
+
+  const { data, error } = await supabase.rpc("putuskan_retur_pemasok", {
+    p_dokumen_id: input.dokumenId,
+    p_versi: input.versi,
+    p_setuju: input.setuju,
+    p_alasan: input.alasan?.trim() ?? null,
+    p_aktor_id: input.actorId,
+  });
+
+  if (error) return fail(pesanKesalahan(error, "Gagal memutuskan retur pemasok."));
+  const hasil = parseDokumen(data);
+  return hasil ? ok(hasil) : fail("Respons keputusan retur tidak valid.");
+}
+
+export async function batalkanReturPemasok(
+  supabase: SupabaseClient,
+  input: BatalkanReturInput,
+): Promise<Result<HasilDokumenPengadaan>> {
+  if (!isUuid(input.actorId) || !isUuid(input.dokumenId) || validasiVersi(input.versi)) {
+    return fail("Data pembatalan retur tidak valid.");
+  }
+  if (input.alasan.trim().length === 0) {
+    return fail("Alasan pembatalan wajib diisi");
+  }
+
+  const { data, error } = await supabase.rpc("batalkan_retur_pemasok", {
+    p_dokumen_id: input.dokumenId,
+    p_versi: input.versi,
+    p_alasan: input.alasan.trim(),
+    p_aktor_id: input.actorId,
+  });
+
+  if (error) return fail(pesanKesalahan(error, "Gagal membatalkan retur pemasok."));
+  const hasil = parseDokumen(data);
+  return hasil ? ok(hasil) : fail("Respons pembatalan retur tidak valid.");
 }
