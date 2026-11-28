@@ -62,7 +62,7 @@ Satu pemilik: tech lead. Urutan wajib.
 | `PG-006` | Penerimaan barang | PG-C penerimaan | 6 | `PG-005`, `FND-005` | `done` |
 | `PG-007` | QC bahan & retur ke pemasok | PG-C penerimaan | 7 | `PG-006`, `FND-005` | `done` |
 | `PG-008` | Three-way match & utang usaha | PG-D utang | 8 | `PG-007`, `FND-006` | `done` |
-| `PG-009` | Pembayaran utang | PG-D utang | 9 | `PG-008`, `FND-006` | `specified` |
+| `PG-009` | Pembayaran utang | PG-D utang | 9 | `PG-008`, `FND-006` | `done` |
 | `PG-010` | Rekonsiliasi bank | PG-E bank | 1 | `FND-006` | `ready` |
 | `PG-011` | Laporan pembelian, utang, dan pengeluaran kas | PG-F pelaporan | 10 | `PG-008`, `PG-009`, `C-009` | `idea` |
 
@@ -222,3 +222,4 @@ Terbaca per level. Semua item dalam satu baris boleh dikerjakan serentak. `DISC-
 | 2026-11-27 | `PG-006` → `done`: ditumpuk di branch PG-005; layar penerimaan dengan sisa qty PO, pembatalan sebelum QC, penutupan exception oleh Purchasing, migrasi `0026` (tepi `DITERIMA → DIBATALKAN`). Dua keputusan state machine ditandai untuk tech lead; bukti AC-DB di `docs/tech-debt/pg-006-bukti-db.md` |
 | 2026-11-27 | `PG-007` → `done`: ditumpuk di branch PG-006; layar QC dan retur pemasok, lokasi pemisahan barang gagal, dokumen `RETUR_PEMASOK` dengan persetujuan Accounting, migrasi `0027`. QC memakai `catat_qc_penerimaan` C-013 sehingga stok + jurnal tetap satu transaksi; bukti AC-DB di `docs/tech-debt/pg-007-bukti-db.md` |
 | 2026-11-27 | `PG-008` → `done`: ditumpuk di branch PG-007; dokumen `INVOICE_PEMASOK`, pencocokan qty/harga/PPN saat simpan, pengesahan utang + jurnal Dr 202/PPN/selisih Cr 201, koreksi dan pembatalan dengan jurnal pembalik, migrasi `0028`, seed akun placeholder 113/603 (`0014`). Bukti AC-DB di `docs/tech-debt/pg-008-bukti-db.md` |
+| 2026-11-28 | `PG-009` → `done`: master `rekening_bank` (seed placeholder), pembayaran dengan alokasi otomatis tertua dulu, verifikasi Accounting, hasil transfer + bukti di Supabase Storage, jurnal Dr 201 / Cr 102, pembatalan dengan jurnal pembalik, migrasi `0029`. Bukti AC-DB di `docs/tech-debt/pg-009-bukti-db.md` |
