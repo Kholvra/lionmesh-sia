@@ -121,6 +121,13 @@ export const NAV_CYCLES: readonly NavCycle[] = [
         icon: "pengeluaran",
         tersedia: true,
       },
+      {
+        label: "Rekonsiliasi bank",
+        href: "/pengeluaran/rekonsiliasi-bank",
+        icon: "pengeluaran",
+        tersedia: true,
+        aksi: "rekonsiliasi_bank",
+      },
     ],
   },
   {

@@ -38,14 +38,19 @@ import type {
   CatatInvoiceInput,
   CatatKonfirmasiPoInput,
   CatatPembayaranInput,
+  CocokkanMutasiInput,
   CocokkanUlangInvoiceInput,
   HasilTransferInput,
+  ImporMutasiInput,
   LokasiPemisahanInput,
+  PasangkanMutasiInput,
   PeriksaPRDenganNilaiInput,
   PeriksaPRInput,
   PutuskanReturInput,
   SahkanInvoiceInput,
   SimpanPenawaranHargaInput,
+  SimpanProfilPemetaanInput,
+  TandaiSelisihInput,
   TerbitkanPoInput,
   TetapkanPemasokDenganAlasanInput,
   TetapkanPemasokPRInput,
@@ -857,4 +862,153 @@ export async function batalkanPembayaranPemasok(
   if (error) return fail(pesanKesalahan(error, "Gagal membatalkan pembayaran."));
   const hasil = parseDokumen(data);
   return hasil ? ok(hasil) : fail("Respons pembatalan pembayaran tidak valid.");
+}
+
+export async function simpanProfilPemetaanBank(
+  supabase: SupabaseClient,
+  input: SimpanProfilPemetaanInput,
+): Promise<Result<{ profilId: string }>> {
+  if (!isUuid(input.actorId) || input.nama.trim().length === 0) {
+    return fail("Data profil pemetaan tidak valid.");
+  }
+
+  const { data, error } = await supabase.rpc("simpan_profil_pemetaan_bank", {
+    p_nama: input.nama.trim(),
+    p_rekening_bank_id: input.rekeningBankId ?? null,
+    p_pemetaan: input.pemetaan,
+    p_aktor_id: input.actorId,
+  });
+
+  if (error) return fail(pesanKesalahan(error, "Gagal menyimpan profil pemetaan."));
+  const profilId = (data as Record<string, unknown> | null)?.profil_id;
+  return typeof profilId === "string"
+    ? ok({ profilId })
+    : fail("Respons profil pemetaan tidak valid.");
+}
+
+export async function imporMutasiBank(
+  supabase: SupabaseClient,
+  input: ImporMutasiInput,
+): Promise<Result<{ jumlahBaris: number; cocok: number; belumCocok: number }>> {
+  if (
+    !isUuid(input.actorId) ||
+    !isUuid(input.rekeningBankId) ||
+    !isIsoDate(input.periode) ||
+    input.hash.trim().length === 0 ||
+    input.baris.length === 0
+  ) {
+    return fail("Data impor mutasi tidak valid.");
+  }
+
+  const { data, error } = await supabase.rpc("impor_mutasi_bank", {
+    p_rekening_bank_id: input.rekeningBankId,
+    p_periode: input.periode,
+    p_hash: input.hash.trim(),
+    p_nama_berkas: input.namaBerkas,
+    p_baris: input.baris.map((row) => ({
+      tanggal: row.tanggal,
+      arah: row.arah,
+      nominal: row.nominal,
+      referensi: row.referensi,
+    })),
+    p_aktor_id: input.actorId,
+  });
+
+  if (error) return fail(pesanKesalahan(error, "Gagal mengimpor mutasi bank."));
+  if (!isRecord(data)) return fail("Respons impor mutasi tidak valid.");
+
+  return ok({
+    jumlahBaris: Number(data.jumlah_baris ?? 0),
+    cocok: Number(data.cocok ?? 0),
+    belumCocok: Number(data.belum_cocok ?? 0),
+  });
+}
+
+export async function cocokkanMutasiBank(
+  supabase: SupabaseClient,
+  input: CocokkanMutasiInput,
+): Promise<Result<{ status: string }>> {
+  if (!isUuid(input.actorId) || !isUuid(input.mutasiId)) {
+    return fail("Data pencocokan mutasi tidak valid.");
+  }
+
+  const { data, error } = await supabase.rpc("cocokkan_mutasi_bank", {
+    p_mutasi_id: input.mutasiId,
+    p_aktor_id: input.actorId,
+  });
+
+  if (error) return fail(pesanKesalahan(error, "Gagal mencocokkan mutasi."));
+  const status = (data as Record<string, unknown> | null)?.status;
+  return typeof status === "string"
+    ? ok({ status })
+    : fail("Respons pencocokan mutasi tidak valid.");
+}
+
+export async function pasangkanMutasiBank(
+  supabase: SupabaseClient,
+  input: PasangkanMutasiInput,
+): Promise<Result<{ status: string }>> {
+  if (
+    !isUuid(input.actorId) ||
+    !isUuid(input.mutasiId) ||
+    !isUuid(input.jurnalDetailId)
+  ) {
+    return fail("Data pemasangan mutasi tidak valid.");
+  }
+
+  const { data, error } = await supabase.rpc("pasangkan_mutasi_bank", {
+    p_mutasi_id: input.mutasiId,
+    p_jurnal_detail_id: input.jurnalDetailId,
+    p_aktor_id: input.actorId,
+  });
+
+  if (error) return fail(pesanKesalahan(error, "Gagal memasangkan mutasi."));
+  const status = (data as Record<string, unknown> | null)?.status;
+  return typeof status === "string"
+    ? ok({ status })
+    : fail("Respons pemasangan mutasi tidak valid.");
+}
+
+export async function tandaiSelisihMutasiBank(
+  supabase: SupabaseClient,
+  input: TandaiSelisihInput,
+): Promise<Result<{ status: string }>> {
+  if (!isUuid(input.actorId) || !isUuid(input.mutasiId)) {
+    return fail("Data selisih mutasi tidak valid.");
+  }
+  if (input.alasan.trim().length === 0) {
+    return fail("Alasan selisih wajib diisi");
+  }
+
+  const { data, error } = await supabase.rpc("tandai_selisih_mutasi_bank", {
+    p_mutasi_id: input.mutasiId,
+    p_alasan: input.alasan.trim(),
+    p_aktor_id: input.actorId,
+  });
+
+  if (error) return fail(pesanKesalahan(error, "Gagal menandai selisih."));
+  const status = (data as Record<string, unknown> | null)?.status;
+  return typeof status === "string"
+    ? ok({ status })
+    : fail("Respons selisih mutasi tidak valid.");
+}
+
+export async function lepasPasanganMutasiBank(
+  supabase: SupabaseClient,
+  input: CocokkanMutasiInput,
+): Promise<Result<{ status: string }>> {
+  if (!isUuid(input.actorId) || !isUuid(input.mutasiId)) {
+    return fail("Data pelepasan pasangan tidak valid.");
+  }
+
+  const { data, error } = await supabase.rpc("lepas_pasangan_mutasi_bank", {
+    p_mutasi_id: input.mutasiId,
+    p_aktor_id: input.actorId,
+  });
+
+  if (error) return fail(pesanKesalahan(error, "Gagal melepas pasangan."));
+  const status = (data as Record<string, unknown> | null)?.status;
+  return typeof status === "string"
+    ? ok({ status })
+    : fail("Respons pelepasan pasangan tidak valid.");
 }

@@ -28,7 +28,7 @@ Pemeriksaan bersyarat:
 
 `Ready`
 
-Semua kriteria DoR terpenuhi sejak 2026-11-23. Fondasi `FND-001`–`FND-009` sudah `done`, termasuk AppShell (`D-62`), sehingga layar item ini punya tempat render. Bila item membuat tabel, DDL dikirim sebagai usulan `06-ddl-proposal.sql` dan dinomori tech lead (`D-09`); layar dicari di `docs/design/inventory/<siklus>.md`.
+Semua kriteria DoR terpenuhi sejak 2026-11-23. Tiga keputusan implementasi (2026-11-28): memakai `rekening_bank` PG-009, pencocokan tanpa dimensi rekening pada jurnal (penyimpangan R-04), dan jendela 3 hari lewat `konfigurasi_rekonsiliasi`. Bukti di `05-evidence.md`; bukti database di `docs/tech-debt/pg-010-bukti-db.md`.
 
 ## Blockers / decisions needed
 
