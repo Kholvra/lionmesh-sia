@@ -119,4 +119,12 @@ export const ui = {
     "bg-[var(--bg-subtle)] text-[color:var(--text-primary)]",
     body,
   ].join(" "),
+  // Added by GJ-002.
+  formWide: "col-span-full",
+  // Two-column card body used by "Presensi hari ini".
+  duaKolom: "grid grid-cols-2 items-start gap-[var(--space-6)]",
+  angkaBesar:
+    "m-0 font-bold tabular-nums text-[color:var(--text-primary)] text-[length:var(--font-size-display)] leading-[var(--line-height-display)]",
+  teksTebal:
+    "m-0 font-semibold text-[color:var(--text-primary)] text-[length:var(--font-size-section)] leading-[var(--line-height-section)]",
 } as const;
