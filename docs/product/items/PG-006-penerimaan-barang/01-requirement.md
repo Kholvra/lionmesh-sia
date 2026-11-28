@@ -8,7 +8,7 @@ lane: active
 sequence: unset
 type: feature
 req_status: specified
-delivery_status: not_started
+delivery_status: in_progress
 priority: unset
 size: unset
 depends_on:

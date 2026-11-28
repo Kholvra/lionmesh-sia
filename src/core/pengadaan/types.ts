@@ -303,3 +303,72 @@ export interface CatatKonfirmasiPoInput {
   catatan: string;
   actorId: string;
 }
+
+export interface PenerimaanView {
+  dokumenId: string;
+  nomor: string;
+  status: StatusDokumen;
+  versi: number;
+  jenis: JenisPenerimaan;
+  tanggal: string;
+  poId: string;
+  poNomor: string | null;
+  gudangId: string;
+  gudangNama: string;
+  createdAt: string;
+}
+
+export interface PenerimaanItemView {
+  id: string;
+  poItemId: string;
+  produkId: string;
+  qtyDiterima: string;
+  qtyLulus: string | null;
+  qtyPo: string;
+}
+
+export interface PenerimaanDetail {
+  header: PenerimaanView;
+  items: PenerimaanItemView[];
+  riwayat: RiwayatStatus[];
+  bisaDibatalkan: boolean;
+}
+
+export interface BarisPoSiapTerima {
+  poItemId: string;
+  produkId: string;
+  qtyPo: string;
+  sisa: string;
+}
+
+export interface PoSiapTerima {
+  header: PurchaseOrderView;
+  items: BarisPoSiapTerima[];
+}
+
+export interface ExceptionPengadaanView {
+  id: string;
+  tipe: string;
+  poId: string;
+  poNomor: string | null;
+  produkId: string | null;
+  qtyPo: string;
+  qtyDiterima: string;
+  selisih: string;
+  alasan: string | null;
+  status: string;
+  createdAt: string;
+}
+
+export interface BatalkanPenerimaanInput {
+  dokumenId: string;
+  versi: number;
+  alasan: string;
+  actorId: string;
+}
+
+export interface TutupExceptionInput {
+  exceptionId: string;
+  alasan: string;
+  actorId: string;
+}
