@@ -26,8 +26,10 @@ const SECTION =
   "shadow-card rounded-[var(--radius-md)] border border-transparent bg-[var(--bg-surface)] px-[var(--space-5)] py-[var(--space-3)]";
 const CIRCLE_BASE =
   "flex size-[var(--space-6)] shrink-0 items-center justify-center rounded-full text-[length:var(--font-size-caption)] font-semibold";
+// Ink-900 on brand-500 is the token-approved pair (6.11:1); white is 2.53:1.
+// The number/check glyph remains the non-colour cue for completion state.
 const CIRCLE_CURRENT =
-  "bg-[var(--brand-500)] text-[color:var(--text-inverse)]";
+  "bg-[var(--brand-500)] text-[color:var(--text-on-brand)]";
 const CIRCLE_COMPLETED =
   "bg-[var(--status-success-bg)] text-[color:var(--status-success-text)]";
 const CIRCLE_UPCOMING =

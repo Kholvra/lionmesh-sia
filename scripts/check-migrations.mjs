@@ -6,8 +6,12 @@ import { readdirSync } from "node:fs";
 
 const DIR = "supabase/migrations";
 const POLA = /^(\d{4})_[a-z0-9]+(?:_[a-z0-9]+)*\.sql$/;
-// GJ-001 reserves 0016; see docs/tech-debt/gj-001-mock-store.md.
-const NOMOR_DICADANGKAN = new Set(["0016"]);
+// Nomor dari track paralel yang belum merge (bukan celah):
+// rantai GJ PR44-49 (0017-0022), rantai PG PR50-55 (0023-0028).
+const NOMOR_DICADANGKAN = new Map([
+  ...["0017", "0018", "0019", "0020", "0021", "0022"].map((n) => [n, "rantai GJ PR44-49"]),
+  ...["0023", "0024", "0025", "0026", "0027", "0028"].map((n) => [n, "rantai PG PR50-55"]),
+]);
 
 
 const berkas = readdirSync(DIR)
@@ -53,8 +57,8 @@ if (masalah.length > 0) {
 
 
 console.log(`[check:migrations] ok — ${berkas.length} berkas, nomor unik`);
-for (const cadangan of NOMOR_DICADANGKAN) {
+for (const [cadangan, alasan] of NOMOR_DICADANGKAN) {
   if (!nomor.has(cadangan)) {
-    console.log(`[check:migrations] nomor ${cadangan} dicadangkan untuk GJ-001`);
+    console.log(`[check:migrations] nomor ${cadangan} ditunggu (${alasan})`);
   }
 }

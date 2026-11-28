@@ -126,8 +126,8 @@ penuh (lihat item K10). Sisa satu keputusan: akun COA rugi abnormal.
       metadata 14×/3 format + `PageProps` 3×); `PATH_*` konstan
       (GJ 11× literal); `PESAN` map typed GJ; hapus barrel mati
       produksi `types.ts`; nama impor relatif vs `@/` disatukan.
-- [x] K10. Produksi persistence PENUH (D-70): skema 0020 (12 tabel) +
-      0021 (WO + RLS) + 16 RPC atomik; core `produksi/` + actions + zod;
+- [x] K10. Produksi persistence PENUH (D-70): skema 0032 (12 tabel) +
+      0033 (WO + RLS) + 16 RPC atomik; core `produksi/` + actions + zod;
       sessionStorage NOL; demo dihapus. Bukti 28 Nov: gate hijau
       (typecheck/lint/arch/test 162/build), reset+seed hijau, E2E BOM v1
       via UI (simpan + baca-balik OK). Akun rugi abnormal DITUTUP via
@@ -174,17 +174,17 @@ K10: 5 rekomendasi skema (R1–R5) disampaikan di chat 27 Nov, menunggu
 review user sebelum dieksekusi.
 Bukti 2026-11-27 (branch `post-merge-consolidation`, 3 agen paralel):
 F1–F3 hijau — `typecheck`/`lint`/`arch:check`/`check-migrations`,
-`pnpm test` 124/124; `0017`+`0018` dry-run apply + rollback bersih di
+`pnpm test` 124/124; `0029`+`0030` dry-run apply + rollback bersih di
 DB lokal (policy pengadaan terbentuk). F1: suffix `,00` tampil di gaji
 (dulu Intl tanpa desimal) — disengaja ikut aturan rupiah-bulat.
 
 - [x] F1. `formatRupiah` GJ → kanonik cents + konversi call site.
 - [x] F2. `Date.now()` AppLayout → `connection()` / client.
-- [x] F3. RLS `0018`: filter `jenis_dokumen` + peran (opsi b).
+- [x] F3. RLS `0030`: filter `jenis_dokumen` + peran (opsi b).
 - [x] F4. Tolak pecahan sen (aturan rupiah-bulat) — berlaku: tolak
-      SEMUA sen termasuk `,50`; half-up saat persist (JS + RPC 0019);
+      SEMUA sen termasuk `,50`; half-up saat persist (JS + RPC 0031);
       qty/rate tetap; display `,00`. Bukti: `pnpm test` 126/126,
-      `build` hijau, `0019` dry-run + rollback bersih, audit data lama
+      `build` hijau, `0031` dry-run + rollback bersih, audit data lama
       bersih (nol pecahan) tanpa migrasi data.
 
 ## Fase 5 — Sidebar per siklus (TERAKHIR, setelah Fase 1–4)
