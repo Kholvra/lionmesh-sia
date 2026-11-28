@@ -14,6 +14,8 @@ type PiutangPageProps = {
   }>;
 };
 
+export const instant = false;
+
 export default async function PiutangPage({ searchParams }: PiutangPageProps) {
   const params = await searchParams;
   const { profile } = await requireSesi();

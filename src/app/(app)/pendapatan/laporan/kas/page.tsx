@@ -11,6 +11,8 @@ type KasPageProps = {
   searchParams: Promise<{ periode?: string | string[] }>;
 };
 
+export const instant = false;
+
 export default async function LaporanKasPage({ searchParams }: KasPageProps) {
   const params = await searchParams;
   const { profile } = await requireSesi();

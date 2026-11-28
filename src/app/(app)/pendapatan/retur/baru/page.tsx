@@ -7,6 +7,8 @@ export const metadata: Metadata = {
   title: "Ajukan Retur Penjualan — Lionmesh SIA",
 };
 
+export const instant = false;
+
 export default async function ReturBaruPage() {
   const { profile } = await requireSesi();
   return <ReturBaruScreen profile={profile} />;

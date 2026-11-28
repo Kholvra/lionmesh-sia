@@ -14,6 +14,8 @@ type PesananListPageProps = {
   }>;
 };
 
+export const instant = false;
+
 export default async function PesananListPage({
   searchParams,
 }: PesananListPageProps) {

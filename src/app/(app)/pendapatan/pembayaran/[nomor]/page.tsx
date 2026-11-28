@@ -11,6 +11,8 @@ type PembayaranDetailPageProps = {
   params: Promise<{ nomor: string }>;
 };
 
+export const instant = false;
+
 export default async function PembayaranDetailPage({
   params,
 }: PembayaranDetailPageProps) {

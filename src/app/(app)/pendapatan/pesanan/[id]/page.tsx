@@ -14,6 +14,8 @@ type PesananDetailPageProps = {
   searchParams: Promise<{ mode?: string | string[] }>;
 };
 
+export const instant = false;
+
 export default async function PesananDetailPage({
   params,
   searchParams,

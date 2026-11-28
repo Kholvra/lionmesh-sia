@@ -11,6 +11,8 @@ type PiutangPageProps = {
   searchParams: Promise<{ tanggal?: string | string[] }>;
 };
 
+export const instant = false;
+
 export default async function LaporanPiutangPage({
   searchParams,
 }: PiutangPageProps) {

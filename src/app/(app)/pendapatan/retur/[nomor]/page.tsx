@@ -11,6 +11,8 @@ type ReturDetailPageProps = {
   params: Promise<{ nomor: string }>;
 };
 
+export const instant = false;
+
 export default async function ReturDetailPage({
   params,
 }: ReturDetailPageProps) {

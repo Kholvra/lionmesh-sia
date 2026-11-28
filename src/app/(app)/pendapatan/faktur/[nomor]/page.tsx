@@ -11,6 +11,8 @@ type FakturDetailPageProps = {
   params: Promise<{ nomor: string }>;
 };
 
+export const instant = false;
+
 export default async function FakturDetailPage({
   params,
 }: FakturDetailPageProps) {

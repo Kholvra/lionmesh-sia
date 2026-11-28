@@ -14,6 +14,8 @@ type FakturPageProps = {
   }>;
 };
 
+export const instant = false;
+
 export default async function FakturPage({ searchParams }: FakturPageProps) {
   const params = await searchParams;
   const { profile } = await requireSesi();

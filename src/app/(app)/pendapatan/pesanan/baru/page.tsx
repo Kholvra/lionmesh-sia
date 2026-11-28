@@ -7,6 +7,8 @@ export const metadata: Metadata = {
   title: "Buat Pesanan Penjualan — Lionmesh SIA",
 };
 
+export const instant = false;
+
 export default async function PesananBaruPage() {
   const { profile } = await requireSesi();
   return <PesananBaruScreen profile={profile} />;

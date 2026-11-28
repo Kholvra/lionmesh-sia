@@ -7,6 +7,8 @@ export const metadata: Metadata = {
   title: "Catat Pembayaran Pelanggan — Lionmesh SIA",
 };
 
+export const instant = false;
+
 export default async function PembayaranBaruPage() {
   const { profile } = await requireSesi();
   return <PembayaranBaruScreen profile={profile} />;

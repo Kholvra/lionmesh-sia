@@ -14,6 +14,8 @@ type PengirimanPageProps = {
   }>;
 };
 
+export const instant = false;
+
 export default async function PengirimanPage({
   searchParams,
 }: PengirimanPageProps) {

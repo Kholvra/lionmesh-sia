@@ -11,6 +11,8 @@ type PenjualanPageProps = {
   searchParams: Promise<{ periode?: string | string[] }>;
 };
 
+export const instant = false;
+
 export default async function LaporanPenjualanPage({
   searchParams,
 }: PenjualanPageProps) {

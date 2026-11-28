@@ -14,6 +14,8 @@ type JurnalPageProps = {
   }>;
 };
 
+export const instant = false;
+
 export default async function JurnalPage({ searchParams }: JurnalPageProps) {
   const params = await searchParams;
   const { profile } = await requireSesi();

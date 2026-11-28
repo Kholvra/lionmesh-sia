@@ -14,6 +14,8 @@ type PembayaranPageProps = {
   }>;
 };
 
+export const instant = false;
+
 export default async function PembayaranPage({
   searchParams,
 }: PembayaranPageProps) {

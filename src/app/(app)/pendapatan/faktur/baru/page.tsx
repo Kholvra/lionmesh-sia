@@ -7,6 +7,8 @@ export const metadata: Metadata = {
   title: "Buat Faktur Penjualan — Lionmesh SIA",
 };
 
+export const instant = false;
+
 export default async function FakturBaruPage() {
   const { profile } = await requireSesi();
   return <FakturBaruScreen profile={profile} />;

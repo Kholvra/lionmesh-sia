@@ -14,6 +14,8 @@ type ReturPageProps = {
   }>;
 };
 
+export const instant = false;
+
 export default async function ReturPage({ searchParams }: ReturPageProps) {
   const params = await searchParams;
   const { profile } = await requireSesi();
